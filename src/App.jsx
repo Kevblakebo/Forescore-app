@@ -235,6 +235,30 @@ const GAMES = {
       "Great for foursome-vs-foursome tournament play.",
     ],
   },
+  swami: {
+    name: "Swami's Standard",
+    tag: "Individual stroke play - 4 players",
+    desc: "A standard, no-frills 4-player stroke play game. Lowest total strokes wins; total putts breaks a tie. Great for players who just want to keep an honest scorecard.",
+    rotates: false,
+    hasScore: true,
+    hasPutts: true,
+    totalScoring: true,
+    defaults: { maxOver: "", maxPutts: "", mulliganSegment: "", prize: "" },
+    rules: [
+      "4-player individual strokes and putting game.",
+      "Total strokes and putts are kept track of.",
+      "Lowest total strokes wins. Total putts settles tie breaker.",
+      "Prize: to be agreed on prior to round",
+      "Strokes max: to be agreed on prior to round.",
+      "Putts max: to be agreed on prior to round.",
+      "Mulligans: to be agreed on prior to round.",
+      "Play OB shots as a lateral drop (1 out, 1 in) (to be agreed on)",
+      "Must putt all the way into the hole.",
+      "Flagstick can stay in.",
+      "Putts start once on the putting green.",
+      "Handicaps not used in game scoring, but are visible.",
+    ],
+  },
   dstreet: {
     name: "D-Street Drop",
     tag: "Individual skins - 4 players",
@@ -450,6 +474,7 @@ const TEAM_CLASS = ["gsc-teamA", "gsc-teamB", "gsc-teamC", "gsc-teamD"];
 // Ponto's mulligan allowance resets every 9 holes (front/back nine).
 // Seabluffe's stays tied to its 6-hole partner-rotation.
 function mulliganWindow(game) {
+  if (game === "swami") return 18; // one mulligan allowance for the whole round
   return game === "ponto" || game === "dstreet" || game === "beachside" || game === "tourneybb" || game === "tourneygg" ? 9 : 6;
 }
 const ACTIVE_KEY = "gsc-active-round";
@@ -1119,7 +1144,7 @@ export default function GolfScorecard() {
     const teams =
       gameKey === "ponto" || gameKey === "beachside"
         ? pontoPairing
-        : gameKey === "dstreet"
+        : gameKey === "dstreet" || gameKey === "swami"
         ? [[0], [1], [2], [3]] // individual - each player is their own "team" of one
         : gameKey === "tourneybb" || gameKey === "tourneygg"
         ? [[0, 1, 2, 3]] // whole foursome as a single team - no sub-teams
@@ -1713,11 +1738,11 @@ function computeRoundScoring(round) {
     }
 
     let ptsAwarded = teamsThisHole.map(() => ({ score: 0, putt: 0 }));
-    if (g.hasScore) {
+    if (g.hasScore && !g.totalScoring) {
       const sums = teamRes.map((t) => t.scoreSum);
       awardLowest(sums).forEach((v, i) => (ptsAwarded[i].score = v));
     }
-    if (g.hasPutts) {
+    if (g.hasPutts && !g.totalScoring) {
       const sums = teamRes.map((t) => t.puttSum);
       awardLowest(sums).forEach((v, i) => (ptsAwarded[i].putt = v));
     }
@@ -1752,6 +1777,7 @@ function computeRoundScoring(round) {
 
   function playerRank() {
     if (!computed || !round) return [];
+    const isTotalScoring = GAMES[round.game] && GAMES[round.game].totalScoring;
     return round.players
       .map((pl, i) => ({
         ...pl,
@@ -1761,7 +1787,13 @@ function computeRoundScoring(round) {
         putts: computed.playerTotalPutts[i],
         relPar: computed.playerTotalScore[i] - computed.playerParPlayed[i],
       }))
-      .sort((a, b) => b.points - a.points);
+      .sort((a, b) => {
+        if (isTotalScoring) {
+          if (a.score !== b.score) return a.score - b.score; // lowest strokes wins
+          return a.putts - b.putts; // total putts breaks a tie
+        }
+        return b.points - a.points;
+      });
   }
 
   // ---------- render helpers ----------
@@ -1837,7 +1869,7 @@ function computeRoundScoring(round) {
 
             <div className="gsc-label" style={{ marginTop: 4, marginBottom: 10, color: "#1B4332" }}>4-Person Team Games</div>
             {Object.entries(GAMES)
-              .filter(([key]) => key !== "dstreet" && !GAMES[key].tournamentOnly)
+              .filter(([key]) => key !== "dstreet" && key !== "swami" && !GAMES[key].tournamentOnly)
               .map(([key, g]) => (
                 <div key={key} className="gsc-card gsc-game-card" style={{ marginBottom: 10 }} onClick={() => startNewRound(key)}>
                   <div className="gsc-game-title">{g.name}</div>
@@ -1858,7 +1890,7 @@ function computeRoundScoring(round) {
 
             <div className="gsc-label" style={{ marginTop: 14, marginBottom: 10, color: "#1B4332" }}>4-person Individual Games</div>
             {Object.entries(GAMES)
-              .filter(([key]) => key === "dstreet")
+              .filter(([key]) => key === "swami" || key === "dstreet")
               .map(([key, g]) => (
                 <div key={key} className="gsc-card gsc-game-card" style={{ marginBottom: 10 }} onClick={() => startNewRound(key)}>
                   <div className="gsc-game-title">{g.name}</div>
@@ -2818,11 +2850,12 @@ function computeRoundScoring(round) {
               <div key={p.idx} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", borderBottom: "1px solid #eee6cf", fontSize: 13 }}>
                 <div>
                   {LETTERS[p.idx]} - {p.name}
-                  {!g.singleTeam && holeIdx === 17 && hr.complete && idx < 2 && <span className="gsc-chip gsc-lead">WIN</span>}
-                  {!g.singleTeam && holeIdx === 17 && hr.complete && idx >= ranks.length - 2 && <span className="gsc-chip gsc-loss">LOSS</span>}
+                  {g.totalScoring && holeIdx === 17 && hr.complete && idx === 0 && <span className="gsc-chip gsc-lead">WINNER</span>}
+                  {!g.singleTeam && !g.totalScoring && holeIdx === 17 && hr.complete && idx < 2 && <span className="gsc-chip gsc-lead">WIN</span>}
+                  {!g.singleTeam && !g.totalScoring && holeIdx === 17 && hr.complete && idx >= ranks.length - 2 && <span className="gsc-chip gsc-loss">LOSS</span>}
                 </div>
                 <div className="gsc-mono" style={{ fontWeight: 700 }}>
-                  {!g.singleTeam && <>{p.points} pts </>}
+                  {!g.singleTeam && !g.totalScoring && <>{p.points} pts </>}
                   <span style={{ fontWeight: 400, color: "#6b6b63", whiteSpace: "nowrap" }}>({p.score}str/{p.putts}put/{formatRelPar(p.relPar)})</span>
                 </div>
               </div>
@@ -2893,12 +2926,14 @@ function computeRoundScoring(round) {
                       })}
                     </tr>
                   )}
-                  <tr style={{ fontWeight: 700, background: "#EBF0EC" }}>
-                    <td colSpan={2}>Points</td>
-                    {round.players.map((_, i) => (
-                      <td key={i}>{computed.playerPoints[i]}</td>
-                    ))}
-                  </tr>
+                  {!g.totalScoring && (
+                    <tr style={{ fontWeight: 700, background: "#EBF0EC" }}>
+                      <td colSpan={2}>Points</td>
+                      {round.players.map((_, i) => (
+                        <td key={i}>{computed.playerPoints[i]}</td>
+                      ))}
+                    </tr>
+                  )}
                   <tr style={{ fontWeight: 700, background: "#F0EEE3" }}>
                     <td colSpan={2}>Handicap</td>
                     {round.players.map((p, i) => (
