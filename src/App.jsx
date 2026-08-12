@@ -1867,7 +1867,7 @@ function computeRoundScoring(round) {
           <div className="gsc-card">
             <div className="gsc-label" style={{ marginBottom: 10 }}>Start a new round</div>
 
-            <div className="gsc-label" style={{ marginTop: 4, marginBottom: 10, color: "#1B4332" }}>4-Person Team Games</div>
+            <div className="gsc-label" style={{ marginTop: 4, marginBottom: 10, color: "#1B4332" }}>Team Games</div>
             {Object.entries(GAMES)
               .filter(([key]) => key !== "dstreet" && key !== "swami" && !GAMES[key].tournamentOnly)
               .map(([key, g]) => (
@@ -1888,7 +1888,7 @@ function computeRoundScoring(round) {
                 </div>
               ))}
 
-            <div className="gsc-label" style={{ marginTop: 14, marginBottom: 10, color: "#1B4332" }}>4-person Individual Games</div>
+            <div className="gsc-label" style={{ marginTop: 14, marginBottom: 10, color: "#1B4332" }}>Individual Games</div>
             {Object.entries(GAMES)
               .filter(([key]) => key === "swami" || key === "dstreet")
               .map(([key, g]) => (
