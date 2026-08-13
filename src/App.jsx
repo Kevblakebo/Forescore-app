@@ -1172,7 +1172,7 @@ export default function GolfScorecard() {
       { name: "", hcp: "" },
     ]);
     setPontoPairing([[0, 1], [2, 3]]);
-    setPar(DEFAULT_PAR);
+    setPar(Array(18).fill(""));
     setCourseName("");
     setCourseMsg("");
     loadSavedCourses();
@@ -1236,6 +1236,13 @@ export default function GolfScorecard() {
     if (cleanPlayers.length < 4) {
       setErr("Need 4 players.");
       return;
+    }
+    if (!activeTournament) {
+      const parIncomplete = par.some((p) => p === "" || p == null || isNaN(Number(p)) || Number(p) <= 0);
+      if (parIncomplete) {
+        setErr("Enter par for every hole above, or load a saved course, before creating the round.");
+        return;
+      }
     }
     const code = genCode();
     const teams =
@@ -1306,7 +1313,7 @@ export default function GolfScorecard() {
     setTournamentCourseName("");
     setTournamentGameKey(key);
     setTournamentRankBy("strokes");
-    setTournamentPar(DEFAULT_PAR);
+    setTournamentPar(Array(18).fill(""));
     setTournamentCfg({ ...GAMES[key].defaults });
     setTournamentFoursomeCount(2);
     setScreen("tournamentCreate");
@@ -1317,6 +1324,11 @@ export default function GolfScorecard() {
     const name = tournamentName.trim();
     if (!name) {
       setTournamentErr("Give the tournament a name first.");
+      return;
+    }
+    const parIncomplete = tournamentPar.some((p) => p === "" || p == null || isNaN(Number(p)) || Number(p) <= 0);
+    if (parIncomplete) {
+      setTournamentErr("Enter par for every hole above before continuing.");
       return;
     }
     const count = tournamentFoursomeCount === "" || tournamentFoursomeCount == null || isNaN(Number(tournamentFoursomeCount)) ? 2 : Math.max(1, Number(tournamentFoursomeCount));
@@ -2617,14 +2629,18 @@ function computeRoundScoring(round) {
               <input className="gsc-input" placeholder="e.g. Seabluffe Golf Links" value={courseName} onChange={(e) => setCourseName(e.target.value)} />
             </div>
             <div className="gsc-label" style={{ marginBottom: 6 }}>Par per hole</div>
+            <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 8 }}>
+              Enter par for every hole, or load a saved course above - you won't be able to create the round until all 18 are filled in.
+            </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 6 }}>
               {par.map((v, i) => (
                 <div key={i}>
                   <div style={{ fontSize: 10, textAlign: "center", color: "#6b6b63" }}>H{i + 1}</div>
                   <input
                     className="gsc-input gsc-mono"
-                    style={{ padding: "6px 2px", textAlign: "center" }}
+                    style={{ padding: "6px 2px", textAlign: "center", borderColor: v === "" || v == null ? "#C1440E" : undefined }}
                     type="number"
+                    placeholder="-"
                     value={v}
                     onChange={(e) => {
                       // Strip any leading zeros (e.g. "02" -> "2"), and keep
@@ -2635,15 +2651,6 @@ function computeRoundScoring(round) {
                       const next = [...par];
                       next[i] = raw === "" ? "" : Number(raw);
                       setPar(next);
-                    }}
-                    onBlur={(e) => {
-                      // On leaving the field, fill back in a sensible
-                      // default if it was left empty.
-                      if (e.target.value === "") {
-                        const next = [...par];
-                        next[i] = 4;
-                        setPar(next);
-                      }
                     }}
                   />
                 </div>
@@ -2712,7 +2719,7 @@ function computeRoundScoring(round) {
                 onClick={() => {
                   setTournamentGameKey(key);
                   setTournamentCfg({ ...GAMES[key].defaults });
-                  setTournamentPar(DEFAULT_PAR);
+                  setTournamentPar(Array(18).fill(""));
                 }}
               >
                 <div className="gsc-game-title">{GAMES[key].name}</div>
@@ -2796,28 +2803,22 @@ function computeRoundScoring(round) {
 
           <div className="gsc-card">
             <div className="gsc-label" style={{ marginBottom: 6 }}>Par per hole</div>
-            <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 10 }}>Every foursome in this tournament plays the same course par.</div>
+            <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 10 }}>Every foursome in this tournament plays the same course par. Enter par for all 18 holes to continue.</div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 6 }}>
               {tournamentPar.map((v, i) => (
                 <div key={i}>
                   <div style={{ fontSize: 10, textAlign: "center", color: "#6b6b63" }}>H{i + 1}</div>
                   <input
                     className="gsc-input gsc-mono"
-                    style={{ padding: "6px 2px", textAlign: "center" }}
+                    style={{ padding: "6px 2px", textAlign: "center", borderColor: v === "" || v == null ? "#C1440E" : undefined }}
                     type="number"
+                    placeholder="-"
                     value={v}
                     onChange={(e) => {
                       const raw = e.target.value.replace(/^0+(?=\d)/, "");
                       const next = [...tournamentPar];
                       next[i] = raw === "" ? "" : Number(raw);
                       setTournamentPar(next);
-                    }}
-                    onBlur={(e) => {
-                      if (e.target.value === "") {
-                        const next = [...tournamentPar];
-                        next[i] = 4;
-                        setTournamentPar(next);
-                      }
                     }}
                   />
                 </div>
