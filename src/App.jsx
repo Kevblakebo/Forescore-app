@@ -1844,7 +1844,7 @@ function computeRoundScoring(round) {
             ForeScore's golf game scorecards tally and share your game live on the course, and settle who's buying at the 19th hole.
             <br />
             <br />
-            To kick off your round, simply:
+            To start a new round:
             <br />
             1) Select a game format below
             <br />
