@@ -778,6 +778,16 @@ export default function GolfScorecard() {
   const [deleteRoundErr, setDeleteRoundErr] = useState("");
   const [archiveErr, setArchiveErr] = useState("");
 
+  // Keep the "Continue round" pointer mirrored to whatever round is
+  // currently loaded, any time it changes (entering a score, toggling a
+  // mulligan, etc.) - not just at the moment the round was first created
+  // or opened. Without this, activeRound stays frozen at hole 1 while the
+  // real round data moves on, so leaving and hitting "Continue round"
+  // would resume from a stale, empty copy instead of where play left off.
+  useEffect(() => {
+    if (round) setActiveRound(round);
+  }, [round]);
+
   useEffect(() => {
     (async () => {
       const res = await storageGet(ACTIVE_KEY, false);
