@@ -1831,7 +1831,7 @@ function computeRoundScoring(round) {
         />
         <div className="gsc-body">
           <div style={{ fontSize: 13, color: "#4b4b45", lineHeight: 1.55, margin: "0 0 16px" }}>
-            ForeScore handles and shares the detail of the various golf games you play within your group live on the course, and settles who's buying at the 19th hole. Simply pick a game below, set your details, and play!
+            ForeScore's golf game scorecards tally and share your game live on the course, and settle who's buying at the 19th hole. Simply pick a game format below, set your details, and play!
           </div>
           {activeRound && !activeRound.tournamentId && (
             <div className="gsc-card" style={{ border: "2px solid #B08D57" }}>
