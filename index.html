@@ -2,12 +2,25 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>ForeScore</title>
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#1B4332" />
+    <!-- Lets the app run full-bleed under the notch/status bar when
+         launched from the home screen, paired with safe-area padding in
+         the app's own CSS so content still clears the notch and home
+         indicator correctly. -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <style>
+      /* Matches the app's fairway green so any overscroll/bounce edge or
+         the moment before the app mounts shows brand color instead of a
+         white flash - feels more like a native app. */
+      html, body { background-color: #1B4332; overscroll-behavior-y: none; }
+    </style>
   </head>
   <body style="margin:0;padding:0;">
     <div id="root"></div>
