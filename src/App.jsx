@@ -1841,7 +1841,16 @@ function computeRoundScoring(round) {
         />
         <div className="gsc-body">
           <div style={{ fontSize: 13, color: "#4b4b45", lineHeight: 1.55, margin: "0 0 16px" }}>
-            ForeScore's golf game scorecards tally and share your game live on the course, and settle who's buying at the 19th hole. Simply pick a game format below, set your details, and play!
+            ForeScore's golf game scorecards tally and share your game live on the course, and settle who's buying at the 19th hole.
+            <br />
+            <br />
+            To kick off your round, simply:
+            <br />
+            1) Select a game format below
+            <br />
+            2) Create your round details
+            <br />
+            3) Enter your strokes for each hole as you play
           </div>
           {activeRound && !activeRound.tournamentId && (
             <div className="gsc-card" style={{ border: "2px solid #B08D57" }}>
