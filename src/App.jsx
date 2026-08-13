@@ -237,15 +237,15 @@ const GAMES = {
   },
   swami: {
     name: "Swami's Standard",
-    tag: "Individual stroke play - 4 players",
-    desc: "A standard, no-frills 4-player stroke play game. Lowest total strokes wins; total putts breaks a tie. Great for players who just want to keep an honest scorecard.",
+    tag: "Individual stroke play - up to 4 players",
+    desc: "A standard, no-frills stroke play game for up to 4 players. Lowest total strokes wins; total putts breaks a tie. Great for players who just want to keep an honest scorecard.",
     rotates: false,
     hasScore: true,
     hasPutts: true,
     totalScoring: true,
     defaults: { maxOver: "", maxPutts: "", mulliganSegment: "", prize: "" },
     rules: [
-      "4-player individual strokes and putting game.",
+      "Individual strokes and putting game for up to 4 players.",
       "Total strokes and putts are kept track of.",
       "Lowest total strokes wins. Total putts settles tie breaker.",
       "Prize: to be agreed on prior to round",
@@ -261,14 +261,14 @@ const GAMES = {
   },
   dstreet: {
     name: "D-Street Drop",
-    tag: "Individual skins - 4 players",
-    desc: "4-player individual strokes and putting skins game (same as Cardiff Combine, but no teams). Points for low strokes AND low putts each hole. Great for similar handicap foursomes.",
+    tag: "Individual skins - up to 4 players",
+    desc: "Individual strokes and putting skins game for up to 4 players (same as Cardiff Combine, but no teams). Points for low strokes AND low putts each hole. Great for similar handicap foursomes.",
     rotates: false,
     hasScore: true,
     hasPutts: true,
     defaults: { maxOver: 3, maxPutts: 3, mulliganSegment: 1, prize: "Losers buy winners a drink at the 19th hole" },
     rules: [
-      "4-player individual strokes and putting skins game (same game as Cardiff Combine, except no teams).",
+      "Individual strokes and putting skins game for up to 4 players (same game as Cardiff Combine, except no teams).",
       {
         text: "0, 1, or 2 points possible per hole per player:",
         sub: [
