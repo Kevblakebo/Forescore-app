@@ -12,7 +12,7 @@ const LOGO_DATA_URI = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHgAAAB4CAY
 const STYLE = `
   .gsc { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background:#F3EFE0; color:#2B2B28; min-height:100vh; }
   .gsc * { box-sizing: border-box; }
-  .gsc-display { font-family: Georgia, "Times New Roman", serif; }
+  .gsc-display { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif; }
   .gsc-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
   .gsc-header { background:#1B4332; color:#F3EFE0; padding:16px 18px; position:sticky; top:0; z-index:10; }
   .gsc-header-row { display:flex; align-items:center; justify-content:space-between; gap:8px; }
