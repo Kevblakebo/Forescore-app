@@ -2108,7 +2108,7 @@ function computeRoundScoring(round) {
           <div className="gsc-card">
             <div style={{ fontSize: 13, color: "#4b4b45", lineHeight: 1.6 }}>
               <p style={{ margin: "0 0 14px" }}>
-                The ForeScore golf games scorecard and tracking app handles and shares the detail of the various golf games you play within your group live on the course so you don't have to: game type, rules, players, teams, scoring, max scores, course pars, handicaps, mulligans, dates, and prizes. You no longer have to do it in your head or on a paper scorecard.
+                The ForeScore golf game scorecard app manages and shares the detail of various golf game formats you can play with your group live on the course so you don't have to: game type, rules, players, teams, scoring, max scores, course pars, handicaps, mulligans, dates, and prizes. You no longer have to do it in your head or on a paper scorecard.
               </p>
               <p style={{ margin: "0 0 14px" }}>
                 Before you tee off, you can quickly set the details that matter for your group. Just pick a game and enter the details before the round. Then each player enters their own scores during play (or one person can enter for everyone), and everyone can see where things stand as you go. When the round wraps up, points are calculated and saved automatically.
