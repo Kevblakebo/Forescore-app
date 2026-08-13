@@ -236,7 +236,7 @@ const GAMES = {
     ],
   },
   swami: {
-    name: "Swami's Standard",
+    name: "Swami's Strokes",
     tag: "Individual stroke play - up to 4 players",
     desc: "A standard, no-frills stroke play game for up to 4 players. Lowest total strokes wins; total putts breaks a tie. Great for players who just want to keep an honest scorecard.",
     rotates: false,
