@@ -2294,11 +2294,6 @@ function computeRoundScoring(round) {
               <div className="gsc-label">Course name</div>
               <input className="gsc-input" placeholder="e.g. Seabluffe Golf Links" value={courseName} onChange={(e) => setCourseName(e.target.value)} />
             </div>
-            <div style={{ fontSize: 12, color: "#6b6b63", lineHeight: 1.5, marginBottom: 10 }}>
-              There's no public GHIN API this app can connect to directly, so par can't be pulled in automatically. The{" "}
-              <a className="gsc-link" href="https://ncrdb.usga.org/" target="_blank" rel="noreferrer">USGA Course Rating Database</a>{" "}
-              lets you look up any rated course's official par and hole handicaps - open it, find your course and tees, then enter the par below. Save it here once and it'll be ready to reuse next time you play that course.
-            </div>
             <div className="gsc-label" style={{ marginBottom: 6 }}>Par per hole</div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 6 }}>
               {par.map((v, i) => (
@@ -2356,7 +2351,7 @@ function computeRoundScoring(round) {
           )}
           {!storageBroken && storageWarning && <div style={{ color: "#B08D57", fontSize: 13, marginBottom: 10 }}>{storageWarning}</div>}
           <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", padding: 14, fontSize: 16 }} disabled={busy} onClick={finishSetup}>
-            {busy ? "Saving..." : activeTournament ? "Add my foursome & start playing" : "Create round & get code"}
+            {busy ? "Saving..." : activeTournament ? "Add my foursome & start playing" : "Create Round"}
           </button>
         </div>
         <RulesModal />
