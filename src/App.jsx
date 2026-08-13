@@ -1944,6 +1944,9 @@ function computeRoundScoring(round) {
             <div className="gsc-row">
               <input
                 className="gsc-input gsc-mono"
+                id="tournament-join-code"
+                name="tournament-join-code"
+                autoComplete="off"
                 placeholder="TOURNAMENT CODE"
                 value={tournamentJoinCode}
                 onChange={(e) => setTournamentJoinCode(e.target.value.toUpperCase())}
@@ -1979,7 +1982,7 @@ function computeRoundScoring(round) {
           <div className="gsc-card">
             <div className="gsc-label">Join an existing round</div>
             <div className="gsc-row" style={{ marginTop: 6 }}>
-              <input className="gsc-input gsc-mono" placeholder="ROUND CODE" value={joinCode} onChange={(e) => setJoinCode(e.target.value.toUpperCase())} maxLength={6} />
+              <input className="gsc-input gsc-mono" id="round-join-code" name="round-join-code" autoComplete="off" placeholder="ROUND CODE" value={joinCode} onChange={(e) => setJoinCode(e.target.value.toUpperCase())} maxLength={6} />
               <button className="gsc-btn gsc-btn-primary" style={{ flex: "0 0 auto" }} disabled={busy || !joinCode} onClick={() => loadRound(joinCode)}>
                 Open
               </button>
@@ -2006,7 +2009,7 @@ function computeRoundScoring(round) {
             <div style={{ fontSize: 12, color: "#6b6b63", margin: "4px 0 8px" }}>
               If a round code isn't syncing, whoever's tracking scores can send you a block of text instead (via "Copy round data to share" on their screen). Paste it here.
             </div>
-            <textarea className="gsc-input" style={{ minHeight: 70, fontFamily: "ui-monospace, monospace", fontSize: 11 }} placeholder="Paste round data here" value={pasteData} onChange={(e) => setPasteData(e.target.value)} />
+            <textarea className="gsc-input" id="paste-round-data" name="paste-round-data" style={{ minHeight: 70, fontFamily: "ui-monospace, monospace", fontSize: 11 }} placeholder="Paste round data here" value={pasteData} onChange={(e) => setPasteData(e.target.value)} />
             <button className="gsc-btn gsc-btn-primary" style={{ marginTop: 8 }} disabled={!pasteData.trim()} onClick={loadFromPastedData}>
               Load this round
             </button>
