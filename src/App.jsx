@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { Home as HomeIcon, Flag as FlagIcon, Trophy as TrophyIcon, User as UserIcon, Lock, Library as LibraryIcon } from "lucide-react";
 
 /* ---------- design tokens ----------
    Palette: fairway (#1B4332) deep green, paper (#F3EFE0) cream, ink (#2B2B28),
@@ -69,6 +70,10 @@ const STYLE = `
   .gsc-modal-title { font-family: Georgia, serif; font-size:19px; font-weight:700; color:#1B4332; margin-bottom:8px; }
   .gsc-modal-body { font-size:14px; color:#4b4b45; line-height:1.5; margin-bottom:18px; }
   .gsc-modal-row { display:flex; gap:10px; }
+  .gsc-navbar { position:fixed; bottom:0; left:0; right:0; background:#1B4332; display:flex; padding:6px 4px calc(6px + env(safe-area-inset-bottom)); box-shadow:0 -2px 10px rgba(0,0,0,0.2); z-index:20; }
+  .gsc-navitem { flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; padding:8px 2px; border-radius:10px; cursor:pointer; border:none; background:none; touch-action:manipulation; min-height:44px; }
+  .gsc-navitem-label { font-size:10px; font-weight:600; letter-spacing:0.2px; }
+  .gsc-body-tabbed { padding-bottom:calc(80px + env(safe-area-inset-bottom)); }
   .gsc-modal-row > * { flex:1; }
 `;
 
@@ -479,6 +484,7 @@ function mulliganWindow(game) {
 }
 const ACTIVE_KEY = "gsc-active-round";
 const LAST_TOURNAMENT_KEY = "gsc-last-tournament";
+const FINISHED_TOURNAMENT_INDEX_KEY = "gsc-finished-tournament-index";
 const FINISHED_INDEX_KEY = "gsc-finished-index";
 const FINISHED_PREFIX = "gsc-finished-round:";
 const TOURNAMENT_PREFIX = "gsc-tournament:";
@@ -777,6 +783,12 @@ export default function GolfScorecard() {
   const [deleteRoundBusy, setDeleteRoundBusy] = useState(false);
   const [deleteRoundErr, setDeleteRoundErr] = useState("");
   const [archiveErr, setArchiveErr] = useState("");
+  const [finishedTournaments, setFinishedTournaments] = useState([]);
+  const [deleteTournamentConfirm, setDeleteTournamentConfirm] = useState(null); // {id, name} while confirming a delete
+  const [deleteTournamentBusy, setDeleteTournamentBusy] = useState(false);
+  const [deleteTournamentErr, setDeleteTournamentErr] = useState("");
+  const [finishTournamentBusy, setFinishTournamentBusy] = useState(false);
+  const [finishTournamentErr, setFinishTournamentErr] = useState("");
 
   // Keep the "Continue round" pointer mirrored to whatever round is
   // currently loaded, any time it changes (entering a score, toggling a
@@ -807,6 +819,12 @@ export default function GolfScorecard() {
       if (ltRes.ok && ltRes.value) {
         try {
           setLastTournament(JSON.parse(ltRes.value));
+        } catch (e) {}
+      }
+      const ftRes = await storageGet(FINISHED_TOURNAMENT_INDEX_KEY, false);
+      if (ftRes.ok && ftRes.value) {
+        try {
+          setFinishedTournaments(JSON.parse(ftRes.value));
         } catch (e) {}
       }
     })();
@@ -883,6 +901,75 @@ export default function GolfScorecard() {
     // tournament code even after this.
     await storageDelete(LAST_TOURNAMENT_KEY, false);
     setLastTournament(null);
+  }
+
+  // Moves a tournament from "in progress" to "finished" on this device.
+  // Unlike finished rounds, there's no separate snapshot to save here -
+  // the tournament's live data already lives in shared storage under its
+  // own code, and stays there untouched. This just adds a personal
+  // bookmark (name/date/game/id) so it shows up under Finished
+  // Tournaments and can be reopened anytime - it never deletes the
+  // tournament or any foursome's data.
+  async function finishTournament(t) {
+    if (!t) return;
+    setFinishTournamentErr("");
+    setFinishTournamentBusy(true);
+    const idxRes = await storageGet(FINISHED_TOURNAMENT_INDEX_KEY, false);
+    let idx = [];
+    if (idxRes.ok && idxRes.value) {
+      try {
+        idx = JSON.parse(idxRes.value);
+      } catch (e) {}
+    }
+    idx = idx.filter((x) => x.id !== t.id);
+    idx.unshift({ id: t.id, name: t.name, date: t.date, game: t.game, foursomeCount: (t.foursomes || []).length });
+    idx = idx.slice(0, 15);
+    const w = await storageSet(FINISHED_TOURNAMENT_INDEX_KEY, JSON.stringify(idx), false);
+    setFinishTournamentBusy(false);
+    if (!w.ok) {
+      setFinishTournamentErr(`Couldn't save this to your finished tournaments (${w.error}). Try again - the tournament itself is unaffected either way.`);
+      return;
+    }
+    setFinishedTournaments(idx);
+    // If this was the device's "in progress" tournament, clear that pointer
+    // too, so it moves cleanly from "in progress" to "finished" rather than
+    // showing in both places.
+    if (lastTournament && lastTournament.id === t.id) {
+      await storageDelete(LAST_TOURNAMENT_KEY, false);
+      setLastTournament(null);
+    }
+    setScreen("tournamentsTab");
+  }
+
+  function requestDeleteFinishedTournament(t) {
+    setDeleteTournamentErr("");
+    setDeleteTournamentConfirm(t);
+  }
+  function cancelDeleteFinishedTournament() {
+    setDeleteTournamentConfirm(null);
+  }
+  async function confirmDeleteFinishedTournament() {
+    if (!deleteTournamentConfirm) return;
+    const id = deleteTournamentConfirm.id;
+    setDeleteTournamentBusy(true);
+    setDeleteTournamentErr("");
+    const idxRes = await storageGet(FINISHED_TOURNAMENT_INDEX_KEY, false);
+    let idx = [];
+    if (idxRes.ok && idxRes.value) {
+      try {
+        idx = JSON.parse(idxRes.value);
+      } catch (e) {}
+    }
+    idx = idx.filter((x) => x.id !== id);
+    const w = await storageSet(FINISHED_TOURNAMENT_INDEX_KEY, JSON.stringify(idx), false);
+    if (!w.ok) {
+      setDeleteTournamentBusy(false);
+      setDeleteTournamentErr(`Couldn't remove this (${w.error}). Try again.`);
+      return;
+    }
+    setFinishedTournaments(idx);
+    setDeleteTournamentBusy(false);
+    setDeleteTournamentConfirm(null);
   }
 
   async function archiveAndExitRound(r) {
@@ -1211,15 +1298,16 @@ export default function GolfScorecard() {
     setScreen("card");
   }
 
-  function startTournamentCreateFlow() {
+  function startTournamentCreateFlow(preselectedGameKey) {
+    const key = typeof preselectedGameKey === "string" && GAMES[preselectedGameKey] ? preselectedGameKey : TOURNAMENT_GAME_KEYS[0];
     setTournamentErr("");
     setTournamentName("");
     setTournamentDate(new Date().toISOString().slice(0, 10));
     setTournamentCourseName("");
-    setTournamentGameKey(TOURNAMENT_GAME_KEYS[0]);
+    setTournamentGameKey(key);
     setTournamentRankBy("strokes");
     setTournamentPar(DEFAULT_PAR);
-    setTournamentCfg({ ...GAMES[TOURNAMENT_GAME_KEYS[0]].defaults });
+    setTournamentCfg({ ...GAMES[key].defaults });
     setTournamentFoursomeCount(2);
     setScreen("tournamentCreate");
   }
@@ -1831,6 +1919,39 @@ function computeRoundScoring(round) {
     );
   }
 
+  const NAV_ITEMS = [
+    { key: "home", label: "Home", icon: HomeIcon },
+    { key: "roundsTab", label: "Rounds", icon: FlagIcon },
+    { key: "tournamentsTab", label: "Tournaments", icon: TrophyIcon },
+    { key: "profileTab", label: "Profile", icon: UserIcon },
+    { key: "libraryTab", label: "Library", icon: LibraryIcon },
+  ];
+
+  // Persistent bottom tab bar - only rendered on the five top-level "tab"
+  // screens (see NAV_ITEMS), never on focused sub-flows like Setup or the
+  // active scorecard, matching standard mobile tab-bar conventions.
+  function BottomNav() {
+    return (
+      <div className="gsc-navbar">
+        {NAV_ITEMS.map((item) => {
+          const Icon = item.icon;
+          const active = screen === item.key;
+          return (
+            <button
+              key={item.key}
+              className="gsc-navitem"
+              style={{ background: active ? "rgba(243,239,224,0.12)" : "none" }}
+              onClick={() => setScreen(item.key)}
+            >
+              <Icon size={20} color={active ? "#F3EFE0" : "#8FA998"} strokeWidth={active ? 2.4 : 2} />
+              <span className="gsc-navitem-label" style={{ color: active ? "#F3EFE0" : "#8FA998" }}>{item.label}</span>
+            </button>
+          );
+        })}
+      </div>
+    );
+  }
+
   if (screen === "home") {
     return (
       <div className="gsc">
@@ -1839,18 +1960,18 @@ function computeRoundScoring(round) {
           title={<><span style={{ fontSize: 23 }}>ForeScore</span><br /><span style={{ fontSize: 11, opacity: 0.75, letterSpacing: "0.5px", textTransform: "uppercase", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>Golf Game Scorecards</span></>}
           sub="Track games, teams &amp; points on the course"
         />
-        <div className="gsc-body">
+        <div className="gsc-body gsc-body-tabbed">
           <div style={{ fontSize: 13, color: "#4b4b45", lineHeight: 1.55, margin: "0 0 16px" }}>
-            ForeScore's golf game scorecards easily tally and share your game live on the course, and settle who's buying at the 19th hole so you don't have to!
+            Less scoring, more golf! ForeScore's golf game scorecards easily tally and share your game live on the course, and settle who's buying at the 19th hole so you don't have to!
             <br />
             <br />
-            To start a new round:
+            To start a new game:
             <br />
-            1) Select a game format below
+            1) Select Rounds or Tournaments below
             <br />
-            2) Set up your round details
+            2) Select your Game Format, then set up your details
             <br />
-            3) Enter your strokes for each hole as you play.
+            3) Enter your strokes for each hole as you play
             <br />
             <br />
             You're all set, next hole... the 19th!
@@ -1886,6 +2007,78 @@ function computeRoundScoring(round) {
               </button>
             </div>
           )}
+
+          <div className="gsc-card gsc-game-card" onClick={() => setScreen("roundsTab")}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: 15 }}>Rounds</div>
+                <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 2 }}>Team Games (2vs2) and Individual Games (up to 4 players)</div>
+                <div style={{ fontSize: 12, color: "#6b6b63" }}>Start, join, or revisit past rounds</div>
+              </div>
+              <FlagIcon size={20} color="#8FA998" />
+            </div>
+          </div>
+
+          <div className="gsc-card gsc-game-card" onClick={() => setScreen("tournamentsTab")}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: 15 }}>Tournaments</div>
+                <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 2 }}>Multiple Foursomes</div>
+                <div style={{ fontSize: 12, color: "#6b6b63" }}>Start, join, or revisit past tournaments</div>
+              </div>
+              <TrophyIcon size={20} color="#8FA998" />
+            </div>
+          </div>
+
+          <div className="gsc-card gsc-game-card" style={{ opacity: 0.7 }} onClick={() => setScreen("profileTab")}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: 15, display: "flex", alignItems: "center", gap: 6 }}>
+                  Profile <Lock size={13} color="#8a8a80" />
+                </div>
+                <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 2 }}>Saved defaults and account</div>
+                <div style={{ fontSize: 12, color: "#6b6b63" }}>Stats - your rounds, averages, and wins</div>
+              </div>
+              <UserIcon size={20} color="#8FA998" />
+            </div>
+          </div>
+
+          <div className="gsc-card gsc-game-card" onClick={() => setScreen("libraryTab")}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: 15 }}>Library</div>
+                <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 2 }}>Golf Games Library</div>
+                <div style={{ fontSize: 12, color: "#6b6b63" }}>About this App</div>
+              </div>
+              <LibraryIcon size={20} color="#8FA998" />
+            </div>
+          </div>
+        </div>
+        <BottomNav />
+      </div>
+    );
+  }
+
+  if (screen === "roundsTab") {
+    return (
+      <div className="gsc">
+        <style>{STYLE}</style>
+        <Header title="Rounds" sub="Create, join, or revisit" />
+        <div className="gsc-body gsc-body-tabbed">
+          {activeRound && !activeRound.tournamentId && (
+            <div className="gsc-card" style={{ border: "2px solid #B08D57" }}>
+              <div className="gsc-label">Round in progress</div>
+              <div style={{ fontWeight: 700, fontSize: 16, marginTop: 2 }}>{activeRound.name}</div>
+              <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 2 }}>
+                {GAMES[activeRound.game].name} - {activeRound.date}{activeRound.course ? " - " + activeRound.course : ""}
+              </div>
+              <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+                <button className="gsc-btn gsc-btn-primary" style={{ flex: 1 }} onClick={resumeActiveRound}>Continue round</button>
+                <button className="gsc-btn gsc-btn-outline" onClick={discardActiveRound}>Discard</button>
+              </div>
+            </div>
+          )}
+
           <div className="gsc-card">
             <div className="gsc-label" style={{ marginBottom: 10 }}>Start a new round</div>
 
@@ -1930,53 +2123,6 @@ function computeRoundScoring(round) {
                   </button>
                 </div>
               ))}
-          </div>
-
-          <div className="gsc-card">
-            <div className="gsc-label" style={{ marginBottom: 6 }}>Tournaments</div>
-            <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>
-              More than one foursome, all playing the same game. Everyone keeps their own scorecard, and can see how every foursome ranks along the way.
-            </div>
-            <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginBottom: 10 }} onClick={startTournamentCreateFlow}>
-              Create a tournament
-            </button>
-            <div className="gsc-label" style={{ marginBottom: 6 }}>Join a tournament</div>
-            <div className="gsc-row">
-              <input
-                className="gsc-input gsc-mono"
-                id="tournament-join-code"
-                name="tournament-join-code"
-                autoComplete="off"
-                placeholder="TOURNAMENT CODE"
-                value={tournamentJoinCode}
-                onChange={(e) => setTournamentJoinCode(e.target.value.toUpperCase())}
-                maxLength={6}
-              />
-              <button className="gsc-btn gsc-btn-primary" style={{ flex: "0 0 auto" }} disabled={tournamentBusy || !tournamentJoinCode} onClick={() => joinTournament(tournamentJoinCode)}>
-                Join
-              </button>
-            </div>
-            {tournamentErr && <div style={{ color: "#C1440E", fontSize: 13, marginTop: 8 }}>{tournamentErr}</div>}
-          </div>
-
-          <div className="gsc-card" style={{ cursor: "pointer" }} onClick={() => setScreen("library")}>
-            <div className="gsc-label" style={{ marginBottom: 6 }}>Golf Games Library</div>
-            <div style={{ fontSize: 13, color: "#4b4b45" }}>
-              Browse other popular team, individual, side, and just-for-fun formats worth trying on your next round.
-            </div>
-            <button className="gsc-link" style={{ marginTop: 8, fontSize: 12 }} onClick={() => setScreen("library")}>
-              Browse the library
-            </button>
-          </div>
-
-          <div className="gsc-card" style={{ cursor: "pointer" }} onClick={() => setScreen("about")}>
-            <div className="gsc-label" style={{ marginBottom: 6 }}>About this App</div>
-            <div style={{ fontSize: 13, color: "#4b4b45" }}>
-              What ForeScore tracks for you, and how a round works from tee to tally.
-            </div>
-            <button className="gsc-link" style={{ marginTop: 8, fontSize: 12 }} onClick={() => setScreen("about")}>
-              Read more
-            </button>
           </div>
 
           <div className="gsc-card">
@@ -2058,6 +2204,175 @@ function computeRoundScoring(round) {
           </div>
         )}
         <RulesModal />
+        <BottomNav />
+      </div>
+    );
+  }
+
+  if (screen === "tournamentsTab") {
+    return (
+      <div className="gsc">
+        <style>{STYLE}</style>
+        <Header title="Tournaments" sub="Create, join, or revisit" />
+        <div className="gsc-body gsc-body-tabbed">
+          {lastTournament && (
+            <div className="gsc-card" style={{ border: "2px solid #B08D57" }}>
+              <div className="gsc-label">Tournament in progress</div>
+              <div style={{ fontWeight: 700, fontSize: 16, marginTop: 2 }}>{lastTournament.name}</div>
+              <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+                <button className="gsc-btn gsc-btn-primary" style={{ flex: 1 }} onClick={() => openTournamentBoard(lastTournament.id)}>Continue tournament</button>
+                <button className="gsc-btn gsc-btn-outline" onClick={discardTournament}>Discard</button>
+              </div>
+              <button
+                className="gsc-link"
+                style={{ marginTop: 10, fontSize: 12 }}
+                disabled={tournamentBusy}
+                onClick={() => addFoursomeToTournamentId(lastTournament.id)}
+              >
+                Add a foursome
+              </button>
+            </div>
+          )}
+
+          <div className="gsc-card">
+            <div className="gsc-label" style={{ marginBottom: 6 }}>Start a new tournament</div>
+            <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>
+              More than one foursome, all playing the same game. Everyone keeps their own scorecard, and can see how every foursome ranks along the way.
+            </div>
+            <div className="gsc-label" style={{ marginTop: 4, marginBottom: 10, color: "#1B4332" }}>Tournament Game Formats</div>
+            {TOURNAMENT_GAME_KEYS.map((key) => {
+              const g = GAMES[key];
+              return (
+                <div key={key} className="gsc-card gsc-game-card" style={{ marginBottom: 10 }} onClick={() => startTournamentCreateFlow(key)}>
+                  <div className="gsc-game-title">{g.name}</div>
+                  <div className="gsc-tag">{g.tag}</div>
+                  <div style={{ fontSize: 13, marginTop: 8, color: "#4b4b45" }}>{g.desc}</div>
+                  <button
+                    className="gsc-link"
+                    style={{ marginTop: 8, fontSize: 12 }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openRules(key);
+                    }}
+                  >
+                    View full rules
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="gsc-card">
+            <div className="gsc-label" style={{ marginBottom: 6 }}>Join a tournament</div>
+            <div className="gsc-row">
+              <input
+                className="gsc-input gsc-mono"
+                id="tournament-join-code"
+                name="tournament-join-code"
+                autoComplete="off"
+                placeholder="TOURNAMENT CODE"
+                value={tournamentJoinCode}
+                onChange={(e) => setTournamentJoinCode(e.target.value.toUpperCase())}
+                maxLength={6}
+              />
+              <button className="gsc-btn gsc-btn-primary" style={{ flex: "0 0 auto" }} disabled={tournamentBusy || !tournamentJoinCode} onClick={() => joinTournament(tournamentJoinCode)}>
+                Join
+              </button>
+            </div>
+            {tournamentErr && <div style={{ color: "#C1440E", fontSize: 13, marginTop: 8 }}>{tournamentErr}</div>}
+          </div>
+
+          {finishedTournaments.length > 0 && (
+            <div className="gsc-card">
+              <div className="gsc-label">Finished tournaments</div>
+              {finishedTournaments.map((t) => (
+                <div key={t.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #eee6cf" }}>
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: 14 }}>{t.name}</div>
+                    <div style={{ fontSize: 12, color: "#6b6b63" }}>
+                      {GAMES[t.game]?.name} - {t.date}{t.foursomeCount != null ? ` - ${t.foursomeCount} foursome${t.foursomeCount === 1 ? "" : "s"}` : ""}
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <button className="gsc-btn gsc-btn-outline" onClick={() => openTournamentBoard(t.id)}>View</button>
+                    <button className="gsc-btn gsc-btn-outline" style={{ color: "#C1440E", borderColor: "#C1440E" }} onClick={() => requestDeleteFinishedTournament(t)}>
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        {deleteTournamentConfirm && (
+          <div className="gsc-modal-backdrop" onClick={cancelDeleteFinishedTournament}>
+            <div className="gsc-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="gsc-modal-title">Remove this tournament?</div>
+              <div className="gsc-modal-body">
+                "{deleteTournamentConfirm.name}" will be removed from your finished tournaments list on this device. The tournament and every foursome's data stay fully intact - you could still rejoin later with the tournament code.
+              </div>
+              {deleteTournamentErr && <div style={{ color: "#C1440E", fontSize: 13, marginBottom: 12 }}>{deleteTournamentErr}</div>}
+              <div className="gsc-modal-row">
+                <button className="gsc-btn gsc-btn-outline" onClick={cancelDeleteFinishedTournament}>Cancel</button>
+                <button className="gsc-btn gsc-btn-primary" style={{ background: "#C1440E" }} disabled={deleteTournamentBusy} onClick={confirmDeleteFinishedTournament}>
+                  {deleteTournamentBusy ? "Removing..." : "Yes, remove"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        <RulesModal />
+        <BottomNav />
+      </div>
+    );
+  }
+
+  if (screen === "profileTab") {
+    return (
+      <div className="gsc">
+        <style>{STYLE}</style>
+        <Header title="Profile" sub="Your account & stats" />
+        <div className="gsc-body gsc-body-tabbed">
+          <div className="gsc-card" style={{ textAlign: "center", padding: "32px 20px" }}>
+            <Lock size={28} color="#8FA998" style={{ marginBottom: 10 }} />
+            <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 6 }}>Profile & Stats is coming in a later update</div>
+            <div style={{ fontSize: 13, color: "#6b6b63", lineHeight: 1.5 }}>
+              Saved defaults (name, handicap, Venmo, home course), account login, and your stats (rounds played, average strokes and putts, wins) will all live here. Logging in will be optional - you'll always be able to keep playing instantly with just a round or tournament code, the way it works today. Aggregating stats needs the app to reliably know which rounds belong to you specifically, which is why it's tied to accounts.
+            </div>
+          </div>
+        </div>
+        <BottomNav />
+      </div>
+    );
+  }
+
+  if (screen === "libraryTab") {
+    return (
+      <div className="gsc">
+        <style>{STYLE}</style>
+        <Header title="Library" sub="Games & about this app" />
+        <div className="gsc-body gsc-body-tabbed">
+          <div className="gsc-card" style={{ cursor: "pointer" }} onClick={() => setScreen("library")}>
+            <div className="gsc-label" style={{ marginBottom: 6 }}>Golf Games Library</div>
+            <div style={{ fontSize: 13, color: "#4b4b45" }}>
+              Browse other popular team, individual, side, and just-for-fun formats worth trying on your next round.
+            </div>
+            <button className="gsc-link" style={{ marginTop: 8, fontSize: 12 }} onClick={() => setScreen("library")}>
+              Browse the library
+            </button>
+          </div>
+
+          <div className="gsc-card" style={{ cursor: "pointer" }} onClick={() => setScreen("about")}>
+            <div className="gsc-label" style={{ marginBottom: 6 }}>About this App</div>
+            <div style={{ fontSize: 13, color: "#4b4b45" }}>
+              What ForeScore tracks for you, and how a round works from tee to tally.
+            </div>
+            <button className="gsc-link" style={{ marginTop: 8, fontSize: 12 }} onClick={() => setScreen("about")}>
+              Read more
+            </button>
+          </div>
+        </div>
+        <BottomNav />
       </div>
     );
   }
@@ -2066,7 +2381,7 @@ function computeRoundScoring(round) {
     return (
       <div className="gsc">
         <style>{STYLE}</style>
-        <Header title="Golf Games Library" sub="Other popular formats to try" onBack={() => setScreen("home")} />
+        <Header title="Golf Games Library" sub="Other popular formats to try" onBack={() => setScreen("libraryTab")} />
         <div className="gsc-body">
           <div style={{ fontSize: 12, color: "#8a8a80", marginBottom: 4 }}>
             These are for reference only - they aren't trackable in this app, just handy to have on hand.
@@ -2106,7 +2421,7 @@ function computeRoundScoring(round) {
     return (
       <div className="gsc">
         <style>{STYLE}</style>
-        <Header title="About this App" sub="What ForeScore does for you" onBack={() => setScreen("home")} />
+        <Header title="About this App" sub="What ForeScore does for you" onBack={() => setScreen("libraryTab")} />
         <div className="gsc-body">
           <div className="gsc-card">
             <div style={{ fontSize: 13, color: "#4b4b45", lineHeight: 1.6 }}>
@@ -2138,8 +2453,9 @@ function computeRoundScoring(round) {
           title={activeTournament ? activeTournament.name : g.name}
           sub={activeTournament ? `${g.name} - Foursome setup` : "Round setup"}
           onBack={() => {
+            const wasTournament = !!activeTournament;
             if (activeTournament) setActiveTournament(null);
-            setScreen("home");
+            setScreen(wasTournament ? "tournamentsTab" : "roundsTab");
           }}
         />
         <div className="gsc-body">
@@ -2371,7 +2687,7 @@ function computeRoundScoring(round) {
     return (
       <div className="gsc">
         <style>{STYLE}</style>
-        <Header title="Create a Tournament" sub="Set it up once, everyone plays the same way" onBack={() => setScreen("home")} />
+        <Header title="Create a Tournament" sub="Set it up once, everyone plays the same way" onBack={() => setScreen("tournamentsTab")} />
         <div className="gsc-body">
           <div className="gsc-card">
             <div className="gsc-label">Tournament name</div>
@@ -2633,7 +2949,7 @@ function computeRoundScoring(round) {
         <Header
           title={t ? t.name : "Tournament Leaderboard"}
           sub={t ? `${GAMES[t.game].name} - strokes and putts ranked separately` : ""}
-          onBack={() => setScreen(round ? "card" : "home")}
+          onBack={() => setScreen(round ? "card" : "tournamentsTab")}
         />
         <div className="gsc-body">
           {t && (
@@ -2676,6 +2992,15 @@ function computeRoundScoring(round) {
               {board.puttsRanked.map((row, idx) => renderFoursomeRow(row, idx, "totalPutts", "puttHoles"))}
             </div>
           )}
+          {t && (
+            <button className="gsc-btn gsc-btn-outline" style={{ width: "100%", marginTop: 14 }} disabled={finishTournamentBusy} onClick={() => finishTournament(t)}>
+              {finishTournamentBusy ? "Saving..." : "Finish tournament"}
+            </button>
+          )}
+          {finishTournamentErr && <div style={{ color: "#C1440E", fontSize: 12, textAlign: "center", marginTop: 8 }}>{finishTournamentErr}</div>}
+          <div style={{ fontSize: 11, color: "#8a8a80", textAlign: "center", marginTop: 6 }}>
+            This moves it to "Finished tournaments" on the Tournaments tab - it won't be deleted, and every foursome's data stays exactly as it is.
+          </div>
         </div>
         <EditFoursomeModal />
         <TournamentRulesModal />
