@@ -260,7 +260,7 @@ const GAMES = {
     ],
   },
   dstreet: {
-    name: "D-Street Drop",
+    name: "Seaside Skins",
     tag: "Individual skins - up to 4 players",
     desc: "Individual strokes and putting skins game for up to 4 players (same as Cardiff Combine, but no teams). Points for low strokes AND low putts each hole. Great for similar handicap foursomes.",
     rotates: false,
@@ -1709,8 +1709,8 @@ function computeRoundScoring(round) {
       }
     }
 
-    // Combined games (Seabluffe Swap, Cardiff Combine, D-Street
-    // Duffers) sum every team/player's capped strokes or putts. Best-ball
+    // Combined games (Seabluffe Swap, Cardiff Combine, Seaside
+    // Skins) sum every team/player's capped strokes or putts. Best-ball
     // games (Beachside Best-Ball) instead count only the lower of the
     // team's two - each player still records their own strokes/putts,
     // but only the best one counts toward the team's total that hole.
