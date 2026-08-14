@@ -49,7 +49,7 @@ const STYLE = `
   .gsc-stepper button:disabled { opacity:0.3; }
   .gsc-stepper-val { font-size:20px; font-weight:700; width:28px; text-align:center; font-family: ui-monospace, monospace; }
   .gsc-player-row { border-radius:10px; padding:12px; margin-bottom:10px; }
-  .gsc-player-name { font-weight:700; font-size:15px; }
+  .gsc-player-name { font-weight:700; font-size:19px; }
   .gsc-hcp { font-size:11px; color:#6b6b63; margin-left:6px; }
   .gsc-mull { display:flex; align-items:center; gap:6px; font-size:12px; margin-top:8px; }
   .gsc-chip { display:inline-block; font-size:11px; font-weight:700; padding:3px 9px; border-radius:20px; margin-right:6px; margin-top:4px; }
@@ -614,6 +614,12 @@ export default function GolfScorecard() {
   const [par, setPar] = useState(DEFAULT_PAR);
   const [courseName, setCourseName] = useState("");
   const [savedCourses, setSavedCourses] = useState([]);
+  const [courseSearchQuery, setCourseSearchQuery] = useState("");
+  const [courseSearchResults, setCourseSearchResults] = useState([]);
+  const [courseSearchBusy, setCourseSearchBusy] = useState(false);
+  const [courseSearchErr, setCourseSearchErr] = useState("");
+  const [courseTeeOptions, setCourseTeeOptions] = useState(null); // {courseLabel, tees: [...]} once a course is picked
+  const [courseDetailBusy, setCourseDetailBusy] = useState(false);
   const [courseMsg, setCourseMsg] = useState("");
 
   // active round
@@ -1159,6 +1165,89 @@ export default function GolfScorecard() {
     }
   }
 
+  // Looks up real courses (by name) from a public course database, via a
+  // server-side proxy that keeps the API key out of the browser. Returns
+  // a short list of candidates - the person still picks the right one
+  // (and the right tee, since par can differ between tees at the same
+  // course) before anything gets filled in.
+  async function searchCourses() {
+    const q = courseSearchQuery.trim();
+    if (q.length < 2) {
+      setCourseSearchErr("Type at least 2 characters to search.");
+      return;
+    }
+    setCourseSearchBusy(true);
+    setCourseSearchErr("");
+    setCourseSearchResults([]);
+    try {
+      const res = await fetch(`/api/course-search?q=${encodeURIComponent(q)}`);
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data) {
+        setCourseSearchErr((data && data.error) || "Course search isn't available right now. You can still enter par manually below.");
+        setCourseSearchBusy(false);
+        return;
+      }
+      setCourseSearchResults(data.courses || []);
+      if (!data.courses || data.courses.length === 0) {
+        setCourseSearchErr("No matches. Try a shorter or differently spelled name, or enter par manually below.");
+      }
+    } catch (e) {
+      setCourseSearchErr("Course search isn't available right now. You can still enter par manually below.");
+    }
+    setCourseSearchBusy(false);
+  }
+
+  // Fetches full detail (every tee, every hole's par) for a chosen course,
+  // then shows a tee picker rather than guessing which tee to use.
+  async function selectCourseResult(course) {
+    setCourseDetailBusy(true);
+    setCourseSearchErr("");
+    try {
+      const res = await fetch(`/api/course-detail?id=${encodeURIComponent(course.id)}`);
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data) {
+        setCourseSearchErr((data && data.error) || "Couldn't load that course's details. You can still enter par manually below.");
+        setCourseDetailBusy(false);
+        return;
+      }
+      const allTees = Object.values(data.tees || {}).flat();
+      if (allTees.length === 0) {
+        setCourseSearchErr("That course doesn't have hole-by-hole par data available. You can still enter par manually below.");
+        setCourseDetailBusy(false);
+        return;
+      }
+      setCourseTeeOptions({
+        courseLabel: data.club_name === data.course_name ? data.club_name : `${data.club_name} - ${data.course_name}`,
+        tees: allTees,
+      });
+    } catch (e) {
+      setCourseSearchErr("Couldn't load that course's details. You can still enter par manually below.");
+    }
+    setCourseDetailBusy(false);
+  }
+
+  // Applies a specific tee's par values. Courses aren't always 18 holes
+  // exactly in the database, so this fills in whatever's available and
+  // leaves the rest blank rather than guessing - the existing "every hole
+  // needs par" check before creating the round will catch anything short.
+  function applyCourseTee(tee) {
+    const holePars = (tee.holes || []).map((h) => h.par);
+    const next = Array(18).fill("");
+    for (let i = 0; i < Math.min(18, holePars.length); i++) {
+      next[i] = holePars[i];
+    }
+    setPar(next);
+    setCourseName(courseTeeOptions.courseLabel);
+    if (holePars.length !== 18) {
+      setCourseMsg(`Loaded ${holePars.length} of 18 holes from "${courseTeeOptions.courseLabel}" (${tee.tee_name}) - fill in the rest manually.`);
+    } else {
+      setCourseMsg(`Loaded par for "${courseTeeOptions.courseLabel}" (${tee.tee_name}).`);
+    }
+    setCourseTeeOptions(null);
+    setCourseSearchResults([]);
+    setCourseSearchQuery("");
+  }
+
   function startNewRound(key) {
     setActiveTournament(null);
     setGameKey(key);
@@ -1175,6 +1264,10 @@ export default function GolfScorecard() {
     setPar(Array(18).fill(""));
     setCourseName("");
     setCourseMsg("");
+    setCourseSearchQuery("");
+    setCourseSearchResults([]);
+    setCourseSearchErr("");
+    setCourseTeeOptions(null);
     loadSavedCourses();
     setScreen("setup");
   }
@@ -1215,6 +1308,16 @@ export default function GolfScorecard() {
     });
   }
 
+  // Only used by individual game formats (Swami's Strokes, Seaside Skins) -
+  // team games and tournaments always need exactly 4 (2v2 or a foursome),
+  // so this stays unused/inaccessible there.
+  function addPlayerSlot() {
+    setPlayers((p) => (p.length >= 4 ? p : [...p, { name: "", hcp: "" }]));
+  }
+  function removePlayerSlot(i) {
+    setPlayers((p) => (p.length <= 2 ? p : p.filter((_, idx) => idx !== i)));
+  }
+
   async function registerFoursomeInTournament(tournamentId, foursomeId, foursomeName) {
     const res = await storageGet(`${TOURNAMENT_PREFIX}${tournamentId}`, true);
     if (!res.ok || !res.value) return { ok: false, error: res.error || "tournament not found" };
@@ -1233,7 +1336,13 @@ export default function GolfScorecard() {
   async function finishSetup() {
     setErr("");
     const cleanPlayers = players.map((p) => ({ name: p.name.trim() || "Player", hcp: p.hcp }));
-    if (cleanPlayers.length < 4) {
+    const isIndividual = gameKey === "dstreet" || gameKey === "swami";
+    if (isIndividual) {
+      if (cleanPlayers.length < 2) {
+        setErr("Need at least 2 players.");
+        return;
+      }
+    } else if (cleanPlayers.length < 4) {
       setErr("Need 4 players.");
       return;
     }
@@ -1248,8 +1357,8 @@ export default function GolfScorecard() {
     const teams =
       gameKey === "ponto" || gameKey === "beachside"
         ? pontoPairing
-        : gameKey === "dstreet" || gameKey === "swami"
-        ? [[0], [1], [2], [3]] // individual - each player is their own "team" of one
+        : isIndividual
+        ? cleanPlayers.map((_, i) => [i]) // individual - each player is their own "team" of one, however many were entered
         : gameKey === "tourneybb" || gameKey === "tourneygg"
         ? [[0, 1, 2, 3]] // whole foursome as a single team - no sub-teams
         : null; // seabluffe computes teams per-hole
@@ -1977,11 +2086,11 @@ function computeRoundScoring(round) {
             Less scoring, more golf! ForeScore's golf game scorecards easily tally and share your game live on the course, and settle who's buying at the 19th hole so you don't have to!
             <br />
             <br />
-            To start a new game:
+            To start a new round or tournament:
             <br />
-            1) Scroll down to Start a New Round (Team Game Formats or Individual Game Formats) or Start a New Tournament
+            1) Select your game format below
             <br />
-            2) Select your Game Format, then set up your details
+            2) Set up your round detail
             <br />
             3) Enter your strokes for each hole as you play
             <br />
@@ -2023,8 +2132,8 @@ function computeRoundScoring(round) {
           <div className="gsc-card">
             <div className="gsc-label" style={{ marginBottom: 6, fontSize: 17 }}>Start a New Round</div>
 
-            <div className="gsc-label" style={{ marginBottom: 4, color: "#1B4332" }}>Team Game Formats</div>
-            <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>Team Games (2 vs 2)</div>
+            <div className="gsc-label" style={{ marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Team Game Formats</div>
+            <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>2 vs 2</div>
             {Object.entries(GAMES)
               .filter(([key]) => key !== "dstreet" && key !== "swami" && !GAMES[key].tournamentOnly)
               .map(([key, g]) => (
@@ -2045,7 +2154,7 @@ function computeRoundScoring(round) {
                 </div>
               ))}
 
-            <div className="gsc-label" style={{ marginTop: 14, marginBottom: 4, color: "#1B4332" }}>Individual Game Formats</div>
+            <div className="gsc-label" style={{ marginTop: 14, marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Individual Game Formats</div>
             <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>Up to 4 Players</div>
             {Object.entries(GAMES)
               .filter(([key]) => key === "swami" || key === "dstreet")
@@ -2104,7 +2213,7 @@ function computeRoundScoring(round) {
           <div className="gsc-card">
             <div className="gsc-label" style={{ marginBottom: 6, fontSize: 17 }}>Start a New Tournament</div>
 
-            <div className="gsc-label" style={{ marginBottom: 4, color: "#1B4332" }}>Tournament Game Formats</div>
+            <div className="gsc-label" style={{ marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Tournament Game Formats</div>
             <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>Multiple Foursomes</div>
             {TOURNAMENT_GAME_KEYS.map((key) => {
               const g = GAMES[key];
@@ -2152,8 +2261,6 @@ function computeRoundScoring(round) {
                 <div style={{ fontWeight: 700, fontSize: 15 }}>Library</div>
                 <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 2 }}>Golf Games Library</div>
                 <div style={{ fontSize: 12, color: "#6b6b63" }}>About this App</div>
-                <div style={{ fontSize: 12, color: "#6b6b63" }}>Finished Rounds</div>
-                <div style={{ fontSize: 12, color: "#6b6b63" }}>Finished Tournaments</div>
               </div>
               <LibraryIcon size={20} color="#8FA998" />
             </div>
@@ -2199,9 +2306,10 @@ function computeRoundScoring(round) {
           )}
 
           <div className="gsc-card">
-            <div className="gsc-label" style={{ marginBottom: 10 }}>Start a new round</div>
+            <div className="gsc-label" style={{ marginBottom: 6, fontSize: 17 }}>Start a New Round</div>
 
-            <div className="gsc-label" style={{ marginTop: 4, marginBottom: 10, color: "#1B4332" }}>Team Game Formats</div>
+            <div className="gsc-label" style={{ marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Team Game Formats</div>
+            <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>2 vs 2</div>
             {Object.entries(GAMES)
               .filter(([key]) => key !== "dstreet" && key !== "swami" && !GAMES[key].tournamentOnly)
               .map(([key, g]) => (
@@ -2222,7 +2330,8 @@ function computeRoundScoring(round) {
                 </div>
               ))}
 
-            <div className="gsc-label" style={{ marginTop: 14, marginBottom: 10, color: "#1B4332" }}>Individual Game Formats</div>
+            <div className="gsc-label" style={{ marginTop: 14, marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Individual Game Formats</div>
+            <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>Up to 4 Players</div>
             {Object.entries(GAMES)
               .filter(([key]) => key === "swami" || key === "dstreet")
               .map(([key, g]) => (
@@ -2284,7 +2393,45 @@ function computeRoundScoring(round) {
           <div style={{ fontSize: 12, color: "#8a8a80", textAlign: "center", marginTop: 4 }}>
             Round data is stored so anyone with the round code can view or edit scores, when sync is working.
           </div>
+
+          {finishedRounds.length > 0 && (
+            <div className="gsc-card" style={{ marginTop: 14 }}>
+              <div className="gsc-label">Finished rounds on this device</div>
+              {finishedRounds.map((f) => (
+                <div key={f.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #eee6cf" }}>
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: 14 }}>{f.name}</div>
+                    <div style={{ fontSize: 12, color: "#6b6b63" }}>{GAMES[f.game]?.name} - {f.date}</div>
+                  </div>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <button className="gsc-btn gsc-btn-outline" disabled={busy} onClick={() => openFinishedRound(f.id)}>Reopen</button>
+                    <button className="gsc-btn gsc-btn-outline" style={{ color: "#C1440E", borderColor: "#C1440E" }} onClick={() => requestDeleteFinishedRound(f)}>
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {reopenErr && <div style={{ color: "#C1440E", fontSize: 12, marginTop: 8 }}>{reopenErr}</div>}
+            </div>
+          )}
         </div>
+        {deleteRoundConfirm && (
+          <div className="gsc-modal-backdrop" onClick={cancelDeleteFinishedRound}>
+            <div className="gsc-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="gsc-modal-title">Delete this round?</div>
+              <div className="gsc-modal-body">
+                "{deleteRoundConfirm.name}" will be permanently deleted from this device. This can't be undone.
+              </div>
+              {deleteRoundErr && <div style={{ color: "#C1440E", fontSize: 13, marginBottom: 12 }}>{deleteRoundErr}</div>}
+              <div className="gsc-modal-row">
+                <button className="gsc-btn gsc-btn-outline" onClick={cancelDeleteFinishedRound}>Cancel</button>
+                <button className="gsc-btn gsc-btn-primary" style={{ background: "#C1440E" }} disabled={deleteRoundBusy} onClick={confirmDeleteFinishedRound}>
+                  {deleteRoundBusy ? "Deleting..." : "Yes, delete"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         <RulesModal />
         <BottomNav />
       </div>
@@ -2317,11 +2464,9 @@ function computeRoundScoring(round) {
           )}
 
           <div className="gsc-card">
-            <div className="gsc-label" style={{ marginBottom: 6 }}>Start a new tournament</div>
-            <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>
-              More than one foursome, all playing the same game. Everyone keeps their own scorecard, and can see how every foursome ranks along the way.
-            </div>
-            <div className="gsc-label" style={{ marginTop: 4, marginBottom: 10, color: "#1B4332" }}>Tournament Game Formats</div>
+            <div className="gsc-label" style={{ marginBottom: 6, fontSize: 17 }}>Start a New Tournament</div>
+            <div className="gsc-label" style={{ marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Tournament Game Formats</div>
+            <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>Multiple Foursomes</div>
             {TOURNAMENT_GAME_KEYS.map((key) => {
               const g = GAMES[key];
               return (
@@ -2363,7 +2508,46 @@ function computeRoundScoring(round) {
             </div>
             {tournamentErr && <div style={{ color: "#C1440E", fontSize: 13, marginTop: 8 }}>{tournamentErr}</div>}
           </div>
+
+          {finishedTournaments.length > 0 && (
+            <div className="gsc-card">
+              <div className="gsc-label">Finished tournaments</div>
+              {finishedTournaments.map((t) => (
+                <div key={t.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #eee6cf" }}>
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: 14 }}>{t.name}</div>
+                    <div style={{ fontSize: 12, color: "#6b6b63" }}>
+                      {GAMES[t.game]?.name} - {t.date}{t.foursomeCount != null ? ` - ${t.foursomeCount} foursome${t.foursomeCount === 1 ? "" : "s"}` : ""}
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <button className="gsc-btn gsc-btn-outline" onClick={() => openTournamentBoard(t.id)}>View</button>
+                    <button className="gsc-btn gsc-btn-outline" style={{ color: "#C1440E", borderColor: "#C1440E" }} onClick={() => requestDeleteFinishedTournament(t)}>
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
+        {deleteTournamentConfirm && (
+          <div className="gsc-modal-backdrop" onClick={cancelDeleteFinishedTournament}>
+            <div className="gsc-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="gsc-modal-title">Remove this tournament?</div>
+              <div className="gsc-modal-body">
+                "{deleteTournamentConfirm.name}" will be removed from your finished tournaments list on this device. The tournament and every foursome's data stay fully intact - you could still rejoin later with the tournament code.
+              </div>
+              {deleteTournamentErr && <div style={{ color: "#C1440E", fontSize: 13, marginBottom: 12 }}>{deleteTournamentErr}</div>}
+              <div className="gsc-modal-row">
+                <button className="gsc-btn gsc-btn-outline" onClick={cancelDeleteFinishedTournament}>Cancel</button>
+                <button className="gsc-btn gsc-btn-primary" style={{ background: "#C1440E" }} disabled={deleteTournamentBusy} onClick={confirmDeleteFinishedTournament}>
+                  {deleteTournamentBusy ? "Removing..." : "Yes, remove"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         <RulesModal />
         <BottomNav />
       </div>
@@ -2414,130 +2598,8 @@ function computeRoundScoring(round) {
               Read more
             </button>
           </div>
-
-          <div className="gsc-card">
-            <div
-              style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #eee6cf", cursor: "pointer" }}
-              onClick={() => setScreen("finishedRoundsScreen")}
-            >
-              <div style={{ fontWeight: 700, fontSize: 14 }}>Finished Rounds</div>
-              <span style={{ color: "#8FA998", fontSize: 18 }}>&rsaquo;</span>
-            </div>
-            <div
-              style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", cursor: "pointer" }}
-              onClick={() => setScreen("finishedTournamentsScreen")}
-            >
-              <div style={{ fontWeight: 700, fontSize: 14 }}>Finished Tournaments</div>
-              <span style={{ color: "#8FA998", fontSize: 18 }}>&rsaquo;</span>
-            </div>
-          </div>
         </div>
         <BottomNav />
-      </div>
-    );
-  }
-
-  if (screen === "finishedRoundsScreen") {
-    return (
-      <div className="gsc">
-        <style>{STYLE}</style>
-        <Header title="Finished Rounds" sub="Saved on this device" onBack={() => setScreen("libraryTab")} />
-        <div className="gsc-body">
-          {finishedRounds.length === 0 && (
-            <div className="gsc-card" style={{ textAlign: "center", padding: "32px 20px" }}>
-              <div style={{ fontSize: 13, color: "#6b6b63" }}>No finished rounds on this device yet.</div>
-            </div>
-          )}
-          {finishedRounds.length > 0 && (
-            <div className="gsc-card">
-              {finishedRounds.map((f) => (
-                <div key={f.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #eee6cf" }}>
-                  <div>
-                    <div style={{ fontWeight: 700, fontSize: 14 }}>{f.name}</div>
-                    <div style={{ fontSize: 12, color: "#6b6b63" }}>{GAMES[f.game]?.name} - {f.date}</div>
-                  </div>
-                  <div style={{ display: "flex", gap: 6 }}>
-                    <button className="gsc-btn gsc-btn-outline" disabled={busy} onClick={() => openFinishedRound(f.id)}>Reopen</button>
-                    <button className="gsc-btn gsc-btn-outline" style={{ color: "#C1440E", borderColor: "#C1440E" }} onClick={() => requestDeleteFinishedRound(f)}>
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              ))}
-              {reopenErr && <div style={{ color: "#C1440E", fontSize: 12, marginTop: 8 }}>{reopenErr}</div>}
-            </div>
-          )}
-        </div>
-        {deleteRoundConfirm && (
-          <div className="gsc-modal-backdrop" onClick={cancelDeleteFinishedRound}>
-            <div className="gsc-modal" onClick={(e) => e.stopPropagation()}>
-              <div className="gsc-modal-title">Delete this round?</div>
-              <div className="gsc-modal-body">
-                "{deleteRoundConfirm.name}" will be permanently deleted from this device. This can't be undone.
-              </div>
-              {deleteRoundErr && <div style={{ color: "#C1440E", fontSize: 13, marginBottom: 12 }}>{deleteRoundErr}</div>}
-              <div className="gsc-modal-row">
-                <button className="gsc-btn gsc-btn-outline" onClick={cancelDeleteFinishedRound}>Cancel</button>
-                <button className="gsc-btn gsc-btn-primary" style={{ background: "#C1440E" }} disabled={deleteRoundBusy} onClick={confirmDeleteFinishedRound}>
-                  {deleteRoundBusy ? "Deleting..." : "Yes, delete"}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  if (screen === "finishedTournamentsScreen") {
-    return (
-      <div className="gsc">
-        <style>{STYLE}</style>
-        <Header title="Finished Tournaments" sub="Saved on this device" onBack={() => setScreen("libraryTab")} />
-        <div className="gsc-body">
-          {finishedTournaments.length === 0 && (
-            <div className="gsc-card" style={{ textAlign: "center", padding: "32px 20px" }}>
-              <div style={{ fontSize: 13, color: "#6b6b63" }}>No finished tournaments on this device yet.</div>
-            </div>
-          )}
-          {finishedTournaments.length > 0 && (
-            <div className="gsc-card">
-              {finishedTournaments.map((t) => (
-                <div key={t.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #eee6cf" }}>
-                  <div>
-                    <div style={{ fontWeight: 700, fontSize: 14 }}>{t.name}</div>
-                    <div style={{ fontSize: 12, color: "#6b6b63" }}>
-                      {GAMES[t.game]?.name} - {t.date}{t.foursomeCount != null ? ` - ${t.foursomeCount} foursome${t.foursomeCount === 1 ? "" : "s"}` : ""}
-                    </div>
-                  </div>
-                  <div style={{ display: "flex", gap: 6 }}>
-                    <button className="gsc-btn gsc-btn-outline" onClick={() => openTournamentBoard(t.id)}>View</button>
-                    <button className="gsc-btn gsc-btn-outline" style={{ color: "#C1440E", borderColor: "#C1440E" }} onClick={() => requestDeleteFinishedTournament(t)}>
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-        {deleteTournamentConfirm && (
-          <div className="gsc-modal-backdrop" onClick={cancelDeleteFinishedTournament}>
-            <div className="gsc-modal" onClick={(e) => e.stopPropagation()}>
-              <div className="gsc-modal-title">Remove this tournament?</div>
-              <div className="gsc-modal-body">
-                "{deleteTournamentConfirm.name}" will be removed from your finished tournaments list on this device. The tournament and every foursome's data stay fully intact - you could still rejoin later with the tournament code.
-              </div>
-              {deleteTournamentErr && <div style={{ color: "#C1440E", fontSize: 13, marginBottom: 12 }}>{deleteTournamentErr}</div>}
-              <div className="gsc-modal-row">
-                <button className="gsc-btn gsc-btn-outline" onClick={cancelDeleteFinishedTournament}>Cancel</button>
-                <button className="gsc-btn gsc-btn-primary" style={{ background: "#C1440E" }} disabled={deleteTournamentBusy} onClick={confirmDeleteFinishedTournament}>
-                  {deleteTournamentBusy ? "Removing..." : "Yes, remove"}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     );
   }
@@ -2730,13 +2792,32 @@ function computeRoundScoring(round) {
 
           <div className="gsc-card">
             <div className="gsc-label" style={{ marginBottom: 10 }}>Players</div>
+            {(gameKey === "swami" || gameKey === "dstreet") && (
+              <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 10 }}>
+                This format supports 2-4 players - add or remove players below to match who's actually playing.
+              </div>
+            )}
             {players.map((p, i) => (
               <div className="gsc-row" key={i} style={{ marginBottom: 8 }}>
                 <div style={{ flex: "0 0 26px", fontWeight: 800, color: "#1B4332", paddingTop: 9 }}>{LETTERS[i]}</div>
                 <input className="gsc-input" placeholder={`Player ${LETTERS[i]} name`} value={p.name} onChange={(e) => updatePlayer(i, "name", e.target.value)} />
                 <input className="gsc-input" style={{ flex: "0 0 70px" }} placeholder="HCP" value={p.hcp} onChange={(e) => updatePlayer(i, "hcp", e.target.value)} />
+                {(gameKey === "swami" || gameKey === "dstreet") && players.length > 2 && (
+                  <button
+                    className="gsc-btn gsc-btn-outline"
+                    style={{ flex: "0 0 auto", color: "#C1440E", borderColor: "#C1440E", padding: "9px 12px" }}
+                    onClick={() => removePlayerSlot(i)}
+                  >
+                    Remove
+                  </button>
+                )}
               </div>
             ))}
+            {(gameKey === "swami" || gameKey === "dstreet") && players.length < 4 && (
+              <button className="gsc-btn gsc-btn-outline" style={{ width: "100%", marginTop: 4 }} onClick={addPlayerSlot}>
+                + Add another player
+              </button>
+            )}
             {gameKey === "seabluffe" && (
               <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 8, lineHeight: 1.5 }}>
                 Rotation: Holes 1-6 {LETTERS[0]}+{LETTERS[1]} vs {LETTERS[2]}+{LETTERS[3]} - Holes 7-12 {LETTERS[0]}+{LETTERS[2]} vs {LETTERS[1]}+{LETTERS[3]} - Holes 13-18 {LETTERS[0]}+{LETTERS[3]} vs {LETTERS[1]}+{LETTERS[2]}
@@ -2777,6 +2858,69 @@ function computeRoundScoring(round) {
                 </select>
               </div>
             )}
+
+            <div className="gsc-field">
+              <div className="gsc-label">Search for your course</div>
+              <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 6 }}>
+                Find a real course by name and its par fills in automatically - no API key or setup needed on your end.
+              </div>
+              <div className="gsc-row">
+                <input
+                  className="gsc-input"
+                  placeholder="e.g. Pebble Beach"
+                  value={courseSearchQuery}
+                  onChange={(e) => setCourseSearchQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && searchCourses()}
+                />
+                <button className="gsc-btn gsc-btn-primary" style={{ flex: "0 0 auto" }} disabled={courseSearchBusy} onClick={searchCourses}>
+                  {courseSearchBusy ? "Searching..." : "Search"}
+                </button>
+              </div>
+              {courseSearchErr && <div style={{ color: "#C1440E", fontSize: 12, marginTop: 8 }}>{courseSearchErr}</div>}
+
+              {courseSearchResults.length > 0 && !courseTeeOptions && (
+                <div style={{ marginTop: 10 }}>
+                  {courseSearchResults.slice(0, 8).map((c) => (
+                    <div
+                      key={c.id}
+                      className="gsc-card gsc-game-card"
+                      style={{ marginBottom: 8, padding: 10 }}
+                      onClick={() => selectCourseResult(c)}
+                    >
+                      <div style={{ fontWeight: 700, fontSize: 14 }}>{c.club_name === c.course_name ? c.club_name : `${c.club_name} - ${c.course_name}`}</div>
+                      {c.location && <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 2 }}>{c.location.address}</div>}
+                    </div>
+                  ))}
+                  {courseDetailBusy && <div style={{ fontSize: 12, color: "#6b6b63" }}>Loading course details...</div>}
+                </div>
+              )}
+
+              {courseTeeOptions && (
+                <div style={{ marginTop: 10 }}>
+                  <div className="gsc-label">Pick a tee ({courseTeeOptions.courseLabel})</div>
+                  <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 8 }}>
+                    Par can differ slightly between tees at the same course - pick the one your group is actually playing.
+                  </div>
+                  {courseTeeOptions.tees.map((tee, i) => (
+                    <div
+                      key={i}
+                      className="gsc-card gsc-game-card"
+                      style={{ marginBottom: 8, padding: 10 }}
+                      onClick={() => applyCourseTee(tee)}
+                    >
+                      <div style={{ fontWeight: 700, fontSize: 14 }}>{tee.tee_name}</div>
+                      <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 2 }}>
+                        Par {tee.par_total} - {tee.number_of_holes} holes{tee.total_yards ? ` - ${tee.total_yards} yds` : ""}
+                      </div>
+                    </div>
+                  ))}
+                  <button className="gsc-link" style={{ marginTop: 4, fontSize: 12 }} onClick={() => setCourseTeeOptions(null)}>
+                    Back to search results
+                  </button>
+                </div>
+              )}
+            </div>
+
             <div className="gsc-field">
               <div className="gsc-label">Course name</div>
               <input className="gsc-input" placeholder="e.g. Seabluffe Golf Links" value={courseName} onChange={(e) => setCourseName(e.target.value)} />
@@ -3350,8 +3494,8 @@ function computeRoundScoring(round) {
                 <div>
                   {LETTERS[p.idx]} - {p.name}
                   {g.totalScoring && holeIdx === 17 && hr.complete && idx === 0 && <span className="gsc-chip gsc-lead">WINNER</span>}
-                  {!g.singleTeam && !g.totalScoring && holeIdx === 17 && hr.complete && idx < 2 && <span className="gsc-chip gsc-lead">WIN</span>}
-                  {!g.singleTeam && !g.totalScoring && holeIdx === 17 && hr.complete && idx >= ranks.length - 2 && <span className="gsc-chip gsc-loss">LOSS</span>}
+                  {!g.singleTeam && !g.totalScoring && holeIdx === 17 && hr.complete && idx < Math.floor(ranks.length / 2) && <span className="gsc-chip gsc-lead">WIN</span>}
+                  {!g.singleTeam && !g.totalScoring && holeIdx === 17 && hr.complete && idx >= Math.ceil(ranks.length / 2) && <span className="gsc-chip gsc-loss">LOSS</span>}
                 </div>
                 <div className="gsc-mono" style={{ fontWeight: 700 }}>
                   {!g.singleTeam && !g.totalScoring && <>{p.points} pts </>}
