@@ -1210,14 +1210,20 @@ export default function GolfScorecard() {
         setCourseDetailBusy(false);
         return;
       }
-      const allTees = Object.values(data.tees || {}).flat();
+      // The course fields may come back at the top level, or wrapped in a
+      // "course" key (mirroring how search results are wrapped in
+      // "courses") - handle either shape rather than assuming one.
+      const courseObj = data.course && typeof data.course === "object" ? data.course : data;
+      const allTees = Object.values(courseObj.tees || {}).flat();
       if (allTees.length === 0) {
-        setCourseSearchErr("That course doesn't have hole-by-hole par data available. You can still enter par manually below.");
+        setCourseSearchErr(
+          `That course doesn't have hole-by-hole par data available. You can still enter par manually below. (debug: response keys were ${Object.keys(data).join(", ")})`
+        );
         setCourseDetailBusy(false);
         return;
       }
       setCourseTeeOptions({
-        courseLabel: data.club_name === data.course_name ? data.club_name : `${data.club_name} - ${data.course_name}`,
+        courseLabel: courseObj.club_name === courseObj.course_name ? courseObj.club_name : `${courseObj.club_name} - ${courseObj.course_name}`,
         tees: allTees,
       });
     } catch (e) {
