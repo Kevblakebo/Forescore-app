@@ -1236,14 +1236,19 @@ export default function GolfScorecard() {
   // exactly in the database, so this fills in whatever's available and
   // leaves the rest blank rather than guessing - the existing "every hole
   // needs par" check before creating the round will catch anything short.
-  function applyCourseTee(tee) {
+  function applyCourseTee(tee, forTournament) {
     const holePars = (tee.holes || []).map((h) => h.par);
     const next = Array(18).fill("");
     for (let i = 0; i < Math.min(18, holePars.length); i++) {
       next[i] = holePars[i];
     }
-    setPar(next);
-    setCourseName(courseTeeOptions.courseLabel);
+    if (forTournament) {
+      setTournamentPar(next);
+      setTournamentCourseName(courseTeeOptions.courseLabel);
+    } else {
+      setPar(next);
+      setCourseName(courseTeeOptions.courseLabel);
+    }
     if (holePars.length !== 18) {
       setCourseMsg(`Loaded ${holePars.length} of 18 holes from "${courseTeeOptions.courseLabel}" (${tee.tee_name}) - fill in the rest manually.`);
     } else {
@@ -1431,6 +1436,11 @@ export default function GolfScorecard() {
     setTournamentPar(Array(18).fill(""));
     setTournamentCfg({ ...GAMES[key].defaults });
     setTournamentFoursomeCount(2);
+    setCourseSearchQuery("");
+    setCourseSearchResults([]);
+    setCourseSearchErr("");
+    setCourseTeeOptions(null);
+    setCourseMsg("");
     setScreen("tournamentCreate");
   }
 
@@ -2568,9 +2578,9 @@ function computeRoundScoring(round) {
         <div className="gsc-body gsc-body-tabbed">
           <div className="gsc-card" style={{ textAlign: "center", padding: "32px 20px" }}>
             <Lock size={28} color="#8FA998" style={{ marginBottom: 10 }} />
-            <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 6 }}>Profile & Stats is coming in a later update</div>
+            <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 6 }}>Profile & Stats Under Construction</div>
             <div style={{ fontSize: 13, color: "#6b6b63", lineHeight: 1.5 }}>
-              Saved defaults (name, handicap, Venmo, home course), account login, and your stats (rounds played, average strokes and putts, wins) will all live here. Logging in will be optional - you'll always be able to keep playing instantly with just a round or tournament code, the way it works today. Aggregating stats needs the app to reliably know which rounds belong to you specifically, which is why it's tied to accounts.
+              Saved defaults (name, handicap, Venmo, home course), account login, and your stats (rounds played, average strokes and putts, wins) will all live here. Logging in will be optional - you'll always be able to keep playing instantly with just a round or tournament code, the way it works today.
             </div>
           </div>
         </div>
@@ -3005,6 +3015,72 @@ function computeRoundScoring(round) {
             <div className="gsc-field" style={{ marginTop: 12 }}>
               <div className="gsc-label">Date</div>
               <input className="gsc-input" type="date" value={tournamentDate} onChange={(e) => setTournamentDate(e.target.value)} />
+            </div>
+            <div className="gsc-field" style={{ marginTop: 12 }}>
+              <div className="gsc-label">Search for your course</div>
+              <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 6 }}>
+                Find a real course by name and its par fills in automatically.
+              </div>
+              <div className="gsc-row">
+                <input
+                  className="gsc-input"
+                  placeholder="e.g. Pebble Beach"
+                  value={courseSearchQuery}
+                  onChange={(e) => setCourseSearchQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && searchCourses()}
+                />
+                <button className="gsc-btn gsc-btn-primary" style={{ flex: "0 0 auto" }} disabled={courseSearchBusy} onClick={searchCourses}>
+                  {courseSearchBusy ? "Searching..." : "Search"}
+                </button>
+              </div>
+              {courseSearchErr && <div style={{ color: "#C1440E", fontSize: 12, marginTop: 8 }}>{courseSearchErr}</div>}
+
+              {courseSearchResults.length > 0 && !courseTeeOptions && (
+                <div style={{ marginTop: 10 }}>
+                  {courseSearchResults.slice(0, 8).map((c) => (
+                    <div
+                      key={c.id}
+                      className="gsc-card gsc-game-card"
+                      style={{ marginBottom: 8, padding: 10 }}
+                      onClick={() => selectCourseResult(c)}
+                    >
+                      <div style={{ fontWeight: 700, fontSize: 14 }}>{c.club_name === c.course_name ? c.club_name : `${c.club_name} - ${c.course_name}`}</div>
+                      {c.location && <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 2 }}>{c.location.address}</div>}
+                    </div>
+                  ))}
+                  {courseDetailBusy && <div style={{ fontSize: 12, color: "#6b6b63" }}>Loading course details...</div>}
+                </div>
+              )}
+
+              {courseTeeOptions && (
+                <div style={{ marginTop: 10 }}>
+                  <div className="gsc-label">Pick a tee ({courseTeeOptions.courseLabel})</div>
+                  <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 8 }}>
+                    Par can differ slightly between tees at the same course - pick the one the tournament is playing.
+                  </div>
+                  {courseTeeOptions.tees.map((tee, i) => (
+                    <div
+                      key={i}
+                      className="gsc-card gsc-game-card"
+                      style={{ marginBottom: 8, padding: 10 }}
+                      onClick={() => applyCourseTee(tee, true)}
+                    >
+                      <div style={{ fontWeight: 700, fontSize: 14 }}>{tee.tee_name}</div>
+                      <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 2 }}>
+                        Par {tee.par_total} - {tee.number_of_holes} holes{tee.total_yards ? ` - ${tee.total_yards} yds` : ""}
+                      </div>
+                    </div>
+                  ))}
+                  <button className="gsc-link" style={{ marginTop: 4, fontSize: 12 }} onClick={() => setCourseTeeOptions(null)}>
+                    Back to search results
+                  </button>
+                </div>
+              )}
+              {courseMsg && (
+                <div style={{ fontSize: 12, color: courseMsg.startsWith("Couldn't") ? "#C1440E" : "#B08D57", marginTop: 8 }}>
+                  {courseMsg}
+                </div>
+              )}
             </div>
             <div className="gsc-field" style={{ marginTop: 12 }}>
               <div className="gsc-label">Course name</div>
