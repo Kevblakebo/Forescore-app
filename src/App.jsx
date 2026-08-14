@@ -495,8 +495,8 @@ function isPhoneDevice() {
 }
 
 function mulliganWindow(game) {
-  if (game === "swami") return 18; // one mulligan allowance for the whole round
-  return game === "ponto" || game === "dstreet" || game === "beachside" || game === "tourneybb" || game === "tourneygg" ? 9 : 6;
+  if (game === "seabluffe") return 6; // tied to the 6-hole team rotation - left as-is
+  return 18; // one mulligan allowance for the whole round, for every other game
 }
 const ACTIVE_KEY = "gsc-active-round";
 const LAST_TOURNAMENT_KEY = "gsc-last-tournament";
@@ -2743,7 +2743,7 @@ function computeRoundScoring(round) {
               <div className="gsc-label" style={{ marginBottom: 6 }}>Tournament settings (locked)</div>
               <div style={{ fontSize: 13, color: "#4b4b45", lineHeight: 1.5 }}>
                 {activeTournament.course && <>Course: {activeTournament.course}<br /></>}
-                Max over par: {activeTournament.cfg.maxOver} - Max putts: {activeTournament.cfg.maxPutts} - Mulligans: {activeTournament.cfg.mulliganSegment} per {mulliganWindow(activeTournament.game)} holes
+                Max over par: {activeTournament.cfg.maxOver} - Max putts: {activeTournament.cfg.maxPutts} - Mulligans: {activeTournament.cfg.mulliganSegment}{activeTournament.game === "seabluffe" ? ` per ${mulliganWindow(activeTournament.game)} holes` : " per player"}
                 <br />
                 Prize: {activeTournament.cfg.prize}
                 <br />
@@ -2812,7 +2812,7 @@ function computeRoundScoring(round) {
             </div>
             {g.rotates !== undefined && g.hasScore && (
               <div className="gsc-field">
-                <div className="gsc-label">Mulligans per player, per {mulliganWindow(gameKey)} holes</div>
+                <div className="gsc-label">{gameKey === "seabluffe" ? `Mulligans per player, per ${mulliganWindow(gameKey)} holes` : "Mulligans per player"}</div>
                 <input
                   className="gsc-input"
                   type="number"
@@ -3191,7 +3191,7 @@ function computeRoundScoring(round) {
             </div>
             {tg.hasScore && (
               <div className="gsc-field">
-                <div className="gsc-label">Mulligans per player, per {mulliganWindow(tournamentGameKey)} holes</div>
+                <div className="gsc-label">{tournamentGameKey === "seabluffe" ? `Mulligans per player, per ${mulliganWindow(tournamentGameKey)} holes` : "Mulligans per player"}</div>
                 <input
                   className="gsc-input"
                   type="number"
