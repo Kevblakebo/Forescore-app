@@ -268,7 +268,7 @@ const GAMES = {
   dstreet: {
     name: "Seaside Skins",
     tag: "Individual skins - up to 4 players",
-    desc: "Individual strokes and putting skins game for up to 4 players (same as Cardiff Combine, but no teams). Points for low strokes AND low putts each hole. Great for similar handicap foursomes.",
+    desc: "Individual strokes and putting skins game for up to 4 players (same as Cardiff Combine, but no teams). Points for low strokes AND low putts each hole. Great for similar handicap groups.",
     rotates: false,
     hasScore: true,
     hasPutts: true,
