@@ -1979,11 +1979,7 @@ function computeRoundScoring(round) {
             <br />
             To start a new game:
             <br />
-            1) Select Rounds or Tournaments below
-            <br />
-            2) Select your Game Format, then set up your details
-            <br />
-            3) Enter your strokes for each hole as you play
+            1) Scroll down to Start a New Round (Team Game Formats or Individual Game Formats) or Start a New Tournament
             <br />
             <br />
             You're all set, next hole... the 19th!
@@ -2020,26 +2016,130 @@ function computeRoundScoring(round) {
             </div>
           )}
 
-          <div className="gsc-card gsc-game-card" onClick={() => setScreen("roundsTab")}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <div>
-                <div style={{ fontWeight: 700, fontSize: 15 }}>Rounds</div>
-                <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 2 }}>Team Games (2vs2) and Individual Games (up to 4 players)</div>
-                <div style={{ fontSize: 12, color: "#6b6b63" }}>Start, join, or revisit past rounds</div>
-              </div>
-              <FlagIcon size={20} color="#8FA998" />
+          <div className="gsc-card">
+            <div className="gsc-label" style={{ marginBottom: 6 }}>Start a New Round</div>
+
+            <div className="gsc-label" style={{ marginBottom: 4, color: "#1B4332" }}>Team Game Formats</div>
+            <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>Team Games (2 vs 2)</div>
+            {Object.entries(GAMES)
+              .filter(([key]) => key !== "dstreet" && key !== "swami" && !GAMES[key].tournamentOnly)
+              .map(([key, g]) => (
+                <div key={key} className="gsc-card gsc-game-card" style={{ marginBottom: 10 }} onClick={() => startNewRound(key)}>
+                  <div className="gsc-game-title">{g.name}</div>
+                  <div className="gsc-tag">{g.tag}</div>
+                  <div style={{ fontSize: 13, marginTop: 8, color: "#4b4b45" }}>{g.desc}</div>
+                  <button
+                    className="gsc-link"
+                    style={{ marginTop: 8, fontSize: 12 }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openRules(key);
+                    }}
+                  >
+                    View full rules
+                  </button>
+                </div>
+              ))}
+
+            <div className="gsc-label" style={{ marginTop: 14, marginBottom: 4, color: "#1B4332" }}>Individual Game Formats</div>
+            <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>Up to 4 Players</div>
+            {Object.entries(GAMES)
+              .filter(([key]) => key === "swami" || key === "dstreet")
+              .map(([key, g]) => (
+                <div key={key} className="gsc-card gsc-game-card" style={{ marginBottom: 10 }} onClick={() => startNewRound(key)}>
+                  <div className="gsc-game-title">{g.name}</div>
+                  <div className="gsc-tag">{g.tag}</div>
+                  <div style={{ fontSize: 13, marginTop: 8, color: "#4b4b45" }}>{g.desc}</div>
+                  <button
+                    className="gsc-link"
+                    style={{ marginTop: 8, fontSize: 12 }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openRules(key);
+                    }}
+                  >
+                    View full rules
+                  </button>
+                </div>
+              ))}
+
+            <div className="gsc-label" style={{ marginTop: 14, marginBottom: 6 }}>Join an existing round</div>
+            <div className="gsc-row">
+              <input className="gsc-input gsc-mono" id="round-join-code-home" name="round-join-code-home" autoComplete="off" placeholder="ROUND CODE" value={joinCode} onChange={(e) => setJoinCode(e.target.value.toUpperCase())} maxLength={6} />
+              <button className="gsc-btn gsc-btn-primary" style={{ flex: "0 0 auto" }} disabled={busy || !joinCode} onClick={() => loadRound(joinCode)}>
+                Open
+              </button>
             </div>
+            {err && <div style={{ color: "#C1440E", fontSize: 13, marginTop: 8 }}>{err}</div>}
+            {recentCodes.length > 0 && (
+              <div style={{ marginTop: 14 }}>
+                <div className="gsc-label">Recent rounds this session</div>
+                {recentCodes.map((c) => (
+                  <div key={c.code} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #eee6cf" }}>
+                    <div>
+                      <div style={{ fontWeight: 700, fontSize: 14 }}>{c.label}</div>
+                      <div className="gsc-mono" style={{ fontSize: 12, color: "#6b6b63" }}>{c.code}</div>
+                    </div>
+                    <button className="gsc-btn gsc-btn-outline" onClick={() => loadRound(c.code)}>Open</button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="gsc-label" style={{ marginTop: 14, marginBottom: 6 }}>Or paste round data someone sent you</div>
+            <div style={{ fontSize: 12, color: "#6b6b63", margin: "4px 0 8px" }}>
+              If a round code isn't syncing, whoever's tracking scores can send you a block of text instead (via "Copy round data to share" on their screen). Paste it here.
+            </div>
+            <textarea className="gsc-input" id="paste-round-data-home" name="paste-round-data-home" style={{ minHeight: 70, fontFamily: "ui-monospace, monospace", fontSize: 11 }} placeholder="Paste round data here" value={pasteData} onChange={(e) => setPasteData(e.target.value)} />
+            <button className="gsc-btn gsc-btn-primary" style={{ marginTop: 8 }} disabled={!pasteData.trim()} onClick={loadFromPastedData}>
+              Load this round
+            </button>
+            {pasteMsg && <div style={{ color: "#C1440E", fontSize: 12, marginTop: 6 }}>{pasteMsg}</div>}
           </div>
 
-          <div className="gsc-card gsc-game-card" onClick={() => setScreen("tournamentsTab")}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <div>
-                <div style={{ fontWeight: 700, fontSize: 15 }}>Tournaments</div>
-                <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 2 }}>Multiple Foursomes</div>
-                <div style={{ fontSize: 12, color: "#6b6b63" }}>Start, join, or revisit past tournaments</div>
-              </div>
-              <TrophyIcon size={20} color="#8FA998" />
+          <div className="gsc-card">
+            <div className="gsc-label" style={{ marginBottom: 6 }}>Start a New Tournament</div>
+
+            <div className="gsc-label" style={{ marginBottom: 4, color: "#1B4332" }}>Tournament Game Formats</div>
+            <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>Multiple Foursomes</div>
+            {TOURNAMENT_GAME_KEYS.map((key) => {
+              const g = GAMES[key];
+              return (
+                <div key={key} className="gsc-card gsc-game-card" style={{ marginBottom: 10 }} onClick={() => startTournamentCreateFlow(key)}>
+                  <div className="gsc-game-title">{g.name}</div>
+                  <div className="gsc-tag">{g.tag}</div>
+                  <div style={{ fontSize: 13, marginTop: 8, color: "#4b4b45" }}>{g.desc}</div>
+                  <button
+                    className="gsc-link"
+                    style={{ marginTop: 8, fontSize: 12 }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openRules(key);
+                    }}
+                  >
+                    View full rules
+                  </button>
+                </div>
+              );
+            })}
+
+            <div className="gsc-label" style={{ marginTop: 14, marginBottom: 6 }}>Join a tournament</div>
+            <div className="gsc-row">
+              <input
+                className="gsc-input gsc-mono"
+                id="tournament-join-code-home"
+                name="tournament-join-code-home"
+                autoComplete="off"
+                placeholder="TOURNAMENT CODE"
+                value={tournamentJoinCode}
+                onChange={(e) => setTournamentJoinCode(e.target.value.toUpperCase())}
+                maxLength={6}
+              />
+              <button className="gsc-btn gsc-btn-primary" style={{ flex: "0 0 auto" }} disabled={tournamentBusy || !tournamentJoinCode} onClick={() => joinTournament(tournamentJoinCode)}>
+                Join
+              </button>
             </div>
+            {tournamentErr && <div style={{ color: "#C1440E", fontSize: 13, marginTop: 8 }}>{tournamentErr}</div>}
           </div>
 
           <div className="gsc-card gsc-game-card" onClick={() => setScreen("libraryTab")}>
@@ -2048,6 +2148,8 @@ function computeRoundScoring(round) {
                 <div style={{ fontWeight: 700, fontSize: 15 }}>Library</div>
                 <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 2 }}>Golf Games Library</div>
                 <div style={{ fontSize: 12, color: "#6b6b63" }}>About this App</div>
+                <div style={{ fontSize: 12, color: "#6b6b63" }}>Finished Rounds</div>
+                <div style={{ fontSize: 12, color: "#6b6b63" }}>Finished Tournaments</div>
               </div>
               <LibraryIcon size={20} color="#8FA998" />
             </div>
@@ -2066,6 +2168,7 @@ function computeRoundScoring(round) {
             </div>
           </div>
         </div>
+        <RulesModal />
         <BottomNav />
       </div>
     );
@@ -2174,47 +2277,10 @@ function computeRoundScoring(round) {
             {pasteMsg && <div style={{ color: "#C1440E", fontSize: 12, marginTop: 6 }}>{pasteMsg}</div>}
           </div>
 
-          {finishedRounds.length > 0 && (
-            <div className="gsc-card">
-              <div className="gsc-label">Finished rounds on this device</div>
-              {finishedRounds.map((f) => (
-                <div key={f.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #eee6cf" }}>
-                  <div>
-                    <div style={{ fontWeight: 700, fontSize: 14 }}>{f.name}</div>
-                    <div style={{ fontSize: 12, color: "#6b6b63" }}>{GAMES[f.game]?.name} - {f.date}</div>
-                  </div>
-                  <div style={{ display: "flex", gap: 6 }}>
-                    <button className="gsc-btn gsc-btn-outline" disabled={busy} onClick={() => openFinishedRound(f.id)}>Reopen</button>
-                    <button className="gsc-btn gsc-btn-outline" style={{ color: "#C1440E", borderColor: "#C1440E" }} onClick={() => requestDeleteFinishedRound(f)}>
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              ))}
-              {reopenErr && <div style={{ color: "#C1440E", fontSize: 12, marginTop: 8 }}>{reopenErr}</div>}
-            </div>
-          )}
           <div style={{ fontSize: 12, color: "#8a8a80", textAlign: "center", marginTop: 4 }}>
             Round data is stored so anyone with the round code can view or edit scores, when sync is working.
           </div>
         </div>
-        {deleteRoundConfirm && (
-          <div className="gsc-modal-backdrop" onClick={cancelDeleteFinishedRound}>
-            <div className="gsc-modal" onClick={(e) => e.stopPropagation()}>
-              <div className="gsc-modal-title">Delete this round?</div>
-              <div className="gsc-modal-body">
-                "{deleteRoundConfirm.name}" will be permanently deleted from this device. This can't be undone.
-              </div>
-              {deleteRoundErr && <div style={{ color: "#C1440E", fontSize: 13, marginBottom: 12 }}>{deleteRoundErr}</div>}
-              <div className="gsc-modal-row">
-                <button className="gsc-btn gsc-btn-outline" onClick={cancelDeleteFinishedRound}>Cancel</button>
-                <button className="gsc-btn gsc-btn-primary" style={{ background: "#C1440E" }} disabled={deleteRoundBusy} onClick={confirmDeleteFinishedRound}>
-                  {deleteRoundBusy ? "Deleting..." : "Yes, delete"}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
         <RulesModal />
         <BottomNav />
       </div>
@@ -2293,46 +2359,7 @@ function computeRoundScoring(round) {
             </div>
             {tournamentErr && <div style={{ color: "#C1440E", fontSize: 13, marginTop: 8 }}>{tournamentErr}</div>}
           </div>
-
-          {finishedTournaments.length > 0 && (
-            <div className="gsc-card">
-              <div className="gsc-label">Finished tournaments</div>
-              {finishedTournaments.map((t) => (
-                <div key={t.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #eee6cf" }}>
-                  <div>
-                    <div style={{ fontWeight: 700, fontSize: 14 }}>{t.name}</div>
-                    <div style={{ fontSize: 12, color: "#6b6b63" }}>
-                      {GAMES[t.game]?.name} - {t.date}{t.foursomeCount != null ? ` - ${t.foursomeCount} foursome${t.foursomeCount === 1 ? "" : "s"}` : ""}
-                    </div>
-                  </div>
-                  <div style={{ display: "flex", gap: 6 }}>
-                    <button className="gsc-btn gsc-btn-outline" onClick={() => openTournamentBoard(t.id)}>View</button>
-                    <button className="gsc-btn gsc-btn-outline" style={{ color: "#C1440E", borderColor: "#C1440E" }} onClick={() => requestDeleteFinishedTournament(t)}>
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
-        {deleteTournamentConfirm && (
-          <div className="gsc-modal-backdrop" onClick={cancelDeleteFinishedTournament}>
-            <div className="gsc-modal" onClick={(e) => e.stopPropagation()}>
-              <div className="gsc-modal-title">Remove this tournament?</div>
-              <div className="gsc-modal-body">
-                "{deleteTournamentConfirm.name}" will be removed from your finished tournaments list on this device. The tournament and every foursome's data stay fully intact - you could still rejoin later with the tournament code.
-              </div>
-              {deleteTournamentErr && <div style={{ color: "#C1440E", fontSize: 13, marginBottom: 12 }}>{deleteTournamentErr}</div>}
-              <div className="gsc-modal-row">
-                <button className="gsc-btn gsc-btn-outline" onClick={cancelDeleteFinishedTournament}>Cancel</button>
-                <button className="gsc-btn gsc-btn-primary" style={{ background: "#C1440E" }} disabled={deleteTournamentBusy} onClick={confirmDeleteFinishedTournament}>
-                  {deleteTournamentBusy ? "Removing..." : "Yes, remove"}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
         <RulesModal />
         <BottomNav />
       </div>
@@ -2383,8 +2410,130 @@ function computeRoundScoring(round) {
               Read more
             </button>
           </div>
+
+          <div className="gsc-card">
+            <div
+              style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #eee6cf", cursor: "pointer" }}
+              onClick={() => setScreen("finishedRoundsScreen")}
+            >
+              <div style={{ fontWeight: 700, fontSize: 14 }}>Finished Rounds</div>
+              <span style={{ color: "#8FA998", fontSize: 18 }}>&rsaquo;</span>
+            </div>
+            <div
+              style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", cursor: "pointer" }}
+              onClick={() => setScreen("finishedTournamentsScreen")}
+            >
+              <div style={{ fontWeight: 700, fontSize: 14 }}>Finished Tournaments</div>
+              <span style={{ color: "#8FA998", fontSize: 18 }}>&rsaquo;</span>
+            </div>
+          </div>
         </div>
         <BottomNav />
+      </div>
+    );
+  }
+
+  if (screen === "finishedRoundsScreen") {
+    return (
+      <div className="gsc">
+        <style>{STYLE}</style>
+        <Header title="Finished Rounds" sub="Saved on this device" onBack={() => setScreen("libraryTab")} />
+        <div className="gsc-body">
+          {finishedRounds.length === 0 && (
+            <div className="gsc-card" style={{ textAlign: "center", padding: "32px 20px" }}>
+              <div style={{ fontSize: 13, color: "#6b6b63" }}>No finished rounds on this device yet.</div>
+            </div>
+          )}
+          {finishedRounds.length > 0 && (
+            <div className="gsc-card">
+              {finishedRounds.map((f) => (
+                <div key={f.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #eee6cf" }}>
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: 14 }}>{f.name}</div>
+                    <div style={{ fontSize: 12, color: "#6b6b63" }}>{GAMES[f.game]?.name} - {f.date}</div>
+                  </div>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <button className="gsc-btn gsc-btn-outline" disabled={busy} onClick={() => openFinishedRound(f.id)}>Reopen</button>
+                    <button className="gsc-btn gsc-btn-outline" style={{ color: "#C1440E", borderColor: "#C1440E" }} onClick={() => requestDeleteFinishedRound(f)}>
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {reopenErr && <div style={{ color: "#C1440E", fontSize: 12, marginTop: 8 }}>{reopenErr}</div>}
+            </div>
+          )}
+        </div>
+        {deleteRoundConfirm && (
+          <div className="gsc-modal-backdrop" onClick={cancelDeleteFinishedRound}>
+            <div className="gsc-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="gsc-modal-title">Delete this round?</div>
+              <div className="gsc-modal-body">
+                "{deleteRoundConfirm.name}" will be permanently deleted from this device. This can't be undone.
+              </div>
+              {deleteRoundErr && <div style={{ color: "#C1440E", fontSize: 13, marginBottom: 12 }}>{deleteRoundErr}</div>}
+              <div className="gsc-modal-row">
+                <button className="gsc-btn gsc-btn-outline" onClick={cancelDeleteFinishedRound}>Cancel</button>
+                <button className="gsc-btn gsc-btn-primary" style={{ background: "#C1440E" }} disabled={deleteRoundBusy} onClick={confirmDeleteFinishedRound}>
+                  {deleteRoundBusy ? "Deleting..." : "Yes, delete"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  if (screen === "finishedTournamentsScreen") {
+    return (
+      <div className="gsc">
+        <style>{STYLE}</style>
+        <Header title="Finished Tournaments" sub="Saved on this device" onBack={() => setScreen("libraryTab")} />
+        <div className="gsc-body">
+          {finishedTournaments.length === 0 && (
+            <div className="gsc-card" style={{ textAlign: "center", padding: "32px 20px" }}>
+              <div style={{ fontSize: 13, color: "#6b6b63" }}>No finished tournaments on this device yet.</div>
+            </div>
+          )}
+          {finishedTournaments.length > 0 && (
+            <div className="gsc-card">
+              {finishedTournaments.map((t) => (
+                <div key={t.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #eee6cf" }}>
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: 14 }}>{t.name}</div>
+                    <div style={{ fontSize: 12, color: "#6b6b63" }}>
+                      {GAMES[t.game]?.name} - {t.date}{t.foursomeCount != null ? ` - ${t.foursomeCount} foursome${t.foursomeCount === 1 ? "" : "s"}` : ""}
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <button className="gsc-btn gsc-btn-outline" onClick={() => openTournamentBoard(t.id)}>View</button>
+                    <button className="gsc-btn gsc-btn-outline" style={{ color: "#C1440E", borderColor: "#C1440E" }} onClick={() => requestDeleteFinishedTournament(t)}>
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        {deleteTournamentConfirm && (
+          <div className="gsc-modal-backdrop" onClick={cancelDeleteFinishedTournament}>
+            <div className="gsc-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="gsc-modal-title">Remove this tournament?</div>
+              <div className="gsc-modal-body">
+                "{deleteTournamentConfirm.name}" will be removed from your finished tournaments list on this device. The tournament and every foursome's data stay fully intact - you could still rejoin later with the tournament code.
+              </div>
+              {deleteTournamentErr && <div style={{ color: "#C1440E", fontSize: 13, marginBottom: 12 }}>{deleteTournamentErr}</div>}
+              <div className="gsc-modal-row">
+                <button className="gsc-btn gsc-btn-outline" onClick={cancelDeleteFinishedTournament}>Cancel</button>
+                <button className="gsc-btn gsc-btn-primary" style={{ background: "#C1440E" }} disabled={deleteTournamentBusy} onClick={confirmDeleteFinishedTournament}>
+                  {deleteTournamentBusy ? "Removing..." : "Yes, remove"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
