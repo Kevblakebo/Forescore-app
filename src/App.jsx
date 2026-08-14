@@ -1299,7 +1299,6 @@ export default function GolfScorecard() {
       { name: "", hcp: "" },
       { name: "", hcp: "" },
     ]);
-    setNumTeams(2);
     setPontoPairing([[0, 1], [2, 3]]);
     setPar([...tournament.par]);
     setCourseName(tournament.course || "");
