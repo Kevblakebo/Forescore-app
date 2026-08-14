@@ -714,27 +714,23 @@ export default function GolfScorecard() {
   // "Full Rules" - they describe how foursomes are scored *against each
   // other*, not how points are awarded inside a single foursome's game.
   function tournamentRulesFor(gameKey) {
-    const g = GAMES[gameKey];
-    const rules = [
+    return [
       "Every foursome in the tournament plays the same game, under the same locked settings (course par, max strokes, max putts, mulligans, prize) - so every foursome's numbers are directly comparable.",
       "Foursomes are ranked two separate ways - by total strokes and by total putts. Each has its own leaderboard, and the lowest total wins each.",
-    ];
-    if (g.bestBall) {
-      rules.push({
-        text: `${g.name} uses best-ball scoring, so each hole's foursome score is the single lowest score in the whole foursome:`,
-        sub: ["Strokes: the lowest strokes among all 4 players on that hole.", "Putts: the lowest putts among all 4 players on that hole."],
-      });
-    } else {
-      rules.push({
-        text: `In ${g.name}, each hole's foursome score is all 4 players' scores added together:`,
+      {
+        text: "In Beachside Best-Ball Tournament, the whole foursome plays as one best-ball team. The lowest strokes and lowest putts among all 4 players are counted for each hole.",
+        sub: [
+          "Strokes: Lowest of all 4 players' strokes for that hole counts towards the team score.",
+          "Putts: Lowest of all 4 players' putts for that hole counts towards the team score.",
+        ],
+      },
+      {
+        text: "In Cardiff Combine Tournament, each hole's foursome score is all 4 players' scores added together:",
         sub: ["Strokes: all 4 players' strokes for that hole, combined.", "Putts: all 4 players' putts for that hole, combined."],
-      });
-    }
-    rules.push(
-      "A hole only counts toward a foursome's total once all 4 players have entered that category for the hole, so an in-progress round never shows a misleading total.",
-      "This tournament-level scoring is separate from, and doesn't change, how points are awarded inside each foursome's own game."
-    );
-    return rules;
+      },
+      "A hole only counts toward a foursome's total once all 4 players have entered their scores for the hole, so an in-progress round never shows a misleading total.",
+      "This tournament-level scoring is separate from, and doesn't change, how points are awarded inside each foursome's own game.",
+    ];
   }
 
   function TournamentRulesModal() {
