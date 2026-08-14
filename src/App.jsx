@@ -2992,7 +2992,7 @@ function computeRoundScoring(round) {
           )}
           {!storageBroken && storageWarning && <div style={{ color: "#B08D57", fontSize: 13, marginBottom: 10 }}>{storageWarning}</div>}
           <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", padding: 14, fontSize: 16 }} disabled={busy} onClick={finishSetup}>
-            {busy ? "Saving..." : activeTournament ? "Add my foursome & start playing" : "Create Round"}
+            {busy ? "Saving..." : activeTournament ? "Add my foursome & start playing" : "Create Round & Generate Share Code"}
           </button>
         </div>
         <RulesModal />
