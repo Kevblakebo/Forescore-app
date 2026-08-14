@@ -1981,6 +1981,10 @@ function computeRoundScoring(round) {
             <br />
             1) Scroll down to Start a New Round (Team Game Formats or Individual Game Formats) or Start a New Tournament
             <br />
+            2) Select your Game Format, then set up your details
+            <br />
+            3) Enter your strokes for each hole as you play
+            <br />
             <br />
             You're all set, next hole... the 19th!
           </div>
@@ -2017,7 +2021,7 @@ function computeRoundScoring(round) {
           )}
 
           <div className="gsc-card">
-            <div className="gsc-label" style={{ marginBottom: 6 }}>Start a New Round</div>
+            <div className="gsc-label" style={{ marginBottom: 6, fontSize: 17 }}>Start a New Round</div>
 
             <div className="gsc-label" style={{ marginBottom: 4, color: "#1B4332" }}>Team Game Formats</div>
             <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>Team Games (2 vs 2)</div>
@@ -2098,7 +2102,7 @@ function computeRoundScoring(round) {
           </div>
 
           <div className="gsc-card">
-            <div className="gsc-label" style={{ marginBottom: 6 }}>Start a New Tournament</div>
+            <div className="gsc-label" style={{ marginBottom: 6, fontSize: 17 }}>Start a New Tournament</div>
 
             <div className="gsc-label" style={{ marginBottom: 4, color: "#1B4332" }}>Tournament Game Formats</div>
             <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>Multiple Foursomes</div>
