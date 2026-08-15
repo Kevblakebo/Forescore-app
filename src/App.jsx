@@ -3686,27 +3686,27 @@ function computeRoundScoring(round) {
           sub={`${g.name} - ${round.date}${round.course ? " - " + round.course : ""}`}
           onBack={requestLeaveRound}
           backExtra={
-            <button className="gsc-link" style={{ color: "#F3EFE0", fontSize: 12, textDecoration: "underline" }} onClick={() => openRules(round.game)}>
-              Rules
+            <button
+              style={{
+                background: "rgba(243,239,224,0.15)",
+                border: "1px solid rgba(243,239,224,0.4)",
+                color: "#F3EFE0",
+                fontSize: 11,
+                fontWeight: 600,
+                padding: "4px 8px",
+                borderRadius: 6,
+                cursor: "pointer",
+              }}
+              onClick={() => syncRoundFromServer(true)}
+            >
+              {syncStatus === "syncing" ? "Refreshing..." : syncStatus === "synced" ? "Up To Date \u2713" : syncStatus === "error" ? "Couldn't Refresh" : "Refresh Scores"}
             </button>
           }
           right={
             <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <button
-                  style={{
-                    background: "rgba(243,239,224,0.15)",
-                    border: "1px solid rgba(243,239,224,0.4)",
-                    color: "#F3EFE0",
-                    fontSize: 11,
-                    fontWeight: 600,
-                    padding: "4px 8px",
-                    borderRadius: 6,
-                    cursor: "pointer",
-                  }}
-                  onClick={() => syncRoundFromServer(true)}
-                >
-                  {syncStatus === "syncing" ? "Refreshing..." : syncStatus === "synced" ? "Up to date \u2713" : syncStatus === "error" ? "Couldn't refresh" : "Refresh scores"}
+                <button className="gsc-link" style={{ color: "#F3EFE0", fontSize: 11, textDecoration: "underline" }} onClick={() => openRules(round.game)}>
+                  Rules
                 </button>
                 <div className="gsc-code">{round.id}</div>
               </div>
