@@ -2243,12 +2243,12 @@ function computeRoundScoring(round) {
       <div className="gsc">
         <style>{STYLE}</style>
         <Header
-          title={<><span style={{ fontSize: 23 }}>ForeScore</span><br /><span style={{ fontSize: 11, opacity: 0.75, letterSpacing: "0.5px", textTransform: "uppercase", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>Golf Game Scorecards</span></>}
+          title={<><span style={{ fontSize: 23 }}>ForeScore</span><br /><span style={{ fontSize: 11, opacity: 0.75, letterSpacing: "0.5px", textTransform: "uppercase", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>Golf Game Formats & Scoring</span></>}
           sub="Track games, teams &amp; points on the course"
         />
         <div className="gsc-body gsc-body-tabbed">
           <div style={{ fontSize: 13, color: "#4b4b45", lineHeight: 1.55, margin: "0 0 16px" }}>
-            Less scoring, more golf! ForeScore's golf game scorecards easily tally and share your game live on the course, and settle who's buying at the 19th hole so you don't have to!
+            Less scoring, more golf! ForeScore makes it easy and fun to play various golf game formats, share your scorecard live on the course, and settle who's buying at the 19th hole!
             <br />
             <br />
             To start a new round or tournament:
