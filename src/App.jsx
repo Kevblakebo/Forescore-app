@@ -72,6 +72,10 @@ const STYLE = `
   .gsc-modal-body { font-size:14px; color:#4b4b45; line-height:1.5; margin-bottom:18px; }
   .gsc-modal-row { display:flex; gap:10px; }
   .gsc-navbar { position:fixed; bottom:0; left:0; right:0; background:#1B4332; display:flex; padding:6px 4px calc(6px + env(safe-area-inset-bottom)); box-shadow:0 -2px 10px rgba(0,0,0,0.2); z-index:20; }
+  @keyframes gsc-firework-particle { 0% { transform:translate(0,0) scale(1); opacity:1; } 100% { transform:translate(var(--dx), var(--dy)) scale(0.3); opacity:0; } }
+  @keyframes gsc-firework-pop { 0% { opacity:0; } 15% { opacity:1; } 100% { opacity:0; } }
+  .gsc-firework-field { position:absolute; inset:0; overflow:hidden; pointer-events:none; }
+  .gsc-winner-card { border:2px solid #B08D57; background:linear-gradient(180deg, rgba(176,141,87,0.14), rgba(176,141,87,0.03)); }
   .gsc-navitem { flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; padding:8px 2px; border-radius:10px; cursor:pointer; border:none; background:none; touch-action:manipulation; min-height:44px; }
   .gsc-navitem-label { font-size:10px; font-weight:600; letter-spacing:0.2px; }
   .gsc-body-tabbed { padding-bottom:calc(80px + env(safe-area-inset-bottom)); }
@@ -615,6 +619,7 @@ export default function GolfScorecard() {
   const [storageWarning, setStorageWarning] = useState("");
   const [storageBroken, setStorageBroken] = useState(false);
   const failCountRef = useRef(0);
+  const lastLocalEditRef = useRef(0);
   const [pasteData, setPasteData] = useState("");
   const [pasteMsg, setPasteMsg] = useState("");
   const [copyMsg, setCopyMsg] = useState("");
@@ -1030,6 +1035,21 @@ export default function GolfScorecard() {
     setFinishedRounds(idx);
     await storageDelete(ACTIVE_KEY, false);
     setActiveRound(null);
+    // If every hole is actually filled in, celebrate on a dedicated screen
+    // with final standings before heading home - keep `round` populated so
+    // that screen can show the finished scorecard; it gets cleared when the
+    // person taps through to Home from there. An early/incomplete finish
+    // skips the celebration and goes straight home as before.
+    const fullyComplete = computed && computed.holeResults.every((hr) => hr.complete);
+    if (fullyComplete) {
+      setScreen("roundComplete");
+    } else {
+      setRound(null);
+      setScreen("home");
+    }
+  }
+
+  function finishCelebrationAndGoHome() {
     setRound(null);
     setScreen("home");
   }
@@ -1836,6 +1856,7 @@ export default function GolfScorecard() {
   }
 
   function updateHoleEntry(playerIdx, field, value) {
+    lastLocalEditRef.current = Date.now();
     setRound((r) => {
       const next = { ...r, scores: { ...r.scores } };
       const holeScores = { ...(next.scores[holeIdx] || {}) };
@@ -1847,6 +1868,61 @@ export default function GolfScorecard() {
       return next;
     });
   }
+
+  const [syncStatus, setSyncStatus] = useState(""); // "", "syncing", "synced", "error"
+
+  // Pulls the latest saved version of the round from shared storage and
+  // merges in anything that changed - this is what lets other players'
+  // score entries actually show up without leaving and rejoining. Skips
+  // applying the fetched data if a local edit happened very recently, so a
+  // slightly-stale poll response can't momentarily stomp on an edit that's
+  // still in flight.
+  async function syncRoundFromServer(isManual) {
+    if (!round) return;
+    if (isManual) setSyncStatus("syncing");
+    const res = await storageGet(`golfround:${round.id}`, true);
+    if (!res.ok || !res.value) {
+      if (isManual) {
+        setSyncStatus("error");
+        setTimeout(() => setSyncStatus(""), 2500);
+      }
+      return;
+    }
+    try {
+      const fresh = JSON.parse(res.value);
+      if (Date.now() - lastLocalEditRef.current > 3000) {
+        setRound((prev) => {
+          if (!prev || prev.id !== fresh.id) return prev;
+          if (JSON.stringify(fresh.scores) === JSON.stringify(prev.scores) && JSON.stringify(fresh.players) === JSON.stringify(prev.players)) {
+            return prev; // nothing actually changed - bail out to avoid an unnecessary re-render
+          }
+          return { ...prev, scores: fresh.scores, players: fresh.players, teams: fresh.teams, cfg: fresh.cfg, par: fresh.par };
+        });
+      }
+      if (isManual) {
+        setSyncStatus("synced");
+        setTimeout(() => setSyncStatus(""), 1800);
+      }
+    } catch (e) {
+      if (isManual) {
+        setSyncStatus("error");
+        setTimeout(() => setSyncStatus(""), 2500);
+      }
+    }
+  }
+
+  // Background auto-sync while actively viewing the scorecard - checks for
+  // other players' updates every 8 seconds. This is polling, not a true
+  // realtime push, so there's a small delay rather than instant sync, but
+  // it needs no extra setup and works with the storage already in place.
+  useEffect(() => {
+    if (screen !== "card" || !round) return;
+    const interval = setInterval(() => {
+      syncRoundFromServer(false);
+    }, 8000);
+    return () => clearInterval(interval);
+  }, [screen, round && round.id]);
+
 
   const game = round ? GAMES[round.game] : gameKey ? GAMES[gameKey] : null;
 
@@ -2114,6 +2190,52 @@ function computeRoundScoring(round) {
             </button>
           );
         })}
+      </div>
+    );
+  }
+
+  // A short, tasteful CSS-only fireworks burst for the round-complete
+  // celebration - a handful of bursts, each a ring of small particles that
+  // fly outward and fade. No animation library needed, and it runs once
+  // (not on a loop) so it doesn't linger or distract from the standings
+  // shown right below it.
+  function Fireworks() {
+    const colors = ["#C1440E", "#B08D57", "#8FA998", "#F3EFE0", "#3F6B54"];
+    const bursts = [
+      { left: "18%", top: "22%", delay: 0 },
+      { left: "78%", top: "16%", delay: 0.25 },
+      { left: "50%", top: "30%", delay: 0.5 },
+      { left: "30%", top: "45%", delay: 0.75 },
+      { left: "68%", top: "42%", delay: 1.0 },
+    ];
+    return (
+      <div className="gsc-firework-field">
+        {bursts.map((b, bi) => (
+          <div key={bi} style={{ position: "absolute", left: b.left, top: b.top }}>
+            {Array.from({ length: 12 }).map((_, i) => {
+              const angle = ((360 / 12) * i * Math.PI) / 180;
+              const dist = 55 + (i % 3) * 20;
+              const dx = Math.cos(angle) * dist;
+              const dy = Math.sin(angle) * dist;
+              return (
+                <div
+                  key={i}
+                  style={{
+                    position: "absolute",
+                    width: 7,
+                    height: 7,
+                    borderRadius: "50%",
+                    background: colors[(bi + i) % colors.length],
+                    opacity: 0,
+                    "--dx": `${dx}px`,
+                    "--dy": `${dy}px`,
+                    animation: `gsc-firework-particle 1.15s ease-out ${b.delay}s both`,
+                  }}
+                />
+              );
+            })}
+          </div>
+        ))}
       </div>
     );
   }
@@ -3417,6 +3539,107 @@ function computeRoundScoring(round) {
     );
   }
 
+  if (screen === "roundComplete" && round && computed) {
+    const g = GAMES[round.game];
+    const ranks = playerRank();
+    let winners = [];
+    if (!g.singleTeam && ranks.length > 0) {
+      winners = g.totalScoring
+        ? ranks.filter((r) => r.score === ranks[0].score && r.putts === ranks[0].putts)
+        : ranks.filter((r) => r.points === ranks[0].points);
+    }
+    const formatRelPar = (n) => (n === 0 ? "E" : n > 0 ? `+${n}` : `${n}`);
+
+    return (
+      <div className="gsc">
+        <style>{STYLE}</style>
+        <div style={{ position: "relative", background: "#1B4332", padding: "28px 18px 22px", overflow: "hidden" }}>
+          <Fireworks />
+          <div style={{ position: "relative", textAlign: "center" }}>
+            <img src={LOGO_DATA_URI} alt="ForeScore logo" style={{ width: 64, height: "auto", marginBottom: 10 }} />
+            <div className="gsc-display" style={{ fontSize: 24, fontWeight: 700, color: "#F3EFE0" }}>Round Complete!</div>
+            <div style={{ fontSize: 13, color: "#F3EFE0", opacity: 0.8, marginTop: 4 }}>
+              {round.name} - {g.name} - {round.date}
+            </div>
+          </div>
+        </div>
+
+        <div className="gsc-body">
+          {g.singleTeam ? (
+            <div className="gsc-card gsc-winner-card" style={{ textAlign: "center" }}>
+              <div style={{ fontSize: 28, marginBottom: 6 }}>&#127942;</div>
+              <div style={{ fontWeight: 700, fontSize: 17, marginBottom: 4 }}>Nice round with your foursome!</div>
+              <div style={{ fontSize: 13, color: "#6b6b63" }}>
+                {round.tournamentId ? "Check the tournament leaderboard to see how you stack up against the other foursomes." : "Great playing today."}
+              </div>
+              {round.tournamentId && (
+                <button className="gsc-btn gsc-btn-primary" style={{ marginTop: 12 }} onClick={() => openTournamentBoard(round.tournamentId)}>
+                  View Leaderboard
+                </button>
+              )}
+            </div>
+          ) : (
+            winners.length > 0 && (
+              <div className="gsc-card gsc-winner-card" style={{ textAlign: "center" }}>
+                <div style={{ fontSize: 28, marginBottom: 6 }}>&#127942;</div>
+                <div style={{ fontWeight: 700, fontSize: 12, textTransform: "uppercase", letterSpacing: "0.5px", color: "#B08D57", marginBottom: 6 }}>
+                  {winners.length > 1 ? "Winners" : "Winner"}
+                </div>
+                <div style={{ fontSize: 19, fontWeight: 700 }}>
+                  {winners.map((w) => `${LETTERS[w.idx]} - ${w.name}`).join(" & ")}
+                </div>
+                <div style={{ fontSize: 13, color: "#6b6b63", marginTop: 4 }}>
+                  {g.totalScoring
+                    ? `${winners[0].score} strokes (${winners[0].putts} putts)`
+                    : `${winners[0].points} pts (${winners[0].score}str/${winners[0].putts}put/${formatRelPar(winners[0].relPar)})`}
+                </div>
+              </div>
+            )
+          )}
+
+          {!g.singleTeam && (
+            <div className="gsc-card">
+              <div className="gsc-label" style={{ marginBottom: 10 }}>Final Standings</div>
+              {ranks.map((p, idx) => {
+                const isWinner = winners.some((w) => w.idx === p.idx);
+                return (
+                  <div
+                    key={p.idx}
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      padding: "10px 0",
+                      borderBottom: idx === ranks.length - 1 ? "none" : "1px solid #eee6cf",
+                    }}
+                  >
+                    <div style={{ fontWeight: isWinner ? 700 : 400 }}>
+                      {isWinner && <span style={{ marginRight: 6 }}>&#127942;</span>}
+                      {LETTERS[p.idx]} - {p.name}
+                    </div>
+                    <div className="gsc-mono" style={{ fontWeight: 700 }}>
+                      {g.totalScoring ? (
+                        <>{p.score}str/{p.putts}put</>
+                      ) : (
+                        <>
+                          {p.points} pts <span style={{ fontWeight: 400, color: "#6b6b63" }}>({p.score}str/{p.putts}put/{formatRelPar(p.relPar)})</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 4 }} onClick={finishCelebrationAndGoHome}>
+            Continue to Home
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (screen === "card" && round && computed) {
     const g = GAMES[round.game];
     const parH = round.par[holeIdx] ?? 4;
@@ -3462,6 +3685,13 @@ function computeRoundScoring(round) {
           right={
             <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
               <div className="gsc-code">{round.id}</div>
+              <button
+                className="gsc-link"
+                style={{ color: "#F3EFE0", fontSize: 11, textDecoration: "underline" }}
+                onClick={() => syncRoundFromServer(true)}
+              >
+                {syncStatus === "syncing" ? "Refreshing..." : syncStatus === "synced" ? "Up to date \u2713" : syncStatus === "error" ? "Couldn't refresh" : "Refresh scores"}
+              </button>
               <button className="gsc-link" style={{ color: "#F3EFE0", fontSize: 11, textDecoration: "underline" }} onClick={() => openRules(round.game)}>
                 Rules
               </button>
