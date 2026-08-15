@@ -2137,15 +2137,18 @@ function computeRoundScoring(round) {
   }
 
   // ---------- render helpers ----------
-  function Header({ title, sub, onBack, right }) {
+  function Header({ title, sub, onBack, backExtra, right }) {
     return (
       <div className="gsc-header">
         <div className="gsc-header-row">
           <div style={{ flex: "1 1 auto", minWidth: 0 }}>
             {onBack && (
-              <button className="gsc-btn gsc-btn-ghost" style={{ marginBottom: 6, padding: "5px 10px", fontSize: 12 }} onClick={onBack}>
-                Back
-              </button>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+                <button className="gsc-btn gsc-btn-ghost" style={{ padding: "5px 10px", fontSize: 12 }} onClick={onBack}>
+                  Back
+                </button>
+                {backExtra}
+              </div>
             )}
             <div className="gsc-title gsc-display">{title}</div>
             {sub && <div className="gsc-sub" style={{ whiteSpace: "nowrap" }}>{sub}</div>}
@@ -3682,19 +3685,31 @@ function computeRoundScoring(round) {
           title={round.name}
           sub={`${g.name} - ${round.date}${round.course ? " - " + round.course : ""}`}
           onBack={requestLeaveRound}
+          backExtra={
+            <button className="gsc-link" style={{ color: "#F3EFE0", fontSize: 12, textDecoration: "underline" }} onClick={() => openRules(round.game)}>
+              Rules
+            </button>
+          }
           right={
             <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
-              <div className="gsc-code">{round.id}</div>
-              <button
-                className="gsc-link"
-                style={{ color: "#F3EFE0", fontSize: 11, textDecoration: "underline" }}
-                onClick={() => syncRoundFromServer(true)}
-              >
-                {syncStatus === "syncing" ? "Refreshing..." : syncStatus === "synced" ? "Up to date \u2713" : syncStatus === "error" ? "Couldn't refresh" : "Refresh scores"}
-              </button>
-              <button className="gsc-link" style={{ color: "#F3EFE0", fontSize: 11, textDecoration: "underline" }} onClick={() => openRules(round.game)}>
-                Rules
-              </button>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <button
+                  style={{
+                    background: "rgba(243,239,224,0.15)",
+                    border: "1px solid rgba(243,239,224,0.4)",
+                    color: "#F3EFE0",
+                    fontSize: 11,
+                    fontWeight: 600,
+                    padding: "4px 8px",
+                    borderRadius: 6,
+                    cursor: "pointer",
+                  }}
+                  onClick={() => syncRoundFromServer(true)}
+                >
+                  {syncStatus === "syncing" ? "Refreshing..." : syncStatus === "synced" ? "Up to date \u2713" : syncStatus === "error" ? "Couldn't refresh" : "Refresh scores"}
+                </button>
+                <div className="gsc-code">{round.id}</div>
+              </div>
               {round.tournamentId && (
                 <button className="gsc-link" style={{ color: "#F3EFE0", fontSize: 11, textDecoration: "underline" }} onClick={() => openTournamentBoard(round.tournamentId)}>
                   Leaderboard
