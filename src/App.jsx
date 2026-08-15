@@ -3544,10 +3544,19 @@ function computeRoundScoring(round) {
     const g = GAMES[round.game];
     const ranks = playerRank();
     let winners = [];
+    const isTwoVsTwoGame = round.game === "seabluffe" || round.game === "ponto" || round.game === "beachside";
     if (!g.singleTeam && ranks.length > 0) {
-      winners = g.totalScoring
-        ? ranks.filter((r) => r.score === ranks[0].score && r.putts === ranks[0].putts)
-        : ranks.filter((r) => r.points === ranks[0].points);
+      if (isTwoVsTwoGame) {
+        // These are always 2v2 - the winning team is the top 2 ranked
+        // players, full stop. Not filtered by an exact points match, since
+        // that's a fragile way to say "the winning team" even though
+        // teammates normally do share identical points.
+        winners = ranks.slice(0, Math.min(2, ranks.length));
+      } else if (g.totalScoring) {
+        winners = ranks.filter((r) => r.score === ranks[0].score && r.putts === ranks[0].putts);
+      } else {
+        winners = ranks.filter((r) => r.points === ranks[0].points);
+      }
     }
     const formatRelPar = (n) => (n === 0 ? "E" : n > 0 ? `+${n}` : `${n}`);
 
@@ -3703,11 +3712,11 @@ function computeRoundScoring(round) {
             </button>
           }
           right={
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6, alignSelf: "flex-start" }}>
+              <div className="gsc-code">{round.id}</div>
               <button className="gsc-link" style={{ color: "#F3EFE0", fontSize: 11, textDecoration: "underline" }} onClick={() => openRules(round.game)}>
                 Rules
               </button>
-              <div className="gsc-code">{round.id}</div>
               {round.tournamentId && (
                 <button className="gsc-link" style={{ color: "#F3EFE0", fontSize: 11, textDecoration: "underline" }} onClick={() => openTournamentBoard(round.tournamentId)}>
                   Leaderboard
