@@ -1035,18 +1035,15 @@ export default function GolfScorecard() {
     setFinishedRounds(idx);
     await storageDelete(ACTIVE_KEY, false);
     setActiveRound(null);
-    // If every hole is actually filled in, celebrate on a dedicated screen
-    // with final standings before heading home - keep `round` populated so
-    // that screen can show the finished scorecard; it gets cleared when the
-    // person taps through to Home from there. An early/incomplete finish
-    // skips the celebration and goes straight home as before.
-    const fullyComplete = computed && computed.holeResults.every((hr) => hr.complete);
-    if (fullyComplete) {
-      setScreen("roundComplete");
-    } else {
-      setRound(null);
-      setScreen("home");
-    }
+    // Celebrate on a dedicated screen with final standings before heading
+    // home - keep `round` populated so that screen can show the finished
+    // scorecard; it gets cleared when the person taps through to Home from
+    // there. Tapping "Finish & exit" is already the explicit signal the
+    // round is done, so this always celebrates rather than requiring every
+    // single cell across all 18 holes to be filled in - that stricter check
+    // used to silently skip the celebration over one missed entry, with no
+    // indication why.
+    setScreen("roundComplete");
   }
 
   function finishCelebrationAndGoHome() {
