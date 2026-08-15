@@ -53,7 +53,7 @@ const STYLE = `
   .gsc-player-name { font-weight:700; font-size:19px; }
   .gsc-hcp { font-size:11px; color:#6b6b63; margin-left:6px; }
   .gsc-mull { display:flex; align-items:center; gap:6px; font-size:12px; margin-top:8px; }
-  .gsc-chip { display:inline-block; font-size:11px; font-weight:700; padding:3px 9px; border-radius:20px; margin-right:6px; margin-top:4px; }
+  .gsc-chip { display:inline-block; font-size:11px; font-weight:700; padding:3px 9px; border-radius:20px; margin-left:6px; margin-right:6px; margin-top:4px; }
   .gsc-lead { background:#B08D57; color:#fff; }
   .gsc-loss { background:#c7c2a8; color:#5b5b52; }
   .gsc-teamA { border-left:5px solid #1B4332; background:#F0EEE3; }
@@ -3884,7 +3884,12 @@ function computeRoundScoring(round) {
                     <th>Hole</th>
                     <th>Par</th>
                     {round.players.map((p, i) => (
-                      <th key={i}>{LETTERS[i]}</th>
+                      <th key={i} style={{ minWidth: 56 }}>
+                        {LETTERS[i]}
+                        <div style={{ fontSize: 9, fontWeight: 400, textTransform: "none", opacity: 0.8, marginTop: 1, whiteSpace: "normal", lineHeight: 1.2 }}>
+                          {(p.name || "").trim()}
+                        </div>
+                      </th>
                     ))}
                   </tr>
                 </thead>
