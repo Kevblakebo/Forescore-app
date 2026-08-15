@@ -2144,9 +2144,7 @@ function computeRoundScoring(round) {
           <div style={{ flex: "1 1 auto", minWidth: 0 }}>
             {onBack && (
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
-                <button className="gsc-btn gsc-btn-ghost" style={{ padding: "5px 10px", fontSize: 12 }} onClick={onBack}>
-                  Back
-                </button>
+                <button className="gsc-btn gsc-btn-ghost" style={{ padding: "5px 10px", fontSize: 12, width: 100, textAlign: "center" }} onClick={onBack}>Back</button>
                 {backExtra}
               </div>
             )}
@@ -3693,9 +3691,11 @@ function computeRoundScoring(round) {
                 color: "#F3EFE0",
                 fontSize: 11,
                 fontWeight: 600,
-                padding: "4px 8px",
+                padding: "5px 8px",
                 borderRadius: 6,
                 cursor: "pointer",
+                width: 100,
+                textAlign: "center",
               }}
               onClick={() => syncRoundFromServer(true)}
             >
@@ -3704,12 +3704,10 @@ function computeRoundScoring(round) {
           }
           right={
             <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <button className="gsc-link" style={{ color: "#F3EFE0", fontSize: 11, textDecoration: "underline" }} onClick={() => openRules(round.game)}>
-                  Rules
-                </button>
-                <div className="gsc-code">{round.id}</div>
-              </div>
+              <button className="gsc-link" style={{ color: "#F3EFE0", fontSize: 11, textDecoration: "underline" }} onClick={() => openRules(round.game)}>
+                Rules
+              </button>
+              <div className="gsc-code">{round.id}</div>
               {round.tournamentId && (
                 <button className="gsc-link" style={{ color: "#F3EFE0", fontSize: 11, textDecoration: "underline" }} onClick={() => openTournamentBoard(round.tournamentId)}>
                   Leaderboard
