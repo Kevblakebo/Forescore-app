@@ -670,6 +670,7 @@ export default function GolfScorecard() {
   const [wizardAnswers, setWizardAnswers] = useState({});
   const [wizardHistory, setWizardHistory] = useState([]); // stack of actually-visited step ids, for Back
   const [wizardFieldErr, setWizardFieldErr] = useState("");
+  const [wizardOnlyMode, setWizardOnlyMode] = useState(null); // null (any format) | "rounds" | "tournament"
   const [courseDetailBusy, setCourseDetailBusy] = useState(false);
 
   // Every screen change (any navigation button) should land at the top of
@@ -1355,6 +1356,7 @@ export default function GolfScorecard() {
     setWizardStepId("playerCount");
     setWizardAnswers({});
     setWizardHistory([]);
+    setWizardOnlyMode(null);
     setErr("");
     setTournamentErr("");
     setRoundName("");
@@ -1376,6 +1378,25 @@ export default function GolfScorecard() {
     setShowManualCourse(false);
     loadSavedCourses();
     goToScreen("gameWizard");
+  }
+
+  // Same reset as startWizard, but scoped to only ever produce a Round
+  // format - the "More than 4 (a tournament)" option gets hidden on the
+  // player-count question, so this path can never end up in a tournament.
+  function startWizardForRounds() {
+    startWizard();
+    setWizardOnlyMode("rounds");
+  }
+
+  // Scoped the other direction - skips the player-count question entirely
+  // (tournaments don't need it the same way a round does) and starts
+  // directly on the tournament scoring question, pre-seeding the answers
+  // a normal "more than 4 players" path would have set.
+  function startWizardForTournament() {
+    startWizard();
+    setWizardOnlyMode("tournament");
+    setWizardStepId("tournamentScoring");
+    setWizardAnswers({ playerCount: 8 });
   }
 
   function wizardNextStepId(stepId, answers) {
@@ -1469,7 +1490,7 @@ export default function GolfScorecard() {
     // step id is ambiguous and was picking the wrong branch. An explicit
     // stack of what was actually visited has no such ambiguity.
     if (wizardHistory.length === 0) {
-      setScreen("home");
+      goBack("home");
       return;
     }
     const prev = wizardHistory[wizardHistory.length - 1];
@@ -2743,6 +2764,41 @@ function computeRoundScoring(round) {
           )}
 
           <div className="gsc-card">
+            <div className="gsc-label">Join an existing round</div>
+            <div className="gsc-row" style={{ marginTop: 6 }}>
+              <input className="gsc-input gsc-mono" id="round-join-code" name="round-join-code" autoComplete="off" placeholder="ROUND CODE" value={joinCode} onChange={(e) => setJoinCode(e.target.value.toUpperCase())} maxLength={6} />
+              <button className="gsc-btn gsc-btn-primary" style={{ flex: "0 0 auto" }} disabled={busy || !joinCode} onClick={() => loadRound(joinCode)}>
+                Open
+              </button>
+            </div>
+            {err && <div style={{ color: "#C1440E", fontSize: 13, marginTop: 8 }}>{err}</div>}
+            {recentCodes.length > 0 && (
+              <div style={{ marginTop: 14 }}>
+                <div className="gsc-label">Recent rounds this session</div>
+                {recentCodes.map((c) => (
+                  <div key={c.code} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #eee6cf" }}>
+                    <div>
+                      <div style={{ fontWeight: 700, fontSize: 14 }}>{c.label}</div>
+                      <div className="gsc-mono" style={{ fontSize: 12, color: "#6b6b63" }}>{c.code}</div>
+                    </div>
+                    <button className="gsc-btn gsc-btn-outline" onClick={() => loadRound(c.code)}>Open</button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="gsc-card gsc-winner-card" style={{ cursor: "pointer" }} onClick={startWizardForRounds}>
+            <div style={{ fontWeight: 700, fontSize: 16 }}>{"\u{1F9D9}"} Not sure which round format to pick?</div>
+            <div style={{ fontSize: 13, color: "#4b4b45", marginTop: 3 }}>
+              Answer a few quick questions and we'll pick the right round format and set everything up for you.
+            </div>
+            <button className="gsc-btn gsc-btn-gold" style={{ width: "100%", marginTop: 10 }} onClick={startWizardForRounds}>
+              Start the Game Wizard
+            </button>
+          </div>
+
+          <div className="gsc-card">
             <div className="gsc-label" style={{ marginBottom: 6, fontSize: 17 }}>Start a New Round</div>
 
             <div className="gsc-label" style={{ marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Team Game Formats</div>
@@ -2788,31 +2844,6 @@ function computeRoundScoring(round) {
                   </button>
                 </div>
               ))}
-          </div>
-
-          <div className="gsc-card">
-            <div className="gsc-label">Join an existing round</div>
-            <div className="gsc-row" style={{ marginTop: 6 }}>
-              <input className="gsc-input gsc-mono" id="round-join-code" name="round-join-code" autoComplete="off" placeholder="ROUND CODE" value={joinCode} onChange={(e) => setJoinCode(e.target.value.toUpperCase())} maxLength={6} />
-              <button className="gsc-btn gsc-btn-primary" style={{ flex: "0 0 auto" }} disabled={busy || !joinCode} onClick={() => loadRound(joinCode)}>
-                Open
-              </button>
-            </div>
-            {err && <div style={{ color: "#C1440E", fontSize: 13, marginTop: 8 }}>{err}</div>}
-            {recentCodes.length > 0 && (
-              <div style={{ marginTop: 14 }}>
-                <div className="gsc-label">Recent rounds this session</div>
-                {recentCodes.map((c) => (
-                  <div key={c.code} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #eee6cf" }}>
-                    <div>
-                      <div style={{ fontWeight: 700, fontSize: 14 }}>{c.label}</div>
-                      <div className="gsc-mono" style={{ fontSize: 12, color: "#6b6b63" }}>{c.code}</div>
-                    </div>
-                    <button className="gsc-btn gsc-btn-outline" onClick={() => loadRound(c.code)}>Open</button>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
 
           <div className="gsc-card">
@@ -2901,6 +2932,36 @@ function computeRoundScoring(round) {
           )}
 
           <div className="gsc-card">
+            <div className="gsc-label" style={{ marginBottom: 6 }}>Join a tournament</div>
+            <div className="gsc-row">
+              <input
+                className="gsc-input gsc-mono"
+                id="tournament-join-code"
+                name="tournament-join-code"
+                autoComplete="off"
+                placeholder="TOURNAMENT CODE"
+                value={tournamentJoinCode}
+                onChange={(e) => setTournamentJoinCode(e.target.value.toUpperCase())}
+                maxLength={6}
+              />
+              <button className="gsc-btn gsc-btn-primary" style={{ flex: "0 0 auto" }} disabled={tournamentBusy || !tournamentJoinCode} onClick={() => joinTournament(tournamentJoinCode)}>
+                Join
+              </button>
+            </div>
+            {tournamentErr && <div style={{ color: "#C1440E", fontSize: 13, marginTop: 8 }}>{tournamentErr}</div>}
+          </div>
+
+          <div className="gsc-card gsc-winner-card" style={{ cursor: "pointer" }} onClick={startWizardForTournament}>
+            <div style={{ fontWeight: 700, fontSize: 16 }}>{"\u{1F9D9}"} Not sure which tournament format to pick?</div>
+            <div style={{ fontSize: 13, color: "#4b4b45", marginTop: 3 }}>
+              Answer a few quick questions and we'll pick the right tournament format and set everything up for you.
+            </div>
+            <button className="gsc-btn gsc-btn-gold" style={{ width: "100%", marginTop: 10 }} onClick={startWizardForTournament}>
+              Start the Game Wizard
+            </button>
+          </div>
+
+          <div className="gsc-card">
             <div className="gsc-label" style={{ marginBottom: 6, fontSize: 17 }}>Start a New Tournament</div>
             <div className="gsc-label" style={{ marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Tournament Game Formats</div>
             <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>Multiple Foursomes</div>
@@ -2924,26 +2985,6 @@ function computeRoundScoring(round) {
                 </div>
               );
             })}
-          </div>
-
-          <div className="gsc-card">
-            <div className="gsc-label" style={{ marginBottom: 6 }}>Join a tournament</div>
-            <div className="gsc-row">
-              <input
-                className="gsc-input gsc-mono"
-                id="tournament-join-code"
-                name="tournament-join-code"
-                autoComplete="off"
-                placeholder="TOURNAMENT CODE"
-                value={tournamentJoinCode}
-                onChange={(e) => setTournamentJoinCode(e.target.value.toUpperCase())}
-                maxLength={6}
-              />
-              <button className="gsc-btn gsc-btn-primary" style={{ flex: "0 0 auto" }} disabled={tournamentBusy || !tournamentJoinCode} onClick={() => joinTournament(tournamentJoinCode)}>
-                Join
-              </button>
-            </div>
-            {tournamentErr && <div style={{ color: "#C1440E", fontSize: 13, marginTop: 8 }}>{tournamentErr}</div>}
           </div>
 
           {finishedTournaments.length > 0 && (
@@ -3150,7 +3191,9 @@ function computeRoundScoring(round) {
                   {n === 1 ? "Just me - playing solo" : `${n} players`}
                 </OptionButton>
               ))}
-              <OptionButton onClick={() => wizardGoNext("playerCount", { playerCount: 8 })}>More than 4 (a tournament)</OptionButton>
+              {wizardOnlyMode !== "rounds" && (
+                <OptionButton onClick={() => wizardGoNext("playerCount", { playerCount: 8 })}>More than 4 (a tournament)</OptionButton>
+              )}
             </div>
           )}
 
@@ -4515,8 +4558,6 @@ function computeRoundScoring(round) {
                       <div>
                         <div style={{ fontSize: 11, color: "#6b6b63", marginBottom: 3 }}>STROKES</div>
                         <div className="gsc-stepper">
-                          <button onClick={() => updateHoleEntry(i, "strokes", (Number(e.strokes) || 0) + 1)}>+</button>
-                          <div className="gsc-stepper-val">{e.strokes === "" || e.strokes == null ? "-" : e.strokes}</div>
                           <button
                             disabled={e.strokes === "" || e.strokes == null}
                             onClick={() => {
@@ -4527,6 +4568,8 @@ function computeRoundScoring(round) {
                           >
                             -
                           </button>
+                          <div className="gsc-stepper-val">{e.strokes === "" || e.strokes == null ? "-" : e.strokes}</div>
+                          <button onClick={() => updateHoleEntry(i, "strokes", (Number(e.strokes) || 0) + 1)}>+</button>
                         </div>
                       </div>
                     )}
@@ -4534,8 +4577,6 @@ function computeRoundScoring(round) {
                       <div>
                         <div style={{ fontSize: 11, color: "#6b6b63", marginBottom: 3 }}>PUTTS</div>
                         <div className="gsc-stepper">
-                          <button onClick={() => updateHoleEntry(i, "putts", (Number(e.putts) || 0) + 1)}>+</button>
-                          <div className="gsc-stepper-val">{e.putts === "" || e.putts == null ? "-" : e.putts}</div>
                           <button
                             disabled={e.putts === "" || e.putts == null}
                             onClick={() => {
@@ -4546,6 +4587,8 @@ function computeRoundScoring(round) {
                           >
                             -
                           </button>
+                          <div className="gsc-stepper-val">{e.putts === "" || e.putts == null ? "-" : e.putts}</div>
+                          <button onClick={() => updateHoleEntry(i, "putts", (Number(e.putts) || 0) + 1)}>+</button>
                         </div>
                       </div>
                     )}
