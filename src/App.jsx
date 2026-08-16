@@ -1382,6 +1382,7 @@ export default function GolfScorecard() {
     switch (stepId) {
       case "playerCount":
         if (Number(answers.playerCount) > 4) return "tournamentScoring";
+        if (Number(answers.playerCount) === 1) return "confirmGame";
         return Number(answers.playerCount) === 4 ? "roundMode" : "individualScoring";
       case "roundMode":
         return answers.roundMode === "team" ? "teamType" : "individualScoring";
@@ -3140,7 +3141,14 @@ function computeRoundScoring(round) {
             <div className="gsc-card">
               <div className="gsc-label" style={{ marginBottom: 10, fontSize: 16 }}>How many players are in your group?</div>
               {[1, 2, 3, 4].map((n) => (
-                <OptionButton key={n} onClick={() => wizardGoNext("playerCount", { playerCount: n })}>{n === 1 ? "Just me - playing solo" : `${n} players`}</OptionButton>
+                <OptionButton
+                  key={n}
+                  onClick={() =>
+                    wizardGoNext("playerCount", n === 1 ? { playerCount: n, resolvedGameKey: "swami", isTournament: false } : { playerCount: n })
+                  }
+                >
+                  {n === 1 ? "Just me - playing solo" : `${n} players`}
+                </OptionButton>
               ))}
               <OptionButton onClick={() => wizardGoNext("playerCount", { playerCount: 8 })}>More than 4 (a tournament)</OptionButton>
             </div>
@@ -4370,23 +4378,28 @@ function computeRoundScoring(round) {
     // sum exactly what's shown in each cell (uncapped, as entered), and only
     // count holes that have actually been played so an in-progress round
     // doesn't show a misleading total.
-    const gridTotals = round.players.map((_, i) => {
-      let sSum = 0, sCount = 0, pSum = 0, pCount = 0, relPar = 0;
-      for (let h = 0; h < 18; h++) {
-        const e = (round.scores[h] || {})[i] || {};
-        if (e.strokes != null && e.strokes !== "") {
-          const s = Number(e.strokes);
-          sSum += s;
-          sCount++;
-          relPar += s - (round.par[h] ?? 4);
+    function rangeTotals(startHole, endHoleExclusive) {
+      return round.players.map((_, i) => {
+        let sSum = 0, sCount = 0, pSum = 0, pCount = 0, relPar = 0;
+        for (let h = startHole; h < endHoleExclusive; h++) {
+          const e = (round.scores[h] || {})[i] || {};
+          if (e.strokes != null && e.strokes !== "") {
+            const s = Number(e.strokes);
+            sSum += s;
+            sCount++;
+            relPar += s - (round.par[h] ?? 4);
+          }
+          if (e.putts != null && e.putts !== "") {
+            pSum += Number(e.putts);
+            pCount++;
+          }
         }
-        if (e.putts != null && e.putts !== "") {
-          pSum += Number(e.putts);
-          pCount++;
-        }
-      }
-      return { sSum, sCount, pSum, pCount, relPar };
-    });
+        return { sSum, sCount, pSum, pCount, relPar };
+      });
+    }
+    const gridTotals = rangeTotals(0, 18);
+    const frontNineTotals = rangeTotals(0, 9);
+    const backNineTotals = rangeTotals(9, 18);
     const formatRelPar = (n) => (n === 0 ? "E" : n > 0 ? `+${n}` : `${n}`);
 
     return (
@@ -4612,23 +4625,58 @@ function computeRoundScoring(round) {
                 </thead>
                 <tbody>
                   {Array.from({ length: 18 }).map((_, h) => (
-                    <tr key={h} onClick={() => setHoleIdx(h)} style={{ cursor: "pointer", background: h === holeIdx ? "#F0EEE3" : undefined }}>
-                      <td>{h + 1}</td>
-                      <td>{round.par[h]}</td>
-                      {round.players.map((_, i) => {
-                        const e = (round.scores[h] || {})[i] || {};
-                        return (
-                          <td key={i}>
-                            {g.hasScore ? (e.strokes ?? "-") : ""}
-                            {g.hasScore && g.hasPutts ? "/" : ""}
-                            {g.hasPutts ? (e.putts ?? "-") : ""}
-                          </td>
-                        );
-                      })}
-                    </tr>
+                    <React.Fragment key={h}>
+                      <tr onClick={() => setHoleIdx(h)} style={{ cursor: "pointer", background: h === holeIdx ? "#F0EEE3" : undefined }}>
+                        <td>{h + 1}</td>
+                        <td>{round.par[h]}</td>
+                        {round.players.map((_, i) => {
+                          const e = (round.scores[h] || {})[i] || {};
+                          return (
+                            <td key={i}>
+                              {g.hasScore ? (e.strokes ?? "-") : ""}
+                              {g.hasScore && g.hasPutts ? "/" : ""}
+                              {g.hasPutts ? (e.putts ?? "-") : ""}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                      {h === 8 && (
+                        <tr style={{ fontWeight: 700, background: "#EFEAD9" }}>
+                          <td colSpan={2}>OUT</td>
+                          {round.players.map((_, i) => {
+                            const t = frontNineTotals[i];
+                            return (
+                              <td key={i}>
+                                {g.hasScore ? (t.sCount ? t.sSum : "-") : ""}
+                                {g.hasScore && g.hasPutts ? "/" : ""}
+                                {g.hasPutts ? (t.pCount ? t.pSum : "-") : ""}
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      )}
+                      {h === 17 && (
+                        <tr style={{ fontWeight: 700, background: "#EFEAD9" }}>
+                          <td colSpan={2}>IN</td>
+                          {round.players.map((_, i) => {
+                            const t = backNineTotals[i];
+                            return (
+                              <td key={i}>
+                                {g.hasScore ? (t.sCount ? t.sSum : "-") : ""}
+                                {g.hasScore && g.hasPutts ? "/" : ""}
+                                {g.hasPutts ? (t.pCount ? t.pSum : "-") : ""}
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      )}
+                    </React.Fragment>
                   ))}
                 </tbody>
                 <tfoot>
+                  <tr>
+                    <td colSpan={2 + round.players.length} style={{ padding: 0, height: 10, background: "#fff", border: "none" }}></td>
+                  </tr>
                   <tr style={{ fontWeight: 700, background: "#F0EEE3" }}>
                     <td colSpan={2}>Total</td>
                     {round.players.map((_, i) => {
@@ -4659,6 +4707,9 @@ function computeRoundScoring(round) {
                       ))}
                     </tr>
                   )}
+                  <tr>
+                    <td colSpan={2 + round.players.length} style={{ padding: 0, height: 10, background: "#fff", border: "none" }}></td>
+                  </tr>
                   <tr style={{ fontWeight: 700, background: "#F0EEE3" }}>
                     <td colSpan={2}>Handicap</td>
                     {round.players.map((p, i) => (
