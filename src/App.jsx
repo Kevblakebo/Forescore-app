@@ -2653,7 +2653,7 @@ function computeRoundScoring(round) {
       <div className="gsc">
         <style>{STYLE}</style>
         <Header
-          title={<><span style={{ fontSize: 23 }}>Foresa Golf</span><br /><span style={{ fontSize: 11, opacity: 0.75, letterSpacing: "0.5px", textTransform: "uppercase", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>Golf Games & Scoring</span></>}
+          title={<><span style={{ fontSize: 23 }}>Foresa Golf</span><br /><span style={{ fontSize: 11, fontWeight: 400, opacity: 0.75, letterSpacing: "0.5px", textTransform: "uppercase", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>Golf Games & Scoring</span></>}
           sub="Share games and scores on the course"
         />
         <div className="gsc-body gsc-body-tabbed">
