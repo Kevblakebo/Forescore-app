@@ -1,6 +1,6 @@
 {
-  "name": "ForTheScore",
-  "short_name": "ForTheScore",
+  "name": "Foresa",
+  "short_name": "Foresa",
   "description": "Golf games scorecard and tournament tracker",
   "start_url": "/",
   "display": "standalone",
