@@ -2498,7 +2498,7 @@ function computeRoundScoring(round) {
 
   const computed = useMemo(() => computeRoundScoring(round), [round]);
 
-  // ForTheScore is built for phones only - this gate runs after every hook
+  // Foresa is built for phones only - this gate runs after every hook
   // above has already executed (Rules of Hooks requires hooks to run
   // unconditionally), so it's safe to return early here for anyone on a
   // tablet or desktop instead of rendering the app itself.
@@ -2507,8 +2507,8 @@ function computeRoundScoring(round) {
       <div className="gsc" style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: 24, textAlign: "center" }}>
         <style>{STYLE}</style>
         <div>
-          <img src={LOGO_DATA_URI} alt="ForTheScore logo" style={{ width: 120, height: "auto", marginBottom: 16 }} />
-          <div className="gsc-display" style={{ fontSize: 20, fontWeight: 700, marginBottom: 10 }}>ForTheScore is built for phones</div>
+          <img src={LOGO_DATA_URI} alt="Foresa logo" style={{ width: 120, height: "auto", marginBottom: 16 }} />
+          <div className="gsc-display" style={{ fontSize: 20, fontWeight: 700, marginBottom: 10 }}>Foresa is built for phones</div>
           <div style={{ fontSize: 14, color: "#4b4b45", lineHeight: 1.6, maxWidth: 360 }}>
             This app is designed for use on a mobile phone out on the course, and isn't optimized for tablets or desktop browsers. Please open this link on your phone to play.
           </div>
@@ -2556,7 +2556,7 @@ function computeRoundScoring(round) {
           {right}
           <img
             src={LOGO_DATA_URI}
-            alt="ForTheScore logo"
+            alt="Foresa logo"
             style={{ width: 68, height: "auto", objectFit: "contain", flexShrink: 0, alignSelf: "flex-start", marginRight: -8, marginTop: -2 }}
           />
         </div>
@@ -2653,12 +2653,12 @@ function computeRoundScoring(round) {
       <div className="gsc">
         <style>{STYLE}</style>
         <Header
-          title={<><span style={{ fontSize: 23 }}>ForTheScore</span><br /><span style={{ fontSize: 11, opacity: 0.75, letterSpacing: "0.5px", textTransform: "uppercase", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>Golf Games & Scorekeeping</span></>}
-          sub="Track games, teams &amp; points on the course"
+          title={<><span style={{ fontSize: 23 }}>Foresa</span><br /><span style={{ fontSize: 11, opacity: 0.75, letterSpacing: "0.5px", textTransform: "uppercase", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>Golf Games & Scoring</span></>}
+          sub="Share games and scores on the course"
         />
         <div className="gsc-body gsc-body-tabbed">
           <div style={{ fontSize: 13, color: "#4b4b45", lineHeight: 1.55, margin: "0 0 16px" }}>
-            Less scoring, more golf! ForTheScore makes it easy and fun to play various golf game formats, share your scorecard live on the course, and settle who's buying at the 19th hole!
+            Less scoring, more golf! Foresa makes it easy and fun to play various golf game formats, share your scorecard live on the course, and settle who's buying at the 19th hole!
             <br />
             <br />
             To start a new round or tournament:
@@ -3193,7 +3193,7 @@ function computeRoundScoring(round) {
           <div className="gsc-card" style={{ cursor: "pointer" }} onClick={() => goToScreen("about")}>
             <div className="gsc-label" style={{ marginBottom: 6 }}>About this App</div>
             <div style={{ fontSize: 13, color: "#4b4b45" }}>
-              What ForTheScore tracks for you, and how a round works from tee to tally.
+              What Foresa tracks for you, and how a round works from tee to tally.
             </div>
             <button className="gsc-link" style={{ marginTop: 8, fontSize: 12 }} onClick={() => goToScreen("about")}>
               Read more
@@ -3249,12 +3249,12 @@ function computeRoundScoring(round) {
     return (
       <div className="gsc">
         <style>{STYLE}</style>
-        <Header title="About this App" sub="What ForTheScore does for you" onBack={() => goBack("libraryTab")} />
+        <Header title="About this App" sub="What Foresa does for you" onBack={() => goBack("libraryTab")} />
         <div className="gsc-body">
           <div className="gsc-card">
             <div style={{ fontSize: 13, color: "#4b4b45", lineHeight: 1.6 }}>
               <p style={{ margin: "0 0 14px" }}>
-                The ForTheScore golf game scorecard app manages and shares the detail of various golf game formats you can play with your group live on the course so you don't have to: game type, rules, players, teams, scoring, max scores, course pars, handicaps, mulligans, dates, and prizes. You no longer have to do it in your head or on a paper scorecard.
+                The Foresa golf game scorecard app manages and shares the detail of various golf game formats you can play with your group live on the course so you don't have to: game type, rules, players, teams, scoring, max scores, course pars, handicaps, mulligans, dates, and prizes. You no longer have to do it in your head or on a paper scorecard.
               </p>
               <p style={{ margin: "0 0 14px" }}>
                 Before you tee off, you can quickly set the details that matter for your group. Just pick a game and enter the details before the round. Then each player enters their own scores during play (or one person can enter for everyone), and everyone can see where things stand as you go. When the round wraps up, points are calculated and saved automatically.
@@ -4457,7 +4457,7 @@ function computeRoundScoring(round) {
         <div style={{ position: "relative", background: "#1B4332", padding: "28px 18px 22px", overflow: "hidden" }}>
           <Fireworks />
           <div style={{ position: "relative", textAlign: "center" }}>
-            <img src={LOGO_DATA_URI} alt="ForTheScore logo" style={{ width: 64, height: "auto", marginBottom: 10 }} />
+            <img src={LOGO_DATA_URI} alt="Foresa logo" style={{ width: 64, height: "auto", marginBottom: 10 }} />
             <div className="gsc-display" style={{ fontSize: 24, fontWeight: 700, color: "#F3EFE0" }}>Round Complete!</div>
             <div style={{ fontSize: 13, color: "#F3EFE0", opacity: 0.8, marginTop: 4 }}>
               {round.name} - {g.name} - {round.date}
