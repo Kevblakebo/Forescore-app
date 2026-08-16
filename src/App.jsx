@@ -2817,7 +2817,7 @@ function computeRoundScoring(round) {
               );
             })}
 
-            <div className="gsc-label" style={{ marginTop: 14, marginBottom: 6 }}>Join a tournament</div>
+            <div className="gsc-label" style={{ marginTop: 14, marginBottom: 6 }}>Join an existing tournament</div>
             <div className="gsc-row">
               <input
                 className="gsc-input gsc-mono"
@@ -3055,7 +3055,7 @@ function computeRoundScoring(round) {
           )}
 
           <div className="gsc-card">
-            <div className="gsc-label" style={{ marginBottom: 6 }}>Join a tournament</div>
+            <div className="gsc-label" style={{ marginBottom: 6 }}>Join an existing tournament</div>
             <div className="gsc-row">
               <input
                 className="gsc-input gsc-mono"
