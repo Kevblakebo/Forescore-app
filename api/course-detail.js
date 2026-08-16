@@ -17,6 +17,11 @@ export default async function handler(req, res) {
       { headers: { Authorization: `Key ${apiKey}` } }
     );
     if (!upstream.ok) {
+      if (upstream.status === 429) {
+        return res.status(429).json({
+          error: "The free course search plan allows 50 lookups a day, and today's have run out. It resets tomorrow - in the meantime, use \"Enter or edit par manually\" below.",
+        });
+      }
       return res.status(upstream.status).json({ error: `Course database returned ${upstream.status}` });
     }
     const data = await upstream.json();
