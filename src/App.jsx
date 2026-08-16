@@ -645,6 +645,13 @@ export default function GolfScorecard() {
   const [storageBroken, setStorageBroken] = useState(false);
   const failCountRef = useRef(0);
   const lastLocalEditRef = useRef(0);
+  // One ref array per manual par-entry grid (Setup, Wizard, Tournament
+  // create) - used to auto-advance focus to the next hole's input once a
+  // par digit is typed, since real par values are always a single digit
+  // (3-6), so there's never a legitimate second keystroke to wait for.
+  const parRefsSetup = useRef([]);
+  const parRefsWizard = useRef([]);
+  const parRefsTournament = useRef([]);
   const [pasteData, setPasteData] = useState("");
   const [pasteMsg, setPasteMsg] = useState("");
   const [copyMsg, setCopyMsg] = useState("");
@@ -3371,6 +3378,7 @@ function computeRoundScoring(round) {
                       <div key={i}>
                         <div style={{ fontSize: 10, textAlign: "center", color: "#6b6b63" }}>H{i + 1}</div>
                         <input
+                          ref={(el) => (parRefsWizard.current[i] = el)}
                           className="gsc-input gsc-mono"
                           style={{ padding: "6px 2px", textAlign: "center", borderColor: v === "" || v == null ? "#C1440E" : undefined }}
                           type="number"
@@ -3381,6 +3389,9 @@ function computeRoundScoring(round) {
                             const next = [...activePar];
                             next[i] = raw === "" ? "" : Number(raw);
                             setActivePar(next);
+                            if (raw !== "" && i < 17 && parRefsWizard.current[i + 1]) {
+                              parRefsWizard.current[i + 1].focus();
+                            }
                           }}
                         />
                       </div>
@@ -3691,6 +3702,7 @@ function computeRoundScoring(round) {
                         <div key={i}>
                           <div style={{ fontSize: 10, textAlign: "center", color: "#6b6b63" }}>H{i + 1}</div>
                           <input
+                            ref={(el) => (parRefsSetup.current[i] = el)}
                             className="gsc-input gsc-mono"
                             style={{ padding: "6px 2px", textAlign: "center", borderColor: v === "" || v == null ? "#C1440E" : undefined }}
                             type="number"
@@ -3706,6 +3718,9 @@ function computeRoundScoring(round) {
                               const next = [...par];
                               next[i] = raw === "" ? "" : Number(raw);
                               setPar(next);
+                              if (raw !== "" && i < 17 && parRefsSetup.current[i + 1]) {
+                                parRefsSetup.current[i + 1].focus();
+                              }
                             }}
                           />
                         </div>
@@ -4104,6 +4119,7 @@ function computeRoundScoring(round) {
                 <div key={i}>
                   <div style={{ fontSize: 10, textAlign: "center", color: "#6b6b63" }}>H{i + 1}</div>
                   <input
+                    ref={(el) => (parRefsTournament.current[i] = el)}
                     className="gsc-input gsc-mono"
                     style={{ padding: "6px 2px", textAlign: "center", borderColor: v === "" || v == null ? "#C1440E" : undefined }}
                     type="number"
@@ -4114,6 +4130,9 @@ function computeRoundScoring(round) {
                       const next = [...tournamentPar];
                       next[i] = raw === "" ? "" : Number(raw);
                       setTournamentPar(next);
+                      if (raw !== "" && i < 17 && parRefsTournament.current[i + 1]) {
+                        parRefsTournament.current[i + 1].focus();
+                      }
                     }}
                   />
                 </div>
