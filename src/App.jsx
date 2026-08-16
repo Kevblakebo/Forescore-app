@@ -484,6 +484,7 @@ const LETTERS = ["A", "B", "C", "D"];
 const AVATAR_OPTIONS = [
   "\u{1F60E}", "\u{1F525}", "\u2B50", "\u{1F3C6}", "\u{1F3AF}", "\u{1F981}", "\u{1F43B}", "\u{1F985}", "\u{1F422}", "\u{1F41D}", "\u{1F30A}", "\u{1F335}",
   "\u{1F9B8}", "\u{1F9B9}", "\u{1F977}", "\u{1F987}", "\u{1F577}\u{FE0F}", "\u26A1", "\u{1F4A5}", "\u{1F6E1}\u{FE0F}", "\u{1F4AA}", "\u{1F680}",
+  "\u{1F42F}", "\u{1F988}",
 ];
 const TEAM_CLASS = ["gsc-teamA", "gsc-teamB", "gsc-teamC", "gsc-teamD"];
 
