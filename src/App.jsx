@@ -2545,7 +2545,7 @@ function computeRoundScoring(round) {
         <div className="gsc-header-row">
           <div style={{ flex: "1 1 auto", minWidth: 0 }}>
             {onBack && (
-              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6, flexWrap: "wrap" }}>
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 6, flexWrap: "wrap" }}>
                 <button className="gsc-btn gsc-btn-ghost" style={{ padding: "5px 6px", fontSize: 12, width: 84, textAlign: "center" }} onClick={onBack}>Back</button>
                 {backExtra}
               </div>
@@ -2557,7 +2557,7 @@ function computeRoundScoring(round) {
           <img
             src={LOGO_DATA_URI}
             alt="Foresa logo"
-            style={{ width: 48, height: "auto", objectFit: "contain", flexShrink: 0, alignSelf: "flex-start", marginRight: -8, marginTop: -2 }}
+            style={{ width: 48, height: "auto", objectFit: "contain", flexShrink: 0, alignSelf: "flex-start", marginRight: 0, marginTop: -2 }}
           />
         </div>
       </div>
@@ -4622,7 +4622,7 @@ function computeRoundScoring(round) {
             </button>
           }
           right={
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6, alignSelf: "flex-start" }}>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6, alignSelf: "flex-start", marginRight: 10 }}>
               <div className="gsc-code" style={{ width: 84, textAlign: "center" }}>{round.id}</div>
               <button className="gsc-link" style={{ color: "#F3EFE0", fontSize: 11, textDecoration: "underline" }} onClick={() => openRules(round.game)}>
                 Rules
