@@ -6,7 +6,7 @@ import { Home as HomeIcon, Flag as FlagIcon, Trophy as TrophyIcon, User as UserI
    flag (#C1440E) red accent for leaders/alerts, gold (#B08D57) for wins/prizes,
    sage (#8FA998) secondary. Display face: native system font (San Francisco
    on iOS, Roboto on Android) throughout, including headings and modals.
-   Data face: ui-monospace (ledger digits; SF Mono on iOS).
+   Data face: Courier New (ledger digits, plain zero - no slash/dot).
 ------------------------------------- */
 
 const LOGO_DATA_URI = "data:image/png;base64,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";
@@ -15,7 +15,7 @@ const STYLE = `
   .gsc { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background:#F3EFE0; color:#2B2B28; min-height:100vh; -webkit-tap-highlight-color: transparent; }
   .gsc * { box-sizing: border-box; }
   .gsc-display { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif; }
-  .gsc-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  .gsc-mono { font-family: "Courier New", Courier, monospace; }
   .gsc-header { background:#1B4332; color:#F3EFE0; padding:calc(16px + env(safe-area-inset-top)) 18px 16px; position:sticky; top:0; z-index:10; }
   .gsc-header-row { display:flex; align-items:center; justify-content:space-between; gap:8px; }
   .gsc-title { font-size:19px; font-weight:700; letter-spacing:0.3px; line-height:1.2; }
@@ -39,7 +39,7 @@ const STYLE = `
   .gsc-row { display:flex; gap:10px; }
   .gsc-row > * { flex:1; }
   .gsc-hole-strip { display:flex; overflow-x:auto; gap:4px; padding:10px 16px; background:#16382C; -webkit-overflow-scrolling:touch; }
-  .gsc-hole-pip { flex:0 0 auto; width:38px; min-height:38px; display:flex; align-items:center; justify-content:center; text-align:center; font-size:12px; color:#F3EFE0; opacity:0.55; padding:4px 0; border-radius:8px; cursor:pointer; font-family: ui-monospace, monospace; touch-action:manipulation; }
+  .gsc-hole-pip { flex:0 0 auto; width:38px; min-height:38px; display:flex; align-items:center; justify-content:center; text-align:center; font-size:12px; color:#F3EFE0; opacity:0.55; padding:4px 0; border-radius:8px; cursor:pointer; font-family: "Courier New", Courier, monospace; touch-action:manipulation; }
   .gsc-hole-pip.active { opacity:1; background:#C1440E; font-weight:700; }
   .gsc-hole-pip.done { opacity:0.9; border-bottom:2px solid #B08D57; }
   .gsc-hole-nav { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
@@ -48,7 +48,7 @@ const STYLE = `
   .gsc-stepper { display:flex; align-items:center; gap:10px; }
   .gsc-stepper button { width:44px; height:44px; border-radius:50%; border:1.5px solid #1B4332; background:#fff; font-size:18px; font-weight:700; color:#1B4332; cursor:pointer; touch-action:manipulation; }
   .gsc-stepper button:disabled { opacity:0.3; }
-  .gsc-stepper-val { font-size:20px; font-weight:700; width:28px; text-align:center; font-family: ui-monospace, monospace; }
+  .gsc-stepper-val { font-size:20px; font-weight:700; width:28px; text-align:center; font-family: "Courier New", Courier, monospace; }
   .gsc-player-row { border-radius:10px; padding:12px; margin-bottom:10px; }
   .gsc-player-name { font-weight:700; font-size:19px; }
   .gsc-hcp { font-size:11px; color:#6b6b63; margin-left:6px; }
@@ -60,12 +60,12 @@ const STYLE = `
   .gsc-teamB { border-left:5px solid #C1440E; background:#FBEDE5; }
   .gsc-teamC { border-left:5px solid #B08D57; background:#F8F1E4; }
   .gsc-teamD { border-left:5px solid #4A6C5A; background:#EBF0EC; }
-  table.gsc-grid { width:100%; border-collapse:collapse; font-size:11px; font-family: ui-monospace, monospace; }
+  table.gsc-grid { width:100%; border-collapse:collapse; font-size:11px; font-family: "Courier New", Courier, monospace; }
   table.gsc-grid th, table.gsc-grid td { border:1px solid #e5e0cd; padding:4px 3px; text-align:center; }
   table.gsc-grid th { background:#1B4332; color:#F3EFE0; position:sticky; top:0; }
   .gsc-link { color:#1B4332; text-decoration:underline; font-weight:600; cursor:pointer; background:none; border:none; padding:0; font-size:inherit; }
   .gsc-empty { text-align:center; padding:40px 16px; color:#6b6b63; }
-  .gsc-code { font-family: ui-monospace, monospace; font-weight:800; letter-spacing:2px; background:rgba(243,239,224,0.15); padding:4px 10px; border-radius:6px; }
+  .gsc-code { font-family: "Courier New", Courier, monospace; font-weight:800; letter-spacing:2px; background:rgba(243,239,224,0.15); padding:4px 10px; border-radius:6px; }
   .gsc-modal-backdrop { position:fixed; inset:0; background:rgba(27,31,26,0.55); display:flex; align-items:center; justify-content:center; z-index:100; padding:20px; }
   .gsc-modal { background:#FDFCF7; border-radius:16px; padding:22px 20px; max-width:340px; width:100%; box-shadow:0 8px 30px rgba(0,0,0,0.25); }
   .gsc-modal-title { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif; font-size:19px; font-weight:700; color:#1B4332; margin-bottom:8px; }
@@ -76,6 +76,8 @@ const STYLE = `
   @keyframes gsc-firework-pop { 0% { opacity:0; } 15% { opacity:1; } 100% { opacity:0; } }
   .gsc-firework-field { position:absolute; inset:0; overflow:hidden; pointer-events:none; }
   .gsc-winner-card { border:2px solid #B08D57; background:linear-gradient(180deg, rgba(176,141,87,0.14), rgba(176,141,87,0.03)); }
+  @keyframes gsc-accolade-pop { 0% { transform:translateX(-50%) scale(0.7); opacity:0; } 15% { transform:translateX(-50%) scale(1.08); opacity:1; } 25% { transform:translateX(-50%) scale(1); opacity:1; } 85% { transform:translateX(-50%) scale(1); opacity:1; } 100% { transform:translateX(-50%) scale(0.9); opacity:0; } }
+  .gsc-accolade { position:fixed; top:14px; left:50%; z-index:40; background:#1B4332; color:#F3EFE0; border:2px solid #B08D57; border-radius:16px; padding:12px 22px; text-align:center; box-shadow:0 6px 20px rgba(0,0,0,0.3); animation: gsc-accolade-pop 2s ease-out both; pointer-events:none; }
   .gsc-navitem { flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; padding:8px 2px; border-radius:10px; cursor:pointer; border:none; background:none; touch-action:manipulation; min-height:44px; }
   .gsc-navitem-label { font-size:10px; font-weight:600; letter-spacing:0.2px; }
   .gsc-body-tabbed { padding-bottom:calc(80px + env(safe-area-inset-bottom)); }
@@ -479,6 +481,7 @@ const SEABLUFFE_PAIRINGS = [
   [[0, 3], [1, 2]],
 ];
 const LETTERS = ["A", "B", "C", "D"];
+const AVATAR_OPTIONS = ["\u{1F60E}", "\u{1F525}", "\u2B50", "\u{1F3C6}", "\u{1F3AF}", "\u{1F981}", "\u{1F43B}", "\u{1F985}", "\u{1F422}", "\u{1F41D}", "\u{1F30A}", "\u{1F335}"];
 const TEAM_CLASS = ["gsc-teamA", "gsc-teamB", "gsc-teamC", "gsc-teamD"];
 
 // Ponto's mulligan allowance resets every 9 holes (front/back nine).
@@ -603,6 +606,33 @@ async function storageDelete(key, shared, attempt = 1) {
 
 export default function GolfScorecard() {
   const [screen, setScreen] = useState("home");
+  // Generic "wherever you actually came from" back-navigation - forward
+  // navigation calls goToScreen() (instead of setScreen() directly),
+  // which pushes the current screen onto a plain ref-based stack before
+  // switching. Back buttons call goBack() to pop it. This replaced an
+  // earlier version that tried to auto-detect navigation reactively via
+  // a useEffect and called setScreen from inside another setState's
+  // updater function - that's a React anti-pattern (nested state-update
+  // side effects don't run in a reliably predictable order), which is
+  // exactly why Back needed multiple taps and often still landed on the
+  // wrong screen. A plain ref for the stack sidesteps all of that, since
+  // ref reads/writes are synchronous and don't interact with React's
+  // update scheduling at all.
+  const screenHistoryRef = useRef([]);
+  function goToScreen(next) {
+    screenHistoryRef.current = [...screenHistoryRef.current, screen];
+    setScreen(next);
+  }
+  function goBack(fallback) {
+    const h = screenHistoryRef.current;
+    if (h.length === 0) {
+      setScreen(fallback || "home");
+      return;
+    }
+    const prev = h[h.length - 1];
+    screenHistoryRef.current = h.slice(0, -1);
+    setScreen(prev);
+  }
 
   // Every screen change (any navigation button) should land at the top of
   // the page, rather than keeping whatever scroll position the previous
@@ -640,6 +670,12 @@ export default function GolfScorecard() {
   const [courseSearchBusy, setCourseSearchBusy] = useState(false);
   const [courseSearchErr, setCourseSearchErr] = useState("");
   const [courseTeeOptions, setCourseTeeOptions] = useState(null); // {courseLabel, tees: [...]} once a course is picked
+  const [showManualCourse, setShowManualCourse] = useState(false);
+  const [avatarPickerFor, setAvatarPickerFor] = useState(null); // player index currently showing its avatar picker, or null
+  const [wizardStepId, setWizardStepId] = useState("playerCount");
+  const [wizardAnswers, setWizardAnswers] = useState({});
+  const [wizardHistory, setWizardHistory] = useState([]); // stack of actually-visited step ids, for Back
+  const [wizardFieldErr, setWizardFieldErr] = useState("");
   const [courseDetailBusy, setCourseDetailBusy] = useState(false);
   const [courseMsg, setCourseMsg] = useState("");
 
@@ -866,7 +902,7 @@ export default function GolfScorecard() {
     setRound(activeRound);
     setGameKey(activeRound.game);
     setHoleIdx(firstOpenHole(activeRound));
-    setScreen("card");
+    goToScreen("card");
   }
 
   // Guard against accidentally losing an in-progress round: tapping Back
@@ -961,7 +997,7 @@ export default function GolfScorecard() {
       await storageDelete(LAST_TOURNAMENT_KEY, false);
       setLastTournament(null);
     }
-    setScreen("tournamentsTab");
+    goToScreen("tournamentsTab");
   }
 
   function requestDeleteFinishedTournament(t) {
@@ -1043,7 +1079,7 @@ export default function GolfScorecard() {
     // single cell across all 18 holes to be filled in - that stricter check
     // used to silently skip the celebration over one missed entry, with no
     // indication why.
-    setScreen("roundComplete");
+    goToScreen("roundComplete");
   }
 
   function finishCelebrationAndGoHome() {
@@ -1066,7 +1102,7 @@ export default function GolfScorecard() {
     setHoleIdx(firstOpenHole(r));
     setActiveRound(r);
     saveRound(r);
-    setScreen("card");
+    goToScreen("card");
   }
 
   function requestDeleteFinishedRound(f) {
@@ -1288,6 +1324,138 @@ export default function GolfScorecard() {
     setCourseSearchQuery("");
   }
 
+  // ---------- Game Wizard ----------
+  // Resets the same underlying state startNewRound uses, since the wizard
+  // ultimately drives those exact fields - this lets the wizard finish by
+  // calling the existing finishSetup()/proceedToFoursomeRoster() functions
+  // directly instead of duplicating their validation and round-creation
+  // logic.
+  function startWizard() {
+    setActiveTournament(null);
+    setWizardStepId("playerCount");
+    setWizardAnswers({});
+    setWizardHistory([]);
+    setErr("");
+    setTournamentErr("");
+    setRoundName("");
+    setRoundDate(new Date().toISOString().slice(0, 10));
+    setPlayers([
+      { name: "", hcp: "", avatar: "" },
+      { name: "", hcp: "", avatar: "" },
+      { name: "", hcp: "", avatar: "" },
+      { name: "", hcp: "", avatar: "" },
+    ]);
+    setPontoPairing([[0, 1], [2, 3]]);
+    setPar(Array(18).fill(""));
+    setCourseName("");
+    setCourseMsg("");
+    setCourseSearchQuery("");
+    setCourseSearchResults([]);
+    setCourseSearchErr("");
+    setCourseTeeOptions(null);
+    setShowManualCourse(false);
+    loadSavedCourses();
+    goToScreen("gameWizard");
+  }
+
+  function wizardNextStepId(stepId, answers) {
+    switch (stepId) {
+      case "playerCount":
+        if (Number(answers.playerCount) > 4) return "tournamentScoring";
+        return Number(answers.playerCount) === 4 ? "roundMode" : "individualScoring";
+      case "roundMode":
+        return answers.roundMode === "team" ? "teamType" : "individualScoring";
+      case "teamType":
+        return answers.teamType === "rotating" ? "confirmGame" : "teamScoring";
+      case "teamScoring":
+      case "individualScoring":
+      case "tournamentScoring":
+        return "confirmGame";
+      case "confirmGame":
+        return "field_name";
+      case "field_name":
+        return "field_course";
+      case "field_course":
+        return "field_limits";
+      case "field_limits":
+        return "field_prize";
+      case "field_prize":
+        return answers.isTournament ? "finish" : "field_venmo";
+      case "field_venmo":
+        return "field_players";
+      case "field_players":
+        return "finish";
+      default:
+        return "finish";
+    }
+  }
+
+  // Rough-but-reasonable progress percentage, derived fresh from the
+  // current step id each render rather than tracked incrementally - the
+  // field-collection phase (once the game is picked) is a known, fixed
+  // list per path, so that part is precise; the branching phase before
+  // that is an approximation, since the total step count isn't knowable
+  // until enough questions are answered.
+  function wizardProgress() {
+    const roundFields = ["field_name", "field_course", "field_limits", "field_prize", "field_venmo", "field_players"];
+    const tournamentFields = ["field_name", "field_course", "field_limits", "field_prize"];
+    const fields = wizardAnswers.isTournament ? tournamentFields : roundFields;
+    const fieldIdx = fields.indexOf(wizardStepId);
+    if (fieldIdx >= 0) return Math.round(38 + (60 * fieldIdx) / fields.length);
+    if (wizardStepId === "confirmGame") return 35;
+    if (wizardStepId === "finish") return 100;
+    const branchOrder = ["playerCount", "roundMode", "teamType", "teamScoring", "individualScoring", "tournamentScoring"];
+    const idx = branchOrder.indexOf(wizardStepId);
+    return Math.min(30, 8 + Math.max(0, idx) * 7);
+  }
+
+  function wizardGoNext(stepId, patch) {
+    setWizardFieldErr("");
+    const nextAnswers = { ...wizardAnswers, ...patch };
+    const next = wizardNextStepId(stepId, nextAnswers);
+    if (next === "confirmGame" && nextAnswers.resolvedGameKey) {
+      const key = nextAnswers.resolvedGameKey;
+      if (nextAnswers.isTournament) {
+        setTournamentGameKey(key);
+        setTournamentCfg({ ...GAMES[key].defaults });
+        setTournamentPar(Array(18).fill(""));
+        setTournamentCourseName("");
+        setTournamentName("");
+        setTournamentFoursomeCount(Math.max(2, Math.ceil((Number(nextAnswers.playerCount) || 8) / 4)));
+      } else {
+        setGameKey(key);
+        setCfg({ ...GAMES[key].defaults });
+        const count = key === "swami" || key === "dstreet" ? Math.max(1, Math.min(4, Number(nextAnswers.playerCount) || 4)) : 4;
+        setPlayers((p) => {
+          const base = [...p];
+          while (base.length < count) base.push({ name: "", hcp: "", avatar: "" });
+          return base.slice(0, count);
+        });
+      }
+    }
+    setWizardAnswers(nextAnswers);
+    setWizardHistory((h) => [...h, stepId]);
+    setWizardStepId(next);
+  }
+
+  function wizardGoBack() {
+    setWizardFieldErr("");
+    // Uses an explicit history stack (pushed in wizardGoNext) rather than
+    // trying to infer the previous step from the current one - several
+    // different questions (rotating teams, best-ball vs combined,
+    // individual scoring, tournament scoring) all lead to the same
+    // "confirm game" step, so guessing backwards from just the current
+    // step id is ambiguous and was picking the wrong branch. An explicit
+    // stack of what was actually visited has no such ambiguity.
+    if (wizardHistory.length === 0) {
+      setScreen("home");
+      return;
+    }
+    const prev = wizardHistory[wizardHistory.length - 1];
+    setWizardHistory((h) => h.slice(0, -1));
+    setWizardStepId(prev);
+  }
+
   function startNewRound(key) {
     setActiveTournament(null);
     setGameKey(key);
@@ -1295,10 +1463,10 @@ export default function GolfScorecard() {
     setRoundName("");
     setRoundDate(new Date().toISOString().slice(0, 10));
     setPlayers([
-      { name: "", hcp: "" },
-      { name: "", hcp: "" },
-      { name: "", hcp: "" },
-      { name: "", hcp: "" },
+      { name: "", hcp: "", avatar: "" },
+      { name: "", hcp: "", avatar: "" },
+      { name: "", hcp: "", avatar: "" },
+      { name: "", hcp: "", avatar: "" },
     ]);
     setPontoPairing([[0, 1], [2, 3]]);
     setPar(Array(18).fill(""));
@@ -1309,7 +1477,7 @@ export default function GolfScorecard() {
     setCourseSearchErr("");
     setCourseTeeOptions(null);
     loadSavedCourses();
-    setScreen("setup");
+    goToScreen("setup");
   }
 
   // Preps the same setup screen used for a normal round, but with the
@@ -1323,10 +1491,10 @@ export default function GolfScorecard() {
     setRoundName("");
     setRoundDate(tournament.date);
     setPlayers([
-      { name: "", hcp: "" },
-      { name: "", hcp: "" },
-      { name: "", hcp: "" },
-      { name: "", hcp: "" },
+      { name: "", hcp: "", avatar: "" },
+      { name: "", hcp: "", avatar: "" },
+      { name: "", hcp: "", avatar: "" },
+      { name: "", hcp: "", avatar: "" },
     ]);
     setPontoPairing([[0, 1], [2, 3]]);
     setPar([...tournament.par]);
@@ -1336,7 +1504,7 @@ export default function GolfScorecard() {
     const pointer = { id: tournament.id, name: tournament.name };
     setLastTournament(pointer);
     storageSet(LAST_TOURNAMENT_KEY, JSON.stringify(pointer), false);
-    setScreen("setup");
+    goToScreen("setup");
   }
 
   function updatePlayer(i, field, val) {
@@ -1351,10 +1519,10 @@ export default function GolfScorecard() {
   // team games and tournaments always need exactly 4 (2v2 or a foursome),
   // so this stays unused/inaccessible there.
   function addPlayerSlot() {
-    setPlayers((p) => (p.length >= 4 ? p : [...p, { name: "", hcp: "" }]));
+    setPlayers((p) => (p.length >= 4 ? p : [...p, { name: "", hcp: "", avatar: "" }]));
   }
   function removePlayerSlot(i) {
-    setPlayers((p) => (p.length <= 2 ? p : p.filter((_, idx) => idx !== i)));
+    setPlayers((p) => (p.length <= 1 ? p : p.filter((_, idx) => idx !== i)));
   }
 
   async function registerFoursomeInTournament(tournamentId, foursomeId, foursomeName) {
@@ -1374,11 +1542,11 @@ export default function GolfScorecard() {
 
   async function finishSetup() {
     setErr("");
-    const cleanPlayers = players.map((p) => ({ name: p.name.trim() || "Player", hcp: p.hcp }));
+    const cleanPlayers = players.map((p) => ({ name: p.name.trim() || "Player", hcp: p.hcp, avatar: p.avatar || "" }));
     const isIndividual = gameKey === "dstreet" || gameKey === "swami";
     if (isIndividual) {
-      if (cleanPlayers.length < 2) {
-        setErr("Need at least 2 players.");
+      if (cleanPlayers.length < 1) {
+        setErr("Need at least 1 player.");
         return;
       }
     } else if (cleanPlayers.length < 4) {
@@ -1450,7 +1618,7 @@ export default function GolfScorecard() {
     setActiveRound(newRound);
     setRound(newRound);
     setHoleIdx(0);
-    setScreen("card");
+    goToScreen("card");
   }
 
   function startTournamentCreateFlow(preselectedGameKey) {
@@ -1469,7 +1637,7 @@ export default function GolfScorecard() {
     setCourseSearchErr("");
     setCourseTeeOptions(null);
     setCourseMsg("");
-    setScreen("tournamentCreate");
+    goToScreen("tournamentCreate");
   }
 
   function proceedToFoursomeRoster() {
@@ -1490,14 +1658,14 @@ export default function GolfScorecard() {
       Array.from({ length: count }, (_, i) => ({
         name: `Foursome ${i + 1}`,
         players: [
-          { name: "", hcp: "" },
-          { name: "", hcp: "" },
-          { name: "", hcp: "" },
-          { name: "", hcp: "" },
+          { name: "", hcp: "", avatar: "" },
+          { name: "", hcp: "", avatar: "" },
+          { name: "", hcp: "", avatar: "" },
+          { name: "", hcp: "", avatar: "" },
         ],
       }))
     );
-    setScreen("tournamentRoster");
+    goToScreen("tournamentRoster");
   }
 
   function updateFoursomeDraftName(fi, val) {
@@ -1544,7 +1712,7 @@ export default function GolfScorecard() {
     for (const draft of tournamentFoursomesDraft) {
       const foursomeCode = genCode();
       const foursomeName = draft.name.trim() || "Foursome";
-      const cleanPlayers = draft.players.map((p) => ({ name: p.name.trim() || "Player", hcp: p.hcp }));
+      const cleanPlayers = draft.players.map((p) => ({ name: p.name.trim() || "Player", hcp: p.hcp, avatar: p.avatar || "" }));
       const foursomeRound = {
         id: foursomeCode,
         game: tournamentGameKey,
@@ -1736,7 +1904,7 @@ export default function GolfScorecard() {
   function openTournamentBoard(tournamentId) {
     setBoard(null);
     setBoardErr("");
-    setScreen("tournamentBoard");
+    goToScreen("tournamentBoard");
     loadTournamentBoard(tournamentId);
   }
 
@@ -1779,7 +1947,7 @@ export default function GolfScorecard() {
     rememberCode(r.id, r.name);
     setActiveRound(r);
     saveRound(r);
-    setScreen("card");
+    goToScreen("card");
   }
 
   function loadFromPastedData() {
@@ -1794,7 +1962,7 @@ export default function GolfScorecard() {
       setActiveRound(r);
       saveRound(r);
       setPasteData("");
-      setScreen("card");
+      goToScreen("card");
     } catch (e) {
       setPasteMsg("That doesn't look like valid round data. Make sure you copied the whole thing.");
     }
@@ -1851,6 +2019,78 @@ export default function GolfScorecard() {
     setStorageWarning("");
     if (round) saveRound(round);
   }
+
+  const [accolade, setAccolade] = useState(null); // {emoji, text, big, player, key}
+  const [accoladeQueue, setAccoladeQueue] = useState([]); // holds multiple accolades to show one at a time
+  const prevHoleIdxRef = useRef(holeIdx);
+  const latestRoundRef = useRef(round);
+  useEffect(() => {
+    latestRoundRef.current = round;
+  }, [round]);
+  const accoladeTimerRef = useRef(null);
+
+  // Figures out whether a just-entered stroke/putt count deserves a fun
+  // celebratory toast - pars/birdies/eagles/aces for strokes (relative to
+  // that hole's par), one-putts/zero-putts for putts. Returns null for
+  // anything that isn't worth calling out.
+  function getAccolade(field, value, parH) {
+    if (field === "strokes") {
+      if (value === 1) return { emoji: "\u{1F3C6}\u{1F389}", text: "HOLE IN ONE!!!", big: true };
+      if (parH == null) return null;
+      const diff = value - parH;
+      if (diff <= -2) return { emoji: "\u{1F985}", text: "EAGLE!", big: true };
+      if (diff === -1) return { emoji: "\u{1F426}", text: "BIRDIE!", big: false };
+      if (diff === 0) return { emoji: "\u{1F44D}", text: "Nice par!", big: false };
+      return null;
+    }
+    if (field === "putts") {
+      if (value === 0) return { emoji: "\u{1F3AF}\u{1F525}", text: "ZERO PUTTS!", big: true };
+      if (value === 1) return { emoji: "\u2B50", text: "ONE PUTT!", big: false };
+      return null;
+    }
+    return null;
+  }
+
+  // Shows accolades for the hole you just left, not while you're still
+  // dialing in a score on the hole you're currently on - so tapping the
+  // stepper through 3, 4, 5 on the way to your actual score doesn't flash
+  // a premature "Nice par!" partway there. Fires once per hole change,
+  // checking every player's final entered values for that completed hole.
+  useEffect(() => {
+    const prevIdx = prevHoleIdxRef.current;
+    const r = latestRoundRef.current;
+    if (prevIdx !== holeIdx && r) {
+      const prevParH = r.par ? r.par[prevIdx] : null;
+      const holeScores = r.scores[prevIdx] || {};
+      const newAccolades = [];
+      (r.players || []).forEach((p, i) => {
+        const entry = holeScores[i] || {};
+        const playerName = p.name || "Player";
+        if (entry.strokes != null && entry.strokes !== "") {
+          const acc = getAccolade("strokes", Number(entry.strokes), prevParH);
+          if (acc) newAccolades.push({ ...acc, player: playerName, key: `${Date.now()}-${i}-s` });
+        }
+        if (entry.putts != null && entry.putts !== "") {
+          const acc = getAccolade("putts", Number(entry.putts), prevParH);
+          if (acc) newAccolades.push({ ...acc, player: playerName, key: `${Date.now()}-${i}-p` });
+        }
+      });
+      if (newAccolades.length > 0) setAccoladeQueue((q) => [...q, ...newAccolades]);
+    }
+    prevHoleIdxRef.current = holeIdx;
+  }, [holeIdx]);
+
+  // Displays queued accolades one at a time rather than all at once, in
+  // case several players earned one on the same hole.
+  useEffect(() => {
+    if (accoladeQueue.length > 0 && !accolade) {
+      const [next, ...rest] = accoladeQueue;
+      setAccolade(next);
+      setAccoladeQueue(rest);
+      if (accoladeTimerRef.current) clearTimeout(accoladeTimerRef.current);
+      accoladeTimerRef.current = setTimeout(() => setAccolade(null), next.big ? 3200 : 2000);
+    }
+  }, [accoladeQueue, accolade]);
 
   function updateHoleEntry(playerIdx, field, value) {
     lastLocalEditRef.current = Date.now();
@@ -2181,7 +2421,7 @@ function computeRoundScoring(round) {
               key={item.key}
               className="gsc-navitem"
               style={{ background: active ? "rgba(243,239,224,0.12)" : "none" }}
-              onClick={() => setScreen(item.key)}
+              onClick={() => goToScreen(item.key)}
             >
               <Icon size={20} color={active ? "#F3EFE0" : "#8FA998"} strokeWidth={active ? 2.4 : 2} />
               <span className="gsc-navitem-label" style={{ color: active ? "#F3EFE0" : "#8FA998" }}>{item.label}</span>
@@ -2201,10 +2441,15 @@ function computeRoundScoring(round) {
     const colors = ["#C1440E", "#B08D57", "#8FA998", "#F3EFE0", "#3F6B54"];
     const bursts = [
       { left: "18%", top: "22%", delay: 0 },
-      { left: "78%", top: "16%", delay: 0.25 },
-      { left: "50%", top: "30%", delay: 0.5 },
-      { left: "30%", top: "45%", delay: 0.75 },
-      { left: "68%", top: "42%", delay: 1.0 },
+      { left: "78%", top: "16%", delay: 0.35 },
+      { left: "50%", top: "30%", delay: 0.7 },
+      { left: "30%", top: "45%", delay: 1.05 },
+      { left: "68%", top: "42%", delay: 1.4 },
+      { left: "12%", top: "38%", delay: 1.8 },
+      { left: "85%", top: "35%", delay: 2.2 },
+      { left: "42%", top: "18%", delay: 2.6 },
+      { left: "60%", top: "48%", delay: 3.0 },
+      { left: "25%", top: "20%", delay: 3.4 },
     ];
     return (
       <div className="gsc-firework-field">
@@ -2227,7 +2472,7 @@ function computeRoundScoring(round) {
                     opacity: 0,
                     "--dx": `${dx}px`,
                     "--dy": `${dy}px`,
-                    animation: `gsc-firework-particle 1.15s ease-out ${b.delay}s both`,
+                    animation: `gsc-firework-particle 1.3s ease-out ${b.delay}s both`,
                   }}
                 />
               );
@@ -2294,6 +2539,45 @@ function computeRoundScoring(round) {
             </div>
           )}
 
+          <div className="gsc-card gsc-winner-card" style={{ cursor: "pointer" }} onClick={startWizard}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: 16 }}>{"\u{1F9D9}"} Not sure which game to pick?</div>
+                <div style={{ fontSize: 13, color: "#4b4b45", marginTop: 3 }}>
+                  Answer a few quick questions and we'll pick the right format and set everything up for you.
+                </div>
+              </div>
+            </div>
+            <button className="gsc-btn gsc-btn-gold" style={{ width: "100%", marginTop: 10 }} onClick={startWizard}>
+              Start the Game Wizard
+            </button>
+          </div>
+
+          <div className="gsc-card">
+            <div className="gsc-label" style={{ marginBottom: 6, fontSize: 17 }}>Join an Existing Round</div>
+            <div className="gsc-row">
+              <input className="gsc-input gsc-mono" id="round-join-code-home" name="round-join-code-home" autoComplete="off" placeholder="ROUND CODE" value={joinCode} onChange={(e) => setJoinCode(e.target.value.toUpperCase())} maxLength={6} />
+              <button className="gsc-btn gsc-btn-primary" style={{ flex: "0 0 auto" }} disabled={busy || !joinCode} onClick={() => loadRound(joinCode)}>
+                Open
+              </button>
+            </div>
+            {err && <div style={{ color: "#C1440E", fontSize: 13, marginTop: 8 }}>{err}</div>}
+            {recentCodes.length > 0 && (
+              <div style={{ marginTop: 14 }}>
+                <div className="gsc-label">Recent rounds this session</div>
+                {recentCodes.map((c) => (
+                  <div key={c.code} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #eee6cf" }}>
+                    <div>
+                      <div style={{ fontWeight: 700, fontSize: 14 }}>{c.label}</div>
+                      <div className="gsc-mono" style={{ fontSize: 12, color: "#6b6b63" }}>{c.code}</div>
+                    </div>
+                    <button className="gsc-btn gsc-btn-outline" onClick={() => loadRound(c.code)}>Open</button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           <div className="gsc-card">
             <div className="gsc-label" style={{ marginBottom: 6, fontSize: 17 }}>Start a New Round</div>
 
@@ -2340,39 +2624,6 @@ function computeRoundScoring(round) {
                   </button>
                 </div>
               ))}
-
-            <div className="gsc-label" style={{ marginTop: 14, marginBottom: 6 }}>Join an existing round</div>
-            <div className="gsc-row">
-              <input className="gsc-input gsc-mono" id="round-join-code-home" name="round-join-code-home" autoComplete="off" placeholder="ROUND CODE" value={joinCode} onChange={(e) => setJoinCode(e.target.value.toUpperCase())} maxLength={6} />
-              <button className="gsc-btn gsc-btn-primary" style={{ flex: "0 0 auto" }} disabled={busy || !joinCode} onClick={() => loadRound(joinCode)}>
-                Open
-              </button>
-            </div>
-            {err && <div style={{ color: "#C1440E", fontSize: 13, marginTop: 8 }}>{err}</div>}
-            {recentCodes.length > 0 && (
-              <div style={{ marginTop: 14 }}>
-                <div className="gsc-label">Recent rounds this session</div>
-                {recentCodes.map((c) => (
-                  <div key={c.code} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #eee6cf" }}>
-                    <div>
-                      <div style={{ fontWeight: 700, fontSize: 14 }}>{c.label}</div>
-                      <div className="gsc-mono" style={{ fontSize: 12, color: "#6b6b63" }}>{c.code}</div>
-                    </div>
-                    <button className="gsc-btn gsc-btn-outline" onClick={() => loadRound(c.code)}>Open</button>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            <div className="gsc-label" style={{ marginTop: 14, marginBottom: 6 }}>Or paste round data someone sent you</div>
-            <div style={{ fontSize: 12, color: "#6b6b63", margin: "4px 0 8px" }}>
-              If a round code isn't syncing, whoever's tracking scores can send you a block of text instead (via "Copy round data to share" on their screen). Paste it here.
-            </div>
-            <textarea className="gsc-input" id="paste-round-data-home" name="paste-round-data-home" style={{ minHeight: 70, fontFamily: "ui-monospace, monospace", fontSize: 11 }} placeholder="Paste round data here" value={pasteData} onChange={(e) => setPasteData(e.target.value)} />
-            <button className="gsc-btn gsc-btn-primary" style={{ marginTop: 8 }} disabled={!pasteData.trim()} onClick={loadFromPastedData}>
-              Load this round
-            </button>
-            {pasteMsg && <div style={{ color: "#C1440E", fontSize: 12, marginTop: 6 }}>{pasteMsg}</div>}
           </div>
 
           <div className="gsc-card">
@@ -2420,7 +2671,7 @@ function computeRoundScoring(round) {
             {tournamentErr && <div style={{ color: "#C1440E", fontSize: 13, marginTop: 8 }}>{tournamentErr}</div>}
           </div>
 
-          <div className="gsc-card gsc-game-card" onClick={() => setScreen("libraryTab")}>
+          <div className="gsc-card gsc-game-card" onClick={() => goToScreen("libraryTab")}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <div>
                 <div style={{ fontWeight: 700, fontSize: 15 }}>Library</div>
@@ -2431,7 +2682,7 @@ function computeRoundScoring(round) {
             </div>
           </div>
 
-          <div className="gsc-card gsc-game-card" style={{ opacity: 0.7 }} onClick={() => setScreen("profileTab")}>
+          <div className="gsc-card gsc-game-card" style={{ opacity: 0.7 }} onClick={() => goToScreen("profileTab")}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <div>
                 <div style={{ fontWeight: 700, fontSize: 15, display: "flex", alignItems: "center", gap: 6 }}>
@@ -2548,7 +2799,7 @@ function computeRoundScoring(round) {
             <div style={{ fontSize: 12, color: "#6b6b63", margin: "4px 0 8px" }}>
               If a round code isn't syncing, whoever's tracking scores can send you a block of text instead (via "Copy round data to share" on their screen). Paste it here.
             </div>
-            <textarea className="gsc-input" id="paste-round-data" name="paste-round-data" style={{ minHeight: 70, fontFamily: "ui-monospace, monospace", fontSize: 11 }} placeholder="Paste round data here" value={pasteData} onChange={(e) => setPasteData(e.target.value)} />
+            <textarea className="gsc-input" id="paste-round-data" name="paste-round-data" style={{ minHeight: 70, fontFamily: 'Courier New, Courier, monospace', fontSize: 11 }} placeholder="Paste round data here" value={pasteData} onChange={(e) => setPasteData(e.target.value)} />
             <button className="gsc-btn gsc-btn-primary" style={{ marginTop: 8 }} disabled={!pasteData.trim()} onClick={loadFromPastedData}>
               Load this round
             </button>
@@ -2744,22 +2995,22 @@ function computeRoundScoring(round) {
         <style>{STYLE}</style>
         <Header title={<span style={{ fontSize: 23 }}>Library</span>} sub="Games & about this app" />
         <div className="gsc-body gsc-body-tabbed">
-          <div className="gsc-card" style={{ cursor: "pointer" }} onClick={() => setScreen("library")}>
+          <div className="gsc-card" style={{ cursor: "pointer" }} onClick={() => goToScreen("library")}>
             <div className="gsc-label" style={{ marginBottom: 6 }}>Golf Games Library</div>
             <div style={{ fontSize: 13, color: "#4b4b45" }}>
               Browse other popular team, individual, side, and just-for-fun formats worth trying on your next round.
             </div>
-            <button className="gsc-link" style={{ marginTop: 8, fontSize: 12 }} onClick={() => setScreen("library")}>
+            <button className="gsc-link" style={{ marginTop: 8, fontSize: 12 }} onClick={() => goToScreen("library")}>
               Browse the library
             </button>
           </div>
 
-          <div className="gsc-card" style={{ cursor: "pointer" }} onClick={() => setScreen("about")}>
+          <div className="gsc-card" style={{ cursor: "pointer" }} onClick={() => goToScreen("about")}>
             <div className="gsc-label" style={{ marginBottom: 6 }}>About this App</div>
             <div style={{ fontSize: 13, color: "#4b4b45" }}>
               What FortheScore tracks for you, and how a round works from tee to tally.
             </div>
-            <button className="gsc-link" style={{ marginTop: 8, fontSize: 12 }} onClick={() => setScreen("about")}>
+            <button className="gsc-link" style={{ marginTop: 8, fontSize: 12 }} onClick={() => goToScreen("about")}>
               Read more
             </button>
           </div>
@@ -2773,7 +3024,7 @@ function computeRoundScoring(round) {
     return (
       <div className="gsc">
         <style>{STYLE}</style>
-        <Header title="Golf Games Library" sub="Other popular formats to try" onBack={() => setScreen("libraryTab")} />
+        <Header title="Golf Games Library" sub="Other popular formats to try" onBack={() => goBack("libraryTab")} />
         <div className="gsc-body">
           <div style={{ fontSize: 12, color: "#8a8a80", marginBottom: 4 }}>
             These are for reference only - they aren't trackable in this app, just handy to have on hand.
@@ -2813,7 +3064,7 @@ function computeRoundScoring(round) {
     return (
       <div className="gsc">
         <style>{STYLE}</style>
-        <Header title="About this App" sub="What FortheScore does for you" onBack={() => setScreen("libraryTab")} />
+        <Header title="About this App" sub="What FortheScore does for you" onBack={() => goBack("libraryTab")} />
         <div className="gsc-body">
           <div className="gsc-card">
             <div style={{ fontSize: 13, color: "#4b4b45", lineHeight: 1.6 }}>
@@ -2836,18 +3087,346 @@ function computeRoundScoring(round) {
     );
   }
 
+  if (screen === "gameWizard") {
+    const g = wizardAnswers.resolvedGameKey ? GAMES[wizardAnswers.resolvedGameKey] : null;
+    const isTournament = !!wizardAnswers.isTournament;
+    const activePar = isTournament ? tournamentPar : par;
+    const setActivePar = isTournament ? setTournamentPar : setPar;
+    const activeCourseName = isTournament ? tournamentCourseName : courseName;
+    const setActiveCourseName = isTournament ? setTournamentCourseName : setCourseName;
+    const activeCfg = isTournament ? tournamentCfg : cfg;
+    const setActiveCfg = isTournament ? setTournamentCfg : setCfg;
+    const progress = wizardProgress();
+
+    const OptionButton = ({ children, onClick }) => (
+      <button className="gsc-btn gsc-btn-outline" style={{ width: "100%", marginBottom: 10, padding: 14, fontSize: 15, textAlign: "left" }} onClick={onClick}>
+        {children}
+      </button>
+    );
+
+    return (
+      <div className="gsc">
+        <style>{STYLE}</style>
+        <Header
+          title={<span style={{ fontSize: 20 }}>{"\u{1F9D9}"} Game Wizard</span>}
+          sub={wizardStepId === "finish" ? "All set!" : `${progress}% complete`}
+          onBack={wizardGoBack}
+        />
+        <div style={{ height: 6, background: "#e4ded0" }}>
+          <div style={{ height: "100%", width: `${progress}%`, background: "#C1440E", transition: "width 0.25s ease" }} />
+        </div>
+        <div className="gsc-body">
+          {wizardStepId === "playerCount" && (
+            <div className="gsc-card">
+              <div className="gsc-label" style={{ marginBottom: 10, fontSize: 16 }}>How many players are in your group?</div>
+              {[1, 2, 3, 4].map((n) => (
+                <OptionButton key={n} onClick={() => wizardGoNext("playerCount", { playerCount: n })}>{n === 1 ? "Just me - playing solo" : `${n} players`}</OptionButton>
+              ))}
+              <OptionButton onClick={() => wizardGoNext("playerCount", { playerCount: 8 })}>More than 4 (a tournament)</OptionButton>
+            </div>
+          )}
+
+          {wizardStepId === "roundMode" && (
+            <div className="gsc-card">
+              <div className="gsc-label" style={{ marginBottom: 10, fontSize: 16 }}>How do you want to play?</div>
+              <OptionButton onClick={() => wizardGoNext("roundMode", { roundMode: "team" })}>2 vs 2 Teams</OptionButton>
+              <OptionButton onClick={() => wizardGoNext("roundMode", { roundMode: "individual" })}>Individually - every player for themselves</OptionButton>
+            </div>
+          )}
+
+          {wizardStepId === "teamType" && (
+            <div className="gsc-card">
+              <div className="gsc-label" style={{ marginBottom: 10, fontSize: 16 }}>Rotating teams, or the same teams all round?</div>
+              <OptionButton onClick={() => wizardGoNext("teamType", { teamType: "rotating", resolvedGameKey: "seabluffe", isTournament: false })}>
+                Rotating teams - new partner every 6 holes
+              </OptionButton>
+              <OptionButton onClick={() => wizardGoNext("teamType", { teamType: "fixed" })}>Same teams the whole round</OptionButton>
+            </div>
+          )}
+
+          {wizardStepId === "teamScoring" && (
+            <div className="gsc-card">
+              <div className="gsc-label" style={{ marginBottom: 10, fontSize: 16 }}>How should your team's score work each hole?</div>
+              <OptionButton onClick={() => wizardGoNext("teamScoring", { teamScoring: "bestball", resolvedGameKey: "beachside", isTournament: false })}>
+                Best-Ball - the lower of your two scores counts
+              </OptionButton>
+              <OptionButton onClick={() => wizardGoNext("teamScoring", { teamScoring: "combined", resolvedGameKey: "ponto", isTournament: false })}>
+                Combined Strokes - both scores add together
+              </OptionButton>
+            </div>
+          )}
+
+          {wizardStepId === "individualScoring" && (
+            <div className="gsc-card">
+              <div className="gsc-label" style={{ marginBottom: 10, fontSize: 16 }}>How do you want to decide the winner?</div>
+              <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 12 }}>Both formats keep track of everyone's strokes and putts - this is just about how a winner gets picked.</div>
+              <OptionButton onClick={() => wizardGoNext("individualScoring", { individualScoring: "totalscore", resolvedGameKey: "swami", isTournament: false })}>
+                Total Score - lowest score wins, putts settle a tie
+              </OptionButton>
+              <OptionButton onClick={() => wizardGoNext("individualScoring", { individualScoring: "skins", resolvedGameKey: "dstreet", isTournament: false })}>
+                Skins - points awarded each hole for strokes AND putts
+              </OptionButton>
+            </div>
+          )}
+
+          {wizardStepId === "tournamentScoring" && (
+            <div className="gsc-card">
+              <div className="gsc-label" style={{ marginBottom: 10, fontSize: 16 }}>How should each foursome's score work?</div>
+              <OptionButton onClick={() => wizardGoNext("tournamentScoring", { tournamentScoring: "bestball", resolvedGameKey: "tourneybb", isTournament: true })}>
+                Best-Ball - lowest score on each hole counts
+              </OptionButton>
+              <OptionButton onClick={() => wizardGoNext("tournamentScoring", { tournamentScoring: "combined", resolvedGameKey: "tourneygg", isTournament: true })}>
+                Combined Strokes - all 4 players add together
+              </OptionButton>
+            </div>
+          )}
+
+          {wizardStepId === "confirmGame" && g && (
+            <div className="gsc-card gsc-winner-card">
+              <div className="gsc-label">{isTournament ? "Your tournament format" : "Your game format"}</div>
+              <div style={{ fontWeight: 700, fontSize: 19, marginTop: 4 }}>{g.name}</div>
+              <div className="gsc-tag" style={{ marginTop: 6 }}>{g.tag}</div>
+              <div style={{ fontSize: 13, marginTop: 10, color: "#4b4b45" }}>{g.desc}</div>
+              <button className="gsc-link" style={{ marginTop: 10, fontSize: 13 }} onClick={() => openRules(wizardAnswers.resolvedGameKey)}>
+                View full rules
+              </button>
+              <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 14 }} onClick={() => wizardGoNext("confirmGame", {})}>
+                This is the one - continue
+              </button>
+            </div>
+          )}
+
+          {wizardStepId === "field_name" && (
+            <div className="gsc-card">
+              <div className="gsc-label" style={{ marginBottom: 10, fontSize: 16 }}>
+                What do you want to name your {isTournament ? "tournament" : "round"}?
+              </div>
+              <input
+                className="gsc-input"
+                placeholder={isTournament ? "e.g. Club Championship" : `${g ? g.name : ""} at ...`}
+                value={isTournament ? tournamentName : roundName}
+                onChange={(e) => (isTournament ? setTournamentName(e.target.value) : setRoundName(e.target.value))}
+              />
+              <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 14 }} onClick={() => wizardGoNext("field_name", {})}>
+                Continue
+              </button>
+            </div>
+          )}
+
+          {wizardStepId === "field_course" && (
+            <div className="gsc-card">
+              <div className="gsc-label" style={{ marginBottom: 10, fontSize: 16 }}>What course are you playing?</div>
+              <div className="gsc-row">
+                <input
+                  className="gsc-input"
+                  placeholder="e.g. Pebble Beach"
+                  value={courseSearchQuery}
+                  onChange={(e) => setCourseSearchQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && searchCourses()}
+                />
+                <button className="gsc-btn gsc-btn-primary" style={{ flex: "0 0 auto" }} disabled={courseSearchBusy} onClick={searchCourses}>
+                  {courseSearchBusy ? "Searching..." : "Search"}
+                </button>
+              </div>
+              {courseSearchErr && <div style={{ color: "#C1440E", fontSize: 12, marginTop: 8 }}>{courseSearchErr}</div>}
+              {courseSearchResults.length > 0 && !courseTeeOptions && (
+                <div style={{ marginTop: 10 }}>
+                  {courseSearchResults.slice(0, 8).map((c) => (
+                    <div key={c.id} className="gsc-card gsc-game-card" style={{ marginBottom: 8, padding: 10 }} onClick={() => selectCourseResult(c)}>
+                      <div style={{ fontWeight: 700, fontSize: 14 }}>{c.club_name === c.course_name ? c.club_name : `${c.club_name} - ${c.course_name}`}</div>
+                      {c.location && <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 2 }}>{c.location.address}</div>}
+                    </div>
+                  ))}
+                  {courseDetailBusy && <div style={{ fontSize: 12, color: "#6b6b63" }}>Loading course details...</div>}
+                </div>
+              )}
+              {courseTeeOptions && (
+                <div style={{ marginTop: 10 }}>
+                  <div className="gsc-label">Pick a tee ({courseTeeOptions.courseLabel})</div>
+                  {courseTeeOptions.tees.map((tee, i) => (
+                    <div key={i} className="gsc-card gsc-game-card" style={{ marginBottom: 8, padding: 10 }} onClick={() => applyCourseTee(tee, isTournament)}>
+                      <div style={{ fontWeight: 700, fontSize: 14 }}>{tee.tee_name}</div>
+                      <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 2 }}>
+                        Par {tee.par_total} - {tee.number_of_holes} holes{tee.total_yards ? ` - ${tee.total_yards} yds` : ""}
+                      </div>
+                    </div>
+                  ))}
+                  <button className="gsc-link" style={{ marginTop: 4, fontSize: 12 }} onClick={() => setCourseTeeOptions(null)}>Back to search results</button>
+                </div>
+              )}
+              {courseMsg && <div style={{ fontSize: 12, color: courseMsg.startsWith("Couldn't") ? "#C1440E" : "#B08D57", marginTop: 8 }}>{courseMsg}</div>}
+
+              <button className="gsc-link" style={{ marginTop: 12, fontSize: 12 }} onClick={() => setShowManualCourse((s) => !s)}>
+                {showManualCourse ? "Hide manual par entry" : "Course not listed? Enter par manually"}
+              </button>
+              {showManualCourse && (
+                <div style={{ marginTop: 10 }}>
+                  <div className="gsc-field">
+                    <div className="gsc-label">Course name</div>
+                    <input className="gsc-input" placeholder="e.g. Seabluffe Golf Links" value={activeCourseName} onChange={(e) => setActiveCourseName(e.target.value)} />
+                  </div>
+                  <div className="gsc-label" style={{ marginTop: 10, marginBottom: 6 }}>Par per hole</div>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 6 }}>
+                    {activePar.map((v, i) => (
+                      <div key={i}>
+                        <div style={{ fontSize: 10, textAlign: "center", color: "#6b6b63" }}>H{i + 1}</div>
+                        <input
+                          className="gsc-input gsc-mono"
+                          style={{ padding: "6px 2px", textAlign: "center", borderColor: v === "" || v == null ? "#C1440E" : undefined }}
+                          type="number"
+                          placeholder="-"
+                          value={v}
+                          onChange={(e) => {
+                            const raw = e.target.value.replace(/^0+(?=\d)/, "");
+                            const next = [...activePar];
+                            next[i] = raw === "" ? "" : Number(raw);
+                            setActivePar(next);
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 8 }}>Total par: {activePar.reduce((a, b) => a + (Number(b) || 0), 0)}</div>
+                </div>
+              )}
+              <button
+                className="gsc-btn gsc-btn-primary"
+                style={{ width: "100%", marginTop: 14 }}
+                onClick={() => {
+                  const incomplete = activePar.some((p) => p === "" || p == null || isNaN(Number(p)) || Number(p) <= 0);
+                  if (incomplete) {
+                    setWizardFieldErr("Search for your course above (or enter par manually) before continuing - every hole needs a par.");
+                    return;
+                  }
+                  wizardGoNext("field_course", {});
+                }}
+              >
+                Continue
+              </button>
+              {wizardFieldErr && <div style={{ color: "#C1440E", fontSize: 12, marginTop: 8, textAlign: "center" }}>{wizardFieldErr}</div>}
+            </div>
+          )}
+
+          {wizardStepId === "field_limits" && g && (
+            <div className="gsc-card">
+              <div className="gsc-label" style={{ marginBottom: 10, fontSize: 16 }}>Set your game limits (optional)</div>
+              {g.hasScore && (
+                <div className="gsc-field">
+                  <div className="gsc-label">Max strokes over par per hole</div>
+                  <input className="gsc-input" type="number" min="0" placeholder="No max" value={activeCfg.maxOver} onChange={(e) => setActiveCfg({ ...activeCfg, maxOver: cleanNumericText(e.target.value) })} />
+                </div>
+              )}
+              {g.hasPutts && (
+                <div className="gsc-field" style={{ marginTop: 10 }}>
+                  <div className="gsc-label">Max putts per hole</div>
+                  <input className="gsc-input" type="number" min="0" placeholder="No max" value={activeCfg.maxPutts} onChange={(e) => setActiveCfg({ ...activeCfg, maxPutts: cleanNumericText(e.target.value) })} />
+                </div>
+              )}
+              <div className="gsc-field" style={{ marginTop: 10 }}>
+                <div className="gsc-label">Mulligans per player{wizardAnswers.resolvedGameKey === "seabluffe" ? ", per 6 holes" : ""}</div>
+                <input className="gsc-input" type="number" min="0" placeholder="0" value={activeCfg.mulliganSegment} onChange={(e) => setActiveCfg({ ...activeCfg, mulliganSegment: cleanNumericText(e.target.value) })} />
+              </div>
+              <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 14 }} onClick={() => wizardGoNext("field_limits", {})}>
+                Continue
+              </button>
+            </div>
+          )}
+
+          {wizardStepId === "field_prize" && (
+            <div className="gsc-card">
+              <div className="gsc-label" style={{ marginBottom: 10, fontSize: 16 }}>What's the prize for winning? (optional)</div>
+              <input className="gsc-input" placeholder="e.g. Losers buy winners a drink at the 19th hole" value={activeCfg.prize} onChange={(e) => setActiveCfg({ ...activeCfg, prize: e.target.value })} />
+              <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 14 }} onClick={() => wizardGoNext("field_prize", {})}>
+                Continue
+              </button>
+            </div>
+          )}
+
+          {wizardStepId === "field_venmo" && (
+            <div className="gsc-card">
+              <div className="gsc-label" style={{ marginBottom: 10, fontSize: 16 }}>Venmo handle for settling up? (optional)</div>
+              <input className="gsc-input" placeholder="@your-venmo" value={cfg.venmo || ""} onChange={(e) => setCfg({ ...cfg, venmo: e.target.value })} />
+              <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 14 }} onClick={() => wizardGoNext("field_venmo", {})}>
+                Continue
+              </button>
+            </div>
+          )}
+
+          {wizardStepId === "field_players" && (
+            <div className="gsc-card">
+              <div className="gsc-label" style={{ marginBottom: 10, fontSize: 16 }}>Who's playing? Add names and handicaps (optional)</div>
+              {players.map((p, i) => (
+                <div key={i} style={{ marginBottom: 8 }}>
+                  <div className="gsc-row">
+                    <button
+                      onClick={() => setAvatarPickerFor(avatarPickerFor === i ? null : i)}
+                      style={{ flex: "0 0 40px", height: 40, borderRadius: "50%", border: "1.5px solid #1B4332", background: p.avatar ? "#fff" : "#EBF0EC", fontSize: p.avatar ? 20 : 12, fontWeight: 800, color: "#1B4332", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+                    >
+                      {p.avatar || LETTERS[i]}
+                    </button>
+                    <input className="gsc-input" placeholder={`Player ${LETTERS[i]} name`} value={p.name} onChange={(e) => updatePlayer(i, "name", e.target.value)} />
+                    <input className="gsc-input" style={{ flex: "0 0 70px" }} placeholder="HCP" value={p.hcp} onChange={(e) => updatePlayer(i, "hcp", e.target.value)} />
+                  </div>
+                  {avatarPickerFor === i && (
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8, padding: "10px 4px 4px 46px" }}>
+                      {AVATAR_OPTIONS.map((emoji) => (
+                        <button
+                          key={emoji}
+                          onClick={() => { updatePlayer(i, "avatar", p.avatar === emoji ? "" : emoji); setAvatarPickerFor(null); }}
+                          style={{ width: 36, height: 36, borderRadius: "50%", border: p.avatar === emoji ? "2px solid #C1440E" : "1.5px solid #d8d2bd", background: "#fff", fontSize: 18, cursor: "pointer" }}
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+              <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 14 }} onClick={() => wizardGoNext("field_players", {})}>
+                Continue
+              </button>
+            </div>
+          )}
+
+          {wizardStepId === "finish" && (
+            <div className="gsc-card gsc-winner-card" style={{ textAlign: "center", padding: "32px 20px" }}>
+              <div style={{ fontSize: 32, marginBottom: 8 }}>{"\u{1F389}"}</div>
+              <div style={{ fontWeight: 700, fontSize: 19, marginBottom: 8 }}>You're all set!</div>
+              <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 16 }}>
+                {isTournament
+                  ? "Next, add each foursome's players - then you're ready to play."
+                  : "Time to head to the first hole."}
+              </div>
+              {err && <div style={{ color: "#C1440E", fontSize: 13, marginBottom: 12 }}>{err}</div>}
+              {tournamentErr && <div style={{ color: "#C1440E", fontSize: 13, marginBottom: 12 }}>{tournamentErr}</div>}
+              <button
+                className="gsc-btn gsc-btn-primary"
+                style={{ width: "100%" }}
+                disabled={busy || tournamentBusy}
+                onClick={() => (isTournament ? proceedToFoursomeRoster() : finishSetup())}
+              >
+                {isTournament ? "Add foursomes" : "Let's play! \u26F3"}
+              </button>
+            </div>
+          )}
+        </div>
+        <RulesModal />
+      </div>
+    );
+  }
+
   if (screen === "setup") {
     const g = GAMES[gameKey];
+    const isTeamGame = gameKey === "seabluffe" || gameKey === "ponto" || gameKey === "beachside";
     return (
       <div className="gsc">
         <style>{STYLE}</style>
         <Header
           title={activeTournament ? activeTournament.name : g.name}
-          sub={activeTournament ? `${g.name} - Foursome setup` : "Round setup"}
+          sub={activeTournament ? `${g.name} - Foursome setup` : isTeamGame ? "Round setup (2 vs 2)" : "Round setup"}
           onBack={() => {
-            const wasTournament = !!activeTournament;
             if (activeTournament) setActiveTournament(null);
-            setScreen(wasTournament ? "tournamentsTab" : "roundsTab");
+            goBack("roundsTab");
           }}
         />
         <div className="gsc-body">
@@ -2885,6 +3464,128 @@ function computeRoundScoring(round) {
               <div className="gsc-field" style={{ marginTop: 12 }}>
                 <div className="gsc-label">Date</div>
                 <input className="gsc-input" type="date" value={roundDate} onChange={(e) => setRoundDate(e.target.value)} />
+              </div>
+            )}
+            {!activeTournament && (
+              <div className="gsc-field" style={{ marginTop: 12 }}>
+                <div className="gsc-label">Search for your course</div>
+                <div className="gsc-row">
+                  <input
+                    className="gsc-input"
+                    placeholder="e.g. Pebble Beach"
+                    value={courseSearchQuery}
+                    onChange={(e) => setCourseSearchQuery(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && searchCourses()}
+                  />
+                  <button className="gsc-btn gsc-btn-primary" style={{ flex: "0 0 auto" }} disabled={courseSearchBusy} onClick={searchCourses}>
+                    {courseSearchBusy ? "Searching..." : "Search"}
+                  </button>
+                </div>
+                {courseSearchErr && <div style={{ color: "#C1440E", fontSize: 12, marginTop: 8 }}>{courseSearchErr}</div>}
+
+                {courseSearchResults.length > 0 && !courseTeeOptions && (
+                  <div style={{ marginTop: 10 }}>
+                    {courseSearchResults.slice(0, 8).map((c) => (
+                      <div
+                        key={c.id}
+                        className="gsc-card gsc-game-card"
+                        style={{ marginBottom: 8, padding: 10 }}
+                        onClick={() => selectCourseResult(c)}
+                      >
+                        <div style={{ fontWeight: 700, fontSize: 14 }}>{c.club_name === c.course_name ? c.club_name : `${c.club_name} - ${c.course_name}`}</div>
+                        {c.location && <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 2 }}>{c.location.address}</div>}
+                      </div>
+                    ))}
+                    {courseDetailBusy && <div style={{ fontSize: 12, color: "#6b6b63" }}>Loading course details...</div>}
+                  </div>
+                )}
+
+                {courseTeeOptions && (
+                  <div style={{ marginTop: 10 }}>
+                    <div className="gsc-label">Pick a tee ({courseTeeOptions.courseLabel})</div>
+                    <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 8 }}>
+                      Par can differ slightly between tees at the same course - pick the one your group is actually playing.
+                    </div>
+                    {courseTeeOptions.tees.map((tee, i) => (
+                      <div
+                        key={i}
+                        className="gsc-card gsc-game-card"
+                        style={{ marginBottom: 8, padding: 10 }}
+                        onClick={() => applyCourseTee(tee)}
+                      >
+                        <div style={{ fontWeight: 700, fontSize: 14 }}>{tee.tee_name}</div>
+                        <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 2 }}>
+                          Par {tee.par_total} - {tee.number_of_holes} holes{tee.total_yards ? ` - ${tee.total_yards} yds` : ""}
+                        </div>
+                      </div>
+                    ))}
+                    <button className="gsc-link" style={{ marginTop: 4, fontSize: 12 }} onClick={() => setCourseTeeOptions(null)}>
+                      Back to search results
+                    </button>
+                  </div>
+                )}
+                {courseMsg && (
+                  <div style={{ fontSize: 12, color: courseMsg.startsWith("Couldn't") ? "#C1440E" : "#B08D57", marginTop: 8 }}>
+                    {courseMsg}
+                  </div>
+                )}
+                <button className="gsc-link" style={{ marginTop: 10, fontSize: 12 }} onClick={() => setShowManualCourse((s) => !s)}>
+                  {showManualCourse ? "Hide manual course entry" : "Course not listed? Enter or edit par manually"}
+                </button>
+                {showManualCourse && (
+                  <div style={{ marginTop: 12 }}>
+                    <div className="gsc-label" style={{ marginBottom: 10 }}>Enter or Edit Par Manually</div>
+                    {savedCourses.length > 0 && (
+                      <div className="gsc-field">
+                        <div className="gsc-label">Load a saved course</div>
+                        <select className="gsc-input" defaultValue="" onChange={(e) => e.target.value && applySavedCourse(e.target.value)}>
+                          <option value="">Choose a course you've saved before...</option>
+                          {savedCourses.map((c) => (
+                            <option key={c.name} value={c.name}>{c.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+
+                    <div className="gsc-field">
+                      <div className="gsc-label">Course name</div>
+                      <input className="gsc-input" placeholder="e.g. Seabluffe Golf Links" value={courseName} onChange={(e) => setCourseName(e.target.value)} />
+                    </div>
+                    <div className="gsc-label" style={{ marginBottom: 6 }}>Par per hole</div>
+                    <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 8 }}>
+                      Enter par for every hole, or load a saved course above - you won't be able to create the round until all 18 are filled in.
+                    </div>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 6 }}>
+                      {par.map((v, i) => (
+                        <div key={i}>
+                          <div style={{ fontSize: 10, textAlign: "center", color: "#6b6b63" }}>H{i + 1}</div>
+                          <input
+                            className="gsc-input gsc-mono"
+                            style={{ padding: "6px 2px", textAlign: "center", borderColor: v === "" || v == null ? "#C1440E" : undefined }}
+                            type="number"
+                            placeholder="-"
+                            value={v}
+                            onChange={(e) => {
+                              // Strip any leading zeros (e.g. "02" -> "2"),
+                              // and keep a cleared field truly empty rather
+                              // than snapping to 0 - forcing it to 0 is what
+                              // let the next keystroke land on top of a
+                              // phantom "0" and produce "02".
+                              const raw = e.target.value.replace(/^0+(?=\d)/, "");
+                              const next = [...par];
+                              next[i] = raw === "" ? "" : Number(raw);
+                              setPar(next);
+                            }}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 8 }}>Total par: {par.reduce((a, b) => a + (Number(b) || 0), 0)}</div>
+                    <button className="gsc-btn gsc-btn-outline" style={{ marginTop: 10 }} onClick={() => saveCourseToIndex(courseName, par)}>
+                      Save this course for next time
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -2959,22 +3660,70 @@ function computeRoundScoring(round) {
             <div className="gsc-label" style={{ marginBottom: 10 }}>Players</div>
             {(gameKey === "swami" || gameKey === "dstreet") && (
               <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 10 }}>
-                This format supports 2-4 players - add or remove players below to match who's actually playing.
+                This format supports 1-4 players - add or remove players below to match who's actually playing.
               </div>
             )}
             {players.map((p, i) => (
-              <div className="gsc-row" key={i} style={{ marginBottom: 8 }}>
-                <div style={{ flex: "0 0 26px", fontWeight: 800, color: "#1B4332", paddingTop: 9 }}>{LETTERS[i]}</div>
-                <input className="gsc-input" placeholder={`Player ${LETTERS[i]} name`} value={p.name} onChange={(e) => updatePlayer(i, "name", e.target.value)} />
-                <input className="gsc-input" style={{ flex: "0 0 70px" }} placeholder="HCP" value={p.hcp} onChange={(e) => updatePlayer(i, "hcp", e.target.value)} />
-                {(gameKey === "swami" || gameKey === "dstreet") && players.length > 2 && (
+              <div key={i} style={{ marginBottom: 8 }}>
+                <div className="gsc-row">
                   <button
-                    className="gsc-btn gsc-btn-outline"
-                    style={{ flex: "0 0 auto", color: "#C1440E", borderColor: "#C1440E", padding: "9px 12px" }}
-                    onClick={() => removePlayerSlot(i)}
+                    onClick={() => setAvatarPickerFor(avatarPickerFor === i ? null : i)}
+                    style={{
+                      flex: "0 0 40px",
+                      height: 40,
+                      borderRadius: "50%",
+                      border: "1.5px solid #1B4332",
+                      background: p.avatar ? "#fff" : "#EBF0EC",
+                      fontSize: p.avatar ? 20 : 12,
+                      fontWeight: 800,
+                      color: "#1B4332",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                    title="Choose an avatar (optional)"
                   >
-                    Remove
+                    {p.avatar || LETTERS[i]}
                   </button>
+                  <input className="gsc-input" placeholder={`Player ${LETTERS[i]} name`} value={p.name} onChange={(e) => updatePlayer(i, "name", e.target.value)} />
+                  <input className="gsc-input" style={{ flex: "0 0 70px" }} placeholder="HCP" value={p.hcp} onChange={(e) => updatePlayer(i, "hcp", e.target.value)} />
+                  {(gameKey === "swami" || gameKey === "dstreet") && players.length > 1 && (
+                    <button
+                      className="gsc-btn gsc-btn-outline"
+                      style={{ flex: "0 0 auto", color: "#C1440E", borderColor: "#C1440E", padding: "9px 12px" }}
+                      onClick={() => removePlayerSlot(i)}
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+                {avatarPickerFor === i && (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8, padding: "10px 4px 4px 46px" }}>
+                    {AVATAR_OPTIONS.map((emoji) => (
+                      <button
+                        key={emoji}
+                        onClick={() => {
+                          updatePlayer(i, "avatar", p.avatar === emoji ? "" : emoji);
+                          setAvatarPickerFor(null);
+                        }}
+                        style={{
+                          width: 36,
+                          height: 36,
+                          borderRadius: "50%",
+                          border: p.avatar === emoji ? "2px solid #C1440E" : "1.5px solid #d8d2bd",
+                          background: "#fff",
+                          fontSize: 18,
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
                 )}
               </div>
             ))}
@@ -3009,130 +3758,6 @@ function computeRoundScoring(round) {
             )}
           </div>
 
-          {!activeTournament && (
-          <div className="gsc-card">
-            <div className="gsc-label" style={{ marginBottom: 10 }}>Course</div>
-            {savedCourses.length > 0 && (
-              <div className="gsc-field">
-                <div className="gsc-label">Load a saved course</div>
-                <select className="gsc-input" defaultValue="" onChange={(e) => e.target.value && applySavedCourse(e.target.value)}>
-                  <option value="">Choose a course you've saved before...</option>
-                  {savedCourses.map((c) => (
-                    <option key={c.name} value={c.name}>{c.name}</option>
-                  ))}
-                </select>
-              </div>
-            )}
-
-            <div className="gsc-field">
-              <div className="gsc-label">Search for your course</div>
-              <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 6 }}>
-                Find a real course by name and its par fills in automatically - no API key or setup needed on your end.
-              </div>
-              <div className="gsc-row">
-                <input
-                  className="gsc-input"
-                  placeholder="e.g. Pebble Beach"
-                  value={courseSearchQuery}
-                  onChange={(e) => setCourseSearchQuery(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && searchCourses()}
-                />
-                <button className="gsc-btn gsc-btn-primary" style={{ flex: "0 0 auto" }} disabled={courseSearchBusy} onClick={searchCourses}>
-                  {courseSearchBusy ? "Searching..." : "Search"}
-                </button>
-              </div>
-              {courseSearchErr && <div style={{ color: "#C1440E", fontSize: 12, marginTop: 8 }}>{courseSearchErr}</div>}
-
-              {courseSearchResults.length > 0 && !courseTeeOptions && (
-                <div style={{ marginTop: 10 }}>
-                  {courseSearchResults.slice(0, 8).map((c) => (
-                    <div
-                      key={c.id}
-                      className="gsc-card gsc-game-card"
-                      style={{ marginBottom: 8, padding: 10 }}
-                      onClick={() => selectCourseResult(c)}
-                    >
-                      <div style={{ fontWeight: 700, fontSize: 14 }}>{c.club_name === c.course_name ? c.club_name : `${c.club_name} - ${c.course_name}`}</div>
-                      {c.location && <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 2 }}>{c.location.address}</div>}
-                    </div>
-                  ))}
-                  {courseDetailBusy && <div style={{ fontSize: 12, color: "#6b6b63" }}>Loading course details...</div>}
-                </div>
-              )}
-
-              {courseTeeOptions && (
-                <div style={{ marginTop: 10 }}>
-                  <div className="gsc-label">Pick a tee ({courseTeeOptions.courseLabel})</div>
-                  <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 8 }}>
-                    Par can differ slightly between tees at the same course - pick the one your group is actually playing.
-                  </div>
-                  {courseTeeOptions.tees.map((tee, i) => (
-                    <div
-                      key={i}
-                      className="gsc-card gsc-game-card"
-                      style={{ marginBottom: 8, padding: 10 }}
-                      onClick={() => applyCourseTee(tee)}
-                    >
-                      <div style={{ fontWeight: 700, fontSize: 14 }}>{tee.tee_name}</div>
-                      <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 2 }}>
-                        Par {tee.par_total} - {tee.number_of_holes} holes{tee.total_yards ? ` - ${tee.total_yards} yds` : ""}
-                      </div>
-                    </div>
-                  ))}
-                  <button className="gsc-link" style={{ marginTop: 4, fontSize: 12 }} onClick={() => setCourseTeeOptions(null)}>
-                    Back to search results
-                  </button>
-                </div>
-              )}
-            </div>
-
-            <div className="gsc-field">
-              <div className="gsc-label">Course name</div>
-              <input className="gsc-input" placeholder="e.g. Seabluffe Golf Links" value={courseName} onChange={(e) => setCourseName(e.target.value)} />
-            </div>
-            <div className="gsc-label" style={{ marginBottom: 6 }}>Par per hole</div>
-            <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 8 }}>
-              Enter par for every hole, or load a saved course above - you won't be able to create the round until all 18 are filled in.
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 6 }}>
-              {par.map((v, i) => (
-                <div key={i}>
-                  <div style={{ fontSize: 10, textAlign: "center", color: "#6b6b63" }}>H{i + 1}</div>
-                  <input
-                    className="gsc-input gsc-mono"
-                    style={{ padding: "6px 2px", textAlign: "center", borderColor: v === "" || v == null ? "#C1440E" : undefined }}
-                    type="number"
-                    placeholder="-"
-                    value={v}
-                    onChange={(e) => {
-                      // Strip any leading zeros (e.g. "02" -> "2"), and keep
-                      // a cleared field truly empty rather than snapping to
-                      // 0 - forcing it to 0 is what let the next keystroke
-                      // land on top of a phantom "0" and produce "02".
-                      const raw = e.target.value.replace(/^0+(?=\d)/, "");
-                      const next = [...par];
-                      next[i] = raw === "" ? "" : Number(raw);
-                      setPar(next);
-                    }}
-                  />
-                </div>
-              ))}
-            </div>
-            <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 8 }}>Total par: {par.reduce((a, b) => a + (Number(b) || 0), 0)}</div>
-            <button className="gsc-btn gsc-btn-outline" style={{ marginTop: 10 }} onClick={() => saveCourseToIndex(courseName, par)}>
-              Save this course for next time
-            </button>
-            {courseMsg && (
-              <div style={{ fontSize: 12, color: courseMsg.startsWith("Couldn't") ? "#C1440E" : "#B08D57", marginTop: 8 }}>
-                {courseMsg}{" "}
-                {courseMsg.startsWith("Couldn't") && (
-                  <button className="gsc-link" onClick={() => saveCourseToIndex(courseName, par)}>Try again</button>
-                )}
-              </div>
-            )}
-          </div>
-          )}
-
           {err && <div style={{ color: "#C1440E", marginBottom: 10 }}>{err}</div>}
           {storageBroken && (
             <div style={{ background: "#F8F1E4", color: "#8a6a2f", fontSize: 12, padding: "8px 10px", borderRadius: 8, marginBottom: 10 }}>
@@ -3156,7 +3781,7 @@ function computeRoundScoring(round) {
     return (
       <div className="gsc">
         <style>{STYLE}</style>
-        <Header title="Create a Tournament" sub="Set it up once, everyone plays the same way" onBack={() => setScreen("tournamentsTab")} />
+        <Header title="Create a Tournament" sub="Set it up once, everyone plays the same way" onBack={() => goBack("tournamentsTab")} />
         <div className="gsc-body">
           <div className="gsc-card">
             <div className="gsc-label">Tournament name</div>
@@ -3390,7 +4015,7 @@ function computeRoundScoring(round) {
     return (
       <div className="gsc">
         <style>{STYLE}</style>
-        <Header title={tournamentName || "New Tournament"} sub="Add each foursome" onBack={() => setScreen("tournamentCreate")} />
+        <Header title={tournamentName || "New Tournament"} sub="Add each foursome" onBack={() => goBack("tournamentCreate")} />
         <div className="gsc-body">
           <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 12 }}>
             Enter each foursome's name and its 4 players. You can always add more foursomes later with the tournament code.
@@ -3478,7 +4103,7 @@ function computeRoundScoring(round) {
         <Header
           title={t ? t.name : "Tournament Leaderboard"}
           sub={t ? `${GAMES[t.game].name} - strokes and putts ranked separately` : ""}
-          onBack={() => setScreen(round ? "card" : "tournamentsTab")}
+          onBack={() => goBack(round ? "card" : "tournamentsTab")}
         />
         <div className="gsc-body">
           {t && (
@@ -3593,7 +4218,7 @@ function computeRoundScoring(round) {
                   {winners.length > 1 ? "Winners" : "Winner"}
                 </div>
                 <div style={{ fontSize: 19, fontWeight: 700 }}>
-                  {winners.map((w) => `${LETTERS[w.idx]} - ${w.name}`).join(" & ")}
+                  {winners.map((w) => `${w.avatar ? w.avatar + " " : ""}${LETTERS[w.idx]} - ${w.name}`).join(" & ")}
                 </div>
                 <div style={{ fontSize: 13, color: "#6b6b63", marginTop: 4 }}>
                   {g.totalScoring
@@ -3622,6 +4247,7 @@ function computeRoundScoring(round) {
                   >
                     <div style={{ fontWeight: isWinner ? 700 : 400 }}>
                       {isWinner && <span style={{ marginRight: 6 }}>&#127942;</span>}
+                      {p.avatar && <span style={{ marginRight: 4 }}>{p.avatar}</span>}
                       {LETTERS[p.idx]} - {p.name}
                     </div>
                     <div className="gsc-mono" style={{ fontWeight: 700 }}>
@@ -3685,6 +4311,13 @@ function computeRoundScoring(round) {
     return (
       <div className="gsc">
         <style>{STYLE}</style>
+        {accolade && (
+          <div key={accolade.key} className="gsc-accolade">
+            <div style={{ fontSize: accolade.big ? 32 : 22 }}>{accolade.emoji}</div>
+            <div style={{ fontWeight: 800, fontSize: accolade.big ? 20 : 15, marginTop: 2 }}>{accolade.text}</div>
+            <div style={{ fontSize: 12, opacity: 0.8, marginTop: 2 }}>{accolade.player}</div>
+          </div>
+        )}
         <Header
           title={round.name}
           sub={`${g.name} - ${round.date}${round.course ? " - " + round.course : ""}`}
@@ -3777,6 +4410,7 @@ function computeRoundScoring(round) {
               return (
                 <div key={i} className={`gsc-player-row ${cls}`}>
                   <div className="gsc-player-name">
+                    {p.avatar && <span style={{ marginRight: 4 }}>{p.avatar}</span>}
                     <span style={{ color: "#B08D57" }}>{LETTERS[i]} - </span>
                     {p.name}
                     {p.hcp && <span className="gsc-hcp">HCP {p.hcp}</span>}
@@ -3786,9 +4420,9 @@ function computeRoundScoring(round) {
                       <div>
                         <div style={{ fontSize: 11, color: "#6b6b63", marginBottom: 3 }}>STROKES</div>
                         <div className="gsc-stepper">
-                          <button onClick={() => updateHoleEntry(i, "strokes", Math.max(1, (Number(e.strokes) || parH) - 1))}>-</button>
+                          <button onClick={() => updateHoleEntry(i, "strokes", Math.max(1, (Number(e.strokes) || 1) - 1))}>-</button>
                           <div className="gsc-stepper-val">{e.strokes ?? "-"}</div>
-                          <button onClick={() => updateHoleEntry(i, "strokes", (Number(e.strokes) || parH - 1) + 1)}>+</button>
+                          <button onClick={() => updateHoleEntry(i, "strokes", (Number(e.strokes) || 0) + 1)}>+</button>
                         </div>
                       </div>
                     )}
@@ -3796,9 +4430,9 @@ function computeRoundScoring(round) {
                       <div>
                         <div style={{ fontSize: 11, color: "#6b6b63", marginBottom: 3 }}>PUTTS</div>
                         <div className="gsc-stepper">
-                          <button onClick={() => updateHoleEntry(i, "putts", Math.max(0, (Number(e.putts) || 2) - 1))}>-</button>
+                          <button onClick={() => updateHoleEntry(i, "putts", Math.max(0, (Number(e.putts) || 1) - 1))}>-</button>
                           <div className="gsc-stepper-val">{e.putts ?? "-"}</div>
-                          <button onClick={() => updateHoleEntry(i, "putts", (Number(e.putts) || 1) + 1)}>+</button>
+                          <button onClick={() => updateHoleEntry(i, "putts", (Number(e.putts) || 0) + 1)}>+</button>
                         </div>
                       </div>
                     )}
@@ -3852,6 +4486,7 @@ function computeRoundScoring(round) {
             {ranks.map((p, idx) => (
               <div key={p.idx} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", borderBottom: "1px solid #eee6cf", fontSize: 13 }}>
                 <div>
+                  {p.avatar && <span style={{ marginRight: 4 }}>{p.avatar}</span>}
                   {LETTERS[p.idx]} - {p.name}
                   {g.totalScoring && holeIdx === 17 && hr.complete && idx === 0 && <span className="gsc-chip gsc-lead">WINNER</span>}
                   {!g.singleTeam && !g.totalScoring && holeIdx === 17 && hr.complete && idx < Math.floor(ranks.length / 2) && <span className="gsc-chip gsc-lead">WIN</span>}
@@ -3885,8 +4520,8 @@ function computeRoundScoring(round) {
                     <th>Par</th>
                     {round.players.map((p, i) => (
                       <th key={i} style={{ minWidth: 56 }}>
-                        {LETTERS[i]}
-                        <div style={{ fontSize: 9, fontWeight: 400, textTransform: "none", opacity: 0.8, marginTop: 1, whiteSpace: "normal", lineHeight: 1.2 }}>
+                        {p.avatar ? <span style={{ fontSize: 14 }}>{p.avatar}</span> : LETTERS[i]}
+                        <div style={{ fontSize: 9, fontWeight: 700, textTransform: "none", opacity: 0.9, marginTop: 1, whiteSpace: "normal", lineHeight: 1.2 }}>
                           {(p.name || "").trim()}
                         </div>
                       </th>
@@ -3974,7 +4609,7 @@ function computeRoundScoring(round) {
             <textarea
               readOnly
               className="gsc-input"
-              style={{ minHeight: 70, fontFamily: "ui-monospace, monospace", fontSize: 10, marginTop: 8 }}
+              style={{ minHeight: 70, fontFamily: 'Courier New, Courier, monospace', fontSize: 10, marginTop: 8 }}
               value={copyFallbackText}
               onFocus={(e) => e.target.select()}
             />
