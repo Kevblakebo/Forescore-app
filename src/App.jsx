@@ -665,6 +665,7 @@ export default function GolfScorecard() {
   const [courseSearchErr, setCourseSearchErr] = useState("");
   const [courseTeeOptions, setCourseTeeOptions] = useState(null); // {courseLabel, tees: [...]} once a course is picked
   const [showManualCourse, setShowManualCourse] = useState(false);
+  const [courseSelectedViaSearch, setCourseSelectedViaSearch] = useState(false);
   const [avatarPickerFor, setAvatarPickerFor] = useState(null); // player index currently showing its avatar picker, or null
   const [wizardStepId, setWizardStepId] = useState("playerCount");
   const [wizardAnswers, setWizardAnswers] = useState({});
@@ -1248,6 +1249,7 @@ export default function GolfScorecard() {
       setCourseName(c.name);
       setPar(c.par);
       setCourseMsg(`Loaded par for "${c.name}".`);
+      setCourseSelectedViaSearch(true);
     }
   }
 
@@ -1343,6 +1345,7 @@ export default function GolfScorecard() {
     setCourseTeeOptions(null);
     setCourseSearchResults([]);
     setCourseSearchQuery("");
+    setCourseSelectedViaSearch(true);
   }
 
   // ---------- Game Wizard ----------
@@ -1370,6 +1373,7 @@ export default function GolfScorecard() {
     setPontoPairing([[0, 1], [2, 3]]);
     setPar(Array(18).fill(""));
     setCourseName("");
+    setCourseSelectedViaSearch(false);
     setCourseMsg("");
     setCourseSearchQuery("");
     setCourseSearchResults([]);
@@ -1462,6 +1466,7 @@ export default function GolfScorecard() {
         setTournamentCfg({ ...GAMES[key].defaults });
         setTournamentPar(Array(18).fill(""));
         setTournamentCourseName("");
+        setCourseSelectedViaSearch(false);
         setTournamentName("");
         setTournamentFoursomeCount(Math.max(2, Math.ceil((Number(nextAnswers.playerCount) || 8) / 4)));
       } else {
@@ -1513,6 +1518,7 @@ export default function GolfScorecard() {
     setPontoPairing([[0, 1], [2, 3]]);
     setPar(Array(18).fill(""));
     setCourseName("");
+    setCourseSelectedViaSearch(false);
     setCourseMsg("");
     setCourseSearchQuery("");
     setCourseSearchResults([]);
@@ -1669,6 +1675,7 @@ export default function GolfScorecard() {
     setTournamentName("");
     setTournamentDate(new Date().toISOString().slice(0, 10));
     setTournamentCourseName("");
+    setCourseSelectedViaSearch(false);
     setTournamentGameKey(key);
     setTournamentRankBy("strokes");
     setTournamentPar(Array(18).fill(""));
@@ -2747,7 +2754,7 @@ function computeRoundScoring(round) {
     return (
       <div className="gsc">
         <style>{STYLE}</style>
-        <Header title={<span style={{ fontSize: 23 }}>Rounds</span>} sub="Join, create, or revisit" />
+        <Header title={<span style={{ fontSize: 23 }}>Rounds</span>} sub={<>Join, create, or revisit<br />Up to 4 Players</>} />
         <div className="gsc-body gsc-body-tabbed">
           {activeRound && !activeRound.tournamentId && (
             <div className="gsc-card" style={{ border: "2px solid #B08D57" }}>
@@ -2910,7 +2917,7 @@ function computeRoundScoring(round) {
     return (
       <div className="gsc">
         <style>{STYLE}</style>
-        <Header title={<span style={{ fontSize: 23 }}>Tournaments</span>} sub="Join, create, or revisit" />
+        <Header title={<span style={{ fontSize: 23 }}>Tournaments</span>} sub={<>Join, create, or revisit<br />Multiple Foursomes</>} />
         <div className="gsc-body gsc-body-tabbed">
           {lastTournament && (
             <div className="gsc-card" style={{ border: "2px solid #B08D57" }}>
@@ -3287,7 +3294,7 @@ function computeRoundScoring(round) {
           {wizardStepId === "field_course" && (
             <div className="gsc-card">
               <div className="gsc-label" style={{ marginBottom: 10, fontSize: 16 }}>What course are you playing?</div>
-              {activeCourseName ? (
+              {activeCourseName && courseSelectedViaSearch ? (
                 <div className="gsc-card gsc-winner-card" style={{ padding: 12 }}>
                   <div className="gsc-label" style={{ marginBottom: 4 }}>Selected Course</div>
                   <div style={{ fontWeight: 700, fontSize: 15 }}>{activeCourseName}</div>
@@ -3300,6 +3307,7 @@ function computeRoundScoring(round) {
                     onClick={() => {
                       setActiveCourseName("");
                       setCourseMsg("");
+                      setCourseSelectedViaSearch(false);
                     }}
                   >
                     Change course
@@ -3569,7 +3577,7 @@ function computeRoundScoring(round) {
             )}
             {!activeTournament && (
               <div className="gsc-field" style={{ marginTop: 12 }}>
-                {courseName ? (
+                {courseName && courseSelectedViaSearch ? (
                   <div className="gsc-card gsc-winner-card" style={{ padding: 12 }}>
                     <div className="gsc-label" style={{ marginBottom: 4 }}>Selected Course</div>
                     <div style={{ fontWeight: 700, fontSize: 15 }}>{courseName}</div>
@@ -3581,6 +3589,7 @@ function computeRoundScoring(round) {
                       style={{ marginTop: 8, fontSize: 12 }}
                       onClick={() => {
                         setCourseName("");
+                        setCourseSelectedViaSearch(false);
                         setCourseMsg("");
                       }}
                     >
