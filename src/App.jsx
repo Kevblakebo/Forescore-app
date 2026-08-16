@@ -496,6 +496,105 @@ const TEAM_CLASS = ["gsc-teamA", "gsc-teamB", "gsc-teamC", "gsc-teamD"];
 // via touch support; Android tablets typically drop "Mobile" from their
 // user agent string even though they still say "Android", so that's
 // checked too rather than treating any "Android" match as a phone.
+// Both sounds are synthesized directly with the Web Audio API rather than
+// external audio files - keeps the app self-contained (nothing extra to
+// host or upload) and works reliably offline. Wrapped in try/catch since
+// audio can fail silently in some contexts (autoplay restrictions, older
+// browsers) and that should never break the actual score entry.
+
+function playBirdieSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const now = ctx.currentTime;
+    // Two quick overlapping upward pitch-sweeps - the classic bird "tweet-tweet".
+    [0, 0.13].forEach((startOffset) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      const start = now + startOffset;
+      osc.frequency.setValueAtTime(2200, start);
+      osc.frequency.exponentialRampToValueAtTime(3400, start + 0.06);
+      osc.frequency.exponentialRampToValueAtTime(2600, start + 0.11);
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.linearRampToValueAtTime(0.25, start + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.13);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(start);
+      osc.stop(start + 0.15);
+    });
+    setTimeout(() => ctx.close(), 600);
+  } catch (e) {
+    // Silently ignore - sound is a nice-to-have, never worth surfacing an error over.
+  }
+}
+
+function playFireworksSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const now = ctx.currentTime;
+
+    // Whoosh (launch): filtered noise with a rising bandpass sweep.
+    const whooshBuffer = ctx.createBuffer(1, ctx.sampleRate * 0.4, ctx.sampleRate);
+    const whooshData = whooshBuffer.getChannelData(0);
+    for (let i = 0; i < whooshData.length; i++) whooshData[i] = Math.random() * 2 - 1;
+    const whooshSource = ctx.createBufferSource();
+    whooshSource.buffer = whooshBuffer;
+    const whooshFilter = ctx.createBiquadFilter();
+    whooshFilter.type = "bandpass";
+    whooshFilter.Q.value = 1;
+    whooshFilter.frequency.setValueAtTime(400, now);
+    whooshFilter.frequency.exponentialRampToValueAtTime(2500, now + 0.35);
+    const whooshGain = ctx.createGain();
+    whooshGain.gain.setValueAtTime(0.15, now);
+    whooshGain.gain.linearRampToValueAtTime(0.0001, now + 0.4);
+    whooshSource.connect(whooshFilter);
+    whooshFilter.connect(whooshGain);
+    whooshGain.connect(ctx.destination);
+    whooshSource.start(now);
+    whooshSource.stop(now + 0.4);
+
+    // Boom (explosion): filtered noise burst right after the whoosh.
+    const boomStart = now + 0.38;
+    const boomBuffer = ctx.createBuffer(1, ctx.sampleRate * 0.6, ctx.sampleRate);
+    const boomData = boomBuffer.getChannelData(0);
+    for (let i = 0; i < boomData.length; i++) boomData[i] = Math.random() * 2 - 1;
+    const boomSource = ctx.createBufferSource();
+    boomSource.buffer = boomBuffer;
+    const boomFilter = ctx.createBiquadFilter();
+    boomFilter.type = "lowpass";
+    boomFilter.frequency.setValueAtTime(1800, boomStart);
+    boomFilter.frequency.exponentialRampToValueAtTime(150, boomStart + 0.5);
+    const boomGain = ctx.createGain();
+    boomGain.gain.setValueAtTime(0.5, boomStart);
+    boomGain.gain.exponentialRampToValueAtTime(0.001, boomStart + 0.6);
+    boomSource.connect(boomFilter);
+    boomFilter.connect(boomGain);
+    boomGain.connect(ctx.destination);
+    boomSource.start(boomStart);
+    boomSource.stop(boomStart + 0.6);
+
+    // A few sparkle/crackle pops trailing after the boom.
+    [0.55, 0.68, 0.8].forEach((offset) => {
+      const t = now + offset;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "square";
+      osc.frequency.setValueAtTime(900 + Math.random() * 600, t);
+      gain.gain.setValueAtTime(0.08, t);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.08);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(t);
+      osc.stop(t + 0.09);
+    });
+
+    setTimeout(() => ctx.close(), 1300);
+  } catch (e) {
+    // Silently ignore - see note above.
+  }
+}
+
 function isPhoneDevice() {
   if (typeof navigator === "undefined") return true; // server-side render safety, shouldn't occur in this app
   const ua = navigator.userAgent || "";
@@ -2078,6 +2177,8 @@ export default function GolfScorecard() {
   }
 
   const [accolade, setAccolade] = useState(null); // {emoji, text, big, player, key}
+  const [inPlayFireworks, setInPlayFireworks] = useState(false);
+  const inPlayFireworksTimerRef = useRef(null);
   const [accoladeQueue, setAccoladeQueue] = useState([]); // holds multiple accolades to show one at a time
   const prevHoleIdxRef = useRef(holeIdx);
   const latestRoundRef = useRef(round);
@@ -2145,6 +2246,14 @@ export default function GolfScorecard() {
       setAccoladeQueue(rest);
       if (accoladeTimerRef.current) clearTimeout(accoladeTimerRef.current);
       accoladeTimerRef.current = setTimeout(() => setAccolade(null), next.big ? 3200 : 2000);
+      if (next.text === "BIRDIE!") {
+        playBirdieSound();
+      } else if (next.text === "HOLE IN ONE!!!") {
+        playFireworksSound();
+        setInPlayFireworks(true);
+        if (inPlayFireworksTimerRef.current) clearTimeout(inPlayFireworksTimerRef.current);
+        inPlayFireworksTimerRef.current = setTimeout(() => setInPlayFireworks(false), 4700);
+      }
     }
   }, [accoladeQueue, accolade]);
 
@@ -4476,6 +4585,11 @@ function computeRoundScoring(round) {
     return (
       <div className="gsc">
         <style>{STYLE}</style>
+        {inPlayFireworks && (
+          <div style={{ position: "fixed", inset: 0, zIndex: 39, pointerEvents: "none" }}>
+            <Fireworks />
+          </div>
+        )}
         {accolade && (
           <div key={accolade.key} className="gsc-accolade">
             <div style={{ fontSize: accolade.big ? 32 : 22 }}>{accolade.emoji}</div>
