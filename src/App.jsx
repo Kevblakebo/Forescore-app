@@ -2102,7 +2102,6 @@ export default function GolfScorecard() {
     }
     if (field === "putts") {
       if (value === 0) return { emoji: "\u{1F3AF}\u{1F525}", text: "ZERO PUTTS!", big: true };
-      if (value === 1) return { emoji: "\u2B50", text: "ONE PUTT!", big: false };
       return null;
     }
     return null;
