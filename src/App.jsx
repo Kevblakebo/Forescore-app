@@ -3390,7 +3390,7 @@ function computeRoundScoring(round) {
                             next[i] = raw === "" ? "" : Number(raw);
                             setActivePar(next);
                             if (raw !== "" && i < 17 && parRefsWizard.current[i + 1]) {
-                              parRefsWizard.current[i + 1].focus();
+                              parRefsWizard.current[i + 1].focus({ preventScroll: true });
                             }
                           }}
                         />
@@ -3719,7 +3719,7 @@ function computeRoundScoring(round) {
                               next[i] = raw === "" ? "" : Number(raw);
                               setPar(next);
                               if (raw !== "" && i < 17 && parRefsSetup.current[i + 1]) {
-                                parRefsSetup.current[i + 1].focus();
+                                parRefsSetup.current[i + 1].focus({ preventScroll: true });
                               }
                             }}
                           />
@@ -4131,7 +4131,7 @@ function computeRoundScoring(round) {
                       next[i] = raw === "" ? "" : Number(raw);
                       setTournamentPar(next);
                       if (raw !== "" && i < 17 && parRefsTournament.current[i + 1]) {
-                        parRefsTournament.current[i + 1].focus();
+                        parRefsTournament.current[i + 1].focus({ preventScroll: true });
                       }
                     }}
                   />
