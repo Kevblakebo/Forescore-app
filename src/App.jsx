@@ -912,7 +912,7 @@ export default function GolfScorecard() {
   function firstOpenHole(r) {
     for (let h = 0; h < 18; h++) {
       const hs = r.scores[h] || {};
-      const filled = r.players.every((_, i) => hs[i] && (hs[i].strokes != null || hs[i].putts != null));
+      const filled = r.players.every((_, i) => hs[i] && ((hs[i].strokes != null && hs[i].strokes !== "") || (hs[i].putts != null && hs[i].putts !== "")));
       if (!filled) return h;
     }
     return 17;
@@ -2354,7 +2354,7 @@ function computeRoundScoring(round) {
 
   const computed = useMemo(() => computeRoundScoring(round), [round]);
 
-  // FortheScore is built for phones only - this gate runs after every hook
+  // ForTheScore is built for phones only - this gate runs after every hook
   // above has already executed (Rules of Hooks requires hooks to run
   // unconditionally), so it's safe to return early here for anyone on a
   // tablet or desktop instead of rendering the app itself.
@@ -2363,8 +2363,8 @@ function computeRoundScoring(round) {
       <div className="gsc" style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: 24, textAlign: "center" }}>
         <style>{STYLE}</style>
         <div>
-          <img src={LOGO_DATA_URI} alt="FortheScore logo" style={{ width: 120, height: "auto", marginBottom: 16 }} />
-          <div className="gsc-display" style={{ fontSize: 20, fontWeight: 700, marginBottom: 10 }}>FortheScore is built for phones</div>
+          <img src={LOGO_DATA_URI} alt="ForTheScore logo" style={{ width: 120, height: "auto", marginBottom: 16 }} />
+          <div className="gsc-display" style={{ fontSize: 20, fontWeight: 700, marginBottom: 10 }}>ForTheScore is built for phones</div>
           <div style={{ fontSize: 14, color: "#4b4b45", lineHeight: 1.6, maxWidth: 360 }}>
             This app is designed for use on a mobile phone out on the course, and isn't optimized for tablets or desktop browsers. Please open this link on your phone to play.
           </div>
@@ -2412,7 +2412,7 @@ function computeRoundScoring(round) {
           {right}
           <img
             src={LOGO_DATA_URI}
-            alt="FortheScore logo"
+            alt="ForTheScore logo"
             style={{ width: 68, height: "auto", objectFit: "contain", flexShrink: 0, alignSelf: "flex-start", marginRight: -8, marginTop: -2 }}
           />
         </div>
@@ -2509,12 +2509,12 @@ function computeRoundScoring(round) {
       <div className="gsc">
         <style>{STYLE}</style>
         <Header
-          title={<><span style={{ fontSize: 23 }}>FortheScore</span><br /><span style={{ fontSize: 11, opacity: 0.75, letterSpacing: "0.5px", textTransform: "uppercase", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>Golf Games & Scorekeeping</span></>}
+          title={<><span style={{ fontSize: 23 }}>ForTheScore</span><br /><span style={{ fontSize: 11, opacity: 0.75, letterSpacing: "0.5px", textTransform: "uppercase", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>Golf Games & Scorekeeping</span></>}
           sub="Track games, teams &amp; points on the course"
         />
         <div className="gsc-body gsc-body-tabbed">
           <div style={{ fontSize: 13, color: "#4b4b45", lineHeight: 1.55, margin: "0 0 16px" }}>
-            Less scoring, more golf! FortheScore makes it easy and fun to play various golf game formats, share your scorecard live on the course, and settle who's buying at the 19th hole!
+            Less scoring, more golf! ForTheScore makes it easy and fun to play various golf game formats, share your scorecard live on the course, and settle who's buying at the 19th hole!
             <br />
             <br />
             To start a new round or tournament:
@@ -3029,7 +3029,7 @@ function computeRoundScoring(round) {
           <div className="gsc-card" style={{ cursor: "pointer" }} onClick={() => goToScreen("about")}>
             <div className="gsc-label" style={{ marginBottom: 6 }}>About this App</div>
             <div style={{ fontSize: 13, color: "#4b4b45" }}>
-              What FortheScore tracks for you, and how a round works from tee to tally.
+              What ForTheScore tracks for you, and how a round works from tee to tally.
             </div>
             <button className="gsc-link" style={{ marginTop: 8, fontSize: 12 }} onClick={() => goToScreen("about")}>
               Read more
@@ -3085,12 +3085,12 @@ function computeRoundScoring(round) {
     return (
       <div className="gsc">
         <style>{STYLE}</style>
-        <Header title="About this App" sub="What FortheScore does for you" onBack={() => goBack("libraryTab")} />
+        <Header title="About this App" sub="What ForTheScore does for you" onBack={() => goBack("libraryTab")} />
         <div className="gsc-body">
           <div className="gsc-card">
             <div style={{ fontSize: 13, color: "#4b4b45", lineHeight: 1.6 }}>
               <p style={{ margin: "0 0 14px" }}>
-                The FortheScore golf game scorecard app manages and shares the detail of various golf game formats you can play with your group live on the course so you don't have to: game type, rules, players, teams, scoring, max scores, course pars, handicaps, mulligans, dates, and prizes. You no longer have to do it in your head or on a paper scorecard.
+                The ForTheScore golf game scorecard app manages and shares the detail of various golf game formats you can play with your group live on the course so you don't have to: game type, rules, players, teams, scoring, max scores, course pars, handicaps, mulligans, dates, and prizes. You no longer have to do it in your head or on a paper scorecard.
               </p>
               <p style={{ margin: "0 0 14px" }}>
                 Before you tee off, you can quickly set the details that matter for your group. Just pick a game and enter the details before the round. Then each player enters their own scores during play (or one person can enter for everyone), and everyone can see where things stand as you go. When the round wraps up, points are calculated and saved automatically.
@@ -3405,7 +3405,7 @@ function computeRoundScoring(round) {
           {wizardStepId === "field_players" && (
             <div className="gsc-card">
               <div className="gsc-label" style={{ marginBottom: 10, fontSize: 16 }}>Who's playing? Add names and handicaps (optional)</div>
-              <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 10 }}>
+              <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 10, fontWeight: 700 }}>
                 Tap the circle next to a player's name to pick a fun avatar (optional).
               </div>
               {players.map((p, i) => (
@@ -4277,7 +4277,7 @@ function computeRoundScoring(round) {
         <div style={{ position: "relative", background: "#1B4332", padding: "28px 18px 22px", overflow: "hidden" }}>
           <Fireworks />
           <div style={{ position: "relative", textAlign: "center" }}>
-            <img src={LOGO_DATA_URI} alt="FortheScore logo" style={{ width: 64, height: "auto", marginBottom: 10 }} />
+            <img src={LOGO_DATA_URI} alt="ForTheScore logo" style={{ width: 64, height: "auto", marginBottom: 10 }} />
             <div className="gsc-display" style={{ fontSize: 24, fontWeight: 700, color: "#F3EFE0" }}>Round Complete!</div>
             <div style={{ fontSize: 13, color: "#F3EFE0", opacity: 0.8, marginTop: 4 }}>
               {round.name} - {g.name} - {round.date}
@@ -4341,7 +4341,7 @@ function computeRoundScoring(round) {
                     </div>
                     <div className="gsc-mono" style={{ fontWeight: 700 }}>
                       {g.totalScoring ? (
-                        <>{p.score}str/{p.putts}put</>
+                        <span style={{ fontSize: 17 }}>{p.score}str/{p.putts}put</span>
                       ) : (
                         <>
                           {p.points} pts <span style={{ fontWeight: 700, color: "#6b6b63" }}>({p.score}str/{p.putts}put/{formatRelPar(p.relPar)})</span>
@@ -4515,9 +4515,18 @@ function computeRoundScoring(round) {
                       <div>
                         <div style={{ fontSize: 11, color: "#6b6b63", marginBottom: 3 }}>STROKES</div>
                         <div className="gsc-stepper">
-                          <button onClick={() => updateHoleEntry(i, "strokes", Math.max(1, (Number(e.strokes) || 1) - 1))}>-</button>
-                          <div className="gsc-stepper-val">{e.strokes ?? "-"}</div>
                           <button onClick={() => updateHoleEntry(i, "strokes", (Number(e.strokes) || 0) + 1)}>+</button>
+                          <div className="gsc-stepper-val">{e.strokes === "" || e.strokes == null ? "-" : e.strokes}</div>
+                          <button
+                            disabled={e.strokes === "" || e.strokes == null}
+                            onClick={() => {
+                              if (e.strokes === "" || e.strokes == null) return;
+                              const n = Number(e.strokes);
+                              updateHoleEntry(i, "strokes", n <= 1 ? "" : n - 1);
+                            }}
+                          >
+                            -
+                          </button>
                         </div>
                       </div>
                     )}
@@ -4525,9 +4534,18 @@ function computeRoundScoring(round) {
                       <div>
                         <div style={{ fontSize: 11, color: "#6b6b63", marginBottom: 3 }}>PUTTS</div>
                         <div className="gsc-stepper">
-                          <button onClick={() => updateHoleEntry(i, "putts", Math.max(0, (Number(e.putts) || 1) - 1))}>-</button>
-                          <div className="gsc-stepper-val">{e.putts ?? "-"}</div>
                           <button onClick={() => updateHoleEntry(i, "putts", (Number(e.putts) || 0) + 1)}>+</button>
+                          <div className="gsc-stepper-val">{e.putts === "" || e.putts == null ? "-" : e.putts}</div>
+                          <button
+                            disabled={e.putts === "" || e.putts == null}
+                            onClick={() => {
+                              if (e.putts === "" || e.putts == null) return;
+                              const n = Number(e.putts);
+                              updateHoleEntry(i, "putts", n <= 0 ? "" : n - 1);
+                            }}
+                          >
+                            -
+                          </button>
                         </div>
                       </div>
                     )}
@@ -4589,7 +4607,11 @@ function computeRoundScoring(round) {
                 </div>
                 <div className="gsc-mono" style={{ fontWeight: 700 }}>
                   {!g.singleTeam && !g.totalScoring && <>{p.points} pts </>}
-                  <span style={{ fontWeight: 700, color: "#6b6b63", whiteSpace: "nowrap" }}>({p.score}str/{p.putts}put/{formatRelPar(p.relPar)})</span>
+                  {g.totalScoring ? (
+                    <span style={{ fontWeight: 700, fontSize: 17, whiteSpace: "nowrap" }}>{p.score}str/{p.putts}put/{formatRelPar(p.relPar)}</span>
+                  ) : (
+                    <span style={{ fontWeight: 700, color: "#6b6b63", whiteSpace: "nowrap" }}>({p.score}str/{p.putts}put/{formatRelPar(p.relPar)})</span>
+                  )}
                 </div>
               </div>
             ))}
@@ -4633,9 +4655,9 @@ function computeRoundScoring(round) {
                           const e = (round.scores[h] || {})[i] || {};
                           return (
                             <td key={i}>
-                              {g.hasScore ? (e.strokes ?? "-") : ""}
+                              {g.hasScore ? (e.strokes === "" || e.strokes == null ? "-" : e.strokes) : ""}
                               {g.hasScore && g.hasPutts ? "/" : ""}
-                              {g.hasPutts ? (e.putts ?? "-") : ""}
+                              {g.hasPutts ? (e.putts === "" || e.putts == null ? "-" : e.putts) : ""}
                             </td>
                           );
                         })}
