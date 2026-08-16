@@ -2747,7 +2747,7 @@ function computeRoundScoring(round) {
     return (
       <div className="gsc">
         <style>{STYLE}</style>
-        <Header title={<span style={{ fontSize: 23 }}>Rounds</span>} sub="Create, join, or revisit" />
+        <Header title={<span style={{ fontSize: 23 }}>Rounds</span>} sub="Join, create, or revisit" />
         <div className="gsc-body gsc-body-tabbed">
           {activeRound && !activeRound.tournamentId && (
             <div className="gsc-card" style={{ border: "2px solid #B08D57" }}>
@@ -2910,7 +2910,7 @@ function computeRoundScoring(round) {
     return (
       <div className="gsc">
         <style>{STYLE}</style>
-        <Header title={<span style={{ fontSize: 23 }}>Tournaments</span>} sub="Create, join, or revisit" />
+        <Header title={<span style={{ fontSize: 23 }}>Tournaments</span>} sub="Join, create, or revisit" />
         <div className="gsc-body gsc-body-tabbed">
           {lastTournament && (
             <div className="gsc-card" style={{ border: "2px solid #B08D57" }}>
