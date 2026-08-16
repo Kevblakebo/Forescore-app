@@ -481,7 +481,10 @@ const SEABLUFFE_PAIRINGS = [
   [[0, 3], [1, 2]],
 ];
 const LETTERS = ["A", "B", "C", "D"];
-const AVATAR_OPTIONS = ["\u{1F60E}", "\u{1F525}", "\u2B50", "\u{1F3C6}", "\u{1F3AF}", "\u{1F981}", "\u{1F43B}", "\u{1F985}", "\u{1F422}", "\u{1F41D}", "\u{1F30A}", "\u{1F335}"];
+const AVATAR_OPTIONS = [
+  "\u{1F60E}", "\u{1F525}", "\u2B50", "\u{1F3C6}", "\u{1F3AF}", "\u{1F981}", "\u{1F43B}", "\u{1F985}", "\u{1F422}", "\u{1F41D}", "\u{1F30A}", "\u{1F335}",
+  "\u{1F9B8}", "\u{1F9B9}", "\u{1F977}", "\u{1F987}", "\u{1F577}\u{FE0F}", "\u26A1", "\u{1F4A5}", "\u{1F6E1}\u{FE0F}", "\u{1F4AA}", "\u{1F680}",
+];
 const TEAM_CLASS = ["gsc-teamA", "gsc-teamB", "gsc-teamC", "gsc-teamD"];
 
 // Ponto's mulligan allowance resets every 9 holes (front/back nine).
@@ -633,15 +636,6 @@ export default function GolfScorecard() {
     screenHistoryRef.current = h.slice(0, -1);
     setScreen(prev);
   }
-
-  // Every screen change (any navigation button) should land at the top of
-  // the page, rather than keeping whatever scroll position the previous
-  // screen was left at.
-  useEffect(() => {
-    window.scrollTo(0, 0);
-    if (document.documentElement) document.documentElement.scrollTop = 0;
-    if (document.body) document.body.scrollTop = 0;
-  }, [screen]);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   const [recentCodes, setRecentCodes] = useState([]);
@@ -677,6 +671,18 @@ export default function GolfScorecard() {
   const [wizardHistory, setWizardHistory] = useState([]); // stack of actually-visited step ids, for Back
   const [wizardFieldErr, setWizardFieldErr] = useState("");
   const [courseDetailBusy, setCourseDetailBusy] = useState(false);
+
+  // Every screen change (any navigation button) should land at the top of
+  // the page, rather than keeping whatever scroll position the previous
+  // screen was left at. Also fires on wizard step changes specifically,
+  // since those happen within the same "gameWizard" screen and wouldn't
+  // otherwise trigger this - which is what caused the wizard to visually
+  // jump around between questions instead of starting cleanly at the top.
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    if (document.documentElement) document.documentElement.scrollTop = 0;
+    if (document.body) document.body.scrollTop = 0;
+  }, [screen, wizardStepId]);
   const [courseMsg, setCourseMsg] = useState("");
 
   // active round
@@ -3377,14 +3383,22 @@ function computeRoundScoring(round) {
           {wizardStepId === "field_players" && (
             <div className="gsc-card">
               <div className="gsc-label" style={{ marginBottom: 10, fontSize: 16 }}>Who's playing? Add names and handicaps (optional)</div>
+              <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 10 }}>
+                Tap the circle next to a player's name to pick a fun avatar (optional).
+              </div>
               {players.map((p, i) => (
                 <div key={i} style={{ marginBottom: 8 }}>
                   <div className="gsc-row">
                     <button
                       onClick={() => setAvatarPickerFor(avatarPickerFor === i ? null : i)}
-                      style={{ flex: "0 0 40px", height: 40, borderRadius: "50%", border: "1.5px solid #1B4332", background: p.avatar ? "#fff" : "#EBF0EC", fontSize: p.avatar ? 20 : 12, fontWeight: 800, color: "#1B4332", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+                      style={{ position: "relative", flex: "0 0 40px", height: 40, borderRadius: "50%", border: p.avatar ? "1.5px solid #1B4332" : "1.5px dashed #B08D57", background: p.avatar ? "#fff" : "#EBF0EC", fontSize: p.avatar ? 20 : 12, fontWeight: 800, color: "#1B4332", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
                     >
                       {p.avatar || LETTERS[i]}
+                      {!p.avatar && (
+                        <span style={{ position: "absolute", bottom: -2, right: -2, width: 16, height: 16, borderRadius: "50%", background: "#C1440E", color: "#fff", fontSize: 11, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", border: "1.5px solid #F3EFE0" }}>
+                          +
+                        </span>
+                      )}
                     </button>
                     <input className="gsc-input" placeholder={`Player ${LETTERS[i]} name`} value={p.name} onChange={(e) => updatePlayer(i, "name", e.target.value)} />
                     <input className="gsc-input" style={{ flex: "0 0 70px" }} placeholder="HCP" value={p.hcp} onChange={(e) => updatePlayer(i, "hcp", e.target.value)} />
@@ -3707,16 +3721,20 @@ function computeRoundScoring(round) {
                 This format supports 1-4 players - add or remove players below to match who's actually playing.
               </div>
             )}
+            <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 10 }}>
+              Tap the circle next to a player's name to pick a fun avatar (optional).
+            </div>
             {players.map((p, i) => (
               <div key={i} style={{ marginBottom: 8 }}>
                 <div className="gsc-row">
                   <button
                     onClick={() => setAvatarPickerFor(avatarPickerFor === i ? null : i)}
                     style={{
+                      position: "relative",
                       flex: "0 0 40px",
                       height: 40,
                       borderRadius: "50%",
-                      border: "1.5px solid #1B4332",
+                      border: p.avatar ? "1.5px solid #1B4332" : "1.5px dashed #B08D57",
                       background: p.avatar ? "#fff" : "#EBF0EC",
                       fontSize: p.avatar ? 20 : 12,
                       fontWeight: 800,
@@ -3729,6 +3747,11 @@ function computeRoundScoring(round) {
                     title="Choose an avatar (optional)"
                   >
                     {p.avatar || LETTERS[i]}
+                    {!p.avatar && (
+                      <span style={{ position: "absolute", bottom: -2, right: -2, width: 16, height: 16, borderRadius: "50%", background: "#C1440E", color: "#fff", fontSize: 11, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", border: "1.5px solid #F3EFE0" }}>
+                        +
+                      </span>
+                    )}
                   </button>
                   <input className="gsc-input" placeholder={`Player ${LETTERS[i]} name`} value={p.name} onChange={(e) => updatePlayer(i, "name", e.target.value)} />
                   <input className="gsc-input" style={{ flex: "0 0 70px" }} placeholder="HCP" value={p.hcp} onChange={(e) => updatePlayer(i, "hcp", e.target.value)} />
@@ -4289,7 +4312,7 @@ function computeRoundScoring(round) {
                       borderBottom: idx === ranks.length - 1 ? "none" : "1px solid #eee6cf",
                     }}
                   >
-                    <div style={{ fontWeight: isWinner ? 700 : 400 }}>
+                    <div style={{ fontWeight: 700 }}>
                       {isWinner && <span style={{ marginRight: 6 }}>&#127942;</span>}
                       {p.avatar && <span style={{ marginRight: 4 }}>{p.avatar}</span>}
                       {LETTERS[p.idx]} - {p.name}
@@ -4299,7 +4322,7 @@ function computeRoundScoring(round) {
                         <>{p.score}str/{p.putts}put</>
                       ) : (
                         <>
-                          {p.points} pts <span style={{ fontWeight: 400, color: "#6b6b63" }}>({p.score}str/{p.putts}put/{formatRelPar(p.relPar)})</span>
+                          {p.points} pts <span style={{ fontWeight: 700, color: "#6b6b63" }}>({p.score}str/{p.putts}put/{formatRelPar(p.relPar)})</span>
                         </>
                       )}
                     </div>
@@ -4529,7 +4552,7 @@ function computeRoundScoring(round) {
             <div className="gsc-label" style={{ marginBottom: 8 }}>Standings</div>
             {ranks.map((p, idx) => (
               <div key={p.idx} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", borderBottom: "1px solid #eee6cf", fontSize: 13 }}>
-                <div>
+                <div style={{ fontWeight: 700 }}>
                   {p.avatar && <span style={{ marginRight: 4 }}>{p.avatar}</span>}
                   {LETTERS[p.idx]} - {p.name}
                   {g.totalScoring && holeIdx === 17 && hr.complete && idx === 0 && <span className="gsc-chip gsc-lead">WINNER</span>}
@@ -4538,7 +4561,7 @@ function computeRoundScoring(round) {
                 </div>
                 <div className="gsc-mono" style={{ fontWeight: 700 }}>
                   {!g.singleTeam && !g.totalScoring && <>{p.points} pts </>}
-                  <span style={{ fontWeight: 400, color: "#6b6b63", whiteSpace: "nowrap" }}>({p.score}str/{p.putts}put/{formatRelPar(p.relPar)})</span>
+                  <span style={{ fontWeight: 700, color: "#6b6b63", whiteSpace: "nowrap" }}>({p.score}str/{p.putts}put/{formatRelPar(p.relPar)})</span>
                 </div>
               </div>
             ))}
