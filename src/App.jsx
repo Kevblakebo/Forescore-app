@@ -32,6 +32,7 @@ const STYLE = `
   .gsc-game-card:hover { border-color:#B08D57; }
   .gsc-game-title { font-size:18px; font-weight:700; color:#1B4332; }
   .gsc-tag { display:inline-block; background:#8FA998; color:#fff; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; padding:3px 8px; border-radius:20px; margin-top:6px; }
+  .gsc-no-select { -webkit-user-select:none; -moz-user-select:none; -ms-user-select:none; user-select:none; }
   .gsc-field { margin-bottom:12px; }
   .gsc-label { display:block; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.4px; color:#6b6b63; margin-bottom:5px; }
   .gsc-input { width:100%; padding:9px 10px; border:1.5px solid #d8d2bd; border-radius:8px; font-size:16px; background:#FDFCF7; }
@@ -886,7 +887,7 @@ export default function GolfScorecard() {
       <div className="gsc-modal-backdrop" onClick={closeRules}>
         <div className="gsc-modal" style={{ maxWidth: 440, maxHeight: "80vh", overflowY: "auto" }} onClick={(e) => e.stopPropagation()}>
           <div className="gsc-modal-title">{rg.name} - Full Rules</div>
-          <ul style={{ fontSize: 13, color: "#4b4b45", lineHeight: 1.6, paddingLeft: 18, margin: "0 0 16px" }}>
+          <ul className="gsc-no-select" style={{ fontSize: 13, color: "#4b4b45", lineHeight: 1.6, paddingLeft: 18, margin: "0 0 16px" }}>
             {rg.rules.map((r, i) =>
               typeof r === "string" ? (
                 <li key={i} style={{ marginBottom: 6 }}>{r}</li>
@@ -2782,7 +2783,7 @@ function computeRoundScoring(round) {
                 <div key={key} className="gsc-card gsc-game-card" style={{ marginBottom: 10 }} onClick={() => startNewRound(key)}>
                   <div className="gsc-game-title">{g.name}</div>
                   <div className="gsc-tag">{g.tag}</div>
-                  <div style={{ fontSize: 13, marginTop: 8, color: "#4b4b45" }}>{g.desc}</div>
+                  <div className="gsc-no-select" style={{ fontSize: 13, marginTop: 8, color: "#4b4b45" }}>{g.desc}</div>
                   <button
                     className="gsc-link"
                     style={{ marginTop: 8, fontSize: 12 }}
@@ -2804,7 +2805,7 @@ function computeRoundScoring(round) {
                 <div key={key} className="gsc-card gsc-game-card" style={{ marginBottom: 10 }} onClick={() => startNewRound(key)}>
                   <div className="gsc-game-title">{g.name}</div>
                   <div className="gsc-tag">{g.tag}</div>
-                  <div style={{ fontSize: 13, marginTop: 8, color: "#4b4b45" }}>{g.desc}</div>
+                  <div className="gsc-no-select" style={{ fontSize: 13, marginTop: 8, color: "#4b4b45" }}>{g.desc}</div>
                   <button
                     className="gsc-link"
                     style={{ marginTop: 8, fontSize: 12 }}
@@ -2830,7 +2831,7 @@ function computeRoundScoring(round) {
                 <div key={key} className="gsc-card gsc-game-card" style={{ marginBottom: 10 }} onClick={() => startTournamentCreateFlow(key)}>
                   <div className="gsc-game-title">{g.name}</div>
                   <div className="gsc-tag">{g.tag}</div>
-                  <div style={{ fontSize: 13, marginTop: 8, color: "#4b4b45" }}>{g.desc}</div>
+                  <div className="gsc-no-select" style={{ fontSize: 13, marginTop: 8, color: "#4b4b45" }}>{g.desc}</div>
                   <button
                     className="gsc-link"
                     style={{ marginTop: 8, fontSize: 12 }}
@@ -2960,7 +2961,7 @@ function computeRoundScoring(round) {
                 <div key={key} className="gsc-card gsc-game-card" style={{ marginBottom: 10 }} onClick={() => startNewRound(key)}>
                   <div className="gsc-game-title">{g.name}</div>
                   <div className="gsc-tag">{g.tag}</div>
-                  <div style={{ fontSize: 13, marginTop: 8, color: "#4b4b45" }}>{g.desc}</div>
+                  <div className="gsc-no-select" style={{ fontSize: 13, marginTop: 8, color: "#4b4b45" }}>{g.desc}</div>
                   <button
                     className="gsc-link"
                     style={{ marginTop: 8, fontSize: 12 }}
@@ -2982,7 +2983,7 @@ function computeRoundScoring(round) {
                 <div key={key} className="gsc-card gsc-game-card" style={{ marginBottom: 10 }} onClick={() => startNewRound(key)}>
                   <div className="gsc-game-title">{g.name}</div>
                   <div className="gsc-tag">{g.tag}</div>
-                  <div style={{ fontSize: 13, marginTop: 8, color: "#4b4b45" }}>{g.desc}</div>
+                  <div className="gsc-no-select" style={{ fontSize: 13, marginTop: 8, color: "#4b4b45" }}>{g.desc}</div>
                   <button
                     className="gsc-link"
                     style={{ marginTop: 8, fontSize: 12 }}
@@ -3110,7 +3111,7 @@ function computeRoundScoring(round) {
                 <div key={key} className="gsc-card gsc-game-card" style={{ marginBottom: 10 }} onClick={() => startTournamentCreateFlow(key)}>
                   <div className="gsc-game-title">{g.name}</div>
                   <div className="gsc-tag">{g.tag}</div>
-                  <div style={{ fontSize: 13, marginTop: 8, color: "#4b4b45" }}>{g.desc}</div>
+                  <div className="gsc-no-select" style={{ fontSize: 13, marginTop: 8, color: "#4b4b45" }}>{g.desc}</div>
                   <button
                     className="gsc-link"
                     style={{ marginTop: 8, fontSize: 12 }}
@@ -3261,7 +3262,7 @@ function computeRoundScoring(round) {
             These are for reference only - they aren't trackable in this app, just handy to have on hand.
           </div>
           {GAME_LIBRARY.map((cat) => (
-            <div key={cat.category} className="gsc-card">
+            <div key={cat.category} className="gsc-card gsc-no-select">
               <div className="gsc-label" style={{ marginBottom: 10 }}>{cat.category}</div>
               {cat.games.map((game, gi) => (
                 <div key={game.name} style={{ marginBottom: gi === cat.games.length - 1 ? 0 : 16, paddingBottom: gi === cat.games.length - 1 ? 0 : 16, borderBottom: gi === cat.games.length - 1 ? "none" : "1px solid #eee6cf" }}>
@@ -3297,7 +3298,7 @@ function computeRoundScoring(round) {
         <style>{STYLE}</style>
         <Header title="About this App" sub="What Foresa does for you" onBack={() => goBack("libraryTab")} />
         <div className="gsc-body">
-          <div className="gsc-card">
+          <div className="gsc-card gsc-no-select">
             <div style={{ fontSize: 13, color: "#4b4b45", lineHeight: 1.6 }}>
               <p style={{ margin: "0 0 14px" }}>
                 The Foresa golf game scorecard app manages and shares the detail of various golf game formats you can play with your group live on the course so you don't have to: game type, rules, players, teams, scoring, max scores, course pars, handicaps, mulligans, dates, and prizes. You no longer have to do it in your head or on a paper scorecard.
@@ -3488,7 +3489,7 @@ function computeRoundScoring(round) {
               <div className="gsc-label">{isTournament ? "Your tournament format" : "Your game format"}</div>
               <div style={{ fontWeight: 700, fontSize: 19, marginTop: 4 }}>{g.name}</div>
               <div className="gsc-tag" style={{ marginTop: 6 }}>{g.tag}</div>
-              <div style={{ fontSize: 13, marginTop: 10, color: "#4b4b45" }}>{g.desc}</div>
+              <div className="gsc-no-select" style={{ fontSize: 13, marginTop: 10, color: "#4b4b45" }}>{g.desc}</div>
               <button className="gsc-link" style={{ marginTop: 10, fontSize: 13 }} onClick={() => openRules(wizardAnswers.resolvedGameKey)}>
                 View full rules
               </button>
