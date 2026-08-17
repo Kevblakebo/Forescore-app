@@ -249,7 +249,7 @@ const GAMES = {
   },
   avoscramble: {
     name: "Avocado Scramble Tournament",
-    tag: "Teams choose best shot - Tournaments only",
+    tag: "Choose best shot - Tournaments only",
     desc: "The whole foursome plays as one team. Every team member tees off on each hole, the team picks the best shot of the foursome, and all players hit their next shots from that same location. This cycle repeats until the ball is in the hole, with the lowest total strokes score winning. Only one score for strokes per hole is tracked for the whole team. Used only in Tournaments, where foursomes are ranked against each other by team strokes.",
     rotates: false,
     hasScore: true,
