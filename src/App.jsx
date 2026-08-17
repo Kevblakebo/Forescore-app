@@ -4599,7 +4599,7 @@ function computeRoundScoring(round) {
         <Header
           title={t ? t.name : "Tournament Leaderboard"}
           sub={t ? `${GAMES[t.game].name} - strokes and putts ranked separately` : ""}
-          onBack={() => goBack(round ? "card" : "tournamentsTab")}
+          onBack={() => setScreen("home")}
         />
         <div className="gsc-body">
           {t && (
@@ -4633,7 +4633,7 @@ function computeRoundScoring(round) {
           {board && t && board.strokesRanked.length > 0 && (
             <div className="gsc-card" style={{ background: "#EBF0EC", border: "1px solid #1B4332" }}>
               <div style={{ fontSize: 13, color: "#1B4332", fontWeight: 700 }}>
-                Tap a foursome below to enter or view its hole-by-hole scores.
+                Tap a foursome below to enter (or view) hole-by-hole scores as you play.
               </div>
             </div>
           )}
