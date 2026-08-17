@@ -860,6 +860,7 @@ export default function GolfScorecard() {
   const [tournamentBusy, setTournamentBusy] = useState(false);
   const [board, setBoard] = useState(null); // { tournament, rows: [{...}] } for the leaderboard screen
   const [tournamentFinishSnapshot, setTournamentFinishSnapshot] = useState(null); // captured winner data for the finish-tournament celebration
+  const [tournamentCreatedSnapshot, setTournamentCreatedSnapshot] = useState(null); // captured data for the "tournament just created" celebration
   const [boardErr, setBoardErr] = useState("");
   const [lastTournament, setLastTournament] = useState(null); // {id, name} - lets Home screen jump back into a tournament from anywhere
   const [editFoursomeOpen, setEditFoursomeOpen] = useState(false);
@@ -1914,7 +1915,8 @@ export default function GolfScorecard() {
     const pointer = { id: tournament.id, name: tournament.name };
     setLastTournament(pointer);
     storageSet(LAST_TOURNAMENT_KEY, JSON.stringify(pointer), false);
-    openTournamentBoard(tournament.id);
+    setTournamentCreatedSnapshot({ tournament, foursomeCount: foursomeEntries.length });
+    goToScreen("tournamentCreatedCelebration");
   }
 
   async function joinTournament(codeRaw) {
@@ -2344,7 +2346,7 @@ export default function GolfScorecard() {
   }, [screen, round && round.id]);
 
   useEffect(() => {
-    if (screen === "tournamentFinishCelebration") playFireworksSound();
+    if (screen === "tournamentFinishCelebration" || screen === "tournamentCreatedCelebration") playFireworksSound();
   }, [screen]);
 
 
@@ -3677,9 +3679,15 @@ function computeRoundScoring(round) {
             <div className="gsc-card">
               <div className="gsc-label" style={{ marginBottom: 10, fontSize: 16 }}>What's the prize for winning? (optional)</div>
               <input className="gsc-input" placeholder="e.g. Losers buy winners a drink at the 19th hole" value={activeCfg.prize} onChange={(e) => setActiveCfg({ ...activeCfg, prize: e.target.value })} />
-              <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 14 }} onClick={() => wizardGoNext("field_prize", {})}>
+              <button
+                className="gsc-btn gsc-btn-primary"
+                style={{ width: "100%", marginTop: 14 }}
+                disabled={tournamentBusy}
+                onClick={() => (isTournament ? proceedToFoursomeRoster() : wizardGoNext("field_prize", {}))}
+              >
                 Continue
               </button>
+              {tournamentErr && <div style={{ color: "#C1440E", fontSize: 12, marginTop: 8 }}>{tournamentErr}</div>}
             </div>
           )}
 
@@ -3742,19 +3750,16 @@ function computeRoundScoring(round) {
               <div style={{ fontSize: 32, marginBottom: 8 }}>{"\u{1F389}"}</div>
               <div style={{ fontWeight: 700, fontSize: 19, marginBottom: 8 }}>You're all set!</div>
               <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 16 }}>
-                {isTournament
-                  ? "Next, add each foursome's players - then you're ready to play."
-                  : "Time to head to the first hole."}
+                Time to head to the first hole.
               </div>
               {err && <div style={{ color: "#C1440E", fontSize: 13, marginBottom: 12 }}>{err}</div>}
-              {tournamentErr && <div style={{ color: "#C1440E", fontSize: 13, marginBottom: 12 }}>{tournamentErr}</div>}
               <button
                 className="gsc-btn gsc-btn-primary"
                 style={{ width: "100%" }}
-                disabled={busy || tournamentBusy}
-                onClick={() => (isTournament ? proceedToFoursomeRoster() : finishSetup())}
+                disabled={busy}
+                onClick={finishSetup}
               >
-                {isTournament ? "Add foursomes" : "Let's play! \u26F3"}
+                Let's play! {"\u26F3"}
               </button>
             </div>
           )}
@@ -4749,6 +4754,41 @@ function computeRoundScoring(round) {
 
           <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 4 }} onClick={finishCelebrationAndGoHome}>
             Continue to Home
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (screen === "tournamentCreatedCelebration" && tournamentCreatedSnapshot) {
+    const { tournament: ct, foursomeCount } = tournamentCreatedSnapshot;
+    return (
+      <div className="gsc">
+        <style>{STYLE}</style>
+        <div style={{ position: "relative", background: "#1B4332", padding: "28px 18px 22px", overflow: "hidden" }}>
+          <Fireworks />
+          <div style={{ position: "relative", textAlign: "center" }}>
+            <img src={LOGO_DATA_URI} alt="Foresa logo" style={{ width: 44, height: "auto", marginBottom: 10 }} />
+            <div className="gsc-display" style={{ fontSize: 24, fontWeight: 700, color: "#F3EFE0" }}>You're All Set!</div>
+            <div style={{ fontSize: 13, color: "#F3EFE0", opacity: 0.8, marginTop: 4 }}>
+              {ct.name} - {GAMES[ct.game].name}
+            </div>
+          </div>
+        </div>
+
+        <div className="gsc-body">
+          <div className="gsc-card gsc-winner-card" style={{ textAlign: "center" }}>
+            <div style={{ fontSize: 28, marginBottom: 6 }}>&#127943;</div>
+            <div style={{ fontWeight: 700, fontSize: 19 }}>
+              {foursomeCount} foursome{foursomeCount === 1 ? "" : "s"} ready to play
+            </div>
+            <div style={{ fontSize: 13, color: "#6b6b63", marginTop: 6 }}>
+              Share tournament code <span className="gsc-mono" style={{ fontWeight: 700 }}>{ct.id}</span> so more foursomes can join any time.
+            </div>
+          </div>
+
+          <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 4 }} onClick={() => { setTournamentCreatedSnapshot(null); openTournamentBoard(ct.id); }}>
+            View Leaderboard
           </button>
         </div>
       </div>
