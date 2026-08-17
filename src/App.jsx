@@ -2172,9 +2172,11 @@ export default function GolfScorecard() {
       const prevParH = r.par ? r.par[prevIdx] : null;
       const holeScores = r.scores[prevIdx] || {};
       const newAccolades = [];
-      (r.players || []).forEach((p, i) => {
+      const isOneTeamScore = r.game && GAMES[r.game] && GAMES[r.game].oneTeamScore;
+      const playersToCheck = isOneTeamScore ? (r.players || []).slice(0, 1) : r.players || [];
+      playersToCheck.forEach((p, i) => {
         const entry = holeScores[i] || {};
-        const playerName = p.name || "Player";
+        const playerName = isOneTeamScore ? "Team" : p.name || "Player";
         if (entry.strokes != null && entry.strokes !== "") {
           const acc = getAccolade("strokes", Number(entry.strokes), prevParH);
           if (acc) newAccolades.push({ ...acc, player: playerName, key: `${Date.now()}-${i}-s` });
