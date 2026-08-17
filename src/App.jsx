@@ -261,7 +261,7 @@ const GAMES = {
     tracksDrives: true,
     defaults: { maxOver: 3, maxPutts: 3, mulliganSegment: 1, minDrives: 3, prize: "Losers buy winners a drink at the 19th hole" },
     rules: [
-      "4-person team strokes competition - the whole foursome plays as one team, not split into 2-person sub-teams.",
+      "4-person team strokes competition - the whole foursome plays as one team",
       {
         text: "Basic Play Sequence:",
         sub: [
