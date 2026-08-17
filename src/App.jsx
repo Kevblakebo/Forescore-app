@@ -1015,7 +1015,11 @@ export default function GolfScorecard() {
   }
   function confirmLeaveRound() {
     setConfirmLeaveOpen(false);
-    setScreen("home");
+    if (round && round.tournamentId) {
+      openTournamentBoard(round.tournamentId);
+    } else {
+      setScreen("home");
+    }
   }
   function cancelLeaveRound() {
     setConfirmLeaveOpen(false);
@@ -4971,16 +4975,6 @@ function computeRoundScoring(round) {
                   Leaderboard
                 </button>
               )}
-              {round.tournamentId && (
-                <button className="gsc-link" style={{ color: "#F3EFE0", fontSize: 11, textDecoration: "underline" }} onClick={() => addFoursomeToTournamentId(round.tournamentId)}>
-                  Add foursome
-                </button>
-              )}
-              {round.tournamentId && (
-                <button className="gsc-link" style={{ color: "#F3EFE0", fontSize: 11, textDecoration: "underline" }} onClick={() => openEditFoursome(round.id, round)}>
-                  Edit foursome
-                </button>
-              )}
             </div>
           }
         />
@@ -5445,7 +5439,9 @@ function computeRoundScoring(round) {
             <div className="gsc-modal" onClick={(e) => e.stopPropagation()}>
               <div className="gsc-modal-title">Leave this round?</div>
               <div className="gsc-modal-body">
-                Your scores are saved, and you can pick up right where you left off from "Continue round" on the home screen. Are you sure you want to leave?
+                {round && round.tournamentId
+                  ? "Your scores are saved, and you can pick up right where you left off by opening this foursome from the Leaderboard. Are you sure you want to leave?"
+                  : "Your scores are saved, and you can pick up right where you left off from \"Continue round\" on the home screen. Are you sure you want to leave?"}
               </div>
               <div className="gsc-modal-row">
                 <button className="gsc-btn gsc-btn-outline" onClick={cancelLeaveRound}>No, stay</button>
