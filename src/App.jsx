@@ -2301,6 +2301,17 @@ export default function GolfScorecard() {
     return () => clearInterval(interval);
   }, [screen, round && round.id]);
 
+  // "One team score" games (like Avocados Scramble) show the tournament
+  // leaderboard directly on the scorecard instead of a per-player Standings
+  // box, since there's only one shared team score - individual player
+  // rankings wouldn't mean anything. Load it once on arrival so it's not
+  // blank before the first manual refresh.
+  useEffect(() => {
+    if (screen !== "card" || !round || !round.tournamentId) return;
+    if (!GAMES[round.game] || !GAMES[round.game].oneTeamScore) return;
+    loadTournamentBoard(round.tournamentId);
+  }, [screen, round && round.id]);
+
 
   const game = round ? GAMES[round.game] : gameKey ? GAMES[gameKey] : null;
 
@@ -4925,6 +4936,46 @@ function computeRoundScoring(round) {
             </div>
           )}
 
+          {g.oneTeamScore && round.tournamentId ? (
+            <div className="gsc-card">
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                <div className="gsc-label" style={{ marginBottom: 0 }}>Tournament Leaderboard</div>
+                <button className="gsc-btn gsc-btn-outline" style={{ padding: "6px 10px", fontSize: 12, minHeight: "auto" }} disabled={boardLoading} onClick={() => loadTournamentBoard(round.tournamentId)}>
+                  {boardLoading ? "Refreshing..." : "Refresh leaderboard"}
+                </button>
+              </div>
+              {boardErr && <div style={{ color: "#C1440E", fontSize: 12, marginBottom: 8 }}>{boardErr}</div>}
+              {board && board.tournament && board.tournament.id === round.tournamentId ? (
+                board.strokesRanked.length === 0 ? (
+                  <div style={{ fontSize: 13, color: "#6b6b63" }}>No foursomes have joined yet.</div>
+                ) : (
+                  board.strokesRanked.map((row, idx) => (
+                    <div
+                      key={row.id}
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        padding: "8px 0",
+                        borderBottom: "1px solid #eee6cf",
+                        background: row.id === round.id ? "#F0EEE3" : undefined,
+                      }}
+                    >
+                      <div>
+                        <div style={{ fontWeight: 700, fontSize: 13 }}>
+                          {idx + 1}. {row.name} {row.id === round.id && <span className="gsc-chip gsc-lead">YOU</span>}
+                        </div>
+                        <div style={{ fontSize: 11, color: "#6b6b63" }}>{row.error ? `Couldn't load (${row.error})` : `Thru ${row.strokeHoles} holes`}</div>
+                      </div>
+                      <div className="gsc-mono" style={{ fontWeight: 700, fontSize: 14 }}>{row.error ? "-" : row.totalStrokes}</div>
+                    </div>
+                  ))
+                )
+              ) : (
+                !boardLoading && <div style={{ fontSize: 13, color: "#6b6b63" }}>Tap "Refresh leaderboard" to load standings.</div>
+              )}
+            </div>
+          ) : (
           <div className="gsc-card">
             <div className="gsc-label" style={{ marginBottom: 8 }}>Standings</div>
             {ranks.map((p, idx) => (
@@ -4957,6 +5008,7 @@ function computeRoundScoring(round) {
               )}
             </div>
           </div>
+          )}
 
           <button className="gsc-link" onClick={() => setShowGrid((s) => !s)}>{showGrid ? "Hide" : "Show"} full 18-hole grid</button>
           {showGrid && (
