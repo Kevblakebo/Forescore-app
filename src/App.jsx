@@ -248,8 +248,8 @@ const GAMES = {
     ],
   },
   avoscramble: {
-    name: "Avocados Scramble Tournament",
-    tag: "4-person choose best shot - Tournaments only",
+    name: "Avocado Scramble Tournament",
+    tag: "Teams choose best shot - Tournaments only",
     desc: "The whole foursome plays as one team. Every team member tees off on each hole, the team picks the best shot of the foursome, and all players hit their next shots from that same location. This cycle repeats until the ball is in the hole, with the lowest total strokes score winning. Only one score for strokes per hole is tracked for the whole team. Used only in Tournaments, where foursomes are ranked against each other by team strokes.",
     rotates: false,
     hasScore: true,
@@ -2237,7 +2237,7 @@ export default function GolfScorecard() {
     });
   }
 
-  // Used by "one team score" games (like Avocados Scramble) where there's
+  // Used by "one team score" games (like Avocado Scramble) where there's
   // only a single shared number per hole, not 4 individual player entries.
   // Writes the same value to all 4 players' slots in one atomic update, so
   // the existing engine (which already knows how to take the minimum of 4
@@ -2313,7 +2313,7 @@ export default function GolfScorecard() {
     return () => clearInterval(interval);
   }, [screen, round && round.id]);
 
-  // "One team score" games (like Avocados Scramble) show the tournament
+  // "One team score" games (like Avocado Scramble) show the tournament
   // leaderboard directly on the scorecard instead of a per-player Standings
   // box, since there's only one shared team score - individual player
   // rankings wouldn't mean anything. Load it once on arrival so it's not
