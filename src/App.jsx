@@ -30,7 +30,7 @@ const STYLE = `
   .gsc-card { background:#fff; border-radius:14px; padding:16px; margin-bottom:14px; box-shadow:0 1px 3px rgba(27,67,50,0.12); border:1px solid rgba(27,67,50,0.08); }
   .gsc-game-card { border:2px solid transparent; cursor:pointer; transition:border-color .15s; }
   .gsc-game-card:hover { border-color:#B08D57; }
-  .gsc-game-title { font-size:20px; font-weight:700; color:#1B4332; }
+  .gsc-game-title { font-size:18px; font-weight:700; color:#1B4332; }
   .gsc-tag { display:inline-block; background:#8FA998; color:#fff; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; padding:3px 8px; border-radius:20px; margin-top:6px; }
   .gsc-field { margin-bottom:12px; }
   .gsc-label { display:block; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.4px; color:#6b6b63; margin-bottom:5px; }
