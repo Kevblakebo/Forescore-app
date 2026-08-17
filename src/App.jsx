@@ -2775,10 +2775,10 @@ function computeRoundScoring(round) {
           <div className="gsc-card">
             <div className="gsc-label" style={{ marginBottom: 6, fontSize: 17 }}>Start a New Round</div>
 
-            <div className="gsc-label" style={{ marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Team Game Formats</div>
-            <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>2 vs 2</div>
-            {Object.entries(GAMES)
-              .filter(([key]) => key !== "dstreet" && key !== "swami" && !GAMES[key].tournamentOnly)
+            <div className="gsc-label" style={{ marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Individual Game Formats</div>
+            <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>Up to 4 Players</div>
+            {["dstreet", "swami"]
+              .map((key) => [key, GAMES[key]])
               .map(([key, g]) => (
                 <div key={key} className="gsc-card gsc-game-card" style={{ marginBottom: 10 }} onClick={() => startNewRound(key)}>
                   <div className="gsc-game-title">{g.name}</div>
@@ -2797,10 +2797,10 @@ function computeRoundScoring(round) {
                 </div>
               ))}
 
-            <div className="gsc-label" style={{ marginTop: 14, marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Individual Game Formats</div>
-            <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>Up to 4 Players</div>
+            <div className="gsc-label" style={{ marginTop: 14, marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Team Game Formats</div>
+            <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>2 vs 2</div>
             {Object.entries(GAMES)
-              .filter(([key]) => key === "swami" || key === "dstreet")
+              .filter(([key]) => key !== "dstreet" && key !== "swami" && !GAMES[key].tournamentOnly)
               .map(([key, g]) => (
                 <div key={key} className="gsc-card gsc-game-card" style={{ marginBottom: 10 }} onClick={() => startNewRound(key)}>
                   <div className="gsc-game-title">{g.name}</div>
@@ -2953,10 +2953,10 @@ function computeRoundScoring(round) {
           <div className="gsc-card">
             <div className="gsc-label" style={{ marginBottom: 6, fontSize: 17 }}>Start a New Round</div>
 
-            <div className="gsc-label" style={{ marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Team Game Formats</div>
-            <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>2 vs 2</div>
-            {Object.entries(GAMES)
-              .filter(([key]) => key !== "dstreet" && key !== "swami" && !GAMES[key].tournamentOnly)
+            <div className="gsc-label" style={{ marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Individual Game Formats</div>
+            <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>Up to 4 Players</div>
+            {["dstreet", "swami"]
+              .map((key) => [key, GAMES[key]])
               .map(([key, g]) => (
                 <div key={key} className="gsc-card gsc-game-card" style={{ marginBottom: 10 }} onClick={() => startNewRound(key)}>
                   <div className="gsc-game-title">{g.name}</div>
@@ -2975,10 +2975,10 @@ function computeRoundScoring(round) {
                 </div>
               ))}
 
-            <div className="gsc-label" style={{ marginTop: 14, marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Individual Game Formats</div>
-            <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>Up to 4 Players</div>
+            <div className="gsc-label" style={{ marginTop: 14, marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Team Game Formats</div>
+            <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>2 vs 2</div>
             {Object.entries(GAMES)
-              .filter(([key]) => key === "swami" || key === "dstreet")
+              .filter(([key]) => key !== "dstreet" && key !== "swami" && !GAMES[key].tournamentOnly)
               .map(([key, g]) => (
                 <div key={key} className="gsc-card gsc-game-card" style={{ marginBottom: 10 }} onClick={() => startNewRound(key)}>
                   <div className="gsc-game-title">{g.name}</div>
