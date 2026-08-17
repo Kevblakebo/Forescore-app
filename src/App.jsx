@@ -626,13 +626,6 @@ function genCode() {
   return s;
 }
 
-function encodeRoundData(round) {
-  return btoa(unescape(encodeURIComponent(JSON.stringify(round))));
-}
-function decodeRoundData(str) {
-  return JSON.parse(decodeURIComponent(escape(atob(str.trim()))));
-}
-
 function emptyScores() {
   const s = {};
   for (let h = 0; h < 18; h++) s[h] = {};
@@ -751,10 +744,6 @@ export default function GolfScorecard() {
   const parRefsSetup = useRef([]);
   const parRefsWizard = useRef([]);
   const parRefsTournament = useRef([]);
-  const [pasteData, setPasteData] = useState("");
-  const [pasteMsg, setPasteMsg] = useState("");
-  const [copyMsg, setCopyMsg] = useState("");
-  const [copyFallbackText, setCopyFallbackText] = useState("");
 
   // wizard state
   const [gameKey, setGameKey] = useState(null);
@@ -1174,7 +1163,7 @@ export default function GolfScorecard() {
     const savedRoundRes = await storageSet(`${FINISHED_PREFIX}${r.id}`, JSON.stringify(r), false);
     if (!savedRoundRes.ok) {
       setBusy(false);
-      setArchiveErr(`Couldn't save this round (${savedRoundRes.error || "storage error"}). Your round hasn't been touched - tap "Finish & exit" to retry, or "Copy round data to share" as a backup.`);
+      setArchiveErr(`Couldn't save this round (${savedRoundRes.error || "storage error"}). Your round hasn't been touched - tap "Finish & exit" to retry.`);
       return;
     }
     const idxRes = await storageGet(FINISHED_INDEX_KEY, false);
@@ -2089,7 +2078,7 @@ export default function GolfScorecard() {
     const res = await storageGet(`golfround:${code.toUpperCase().trim()}`, true);
     setBusy(false);
     if (!res.ok) {
-      setErr(`Couldn't reach shared rounds (${res.error}). If this keeps happening, ask whoever has the round to use "Copy round data to share" and send it to you directly instead.`);
+      setErr(`Couldn't reach shared rounds (${res.error}). Please try again in a moment.`);
       return;
     }
     if (!res.value) {
@@ -2104,40 +2093,6 @@ export default function GolfScorecard() {
     setActiveRound(r);
     saveRound(r);
     goToScreen("card");
-  }
-
-  function loadFromPastedData() {
-    setPasteMsg("");
-    try {
-      const r = decodeRoundData(pasteData);
-      if (!r || !r.id || !r.game) throw new Error("not a round");
-      setRound(r);
-      setGameKey(r.game);
-      setHoleIdx(firstOpenHole(r));
-      rememberCode(r.id, r.name);
-      setActiveRound(r);
-      saveRound(r);
-      setPasteData("");
-      goToScreen("card");
-    } catch (e) {
-      setPasteMsg("That doesn't look like valid round data. Make sure you copied the whole thing.");
-    }
-  }
-
-  async function copyRoundData(r) {
-    const text = encodeRoundData(r);
-    try {
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        await navigator.clipboard.writeText(text);
-        setCopyMsg("Copied! Paste it into a text/message to your group.");
-        setCopyFallbackText("");
-      } else {
-        throw new Error("no clipboard api");
-      }
-    } catch (e) {
-      setCopyMsg("Couldn't copy automatically - select and copy the text below manually.");
-      setCopyFallbackText(text);
-    }
   }
 
   const saveRound = useCallback(async (r) => {
@@ -2653,7 +2608,7 @@ function computeRoundScoring(round) {
       <div className="gsc">
         <style>{STYLE}</style>
         <Header
-          title={<><span style={{ fontSize: 23 }}>Foresa Golf</span><br /><span style={{ fontSize: 11, fontWeight: 400, opacity: 0.75, letterSpacing: "0.5px", textTransform: "uppercase", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>Golf Games & Scoring</span></>}
+          title={<><span style={{ fontSize: 23 }}>Foresa Golf</span><div style={{ fontSize: 11, fontWeight: 400, opacity: 0.75, letterSpacing: "0.5px", textTransform: "uppercase", marginTop: 2, fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>Golf Games & Scoring</div></>}
           sub="Share games and scores on the course"
         />
         <div className="gsc-body gsc-body-tabbed">
@@ -2967,18 +2922,6 @@ function computeRoundScoring(round) {
                   </button>
                 </div>
               ))}
-          </div>
-
-          <div className="gsc-card">
-            <div className="gsc-label">Or paste round data someone sent you</div>
-            <div style={{ fontSize: 12, color: "#6b6b63", margin: "4px 0 8px" }}>
-              If a round code isn't syncing, whoever's tracking scores can send you a block of text instead (via "Copy round data to share" on their screen). Paste it here.
-            </div>
-            <textarea className="gsc-input" id="paste-round-data" name="paste-round-data" style={{ minHeight: 70, fontFamily: 'Courier New, Courier, monospace', fontSize: 11 }} placeholder="Paste round data here" value={pasteData} onChange={(e) => setPasteData(e.target.value)} />
-            <button className="gsc-btn gsc-btn-primary" style={{ marginTop: 8 }} disabled={!pasteData.trim()} onClick={loadFromPastedData}>
-              Load this round
-            </button>
-            {pasteMsg && <div style={{ color: "#C1440E", fontSize: 12, marginTop: 6 }}>{pasteMsg}</div>}
           </div>
 
           <div style={{ fontSize: 12, color: "#8a8a80", textAlign: "center", marginTop: 4 }}>
@@ -3401,9 +3344,20 @@ function computeRoundScoring(round) {
                 value={isTournament ? tournamentName : roundName}
                 onChange={(e) => (isTournament ? setTournamentName(e.target.value) : setRoundName(e.target.value))}
               />
-              <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 14 }} onClick={() => wizardGoNext("field_name", {})}>
+              <button
+                className="gsc-btn gsc-btn-primary"
+                style={{ width: "100%", marginTop: 14 }}
+                onClick={() => {
+                  if (isTournament && !tournamentName.trim()) {
+                    setWizardFieldErr("Give your tournament a name before continuing.");
+                    return;
+                  }
+                  wizardGoNext("field_name", {});
+                }}
+              >
                 Continue
               </button>
+              {wizardFieldErr && <div style={{ color: "#C1440E", fontSize: 12, marginTop: 8, textAlign: "center" }}>{wizardFieldErr}</div>}
             </div>
           )}
 
@@ -4294,24 +4248,83 @@ function computeRoundScoring(round) {
               <div className="gsc-label">Foursome name</div>
               <input className="gsc-input" style={{ marginBottom: 12 }} value={f.name} onChange={(e) => updateFoursomeDraftName(fi, e.target.value)} />
               <div className="gsc-label" style={{ marginBottom: 6 }}>Players</div>
-              {f.players.map((p, pi) => (
-                <div className="gsc-row" key={pi} style={{ marginBottom: 8 }}>
-                  <div style={{ flex: "0 0 26px", fontWeight: 800, color: "#1B4332", paddingTop: 9 }}>{LETTERS[pi]}</div>
-                  <input
-                    className="gsc-input"
-                    placeholder={`Player ${LETTERS[pi]} name`}
-                    value={p.name}
-                    onChange={(e) => updateFoursomeDraftPlayer(fi, pi, "name", e.target.value)}
-                  />
-                  <input
-                    className="gsc-input"
-                    style={{ flex: "0 0 70px" }}
-                    placeholder="HCP"
-                    value={p.hcp}
-                    onChange={(e) => updateFoursomeDraftPlayer(fi, pi, "hcp", e.target.value)}
-                  />
+              <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 10 }}>
+                Tap the circle next to a player's name to pick a fun avatar (optional).
+              </div>
+              {f.players.map((p, pi) => {
+                const avatarKey = `${fi}-${pi}`;
+                return (
+                <div key={pi} style={{ marginBottom: 8 }}>
+                  <div className="gsc-row">
+                    <button
+                      onClick={() => setAvatarPickerFor(avatarPickerFor === avatarKey ? null : avatarKey)}
+                      style={{
+                        position: "relative",
+                        flex: "0 0 40px",
+                        height: 40,
+                        borderRadius: "50%",
+                        border: p.avatar ? "1.5px solid #1B4332" : "1.5px dashed #B08D57",
+                        background: p.avatar ? "#fff" : "#EBF0EC",
+                        fontSize: p.avatar ? 20 : 12,
+                        fontWeight: 800,
+                        color: "#1B4332",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      {p.avatar || LETTERS[pi]}
+                      {!p.avatar && (
+                        <span style={{ position: "absolute", bottom: -2, right: -2, width: 16, height: 16, borderRadius: "50%", background: "#C1440E", color: "#fff", fontSize: 11, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", border: "1.5px solid #F3EFE0" }}>
+                          +
+                        </span>
+                      )}
+                    </button>
+                    <input
+                      className="gsc-input"
+                      placeholder={`Player ${LETTERS[pi]} name`}
+                      value={p.name}
+                      onChange={(e) => updateFoursomeDraftPlayer(fi, pi, "name", e.target.value)}
+                    />
+                    <input
+                      className="gsc-input"
+                      style={{ flex: "0 0 70px" }}
+                      placeholder="HCP"
+                      value={p.hcp}
+                      onChange={(e) => updateFoursomeDraftPlayer(fi, pi, "hcp", e.target.value)}
+                    />
+                  </div>
+                  {avatarPickerFor === avatarKey && (
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8, padding: "10px 4px 4px 46px" }}>
+                      {AVATAR_OPTIONS.map((emoji) => (
+                        <button
+                          key={emoji}
+                          onClick={() => {
+                            updateFoursomeDraftPlayer(fi, pi, "avatar", p.avatar === emoji ? "" : emoji);
+                            setAvatarPickerFor(null);
+                          }}
+                          style={{
+                            width: 36,
+                            height: 36,
+                            borderRadius: "50%",
+                            border: p.avatar === emoji ? "2px solid #C1440E" : "1.5px solid #d8d2bd",
+                            background: "#fff",
+                            fontSize: 18,
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              ))}
+                );
+              })}
             </div>
           ))}
           {tournamentErr && <div style={{ color: "#C1440E", marginBottom: 10 }}>{tournamentErr}</div>}
@@ -4615,6 +4628,10 @@ function computeRoundScoring(round) {
                 width: 84,
                 textAlign: "center",
                 lineHeight: 1.25,
+                minHeight: 44,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
               }}
               onClick={() => syncRoundFromServer(true)}
             >
@@ -4648,8 +4665,7 @@ function computeRoundScoring(round) {
         {storageBroken ? (
           <div style={{ background: "#F8F1E4", color: "#8a6a2f", fontSize: 12, padding: "8px 16px", textAlign: "center" }}>
             Storage isn't responding right now, so nothing is saving automatically. Your scores are fine for this session -{" "}
-            <button className="gsc-link" onClick={retrySync}>Retry storage</button>
-            {" "}or tap "Copy round data to share" below as a backup.
+            <button className="gsc-link" onClick={retrySync}>Retry storage</button> to reconnect.
           </div>
         ) : (
           storageWarning && (
@@ -4698,7 +4714,7 @@ function computeRoundScoring(round) {
                   <div style={{ display: "flex", gap: 22, marginTop: 8, flexWrap: "wrap" }}>
                     {g.hasScore && (
                       <div>
-                        <div style={{ fontSize: 11, color: "#6b6b63", marginBottom: 3 }}>STROKES</div>
+                        <div style={{ fontSize: 11, color: "#6b6b63", marginBottom: 3, textAlign: "center" }}>STROKES</div>
                         <div className="gsc-stepper">
                           <button
                             disabled={e.strokes === "" || e.strokes == null}
@@ -4717,7 +4733,7 @@ function computeRoundScoring(round) {
                     )}
                     {g.hasPutts && (
                       <div>
-                        <div style={{ fontSize: 11, color: "#6b6b63", marginBottom: 3 }}>PUTTS</div>
+                        <div style={{ fontSize: 11, color: "#6b6b63", marginBottom: 3, textAlign: "center" }}>PUTTS</div>
                         <div className="gsc-stepper">
                           <button
                             disabled={e.putts === "" || e.putts == null}
@@ -4941,19 +4957,6 @@ function computeRoundScoring(round) {
           <div style={{ fontSize: 12, color: "#8a8a80", textAlign: "center", marginTop: 16 }}>
             Share code <b className="gsc-mono">{round.id}</b> with your group so everyone can enter or view scores.
           </div>
-          <button className="gsc-btn gsc-btn-outline" style={{ width: "100%", marginTop: 10 }} onClick={() => copyRoundData(round)}>
-            Copy round data to share
-          </button>
-          {copyMsg && <div style={{ fontSize: 12, color: "#B08D57", textAlign: "center", marginTop: 6 }}>{copyMsg}</div>}
-          {copyFallbackText && (
-            <textarea
-              readOnly
-              className="gsc-input"
-              style={{ minHeight: 70, fontFamily: 'Courier New, Courier, monospace', fontSize: 10, marginTop: 8 }}
-              value={copyFallbackText}
-              onFocus={(e) => e.target.select()}
-            />
-          )}
           <button className="gsc-btn gsc-btn-outline" style={{ width: "100%", marginTop: 14 }} disabled={busy} onClick={() => archiveAndExitRound(round)}>
             {busy ? "Saving..." : "Finish & exit this round"}
           </button>
