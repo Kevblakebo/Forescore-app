@@ -3206,6 +3206,16 @@ function computeRoundScoring(round) {
             </button>
           </div>
 
+          <div className="gsc-card" style={{ cursor: "pointer" }} onClick={() => goToScreen("swagStore")}>
+            <div className="gsc-label" style={{ marginBottom: 6 }}>Swag Store</div>
+            <div style={{ fontSize: 13, color: "#4b4b45" }}>
+              Order your Foresa Golf swag here.
+            </div>
+            <button className="gsc-link" style={{ marginTop: 8, fontSize: 12 }} onClick={() => goToScreen("swagStore")}>
+              Read more
+            </button>
+          </div>
+
           <div className="gsc-card" style={{ cursor: "pointer" }} onClick={() => goToScreen("about")}>
             <div className="gsc-label" style={{ marginBottom: 6 }}>About this App</div>
             <div style={{ fontSize: 13, color: "#4b4b45" }}>
@@ -3232,16 +3242,6 @@ function computeRoundScoring(round) {
               How Foresa handles your data.
             </div>
             <button className="gsc-link" style={{ marginTop: 8, fontSize: 12 }} onClick={() => goToScreen("privacyPolicy")}>
-              Read more
-            </button>
-          </div>
-
-          <div className="gsc-card" style={{ cursor: "pointer" }} onClick={() => goToScreen("swagStore")}>
-            <div className="gsc-label" style={{ marginBottom: 6 }}>Swag Store</div>
-            <div style={{ fontSize: 13, color: "#4b4b45" }}>
-              Order your Foresa Golf swag here.
-            </div>
-            <button className="gsc-link" style={{ marginTop: 8, fontSize: 12 }} onClick={() => goToScreen("swagStore")}>
               Read more
             </button>
           </div>
