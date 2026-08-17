@@ -147,7 +147,7 @@ const GAMES = {
     ],
   },
   beachside: {
-    name: "Beachside Best-Ball",
+    name: "Beacons Best-Ball",
     tag: "Best-ball teams - 4 players",
     desc: "Two 2-person teams, best-ball scoring - the lower of the team's two strokes AND the lower of the team's two putts count each hole. Same structure as Cardiff Combine, but best-ball instead of combined. Great for similar handicap pairs.",
     rotates: false,
@@ -184,7 +184,7 @@ const GAMES = {
     ],
   },
   tourneybb: {
-    name: "Beachside Best-Ball Tournament",
+    name: "Beacons Best-Ball Tournament",
     tag: "4-person best-ball - Tournaments only",
     desc: "The whole foursome plays as one best-ball team - no 2-person sub-teams. The lowest strokes and lowest putts among all 4 players count each hole. Used only in Tournaments, where foursomes are ranked against each other by total best-ball strokes and total best-ball putts.",
     rotates: false,
@@ -2325,7 +2325,7 @@ export default function GolfScorecard() {
 // in-foursome scoring engine below, because "the foursome's number" means
 // something different at the tournament level than it does inside the
 // foursome's own game:
-//  - Beachside Best-Ball: the single lowest strokes among all 4 players on
+//  - Beacons Best-Ball: the single lowest strokes among all 4 players on
 //    a hole is the foursome's stroke score for that hole; likewise the
 //    single lowest putts is the foursome's putt score. (True 4-way best
 //    ball, not the 2-person sub-team best ball used for in-foursome points.)
@@ -2412,7 +2412,7 @@ function computeRoundScoring(round) {
 
     // Combined games (Seabluffe Swap, Cardiff Combine, Seaside
     // Skins) sum every team/player's capped strokes or putts. Best-ball
-    // games (Beachside Best-Ball) instead count only the lower of the
+    // games (Beacons Best-Ball) instead count only the lower of the
     // team's two - each player still records their own strokes/putts,
     // but only the best one counts toward the team's total that hole.
     const aggregate = (arr) => (g.bestBall ? Math.min(...arr) : arr.reduce((a, b) => a + b, 0));
