@@ -258,7 +258,8 @@ const GAMES = {
     singleTeam: true,
     oneTeamScore: true,
     tournamentOnly: true,
-    defaults: { maxOver: 3, maxPutts: 3, mulliganSegment: 1, prize: "Losers buy winners a drink at the 19th hole" },
+    tracksDrives: true,
+    defaults: { maxOver: 3, maxPutts: 3, mulliganSegment: 1, minDrives: 3, prize: "Losers buy winners a drink at the 19th hole" },
     rules: [
       "4-person team strokes competition - the whole foursome plays as one team, not split into 2-person sub-teams.",
       {
@@ -273,7 +274,7 @@ const GAMES = {
       },
       "For each hole, the foursome's score is just one team score.",
       "Used only in Tournaments - foursomes are ranked against every other foursome by total strokes, tracked and ranked (lowest score wins).",
-      "Minimum drives: set number of tee shots from each team member per round to be agreed on prior to round.",
+      "Minimum drives: each player's tee shot must be used at least this many times over the round, set when the tournament is created and tracked hole by hole.",
       "Prize: to be agreed on prior to round.",
       "Strokes max: to be agreed on prior to round.",
       "Putts max: to be agreed on prior to round.",
@@ -1855,6 +1856,7 @@ export default function GolfScorecard() {
       maxPutts: tournamentCfg.maxPutts === "" || tournamentCfg.maxPutts == null || isNaN(Number(tournamentCfg.maxPutts)) ? 3 : Number(tournamentCfg.maxPutts),
       mulliganSegment:
         tournamentCfg.mulliganSegment === "" || tournamentCfg.mulliganSegment == null || isNaN(Number(tournamentCfg.mulliganSegment)) ? 1 : Number(tournamentCfg.mulliganSegment),
+      minDrives: tournamentCfg.minDrives === "" || tournamentCfg.minDrives == null || isNaN(Number(tournamentCfg.minDrives)) ? 3 : Number(tournamentCfg.minDrives),
     };
 
     setTournamentBusy(true);
@@ -2253,6 +2255,23 @@ export default function GolfScorecard() {
         entry[field] = value;
         holeScores[idx] = entry;
       });
+      next.scores[holeIdx] = holeScores;
+      saveRound(next);
+      return next;
+    });
+  }
+
+  // Records which player's tee shot was used on this hole - a single
+  // shared choice for the whole team, so it's stored as a hole-level
+  // property (driveUsedBy) rather than nested inside any one player's own
+  // entry, the same way a mulligan is a per-player flag but this is a
+  // per-hole one.
+  function updateDriveUsedBy(playerIdx) {
+    lastLocalEditRef.current = Date.now();
+    setRound((r) => {
+      const next = { ...r, scores: { ...r.scores } };
+      const holeScores = { ...(next.scores[holeIdx] || {}) };
+      holeScores.driveUsedBy = holeScores.driveUsedBy === playerIdx ? null : playerIdx;
       next.scores[holeIdx] = holeScores;
       saveRound(next);
       return next;
@@ -3613,6 +3632,15 @@ function computeRoundScoring(round) {
                 <div className="gsc-label">Mulligans per player{wizardAnswers.resolvedGameKey === "seabluffe" ? ", per 6 holes" : ""}</div>
                 <input className="gsc-input" type="number" min="0" placeholder="0" value={activeCfg.mulliganSegment} onChange={(e) => setActiveCfg({ ...activeCfg, mulliganSegment: cleanNumericText(e.target.value) })} />
               </div>
+              {g.tracksDrives && (
+                <div className="gsc-field" style={{ marginTop: 10 }}>
+                  <div className="gsc-label">Minimum drives per player</div>
+                  <input className="gsc-input" type="number" min="0" placeholder="3" value={activeCfg.minDrives} onChange={(e) => setActiveCfg({ ...activeCfg, minDrives: cleanNumericText(e.target.value) })} />
+                  <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 6 }}>
+                    Each player's tee shot must be used at least this many times over the round.
+                  </div>
+                </div>
+              )}
               <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 14 }} onClick={() => wizardGoNext("field_limits", {})}>
                 Continue
               </button>
@@ -4310,22 +4338,24 @@ function computeRoundScoring(round) {
                 />
               </div>
             )}
-            <div className="gsc-field">
-              <div className="gsc-label">Max putts per hole</div>
-              <input
-                className="gsc-input"
-                type="number"
-                min="1"
-                value={tournamentCfg.maxPutts}
-                onChange={(e) => {
-                  const raw = cleanNumericText(e.target.value);
-                  setTournamentCfg({ ...tournamentCfg, maxPutts: raw === "" ? "" : Number(raw) });
-                }}
-                onBlur={(e) => {
-                  if (e.target.value === "") setTournamentCfg((c) => ({ ...c, maxPutts: 3 }));
-                }}
-              />
-            </div>
+            {tg.hasPutts && (
+              <div className="gsc-field">
+                <div className="gsc-label">Max putts per hole</div>
+                <input
+                  className="gsc-input"
+                  type="number"
+                  min="1"
+                  value={tournamentCfg.maxPutts}
+                  onChange={(e) => {
+                    const raw = cleanNumericText(e.target.value);
+                    setTournamentCfg({ ...tournamentCfg, maxPutts: raw === "" ? "" : Number(raw) });
+                  }}
+                  onBlur={(e) => {
+                    if (e.target.value === "") setTournamentCfg((c) => ({ ...c, maxPutts: 3 }));
+                  }}
+                />
+              </div>
+            )}
             {tg.hasScore && (
               <div className="gsc-field">
                 <div className="gsc-label">{tournamentGameKey === "seabluffe" ? `Mulligans per player, per ${mulliganWindow(tournamentGameKey)} holes` : "Mulligans per player"}</div>
@@ -4342,6 +4372,27 @@ function computeRoundScoring(round) {
                     if (e.target.value === "") setTournamentCfg((c) => ({ ...c, mulliganSegment: 1 }));
                   }}
                 />
+              </div>
+            )}
+            {tg.tracksDrives && (
+              <div className="gsc-field">
+                <div className="gsc-label">Minimum drives per player</div>
+                <input
+                  className="gsc-input"
+                  type="number"
+                  min="0"
+                  value={tournamentCfg.minDrives}
+                  onChange={(e) => {
+                    const raw = cleanNumericText(e.target.value);
+                    setTournamentCfg({ ...tournamentCfg, minDrives: raw === "" ? "" : Number(raw) });
+                  }}
+                  onBlur={(e) => {
+                    if (e.target.value === "") setTournamentCfg((c) => ({ ...c, minDrives: 3 }));
+                  }}
+                />
+                <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 6 }}>
+                  Each player's tee shot must be used at least this many times over the round.
+                </div>
               </div>
             )}
             <div className="gsc-field">
@@ -4918,6 +4969,16 @@ function computeRoundScoring(round) {
             {g.oneTeamScore ? (
               (() => {
                 const teamEntry = hs[0] || {};
+                const driveUsedBy = hs.driveUsedBy;
+                let driveCounts = null;
+                if (g.tracksDrives) {
+                  driveCounts = round.players.map(() => 0);
+                  for (let h = 0; h < 18; h++) {
+                    const usedBy = (round.scores[h] || {}).driveUsedBy;
+                    if (usedBy != null && driveCounts[usedBy] != null) driveCounts[usedBy]++;
+                  }
+                }
+                const minDrives = Number(round.cfg.minDrives) || 0;
                 return (
                   <div className="gsc-player-row">
                     <div className="gsc-player-name">Team Strokes</div>
@@ -4940,6 +5001,57 @@ function computeRoundScoring(round) {
                         </div>
                       </div>
                     </div>
+
+                    {g.tracksDrives && (
+                      <div style={{ marginTop: 14 }}>
+                        <div style={{ fontSize: 11, color: "#6b6b63", marginBottom: 6 }}>WHOSE DRIVE WAS USED THIS HOLE?</div>
+                        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                          {round.players.map((p, i) => (
+                            <button
+                              key={i}
+                              onClick={() => updateDriveUsedBy(i)}
+                              style={{
+                                padding: "8px 12px",
+                                borderRadius: 8,
+                                border: driveUsedBy === i ? "2px solid #1B4332" : "1.5px solid #d8d2bd",
+                                background: driveUsedBy === i ? "#EBF0EC" : "#fff",
+                                fontWeight: 700,
+                                fontSize: 13,
+                                cursor: "pointer",
+                              }}
+                            >
+                              {p.avatar && <span style={{ marginRight: 4 }}>{p.avatar}</span>}
+                              {LETTERS[i]} - {p.name}
+                            </button>
+                          ))}
+                        </div>
+
+                        <div style={{ fontSize: 11, color: "#6b6b63", marginTop: 14, marginBottom: 6 }}>
+                          DRIVES USED (MIN {minDrives} EACH)
+                        </div>
+                        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                          {round.players.map((p, i) => {
+                            const count = driveCounts[i];
+                            const met = count >= minDrives;
+                            return (
+                              <div
+                                key={i}
+                                style={{
+                                  padding: "6px 10px",
+                                  borderRadius: 8,
+                                  background: met ? "#EBF0EC" : "#FBEFE3",
+                                  fontSize: 12,
+                                  fontWeight: 700,
+                                  color: met ? "#1B4332" : "#8a6a2f",
+                                }}
+                              >
+                                {LETTERS[i]}: {count}/{minDrives} {met && "\u2713"}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 );
               })()
@@ -5043,6 +5155,23 @@ function computeRoundScoring(round) {
               <div style={{ fontSize: 12, color: "#8a8a80", marginTop: 8 }}>
                 This is what counts on the tournament leaderboard - check the Leaderboard link above to see how this foursome ranks against the others.
               </div>
+              {g.tracksDrives && (() => {
+                const minDrives = Number(round.cfg.minDrives) || 0;
+                const driveCounts = round.players.map(() => 0);
+                for (let h = 0; h < 18; h++) {
+                  const usedBy = (round.scores[h] || {}).driveUsedBy;
+                  if (usedBy != null && driveCounts[usedBy] != null) driveCounts[usedBy]++;
+                }
+                const shortPlayers = round.players.filter((_, i) => driveCounts[i] < minDrives);
+                return (
+                  <div style={{ fontSize: 12, marginTop: 8, color: shortPlayers.length === 0 ? "#1B4332" : "#8a6a2f" }}>
+                    <b>Drive quota:</b>{" "}
+                    {shortPlayers.length === 0
+                      ? `All players have met the minimum ${minDrives} drives \u2713`
+                      : `${shortPlayers.length} player${shortPlayers.length === 1 ? "" : "s"} still short of the minimum ${minDrives} drives`}
+                  </div>
+                );
+              })()}
             </div>
           )}
 
