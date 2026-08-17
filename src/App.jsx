@@ -247,6 +247,45 @@ const GAMES = {
       "Great for foursome-vs-foursome tournament play.",
     ],
   },
+  avoscramble: {
+    name: "Avocados Scramble Tournament",
+    tag: "4-person choose best shot - Tournaments only",
+    desc: "The whole foursome plays as one team. Every team member tees off on each hole, the team picks the best shot of the foursome, and all players hit their next shots from that same location. This cycle repeats until the ball is in the hole, with the lowest total strokes score winning. Only one score for strokes per hole is tracked for the whole team. Used only in Tournaments, where foursomes are ranked against each other by team strokes.",
+    rotates: false,
+    hasScore: true,
+    hasPutts: false,
+    bestBall: true,
+    singleTeam: true,
+    oneTeamScore: true,
+    tournamentOnly: true,
+    defaults: { maxOver: 3, maxPutts: 3, mulliganSegment: 1, prize: "Losers buy winners a drink at the 19th hole" },
+    rules: [
+      "4-person team strokes competition - the whole foursome plays as one team, not split into 2-person sub-teams.",
+      {
+        text: "Basic Play Sequence:",
+        sub: [
+          "Tee off: Every player hits a tee shot on every hole.",
+          "Select the best shot: The group chooses the best ball and marks the spot.",
+          "Place the ball: Other team members pick up their balls and place them within one club-length of the chosen spot, no closer to the hole.",
+          "Maintain the lie: If the chosen shot is in the rough, sand, or fairway, the placed balls must stay in that same surface type or tier.",
+          "On the green: Mark the chosen putt location; all players putt from that exact spot, usually within a putter head or scorecard length. The first ball holed counts as the team score.",
+        ],
+      },
+      "For each hole, the foursome's score is just one team score.",
+      "Used only in Tournaments - foursomes are ranked against every other foursome by total strokes, tracked and ranked (lowest score wins).",
+      "Minimum drives: set number of tee shots from each team member per round to be agreed on prior to round.",
+      "Prize: to be agreed on prior to round.",
+      "Strokes max: to be agreed on prior to round.",
+      "Putts max: to be agreed on prior to round.",
+      "Mulligans: to be agreed on prior to round.",
+      "Handicaps: could be used in game scoring. If so, this would be an average of the 4 players' handicaps and subtracted from the Total Score to determine Net Score.",
+      "Play OB shots as a lateral drop (1 out, 1 in).",
+      "Must putt all the way into the hole.",
+      "Flagstick can stay in.",
+      "Putts start once on the putting green.",
+      "Great for foursome-vs-foursome tournament play w/higher handicaps.",
+    ],
+  },
   swami: {
     name: "Swami's Strokes",
     tag: "Individual stroke play - up to 4 players",
@@ -803,7 +842,6 @@ export default function GolfScorecard() {
   const [showGrid, setShowGrid] = useState(false);
   const [confirmLeaveOpen, setConfirmLeaveOpen] = useState(false);
   const [rulesOpenFor, setRulesOpenFor] = useState(null);
-  const [tournamentRulesOpen, setTournamentRulesOpen] = useState(false);
 
   // ---- Tournament (multi-foursome) state ----
   const [activeTournament, setActiveTournament] = useState(null); // tournament object once created/joined, drives "foursome mode" in setup
@@ -862,62 +900,6 @@ export default function GolfScorecard() {
             )}
           </ul>
           <button className="gsc-btn gsc-btn-primary" style={{ width: "100%" }} onClick={closeRules}>
-            Close
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // Tournament-level rules are deliberately separate from each game's own
-  // "Full Rules" - they describe how foursomes are scored *against each
-  // other*, not how points are awarded inside a single foursome's game.
-  function tournamentRulesFor(gameKey) {
-    return [
-      "Every foursome in the tournament plays the same game, under the same locked settings (course par, max strokes, max putts, mulligans, prize) - so every foursome's numbers are directly comparable.",
-      "Foursomes are ranked two separate ways - by total strokes and by total putts. Each has its own leaderboard, and the lowest total wins each.",
-      {
-        text: "In Beachside Best-Ball Tournament, the whole foursome plays as one best-ball team. The lowest strokes and lowest putts among all 4 players are counted for each hole.",
-        sub: [
-          "Strokes: Lowest of all 4 players' strokes for that hole counts towards the team score.",
-          "Putts: Lowest of all 4 players' putts for that hole counts towards the team score.",
-        ],
-      },
-      {
-        text: "In Cardiff Combine Tournament, each hole's foursome score is all 4 players' scores added together:",
-        sub: ["Strokes: all 4 players' strokes for that hole, combined.", "Putts: all 4 players' putts for that hole, combined."],
-      },
-      "A hole only counts toward a foursome's total once all 4 players have entered their scores for the hole, so an in-progress round never shows a misleading total.",
-      "This tournament-level scoring is separate from, and doesn't change, how points are awarded inside each foursome's own game.",
-    ];
-  }
-
-  function TournamentRulesModal() {
-    if (!tournamentRulesOpen) return null;
-    const key = activeTournament ? activeTournament.game : tournamentGameKey;
-    if (!key) return null;
-    const rules = tournamentRulesFor(key);
-    return (
-      <div className="gsc-modal-backdrop" onClick={() => setTournamentRulesOpen(false)}>
-        <div className="gsc-modal" style={{ maxWidth: 440, maxHeight: "80vh", overflowY: "auto" }} onClick={(e) => e.stopPropagation()}>
-          <div className="gsc-modal-title">Tournament Scoring Rules</div>
-          <ul style={{ fontSize: 13, color: "#4b4b45", lineHeight: 1.6, paddingLeft: 18, margin: "0 0 16px" }}>
-            {rules.map((r, i) =>
-              typeof r === "string" ? (
-                <li key={i} style={{ marginBottom: 6 }}>{r}</li>
-              ) : (
-                <li key={i} style={{ marginBottom: 6 }}>
-                  {r.text}
-                  <ul style={{ marginTop: 4 }}>
-                    {r.sub.map((s, j) => (
-                      <li key={j} style={{ marginBottom: 2 }}>{s}</li>
-                    ))}
-                  </ul>
-                </li>
-              )
-            )}
-          </ul>
-          <button className="gsc-btn gsc-btn-primary" style={{ width: "100%" }} onClick={() => setTournamentRulesOpen(false)}>
             Close
           </button>
         </div>
@@ -1599,6 +1581,20 @@ export default function GolfScorecard() {
     setWizardStepId(prev);
   }
 
+  // Unlike wizardGoBack (which steps back one question at a time, and
+  // ultimately returns to wherever the wizard was actually launched from),
+  // Cancel always jumps straight to Home and fully resets the wizard - for
+  // when someone just wants out immediately, not a multi-tap trip back
+  // through every question they already answered.
+  function cancelWizard() {
+    setWizardStepId("playerCount");
+    setWizardAnswers({});
+    setWizardHistory([]);
+    setWizardOnlyMode(null);
+    setWizardFieldErr("");
+    goToScreen("home");
+  }
+
   function startNewRound(key) {
     setActiveTournament(null);
     setGameKey(key);
@@ -1782,6 +1778,7 @@ export default function GolfScorecard() {
     setCourseSearchErr("");
     setCourseTeeOptions(null);
     setCourseMsg("");
+    setShowManualCourse(false);
     goToScreen("tournamentCreate");
   }
 
@@ -2220,6 +2217,28 @@ export default function GolfScorecard() {
       const entry = { ...(holeScores[playerIdx] || {}) };
       entry[field] = value;
       holeScores[playerIdx] = entry;
+      next.scores[holeIdx] = holeScores;
+      saveRound(next);
+      return next;
+    });
+  }
+
+  // Used by "one team score" games (like Avocados Scramble) where there's
+  // only a single shared number per hole, not 4 individual player entries.
+  // Writes the same value to all 4 players' slots in one atomic update, so
+  // the existing engine (which already knows how to take the minimum of 4
+  // entries via bestBall) correctly treats it as a single team score
+  // without needing its own separate scoring code path.
+  function updateTeamHoleEntry(field, value) {
+    lastLocalEditRef.current = Date.now();
+    setRound((r) => {
+      const next = { ...r, scores: { ...r.scores } };
+      const holeScores = { ...(next.scores[holeIdx] || {}) };
+      r.players.forEach((_, idx) => {
+        const entry = { ...(holeScores[idx] || {}) };
+        entry[field] = value;
+        holeScores[idx] = entry;
+      });
       next.scores[holeIdx] = holeScores;
       saveRound(next);
       return next;
@@ -3295,6 +3314,11 @@ function computeRoundScoring(round) {
           title={<span style={{ fontSize: 20 }}>{"\u{1F9D9}"} Game Wizard</span>}
           sub={wizardStepId === "finish" ? "All set!" : `${progress}% complete`}
           onBack={wizardGoBack}
+          backExtra={
+            <button className="gsc-btn gsc-btn-ghost" style={{ padding: "5px 6px", fontSize: 12, width: 84, textAlign: "center" }} onClick={cancelWizard}>
+              Cancel
+            </button>
+          }
         />
         <div style={{ height: 6, background: "#e4ded0" }}>
           <div style={{ height: "100%", width: `${progress}%`, background: "#C1440E", transition: "width 0.25s ease" }} />
@@ -3370,6 +3394,9 @@ function computeRoundScoring(round) {
               </OptionButton>
               <OptionButton onClick={() => wizardGoNext("tournamentScoring", { tournamentScoring: "combined", resolvedGameKey: "tourneygg", isTournament: true })}>
                 Combined Strokes - all 4 players add together
+              </OptionButton>
+              <OptionButton onClick={() => wizardGoNext("tournamentScoring", { tournamentScoring: "scramble", resolvedGameKey: "avoscramble", isTournament: true })}>
+                One score for the team - Teams play the best shot of the foursome from tee to hole for the score
               </OptionButton>
             </div>
           )}
@@ -3677,15 +3704,12 @@ function computeRoundScoring(round) {
               <div className="gsc-label" style={{ marginBottom: 6 }}>Tournament settings (locked)</div>
               <div style={{ fontSize: 13, color: "#4b4b45", lineHeight: 1.5 }}>
                 {activeTournament.course && <>Course: {activeTournament.course}<br /></>}
-                Max over par: {activeTournament.cfg.maxOver} - Max putts: {activeTournament.cfg.maxPutts} - Mulligans: {activeTournament.cfg.mulliganSegment}{activeTournament.game === "seabluffe" ? ` per ${mulliganWindow(activeTournament.game)} holes` : " per player"}
+                Max over par: {activeTournament.cfg.maxOver}{GAMES[activeTournament.game].hasPutts ? ` - Max putts: ${activeTournament.cfg.maxPutts}` : ""} - Mulligans: {activeTournament.cfg.mulliganSegment}{activeTournament.game === "seabluffe" ? ` per ${mulliganWindow(activeTournament.game)} holes` : " per player"}
                 <br />
                 Prize: {activeTournament.cfg.prize}
                 <br />
                 Ranked by: strokes and putts (tracked separately, lowest wins each) - {GAMES[activeTournament.game].bestBall ? "best-ball (lowest single score) per hole" : "combined (all 4 players added) per hole"}
               </div>
-              <button className="gsc-link" style={{ marginTop: 8, fontSize: 12 }} onClick={() => setTournamentRulesOpen(true)}>
-                View full tournament scoring rules
-              </button>
               <div style={{ fontSize: 12, color: "#8a8a80", marginTop: 8 }}>
                 Every foursome in this tournament plays under these same settings so the leaderboard stays fair. Tournament code: <span className="gsc-mono" style={{ fontWeight: 700 }}>{activeTournament.id}</span>
               </div>
@@ -4046,7 +4070,6 @@ function computeRoundScoring(round) {
           </button>
         </div>
         <RulesModal />
-        <TournamentRulesModal />
       </div>
     );
   }
@@ -4056,8 +4079,11 @@ function computeRoundScoring(round) {
     return (
       <div className="gsc">
         <style>{STYLE}</style>
-        <Header title="Create a Tournament" sub="Set it up once, everyone plays the same way" onBack={() => goBack("tournamentsTab")} />
+        <Header title={tg.name} sub="Tournament setup - every foursome plays this format" onBack={() => goBack("tournamentsTab")} />
         <div className="gsc-body">
+          <button className="gsc-link" style={{ marginBottom: 12, fontSize: 13 }} onClick={() => openRules(tournamentGameKey)}>
+            View full rules for {tg.name}
+          </button>
           <div className="gsc-card">
             <div className="gsc-label">Tournament name</div>
             <input className="gsc-input" placeholder="e.g. Club Championship" value={tournamentName} onChange={(e) => setTournamentName(e.target.value)} />
@@ -4066,10 +4092,28 @@ function computeRoundScoring(round) {
               <input className="gsc-input" type="date" value={tournamentDate} onChange={(e) => setTournamentDate(e.target.value)} />
             </div>
             <div className="gsc-field" style={{ marginTop: 12 }}>
+              {tournamentCourseName && courseSelectedViaSearch ? (
+                <div className="gsc-card gsc-winner-card" style={{ padding: 12 }}>
+                  <div className="gsc-label" style={{ marginBottom: 4 }}>Selected Course</div>
+                  <div style={{ fontWeight: 700, fontSize: 15 }}>{tournamentCourseName}</div>
+                  <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 2 }}>
+                    Par {tournamentPar.reduce((a, b) => a + (Number(b) || 0), 0)} - {tournamentPar.filter((p) => p !== "" && p != null).length}/18 holes entered
+                  </div>
+                  <button
+                    className="gsc-link"
+                    style={{ marginTop: 8, fontSize: 12 }}
+                    onClick={() => {
+                      setTournamentCourseName("");
+                      setCourseSelectedViaSearch(false);
+                      setCourseMsg("");
+                    }}
+                  >
+                    Change course
+                  </button>
+                </div>
+              ) : (
+                <>
               <div className="gsc-label">Search for your course</div>
-              <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 6 }}>
-                Find a real course by name and its par fills in automatically.
-              </div>
               <div className="gsc-row">
                 <input
                   className="gsc-input"
@@ -4130,43 +4174,65 @@ function computeRoundScoring(round) {
                   {courseMsg}
                 </div>
               )}
-            </div>
-            <div className="gsc-field" style={{ marginTop: 12 }}>
-              <div className="gsc-label">Course name</div>
-              <input className="gsc-input" placeholder="e.g. Seabluffe Golf Links" value={tournamentCourseName} onChange={(e) => setTournamentCourseName(e.target.value)} />
-            </div>
-          </div>
+              <button className="gsc-link" style={{ marginTop: 10, fontSize: 12 }} onClick={() => setShowManualCourse((s) => !s)}>
+                {showManualCourse ? "Hide manual course entry" : "Course not listed? Enter or edit par manually"}
+              </button>
+              {showManualCourse && (
+                <div style={{ marginTop: 12 }}>
+                  <div className="gsc-label" style={{ marginBottom: 10 }}>Enter or Edit Par Manually</div>
+                  {savedCourses.length > 0 && (
+                    <div className="gsc-field">
+                      <div className="gsc-label">Load a saved course</div>
+                      <select className="gsc-input" defaultValue="" onChange={(e) => e.target.value && applySavedCourse(e.target.value)}>
+                        <option value="">Choose a course you've saved before...</option>
+                        {savedCourses.map((c) => (
+                          <option key={c.name} value={c.name}>{c.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
 
-          <div className="gsc-card">
-            <div className="gsc-label" style={{ marginBottom: 10 }}>Game (every foursome plays this)</div>
-            {TOURNAMENT_GAME_KEYS.map((key) => (
-              <div
-                key={key}
-                className="gsc-card gsc-game-card"
-                style={{ marginBottom: 10, border: tournamentGameKey === key ? "2px solid #B08D57" : undefined }}
-                onClick={() => {
-                  setTournamentGameKey(key);
-                  setTournamentCfg({ ...GAMES[key].defaults });
-                  setTournamentPar(Array(18).fill(""));
-                }}
-              >
-                <div className="gsc-game-title">{GAMES[key].name}</div>
-                <div className="gsc-tag">{GAMES[key].tag}</div>
-                <div style={{ fontSize: 13, marginTop: 8, color: "#4b4b45" }}>{GAMES[key].desc}</div>
-              </div>
-            ))}
-          </div>
-
-          <div className="gsc-card">
-            <div className="gsc-label" style={{ marginBottom: 6 }}>How foursomes are ranked</div>
-            <div style={{ fontSize: 13, color: "#4b4b45" }}>
-              Strokes and putts are tracked as two separate rankings - lowest total wins each. {tg.bestBall
-                ? "For Beachside Best-Ball, each hole counts the single lowest strokes and single lowest putts among all 4 players in the foursome."
-                : "Each hole counts all 4 players' strokes added together, and all 4 players' putts added together."}
+                  <div className="gsc-field">
+                    <div className="gsc-label">Course name</div>
+                    <input className="gsc-input" placeholder="e.g. Seabluffe Golf Links" value={tournamentCourseName} onChange={(e) => setTournamentCourseName(e.target.value)} />
+                  </div>
+                  <div className="gsc-label" style={{ marginBottom: 6 }}>Par per hole</div>
+                  <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 8 }}>
+                    Every foursome in this tournament plays the same course par. Enter par for all 18 holes to continue.
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 6 }}>
+                    {tournamentPar.map((v, i) => (
+                      <div key={i}>
+                        <div style={{ fontSize: 10, textAlign: "center", color: "#6b6b63" }}>H{i + 1}</div>
+                        <input
+                          ref={(el) => (parRefsTournament.current[i] = el)}
+                          className="gsc-input gsc-mono"
+                          style={{ padding: "6px 2px", textAlign: "center", borderColor: v === "" || v == null ? "#C1440E" : undefined }}
+                          type="number"
+                          placeholder="-"
+                          value={v}
+                          onChange={(e) => {
+                            const raw = e.target.value.replace(/^0+(?=\d)/, "");
+                            const next = [...tournamentPar];
+                            next[i] = raw === "" ? "" : Number(raw);
+                            setTournamentPar(next);
+                            if (raw !== "" && i < 17 && parRefsTournament.current[i + 1]) {
+                              parRefsTournament.current[i + 1].focus({ preventScroll: true });
+                            }
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 8 }}>Total par: {tournamentPar.reduce((a, b) => a + (Number(b) || 0), 0)}</div>
+                  <button className="gsc-btn gsc-btn-outline" style={{ marginTop: 10 }} onClick={() => saveCourseToIndex(tournamentCourseName, tournamentPar)}>
+                    Save this course for next time
+                  </button>
+                </div>
+              )}
+                </>
+              )}
             </div>
-            <button className="gsc-link" style={{ marginTop: 8, fontSize: 12 }} onClick={() => setTournamentRulesOpen(true)}>
-              View full tournament scoring rules
-            </button>
           </div>
 
           <div className="gsc-card">
@@ -4230,36 +4296,6 @@ function computeRoundScoring(round) {
           </div>
 
           <div className="gsc-card">
-            <div className="gsc-label" style={{ marginBottom: 6 }}>Par per hole</div>
-            <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 10 }}>Every foursome in this tournament plays the same course par. Enter par for all 18 holes to continue.</div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 6 }}>
-              {tournamentPar.map((v, i) => (
-                <div key={i}>
-                  <div style={{ fontSize: 10, textAlign: "center", color: "#6b6b63" }}>H{i + 1}</div>
-                  <input
-                    ref={(el) => (parRefsTournament.current[i] = el)}
-                    className="gsc-input gsc-mono"
-                    style={{ padding: "6px 2px", textAlign: "center", borderColor: v === "" || v == null ? "#C1440E" : undefined }}
-                    type="number"
-                    placeholder="-"
-                    value={v}
-                    onChange={(e) => {
-                      const raw = e.target.value.replace(/^0+(?=\d)/, "");
-                      const next = [...tournamentPar];
-                      next[i] = raw === "" ? "" : Number(raw);
-                      setTournamentPar(next);
-                      if (raw !== "" && i < 17 && parRefsTournament.current[i + 1]) {
-                        parRefsTournament.current[i + 1].focus({ preventScroll: true });
-                      }
-                    }}
-                  />
-                </div>
-              ))}
-            </div>
-            <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 8 }}>Total par: {tournamentPar.reduce((a, b) => a + (Number(b) || 0), 0)}</div>
-          </div>
-
-          <div className="gsc-card">
             <div className="gsc-label">Number of foursomes</div>
             <input
               className="gsc-input"
@@ -4285,7 +4321,7 @@ function computeRoundScoring(round) {
             Next: add foursomes
           </button>
         </div>
-        <TournamentRulesModal />
+        <RulesModal />
       </div>
     );
   }
@@ -4460,14 +4496,16 @@ function computeRoundScoring(round) {
           {boardErr && <div style={{ color: "#C1440E", marginBottom: 10 }}>{boardErr}</div>}
           {board && t && (
             <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 4 }}>
-              {GAMES[t.game].bestBall
+              {GAMES[t.game].oneTeamScore
+                ? "Scramble scoring: the whole foursome shares one team stroke total per hole."
+                : GAMES[t.game].bestBall
                 ? "Best-ball scoring: each foursome's stroke and putt totals are the single lowest score among all 4 players on each hole."
                 : "Combined scoring: each foursome's stroke and putt totals are all 4 players' scores added together."}
             </div>
           )}
           {board && t && (
-            <button className="gsc-link" style={{ fontSize: 12, marginBottom: 12 }} onClick={() => setTournamentRulesOpen(true)}>
-              View full tournament scoring rules
+            <button className="gsc-link" style={{ fontSize: 12, marginBottom: 12 }} onClick={() => openRules(t.game)}>
+              View full rules for {GAMES[t.game].name}
             </button>
           )}
           {board && (
@@ -4477,7 +4515,7 @@ function computeRoundScoring(round) {
               {board.strokesRanked.map((row, idx) => renderFoursomeRow(row, idx, "totalStrokes", "strokeHoles"))}
             </div>
           )}
-          {board && (
+          {board && t && GAMES[t.game].hasPutts && (
             <div className="gsc-card">
               <div className="gsc-label" style={{ marginBottom: 10 }}>Ranked by Putts</div>
               {board.puttsRanked.length === 0 && <div style={{ fontSize: 13, color: "#6b6b63" }}>No foursomes have joined yet.</div>}
@@ -4495,7 +4533,7 @@ function computeRoundScoring(round) {
           </div>
         </div>
         <EditFoursomeModal />
-        <TournamentRulesModal />
+        <RulesModal />
       </div>
     );
   }
@@ -4754,7 +4792,36 @@ function computeRoundScoring(round) {
               <button className="gsc-btn gsc-btn-outline" disabled={holeIdx === 17} onClick={() => setHoleIdx((h) => h + 1)}>Next</button>
             </div>
 
-            {round.players.map((p, i) => {
+            {g.oneTeamScore ? (
+              (() => {
+                const teamEntry = hs[0] || {};
+                return (
+                  <div className="gsc-player-row">
+                    <div className="gsc-player-name">Team Strokes</div>
+                    <div style={{ display: "flex", gap: 22, marginTop: 8, flexWrap: "wrap" }}>
+                      <div>
+                        <div style={{ fontSize: 11, color: "#6b6b63", marginBottom: 3, textAlign: "center" }}>STROKES</div>
+                        <div className="gsc-stepper">
+                          <button
+                            disabled={teamEntry.strokes === "" || teamEntry.strokes == null}
+                            onClick={() => {
+                              if (teamEntry.strokes === "" || teamEntry.strokes == null) return;
+                              const n = Number(teamEntry.strokes);
+                              updateTeamHoleEntry("strokes", n <= 1 ? "" : n - 1);
+                            }}
+                          >
+                            -
+                          </button>
+                          <div className="gsc-stepper-val">{teamEntry.strokes === "" || teamEntry.strokes == null ? "-" : teamEntry.strokes}</div>
+                          <button onClick={() => updateTeamHoleEntry("strokes", (Number(teamEntry.strokes) || 0) + 1)}>+</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()
+            ) : (
+            round.players.map((p, i) => {
               const teamIdxInHole = teamsThisHole.findIndex((t) => t.includes(i));
               const cls = TEAM_CLASS[teamIdxInHole % 4];
               const e = hs[i] || {};
@@ -4818,7 +4885,8 @@ function computeRoundScoring(round) {
                   </div>
                 </div>
               );
-            })}
+            })
+            )}
 
             <div style={{ marginTop: 6 }}>
               {teamsThisHole.map((team, ti) => {
@@ -4828,7 +4896,7 @@ function computeRoundScoring(round) {
                 return (
                   <div key={ti} style={{ fontSize: 12, marginTop: 4 }}>
                     <b>{label}</b>{" "}
-                    {g.hasScore && <span>{g.bestBall ? "best strokes" : g.singleTeam ? "combined strokes" : "score"} {r.scoreSum ?? "-"} </span>}
+                    {g.hasScore && <span>{g.oneTeamScore ? "team strokes" : g.bestBall ? "best strokes" : g.singleTeam ? "combined strokes" : "score"} {r.scoreSum ?? "-"} </span>}
                     {g.hasPutts && <span>{g.bestBall ? "best putts" : g.singleTeam ? "combined putts" : "putts"} {r.puttSum ?? "-"} </span>}
                     {(pts.score > 0 || pts.putt > 0) && <span className="gsc-chip gsc-lead">+{pts.score + pts.putt} pt</span>}
                   </div>
@@ -4839,11 +4907,15 @@ function computeRoundScoring(round) {
 
           {g.singleTeam && (
             <div className="gsc-card" style={{ border: "2px solid #B08D57" }}>
-              <div className="gsc-label" style={{ marginBottom: 8 }}>Foursome {g.bestBall ? "Best-Ball" : "Combined"} Totals</div>
+              <div className="gsc-label" style={{ marginBottom: 8 }}>Foursome {g.oneTeamScore ? "Team" : g.bestBall ? "Best-Ball" : "Combined"} Totals</div>
               <div style={{ fontSize: 13, color: "#4b4b45", lineHeight: 1.6 }}>
-                {g.bestBall ? "Best-ball" : "Combined"} strokes: <b>{foursomeTotals.totalStrokes}</b> (thru {foursomeTotals.strokeHoles} holes)
-                <br />
-                {g.bestBall ? "Best-ball" : "Combined"} putts: <b>{foursomeTotals.totalPutts}</b> (thru {foursomeTotals.puttHoles} holes)
+                {g.oneTeamScore ? "Team" : g.bestBall ? "Best-ball" : "Combined"} strokes: <b>{foursomeTotals.totalStrokes}</b> (thru {foursomeTotals.strokeHoles} holes)
+                {g.hasPutts && (
+                  <>
+                    <br />
+                    {g.bestBall ? "Best-ball" : "Combined"} putts: <b>{foursomeTotals.totalPutts}</b> (thru {foursomeTotals.puttHoles} holes)
+                  </>
+                )}
               </div>
               <div style={{ fontSize: 12, color: "#8a8a80", marginTop: 8 }}>
                 This is what counts on the tournament leaderboard - check the Leaderboard link above to see how this foursome ranks against the others.
