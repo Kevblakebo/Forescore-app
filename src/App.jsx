@@ -1512,6 +1512,8 @@ export default function GolfScorecard() {
       case "field_course":
         return "field_limits";
       case "field_limits":
+        return answers.isTournament ? "field_foursomeCount" : "field_prize";
+      case "field_foursomeCount":
         return "field_prize";
       case "field_prize":
         return answers.isTournament ? "finish" : "field_venmo";
@@ -1532,7 +1534,7 @@ export default function GolfScorecard() {
   // until enough questions are answered.
   function wizardProgress() {
     const roundFields = ["field_name", "field_course", "field_limits", "field_prize", "field_venmo", "field_players"];
-    const tournamentFields = ["field_name", "field_course", "field_limits", "field_prize"];
+    const tournamentFields = ["field_name", "field_course", "field_limits", "field_foursomeCount", "field_prize"];
     const fields = wizardAnswers.isTournament ? tournamentFields : roundFields;
     const fieldIdx = fields.indexOf(wizardStepId);
     if (fieldIdx >= 0) return Math.round(38 + (60 * fieldIdx) / fields.length);
@@ -3612,6 +3614,32 @@ function computeRoundScoring(round) {
                 <input className="gsc-input" type="number" min="0" placeholder="0" value={activeCfg.mulliganSegment} onChange={(e) => setActiveCfg({ ...activeCfg, mulliganSegment: cleanNumericText(e.target.value) })} />
               </div>
               <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 14 }} onClick={() => wizardGoNext("field_limits", {})}>
+                Continue
+              </button>
+            </div>
+          )}
+
+          {wizardStepId === "field_foursomeCount" && (
+            <div className="gsc-card">
+              <div className="gsc-label" style={{ marginBottom: 10, fontSize: 16 }}>How many foursomes?</div>
+              <input
+                className="gsc-input"
+                type="number"
+                min="1"
+                max="20"
+                value={tournamentFoursomeCount}
+                onChange={(e) => {
+                  const raw = cleanNumericText(e.target.value);
+                  setTournamentFoursomeCount(raw === "" ? "" : Number(raw));
+                }}
+                onBlur={(e) => {
+                  if (e.target.value === "") setTournamentFoursomeCount(2);
+                }}
+              />
+              <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 8 }}>
+                You'll add each foursome's name and 4 players next. More foursomes can always join later with the tournament code.
+              </div>
+              <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 14 }} onClick={() => wizardGoNext("field_foursomeCount", {})}>
                 Continue
               </button>
             </div>
