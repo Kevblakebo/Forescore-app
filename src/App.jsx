@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { Home as HomeIcon, Flag as FlagIcon, Trophy as TrophyIcon, User as UserIcon, Lock, Library as LibraryIcon } from "lucide-react";
+import { Home as HomeIcon, Flag as FlagIcon, Trophy as TrophyIcon, User as UserIcon, Lock, Library as LibraryIcon, ShoppingBag } from "lucide-react";
 
 /* ---------- design tokens ----------
    Palette: fairway (#1B4332) deep green, paper (#F3EFE0) cream, ink (#2B2B28),
@@ -3235,6 +3235,16 @@ function computeRoundScoring(round) {
               Read more
             </button>
           </div>
+
+          <div className="gsc-card" style={{ cursor: "pointer" }} onClick={() => goToScreen("swagStore")}>
+            <div className="gsc-label" style={{ marginBottom: 6 }}>Swag Store</div>
+            <div style={{ fontSize: 13, color: "#4b4b45" }}>
+              Order your Foresa Golf swag here.
+            </div>
+            <button className="gsc-link" style={{ marginTop: 8, fontSize: 12 }} onClick={() => goToScreen("swagStore")}>
+              Read more
+            </button>
+          </div>
         </div>
         <BottomNav />
       </div>
@@ -3337,6 +3347,24 @@ function computeRoundScoring(round) {
             <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 6 }}>Privacy Policy Under Construction</div>
             <div style={{ fontSize: 13, color: "#6b6b63", lineHeight: 1.5 }}>
               The full privacy policy will live here soon.
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (screen === "swagStore") {
+    return (
+      <div className="gsc">
+        <style>{STYLE}</style>
+        <Header title="Swag Store" sub="Order your Foresa Golf swag here" onBack={() => goBack("libraryTab")} />
+        <div className="gsc-body">
+          <div className="gsc-card" style={{ textAlign: "center", padding: "32px 20px" }}>
+            <ShoppingBag size={28} color="#8FA998" style={{ marginBottom: 10 }} />
+            <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 6 }}>Swag Store Under Construction</div>
+            <div style={{ fontSize: 13, color: "#6b6b63", lineHeight: 1.5 }}>
+              Foresa Golf hats, shirts, and more will be available to order here soon.
             </div>
           </div>
         </div>
