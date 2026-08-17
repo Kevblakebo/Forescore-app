@@ -858,6 +858,7 @@ export default function GolfScorecard() {
   const [tournamentErr, setTournamentErr] = useState("");
   const [tournamentBusy, setTournamentBusy] = useState(false);
   const [board, setBoard] = useState(null); // { tournament, rows: [{...}] } for the leaderboard screen
+  const [tournamentFinishSnapshot, setTournamentFinishSnapshot] = useState(null); // captured winner data for the finish-tournament celebration
   const [boardErr, setBoardErr] = useState("");
   const [lastTournament, setLastTournament] = useState(null); // {id, name} - lets Home screen jump back into a tournament from anywhere
   const [editFoursomeOpen, setEditFoursomeOpen] = useState(false);
@@ -1097,7 +1098,16 @@ export default function GolfScorecard() {
       await storageDelete(LAST_TOURNAMENT_KEY, false);
       setLastTournament(null);
     }
-    goToScreen("tournamentsTab");
+    // Snapshot the current leaderboard (already loaded on this screen) so
+    // the celebration screen has stable winner data to show, regardless of
+    // whatever board/lastTournament state changes happen next.
+    setTournamentFinishSnapshot({
+      tournament: t,
+      strokesRanked: board && board.tournament && board.tournament.id === t.id ? board.strokesRanked : [],
+      puttsRanked: board && board.tournament && board.tournament.id === t.id ? board.puttsRanked : [],
+      hasPutts: GAMES[t.game] ? GAMES[t.game].hasPutts : false,
+    });
+    goToScreen("tournamentFinishCelebration");
   }
 
   function requestDeleteFinishedTournament(t) {
@@ -2311,6 +2321,10 @@ export default function GolfScorecard() {
     if (!GAMES[round.game] || !GAMES[round.game].oneTeamScore) return;
     loadTournamentBoard(round.tournamentId);
   }, [screen, round && round.id]);
+
+  useEffect(() => {
+    if (screen === "tournamentFinishCelebration") playFireworksSound();
+  }, [screen]);
 
 
   const game = round ? GAMES[round.game] : gameKey ? GAMES[gameKey] : null;
@@ -4656,6 +4670,74 @@ function computeRoundScoring(round) {
 
           <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 4 }} onClick={finishCelebrationAndGoHome}>
             Continue to Home
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (screen === "tournamentFinishCelebration" && tournamentFinishSnapshot) {
+    const { tournament: ft, strokesRanked, puttsRanked, hasPutts } = tournamentFinishSnapshot;
+    const strokesWinner = strokesRanked.find((r) => !r.error);
+    const puttsWinner = hasPutts ? puttsRanked.find((r) => !r.error) : null;
+    const sameWinner = puttsWinner && strokesWinner && puttsWinner.id === strokesWinner.id;
+
+    return (
+      <div className="gsc">
+        <style>{STYLE}</style>
+        <div style={{ position: "relative", background: "#1B4332", padding: "28px 18px 22px", overflow: "hidden" }}>
+          <Fireworks />
+          <div style={{ position: "relative", textAlign: "center" }}>
+            <img src={LOGO_DATA_URI} alt="Foresa logo" style={{ width: 44, height: "auto", marginBottom: 10 }} />
+            <div className="gsc-display" style={{ fontSize: 24, fontWeight: 700, color: "#F3EFE0" }}>Tournament Complete!</div>
+            <div style={{ fontSize: 13, color: "#F3EFE0", opacity: 0.8, marginTop: 4 }}>
+              {ft.name} - {GAMES[ft.game].name} - {ft.date}
+            </div>
+          </div>
+        </div>
+
+        <div className="gsc-body">
+          {strokesWinner ? (
+            <div className="gsc-card gsc-winner-card" style={{ textAlign: "center" }}>
+              <div style={{ fontSize: 28, marginBottom: 6 }}>&#127942;</div>
+              <div style={{ fontWeight: 700, fontSize: 12, textTransform: "uppercase", letterSpacing: "0.5px", color: "#B08D57", marginBottom: 6 }}>
+                {sameWinner ? "Tournament Winner" : "Strokes Winner"}
+              </div>
+              <div style={{ fontSize: 19, fontWeight: 700 }}>{strokesWinner.name}</div>
+              <div style={{ fontSize: 13, color: "#6b6b63", marginTop: 4 }}>{strokesWinner.totalStrokes} total strokes</div>
+              {hasPutts && puttsWinner && !sameWinner && (
+                <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid #e4ded0" }}>
+                  <div style={{ fontWeight: 700, fontSize: 12, textTransform: "uppercase", letterSpacing: "0.5px", color: "#B08D57", marginBottom: 6 }}>
+                    Putts Winner
+                  </div>
+                  <div style={{ fontSize: 19, fontWeight: 700 }}>{puttsWinner.name}</div>
+                  <div style={{ fontSize: 13, color: "#6b6b63", marginTop: 4 }}>{puttsWinner.totalPutts} total putts</div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="gsc-card" style={{ textAlign: "center" }}>
+              <div style={{ fontSize: 13, color: "#6b6b63" }}>No foursomes finished this tournament.</div>
+            </div>
+          )}
+
+          {strokesRanked.length > 0 && (
+            <div className="gsc-card">
+              <div className="gsc-label" style={{ marginBottom: 10 }}>Final Standings - Strokes</div>
+              {strokesRanked.map((row, idx) => (
+                <div key={row.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: idx === strokesRanked.length - 1 ? "none" : "1px solid #eee6cf" }}>
+                  <div style={{ fontWeight: idx === 0 ? 700 : 400 }}>
+                    {idx === 0 && <span style={{ marginRight: 6 }}>&#127942;</span>}
+                    {idx + 1}. {row.name}
+                  </div>
+                  <div className="gsc-mono" style={{ fontWeight: 700 }}>{row.error ? "-" : row.totalStrokes}</div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 4 }} onClick={() => { setTournamentFinishSnapshot(null); goToScreen("tournamentsTab"); }}>
+            Continue to Tournaments
           </button>
         </div>
       </div>
