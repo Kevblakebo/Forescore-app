@@ -3102,7 +3102,7 @@ function computeRoundScoring(round) {
     return (
       <div className="gsc">
         <style>{STYLE}</style>
-        <Header title={<span style={{ fontSize: 23 }}>Profile</span>} sub="Your account & stats" />
+        <Header title={<span style={{ fontSize: 23 }}>Profile</span>} sub={<>Your account & stats<br />Leaderboard & rankings</>} />
         <div className="gsc-body gsc-body-tabbed">
           <div className="gsc-card" style={{ textAlign: "center", padding: "32px 20px" }}>
             <Lock size={28} color="#8FA998" style={{ marginBottom: 10 }} />
@@ -3121,7 +3121,7 @@ function computeRoundScoring(round) {
     return (
       <div className="gsc">
         <style>{STYLE}</style>
-        <Header title={<span style={{ fontSize: 23 }}>Library</span>} sub="Games & about this app" />
+        <Header title={<span style={{ fontSize: 23 }}>Library</span>} sub={<>Games & about this app<br />Terms and privacy policy</>} />
         <div className="gsc-body gsc-body-tabbed">
           <div className="gsc-card" style={{ cursor: "pointer" }} onClick={() => goToScreen("library")}>
             <div className="gsc-label" style={{ marginBottom: 6 }}>Golf Games Library</div>
@@ -3139,6 +3139,26 @@ function computeRoundScoring(round) {
               What Foresa tracks for you, and how a round works from tee to tally.
             </div>
             <button className="gsc-link" style={{ marginTop: 8, fontSize: 12 }} onClick={() => goToScreen("about")}>
+              Read more
+            </button>
+          </div>
+
+          <div className="gsc-card" style={{ cursor: "pointer" }} onClick={() => goToScreen("termsOfService")}>
+            <div className="gsc-label" style={{ marginBottom: 6 }}>Terms of Service</div>
+            <div style={{ fontSize: 13, color: "#4b4b45" }}>
+              The terms for using Foresa.
+            </div>
+            <button className="gsc-link" style={{ marginTop: 8, fontSize: 12 }} onClick={() => goToScreen("termsOfService")}>
+              Read more
+            </button>
+          </div>
+
+          <div className="gsc-card" style={{ cursor: "pointer" }} onClick={() => goToScreen("privacyPolicy")}>
+            <div className="gsc-label" style={{ marginBottom: 6 }}>Privacy Policy</div>
+            <div style={{ fontSize: 13, color: "#4b4b45" }}>
+              How Foresa handles your data.
+            </div>
+            <button className="gsc-link" style={{ marginTop: 8, fontSize: 12 }} onClick={() => goToScreen("privacyPolicy")}>
               Read more
             </button>
           </div>
@@ -3208,6 +3228,42 @@ function computeRoundScoring(round) {
               <p style={{ margin: 0 }}>
                 No more arguing about the rules, redoing the math, or waiting to find out who owes who at the 19th hole, it's all tracked right here.
               </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (screen === "termsOfService") {
+    return (
+      <div className="gsc">
+        <style>{STYLE}</style>
+        <Header title="Terms of Service" sub="The terms for using Foresa" onBack={() => goBack("libraryTab")} />
+        <div className="gsc-body">
+          <div className="gsc-card" style={{ textAlign: "center", padding: "32px 20px" }}>
+            <Lock size={28} color="#8FA998" style={{ marginBottom: 10 }} />
+            <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 6 }}>Terms of Service Under Construction</div>
+            <div style={{ fontSize: 13, color: "#6b6b63", lineHeight: 1.5 }}>
+              The full terms of service will live here soon.
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (screen === "privacyPolicy") {
+    return (
+      <div className="gsc">
+        <style>{STYLE}</style>
+        <Header title="Privacy Policy" sub="How Foresa handles your data" onBack={() => goBack("libraryTab")} />
+        <div className="gsc-body">
+          <div className="gsc-card" style={{ textAlign: "center", padding: "32px 20px" }}>
+            <Lock size={28} color="#8FA998" style={{ marginBottom: 10 }} />
+            <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 6 }}>Privacy Policy Under Construction</div>
+            <div style={{ fontSize: 13, color: "#6b6b63", lineHeight: 1.5 }}>
+              The full privacy policy will live here soon.
             </div>
           </div>
         </div>
