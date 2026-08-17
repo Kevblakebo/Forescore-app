@@ -4575,8 +4575,15 @@ function computeRoundScoring(round) {
               </button>
             )}
           </div>
-          <div className="gsc-mono" style={{ fontWeight: 700, fontSize: 15 }}>
-            {row.error ? "-" : row[valueKey]}
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 2 }}>
+            <div className="gsc-mono" style={{ fontWeight: 700, fontSize: 15 }}>
+              {row.error ? "-" : row[valueKey]}
+            </div>
+            {!row.error && (
+              <div style={{ fontSize: 11, fontWeight: 700, color: "#1B4332", whiteSpace: "nowrap" }}>
+                Enter scores {"\u203A"}
+              </div>
+            )}
           </div>
         </div>
       );
@@ -4618,6 +4625,13 @@ function computeRoundScoring(round) {
             <button className="gsc-link" style={{ fontSize: 12, marginBottom: 12 }} onClick={() => openRules(t.game)}>
               View full rules for {GAMES[t.game].name}
             </button>
+          )}
+          {board && t && board.strokesRanked.length > 0 && (
+            <div className="gsc-card" style={{ background: "#EBF0EC", border: "1px solid #1B4332" }}>
+              <div style={{ fontSize: 13, color: "#1B4332", fontWeight: 700 }}>
+                Tap a foursome below to enter or view its hole-by-hole scores.
+              </div>
+            </div>
           )}
           {board && (
             <div className="gsc-card">
