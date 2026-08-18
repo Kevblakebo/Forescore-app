@@ -987,6 +987,74 @@ export default function GolfScorecard() {
   const [board, setBoard] = useState(null); // { tournament, rows: [{...}] } for the leaderboard screen
   const [tournamentFinishSnapshot, setTournamentFinishSnapshot] = useState(null); // captured winner data for the finish-tournament celebration
   const [tournamentCreatedSnapshot, setTournamentCreatedSnapshot] = useState(null); // captured data for the "tournament just created" celebration
+
+  // ---- Feedback survey state ----
+  const FEEDBACK_FEATURES = ["Mulligan tracking", "Course search (auto-fill par)", "Avatars", "Tournaments / Leaderboard", "Full 18-hole grid view", "Accolades (birdie/eagle celebrations)"];
+  const [feedbackAnswers, setFeedbackAnswers] = useState({
+    setupMethod: null,
+    setupEase: null,
+    setupFriction: "",
+    formats: [],
+    scoringEase: null,
+    confusion: "",
+    features: {},
+    dataTrust: null,
+    dataTrustDetail: "",
+    wishlist: "",
+    npsScore: null,
+  });
+  const [feedbackBusy, setFeedbackBusy] = useState(false);
+  const [feedbackErr, setFeedbackErr] = useState("");
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
+
+  function updateFeedback(field, value) {
+    setFeedbackAnswers((a) => ({ ...a, [field]: value }));
+  }
+  function toggleFeedbackFormat(format) {
+    setFeedbackAnswers((a) => {
+      const has = a.formats.includes(format);
+      return { ...a, formats: has ? a.formats.filter((f) => f !== format) : [...a.formats, format] };
+    });
+  }
+  function updateFeedbackFeature(feature, value) {
+    setFeedbackAnswers((a) => ({ ...a, features: { ...a.features, [feature]: value } }));
+  }
+  function resetFeedbackForm() {
+    setFeedbackAnswers({
+      setupMethod: null, setupEase: null, setupFriction: "", formats: [], scoringEase: null,
+      confusion: "", features: {}, dataTrust: null, dataTrustDetail: "", wishlist: "", npsScore: null,
+    });
+    setFeedbackSubmitted(false);
+    setFeedbackErr("");
+  }
+  async function submitFeedback() {
+    setFeedbackErr("");
+    const a = feedbackAnswers;
+    if (a.setupMethod == null || a.setupEase == null || a.scoringEase == null || a.dataTrust == null || a.npsScore == null || a.formats.length === 0) {
+      setFeedbackErr("Please answer the required questions above (marked without \"Optional\") before submitting.");
+      return;
+    }
+    setFeedbackBusy(true);
+    try {
+      const resp = await fetch("/api/send-feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...a, submittedAt: new Date().toISOString() }),
+      });
+      const data = await resp.json().catch(() => ({}));
+      if (!resp.ok) {
+        setFeedbackBusy(false);
+        setFeedbackErr(`Couldn't send feedback (${data.error || resp.status}). Please try again.`);
+        return;
+      }
+      setFeedbackBusy(false);
+      setFeedbackSubmitted(true);
+    } catch (e) {
+      setFeedbackBusy(false);
+      setFeedbackErr(`Couldn't send feedback (${e.message || "network error"}). Please try again.`);
+    }
+  }
+
   const [boardErr, setBoardErr] = useState("");
   const [lastTournament, setLastTournament] = useState(null); // {id, name} - lets Home screen jump back into a tournament from anywhere
   const [editFoursomeOpen, setEditFoursomeOpen] = useState(false);
@@ -3364,6 +3432,16 @@ function computeRoundScoring(round) {
               Saved defaults (name, handicap, Venmo, home course), account login, and your stats (rounds played, average strokes and putts, wins) will all live here. Logging in will be optional - you'll always be able to keep playing instantly with just a round or tournament code, the way it works today.
             </div>
           </div>
+
+          <div className="gsc-card" style={{ cursor: "pointer" }} onClick={() => goToScreen("feedback")}>
+            <div className="gsc-label" style={{ marginBottom: 6 }}>Give Feedback</div>
+            <div style={{ fontSize: 13, color: "#4b4b45" }}>
+              Two minutes, ten questions - tell us what's working and what isn't.
+            </div>
+            <button className="gsc-link" style={{ marginTop: 8, fontSize: 12 }} onClick={() => goToScreen("feedback")}>
+              Start feedback survey
+            </button>
+          </div>
         </div>
         <BottomNav />
       </div>
@@ -3546,6 +3624,226 @@ function computeRoundScoring(round) {
             <div style={{ fontSize: 13, color: "#6b6b63", lineHeight: 1.5 }}>
               Foresa Golf hats, shirts, and more will be available to order here soon.
             </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (screen === "feedback") {
+    const a = feedbackAnswers;
+
+    if (feedbackSubmitted) {
+      return (
+        <div className="gsc">
+          <style>{STYLE}</style>
+          <Header title="Feedback" sub="Thanks for taking the time" onBack={() => goBack("profileTab")} />
+          <div className="gsc-body">
+            <div className="gsc-card gsc-winner-card" style={{ textAlign: "center", padding: "36px 20px" }}>
+              <div style={{ fontSize: 40, marginBottom: 10 }}>{"\u{1F3CC}\u{FE0F}"}</div>
+              <div style={{ fontWeight: 700, fontSize: 19, marginBottom: 8 }}>Thanks for the feedback</div>
+              <div style={{ fontSize: 13, color: "#6b6b63", lineHeight: 1.6 }}>
+                This genuinely helps shape what gets built next. See you on the course.
+              </div>
+            </div>
+            <button className="gsc-btn gsc-btn-outline" style={{ width: "100%", marginTop: 4 }} onClick={resetFeedbackForm}>
+              Submit another response
+            </button>
+            <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 10 }} onClick={() => goBack("profileTab")}>
+              Back to Profile
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    const choiceBtn = (selected) => ({
+      display: "block",
+      width: "100%",
+      textAlign: "left",
+      padding: "11px 14px",
+      marginBottom: 8,
+      borderRadius: 10,
+      border: selected ? "2px solid #1B4332" : "1.5px solid #d8d2bd",
+      background: selected ? "#EBF0EC" : "#fff",
+      fontWeight: selected ? 700 : 500,
+      fontSize: 14.5,
+      cursor: "pointer",
+      color: "#2B2B28",
+      fontFamily: "inherit",
+    });
+    const pillBtn = (selected) => ({
+      padding: "9px 14px",
+      borderRadius: 20,
+      border: selected ? "2px solid #1B4332" : "1.5px solid #d8d2bd",
+      background: selected ? "#EBF0EC" : "#fff",
+      fontWeight: selected ? 700 : 500,
+      fontSize: 13.5,
+      cursor: "pointer",
+      color: "#2B2B28",
+      fontFamily: "inherit",
+    });
+    const scaleBtn = (selected) => ({
+      flex: 1,
+      aspectRatio: "1",
+      borderRadius: 10,
+      border: selected ? "2px solid #1B4332" : "1.5px solid #d8d2bd",
+      background: selected ? "#1B4332" : "#fff",
+      color: selected ? "#F3EFE0" : "#2B2B28",
+      fontWeight: 700,
+      fontSize: 16,
+      cursor: "pointer",
+      fontFamily: "inherit",
+    });
+    const npsBtn = (selected) => ({
+      flex: 1,
+      minWidth: 0,
+      height: 36,
+      borderRadius: 8,
+      border: selected ? "2px solid #1B4332" : "1.5px solid #d8d2bd",
+      background: selected ? "#1B4332" : "#fff",
+      color: selected ? "#F3EFE0" : "#2B2B28",
+      fontWeight: 700,
+      fontSize: 12,
+      cursor: "pointer",
+      fontFamily: "inherit",
+      padding: 0,
+    });
+
+    return (
+      <div className="gsc">
+        <style>{STYLE}</style>
+        <Header title="Feedback" sub="Two minutes, ten questions" onBack={() => goBack("profileTab")} />
+        <div className="gsc-body">
+          <div style={{ fontSize: 13, color: "#4b4b45", lineHeight: 1.55, marginBottom: 4 }}>
+            Your answers are emailed straight to the person building this - be honest, it genuinely helps.
+          </div>
+
+          <div className="gsc-label" style={{ marginTop: 18, marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Getting Started</div>
+
+          <div className="gsc-card">
+            <div className="gsc-label" style={{ marginBottom: 8 }}>How did you set up your round?</div>
+            {["Used the Game Wizard", "Picked a game format directly", "Not sure / just followed the prompts"].map((opt) => (
+              <button key={opt} style={choiceBtn(a.setupMethod === opt)} onClick={() => updateFeedback("setupMethod", opt)}>{opt}</button>
+            ))}
+          </div>
+
+          <div className="gsc-card">
+            <div className="gsc-label" style={{ marginBottom: 8 }}>How easy was it to get your round started and playing?</div>
+            <div style={{ display: "flex", gap: 8 }}>
+              {[1, 2, 3, 4, 5].map((n) => (
+                <button key={n} style={scaleBtn(a.setupEase === n)} onClick={() => updateFeedback("setupEase", n)}>{n}</button>
+              ))}
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#6b6b63", marginTop: 6 }}>
+              <span>Confusing</span><span>Effortless</span>
+            </div>
+          </div>
+
+          <div className="gsc-card">
+            <div className="gsc-label" style={{ marginBottom: 8 }}>What almost stopped you from finishing setup, if anything? <span style={{ textTransform: "none", fontWeight: 400 }}>(optional)</span></div>
+            <textarea className="gsc-input" style={{ minHeight: 70 }} value={a.setupFriction} onChange={(e) => updateFeedback("setupFriction", e.target.value)} />
+          </div>
+
+          <div className="gsc-label" style={{ marginTop: 18, marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Core Usage</div>
+
+          <div className="gsc-card">
+            <div className="gsc-label" style={{ marginBottom: 8 }}>Which game format(s) have you played? <span style={{ textTransform: "none", fontWeight: 400 }}>(select all that apply)</span></div>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              {["Swami's Strokes", "Seaside Skins", "Ponto Bango Bongo", "Beacons Best-Ball", "Cardiff Combine", "Seabluffe Swap", "Moonlight Wolf", "A tournament format"].map((opt) => (
+                <button key={opt} style={pillBtn(a.formats.includes(opt))} onClick={() => toggleFeedbackFormat(opt)}>{opt}</button>
+              ))}
+            </div>
+          </div>
+
+          <div className="gsc-card">
+            <div className="gsc-label" style={{ marginBottom: 8 }}>How easy was entering scores while actually playing?</div>
+            <div style={{ display: "flex", gap: 8 }}>
+              {[1, 2, 3, 4, 5].map((n) => (
+                <button key={n} style={scaleBtn(a.scoringEase === n)} onClick={() => updateFeedback("scoringEase", n)}>{n}</button>
+              ))}
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#6b6b63", marginTop: 6 }}>
+              <span>Frustrating</span><span>Effortless</span>
+            </div>
+          </div>
+
+          <div className="gsc-card">
+            <div className="gsc-label" style={{ marginBottom: 8 }}>Did you run into anything confusing, or that didn't work the way you expected? <span style={{ textTransform: "none", fontWeight: 400 }}>(optional)</span></div>
+            <textarea className="gsc-input" style={{ minHeight: 70 }} value={a.confusion} onChange={(e) => updateFeedback("confusion", e.target.value)} />
+          </div>
+
+          <div className="gsc-label" style={{ marginTop: 18, marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Specific Features</div>
+
+          <div className="gsc-card">
+            <div className="gsc-label" style={{ marginBottom: 10 }}>Rate each feature you've used <span style={{ textTransform: "none", fontWeight: 400 }}>(skip any you haven't tried)</span></div>
+            {FEEDBACK_FEATURES.map((feature) => (
+              <div key={feature} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "9px 0", borderBottom: "1px solid #eee6cf", gap: 10 }}>
+                <div style={{ fontSize: 13.5, fontWeight: 500, flex: 1 }}>{feature}</div>
+                <div style={{ display: "flex", gap: 3 }}>
+                  {["\u2014", "1", "2", "3", "4", "5"].map((label, i) => {
+                    const val = i === 0 ? "not used" : i;
+                    const selected = a.features[feature] === val;
+                    return (
+                      <button
+                        key={label}
+                        style={{
+                          width: 30, height: 30, borderRadius: 7,
+                          border: selected ? "2px solid #1B4332" : "1.5px solid #d8d2bd",
+                          background: selected ? "#1B4332" : "#fff",
+                          color: selected ? "#F3EFE0" : "#6b6b63",
+                          fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", padding: 0,
+                        }}
+                        onClick={() => updateFeedbackFeature(feature, val)}
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="gsc-label" style={{ marginTop: 18, marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Reliability</div>
+
+          <div className="gsc-card">
+            <div className="gsc-label" style={{ marginBottom: 8 }}>Did the app ever lose your scores, fail to sync, or otherwise make you nervous about your data?</div>
+            <div style={{ display: "flex", gap: 8 }}>
+              {["Yes", "No"].map((opt) => (
+                <button key={opt} style={{ ...pillBtn(a.dataTrust === opt), flex: "0 0 auto" }} onClick={() => updateFeedback("dataTrust", opt)}>{opt}</button>
+              ))}
+            </div>
+            {a.dataTrust === "Yes" && (
+              <textarea className="gsc-input" style={{ minHeight: 70, marginTop: 12 }} placeholder="Tell us more about what happened..." value={a.dataTrustDetail} onChange={(e) => updateFeedback("dataTrustDetail", e.target.value)} />
+            )}
+          </div>
+
+          <div className="gsc-label" style={{ marginTop: 18, marginBottom: 4, color: "#1B4332", fontSize: 15 }}>The Big Picture</div>
+
+          <div className="gsc-card">
+            <div className="gsc-label" style={{ marginBottom: 8 }}>What's one thing you'd add or change if you could wave a magic wand? <span style={{ textTransform: "none", fontWeight: 400 }}>(optional)</span></div>
+            <textarea className="gsc-input" style={{ minHeight: 70 }} value={a.wishlist} onChange={(e) => updateFeedback("wishlist", e.target.value)} />
+          </div>
+
+          <div className="gsc-card">
+            <div className="gsc-label" style={{ marginBottom: 8 }}>How likely are you to use this again for your next round?</div>
+            <div style={{ display: "flex", gap: 4 }}>
+              {Array.from({ length: 11 }).map((_, n) => (
+                <button key={n} style={npsBtn(a.npsScore === n)} onClick={() => updateFeedback("npsScore", n)}>{n}</button>
+              ))}
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#6b6b63", marginTop: 6 }}>
+              <span>Definitely not</span><span>Absolutely</span>
+            </div>
+          </div>
+
+          {feedbackErr && <div style={{ color: "#C1440E", fontSize: 13, marginBottom: 10 }}>{feedbackErr}</div>}
+          <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", padding: 14, fontSize: 16, marginTop: 4 }} disabled={feedbackBusy} onClick={submitFeedback}>
+            {feedbackBusy ? "Sending..." : "Submit Feedback"}
+          </button>
+          <div style={{ fontSize: 11, color: "#8a8a80", textAlign: "center", marginTop: 8 }}>
+            Your response is sent anonymously - no name or contact info collected.
           </div>
         </div>
       </div>
