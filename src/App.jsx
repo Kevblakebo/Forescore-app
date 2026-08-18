@@ -3064,7 +3064,7 @@ function computeRoundScoring(round) {
             </div>
           </div>
         </div>
-        <RulesModal />
+        {RulesModal()}
         <BottomNav />
       </div>
     );
@@ -3215,7 +3215,7 @@ function computeRoundScoring(round) {
             </div>
           </div>
         )}
-        <RulesModal />
+        {RulesModal()}
         <BottomNav />
       </div>
     );
@@ -3341,7 +3341,7 @@ function computeRoundScoring(round) {
             </div>
           </div>
         )}
-        <RulesModal />
+        {RulesModal()}
         <BottomNav />
       </div>
     );
@@ -3983,7 +3983,7 @@ function computeRoundScoring(round) {
             </div>
           )}
         </div>
-        <RulesModal />
+        {RulesModal()}
       </div>
     );
   }
@@ -4376,7 +4376,7 @@ function computeRoundScoring(round) {
             {busy ? "Saving..." : activeTournament ? "Add my foursome & start playing" : "Create Round & Generate Share Code"}
           </button>
         </div>
-        <RulesModal />
+        {RulesModal()}
       </div>
     );
   }
@@ -4651,7 +4651,7 @@ function computeRoundScoring(round) {
             Next: add foursomes
           </button>
         </div>
-        <RulesModal />
+        {RulesModal()}
       </div>
     );
   }
@@ -4876,8 +4876,8 @@ function computeRoundScoring(round) {
             This moves it to "Finished tournaments" on the Tournaments tab - it won't be deleted, and every foursome's data stays exactly as it is.
           </div>
         </div>
-        <EditFoursomeModal />
-        <RulesModal />
+        {EditFoursomeModal()}
+        {RulesModal()}
       </div>
     );
   }
@@ -5777,8 +5777,8 @@ function computeRoundScoring(round) {
             </div>
           </div>
         )}
-        <RulesModal />
-        <EditFoursomeModal />
+        {RulesModal()}
+        {EditFoursomeModal()}
       </div>
     );
   }
