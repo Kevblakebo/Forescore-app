@@ -780,7 +780,10 @@ const TOURNAMENT_PREFIX = "gsc-tournament:";
 // Tournaments only ever use the dedicated tournament game - a true 4-person
 // best-ball format with no 2-person sub-teams. None of the other games are
 // offered in Tournament creation.
-const TOURNAMENT_GAME_KEYS = Object.keys(GAMES).filter((k) => GAMES[k].tournamentOnly);
+// Explicit order (not auto-derived from GAMES) so display order is
+// deliberate and controllable - remember to add any new tournamentOnly
+// game here too, or it won't show up in the Tournament Game Formats list.
+const TOURNAMENT_GAME_KEYS = ["avoscramble", "tourneybb", "tourneygg"];
 
 function genCode() {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -2971,8 +2974,8 @@ function computeRoundScoring(round) {
 
             <div className="gsc-label" style={{ marginTop: 14, marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Team Game Formats</div>
             <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>2 vs 2</div>
-            {Object.entries(GAMES)
-              .filter(([key]) => key !== "dstreet" && key !== "swami" && key !== "pontobango" && !GAMES[key].tournamentOnly)
+            {["seabluffe", "moonlightwolf", "beachside", "ponto"]
+              .map((key) => [key, GAMES[key]])
               .map(([key, g]) => (
                 <div key={key} className="gsc-card gsc-game-card" style={{ marginBottom: 10 }} onClick={() => startNewRound(key)}>
                   <div className="gsc-game-title">{g.name}</div>
@@ -3149,8 +3152,8 @@ function computeRoundScoring(round) {
 
             <div className="gsc-label" style={{ marginTop: 14, marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Team Game Formats</div>
             <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>2 vs 2</div>
-            {Object.entries(GAMES)
-              .filter(([key]) => key !== "dstreet" && key !== "swami" && key !== "pontobango" && !GAMES[key].tournamentOnly)
+            {["seabluffe", "moonlightwolf", "beachside", "ponto"]
+              .map((key) => [key, GAMES[key]])
               .map(([key, g]) => (
                 <div key={key} className="gsc-card gsc-game-card" style={{ marginBottom: 10 }} onClick={() => startNewRound(key)}>
                   <div className="gsc-game-title">{g.name}</div>
