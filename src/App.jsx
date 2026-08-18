@@ -346,7 +346,7 @@ const GAMES = {
   pontobango: {
     name: "Ponto Bango Bongo",
     tag: "Individual points game - up to 4 players",
-    desc: "A points-based game where every hole is worth three points. The Ponto point goes to the first player on the green. The Bango point goes to the player closest to the hole once on the green. The Bongo point goes to the longest putt. The player with the most Ponto Bango Bongo points wins. Strokes and putts are still tracked.",
+    desc: "A points-based game where every hole is worth three points. The Ponto point goes to the first on the green. The Bango point goes to the closest to the hole once on the green. The Bongo point goes to the longest putt. The player with the most points wins. Strokes and putts are still tracked.",
     rotates: false,
     hasScore: true,
     hasPutts: true,
