@@ -119,6 +119,61 @@ const GAMES = {
       "Great for mixed handicap groups.",
     ],
   },
+  moonlightwolf: {
+    name: "Moonlight Wolf",
+    tag: "Rotating team - 4 players",
+    desc: "A rotating team four-player game where one player acts as the \"Wolf\" on each hole. The Wolf watches the other drives (tees off last), then either chooses a partner or goes it alone (\"Lone Wolf\"), to win points based on a best-ball lowest strokes and putts format.",
+    rotates: true,
+    hasScore: true,
+    hasPutts: true,
+    bestBall: true,
+    tracksWolf: true,
+    defaults: { maxOver: 3, maxPutts: 3, mulliganSegment: 1, prize: "Losers buy winners a drink at the 19th hole" },
+    rules: [
+      {
+        text: "Setting Up the Game",
+        sub: [
+          "The foursome: Moonlight Wolf is designed for four players.",
+          "Play order: players determine the initial tee-off order prior to the first hole. This will be Player 1, 2, 3, 4 in that order. Player 1 is the first hitter on hole 1, then player 2, then player 3, then player 4 - who is the last hitter and is the Wolf on hole one.",
+          "Rotation: this exact rotation order shifts by one player on each subsequent hole. Example: Player 4 on hole one becomes the first hitter on hole two, Player 1 on hole two is the 2nd hitter, Player 2 is the 3rd hitter, and Player 3 is the 4th hitter and becomes the new Wolf. This continues for all 18 holes.",
+        ],
+      },
+      {
+        text: "Playing a Hole",
+        sub: [
+          "The Wolf's position: the Wolf always tees off last on every hole, allowing them to evaluate everyone else's shots.",
+          "Selecting a partner: after each player hits a tee shot, the Wolf can immediately choose that player as a partner for the hole. The choice must be made before the next player hits.",
+          "Going alone: if the Wolf declines all partners after watching every drive, they automatically become a \"Lone Wolf\" playing 1-against-3.",
+        ],
+      },
+      {
+        text: "Scoring System - 2-on-2 (Wolf picked a partner): best-ball for strokes and putts, same as Beacons Best-Ball scoring:",
+        sub: [
+          "Each player plays their own ball and records their own strokes and putts.",
+          "The lower of the Wolf team's two strokes scores counts toward the game.",
+          "The lower of the Wolf team's two putts scores counts toward the game.",
+          "0, 1, or 2 points possible per hole per team: 1 pt per team for best-ball putts, 1 pt per team for best-ball strokes.",
+        ],
+      },
+      {
+        text: "Scoring System - Lone Wolf (1-against-3):",
+        sub: [
+          "If the Lone Wolf wins the best-ball strokes outright (no ties), the Wolf earns 3 points. If the three-player team's best-ball score wins best strokes, each of the 3-person team players gets 1 point. If there is a tie on strokes between the Lone Wolf's score and the 3-person best-ball team score, no one earns a point.",
+          "If the Lone Wolf wins the best-ball putts outright (doesn't tie), the Wolf earns 3 points. If the three-player team wins putts, each of the 3-person team players gets 1 point. If there is a tie between the Lone Wolf's score and the 3-player team's best-ball score on putts, no one earns a point.",
+        ],
+      },
+      "Each hole: one player is the Wolf, who decides whether to choose a partner after seeing the other drives, or go Lone Wolf for bigger stakes.",
+      "Prize: to be agreed on prior to round.",
+      "Strokes max: to be agreed on prior to round.",
+      "Putts max: to be agreed on prior to round.",
+      "Mulligans: to be agreed on prior to round.",
+      "Handicaps: not used in game scoring.",
+      "Play OB shots as a lateral drop (1 out, 1 in).",
+      "Must putt all the way into the hole.",
+      "Flagstick can stay in.",
+      "Putts start once on the putting green.",
+    ],
+  },
   ponto: {
     name: "Cardiff Combine",
     tag: "Fixed teams - 4 players",
@@ -681,6 +736,40 @@ function isPhoneDevice() {
 function mulliganWindow(game) {
   if (game === "seabluffe") return 6; // tied to the 6-hole team rotation - left as-is
   return 18; // one mulligan allowance for the whole round, for every other game
+}
+
+// The Wolf rotates by exactly one position each hole: Player 4 (index 3)
+// is the Wolf on hole 1, Player 3 on hole 2, Player 2 on hole 3, Player 1
+// on hole 4, then the whole 4-hole cycle repeats. This is fully derivable
+// from the hole index alone - no extra state needs to be stored.
+function wolfIndexForHole(h) {
+  return 3 - (h % 4);
+}
+
+// Single source of truth for "who's on which team this hole" - used by
+// both the scoring engine and the card screen's own render. These two
+// used to compute this independently, which is exactly how a game like
+// Moonlight Wolf (dynamic per-hole teams) could work correctly in the
+// engine but still crash on the card screen, which had its own simpler
+// copy that never learned about it.
+function computeTeamsForHole(round, h, hs) {
+  if (round.game === "seabluffe") {
+    return SEABLUFFE_PAIRINGS[Math.floor(h / 6)];
+  }
+  if (round.game === "moonlightwolf") {
+    const wolfIdx = wolfIndexForHole(h);
+    const partner = hs.wolfPartner;
+    if (partner === "lone") {
+      return [[wolfIdx], [0, 1, 2, 3].filter((i) => i !== wolfIdx)];
+    }
+    if (typeof partner === "number") {
+      return [[wolfIdx, partner], [0, 1, 2, 3].filter((i) => i !== wolfIdx && i !== partner)];
+    }
+    // No decision made yet this hole - shape is a placeholder only;
+    // point-awarding is separately gated on a decision existing.
+    return [[wolfIdx], [0, 1, 2, 3].filter((i) => i !== wolfIdx)];
+  }
+  return round.teams;
 }
 const ACTIVE_KEY = "gsc-active-round";
 const LAST_TOURNAMENT_KEY = "gsc-last-tournament";
@@ -1540,7 +1629,7 @@ export default function GolfScorecard() {
       case "roundMode":
         return answers.roundMode === "team" ? "teamType" : "individualScoring";
       case "teamType":
-        return answers.teamType === "rotating" ? "confirmGame" : "teamScoring";
+        return answers.resolvedGameKey ? "confirmGame" : "teamScoring";
       case "teamScoring":
       case "individualScoring":
       case "tournamentScoring":
@@ -2472,14 +2561,7 @@ function computeRoundScoring(round) {
   for (let h = 0; h < 18; h++) {
     const parH = round.par[h] ?? 4;
     const hs = round.scores[h] || {};
-    let teamsThisHole;
-    if (round.game === "seabluffe") {
-      teamsThisHole = SEABLUFFE_PAIRINGS[Math.floor(h / 6)];
-    } else if (round.game === "ponto") {
-      teamsThisHole = round.teams;
-    } else {
-      teamsThisHole = round.teams;
-    }
+    const teamsThisHole = computeTeamsForHole(round, h, hs);
 
     const capStroke = (v) => (v == null || v === "" ? null : Math.min(Number(v), parH + (round.cfg.maxOver ?? 99)));
     const capPutt = (v) => (v == null || v === "" ? null : Math.min(Number(v), round.cfg.maxPutts ?? 99));
@@ -2550,11 +2632,42 @@ function computeRoundScoring(round) {
         const ti = teamsThisHole.findIndex((team) => team.includes(winnerIdx));
         if (ti >= 0) ptsAwarded[ti].score += 1;
       });
+    } else if (g.tracksWolf) {
+      // No points at all until the Wolf has actually made a choice this
+      // hole (partner or Lone Wolf) - awarding points off a placeholder
+      // team shape before a real decision exists would be meaningless.
+      if (hs.wolfPartner != null) {
+        const isLoneWolf = teamsThisHole[0].length === 1;
+        if (isLoneWolf) {
+          // Symmetric on the edges, asymmetric in the middle: a strict win
+          // by either side pays out (3 for the Lone Wolf, 1 each for the
+          // three-player team), but an exact tie is a push - nobody scores
+          // that category.
+          const loneWolfAward = (wolfSum, teamSum) => {
+            if (wolfSum == null || teamSum == null) return [0, 0];
+            if (wolfSum < teamSum) return [3, 0];
+            if (teamSum < wolfSum) return [0, 1];
+            return [0, 0];
+          };
+          const [wolfScorePts, teamScorePts] = loneWolfAward(teamRes[0].scoreSum, teamRes[1].scoreSum);
+          ptsAwarded[0].score = wolfScorePts;
+          ptsAwarded[1].score = teamScorePts;
+          const [wolfPuttPts, teamPuttPts] = loneWolfAward(teamRes[0].puttSum, teamRes[1].puttSum);
+          ptsAwarded[0].putt = wolfPuttPts;
+          ptsAwarded[1].putt = teamPuttPts;
+        } else {
+          // Standard 2v2 best-ball, same mechanic as Beacons Best-Ball.
+          const strokeSums = teamRes.map((t) => t.scoreSum);
+          awardLowest(strokeSums).forEach((v, i) => (ptsAwarded[i].score = v));
+          const puttSums = teamRes.map((t) => t.puttSum);
+          awardLowest(puttSums).forEach((v, i) => (ptsAwarded[i].putt = v));
+        }
+      }
     } else if (g.hasScore && !g.totalScoring) {
       const sums = teamRes.map((t) => t.scoreSum);
       awardLowest(sums).forEach((v, i) => (ptsAwarded[i].score = v));
     }
-    if (!g.tracksPontoBangoBongo && g.hasPutts && !g.totalScoring) {
+    if (!g.tracksPontoBangoBongo && !g.tracksWolf && g.hasPutts && !g.totalScoring) {
       const sums = teamRes.map((t) => t.puttSum);
       awardLowest(sums).forEach((v, i) => (ptsAwarded[i].putt = v));
     }
@@ -3499,6 +3612,9 @@ function computeRoundScoring(round) {
               <OptionButton onClick={() => wizardGoNext("teamType", { teamType: "rotating", resolvedGameKey: "seabluffe", isTournament: false })}>
                 Rotating teams - new partner every 6 holes
               </OptionButton>
+              <OptionButton onClick={() => wizardGoNext("teamType", { teamType: "wolf", resolvedGameKey: "moonlightwolf", isTournament: false })}>
+                Rotating teams - new partner every hole (the Wolf selects their partner, or goes "Lone Wolf")
+              </OptionButton>
               <OptionButton onClick={() => wizardGoNext("teamType", { teamType: "fixed" })}>Same teams the whole round</OptionButton>
             </div>
           )}
@@ -3526,8 +3642,13 @@ function computeRoundScoring(round) {
                 Skins - points awarded each hole for strokes AND putts
               </OptionButton>
               <OptionButton onClick={() => wizardGoNext("individualScoring", { individualScoring: "pontobango", resolvedGameKey: "pontobango", isTournament: false })}>
-                Total Strokes and Putts tracked, but Points awarded for First on, closest to pin, & longest putt
+                Points awarded for First on, closest to pin, & longest putt
               </OptionButton>
+              {Number(wizardAnswers.playerCount) === 4 && (
+                <OptionButton onClick={() => wizardGoNext("individualScoring", { individualScoring: "wolf", resolvedGameKey: "moonlightwolf", isTournament: false })}>
+                  Rotating partner scores for each hole, chosen by that hole's Wolf
+                </OptionButton>
+              )}
             </div>
           )}
 
@@ -4976,9 +5097,8 @@ function computeRoundScoring(round) {
     const g = GAMES[round.game];
     const parH = round.par[holeIdx] ?? 4;
     const hs = round.scores[holeIdx] || {};
-    const seg = Math.floor(holeIdx / 6);
     const mulSeg = Math.floor(holeIdx / mulliganWindow(round.game));
-    const teamsThisHole = round.game === "seabluffe" ? SEABLUFFE_PAIRINGS[seg] : round.teams;
+    const teamsThisHole = computeTeamsForHole(round, holeIdx, hs);
     const hr = computed.holeResults[holeIdx];
     const ranks = playerRank();
     const foursomeTotals = g.singleTeam ? computeTournamentFoursomeTotals(round) : null;
@@ -5207,6 +5327,22 @@ function computeRoundScoring(round) {
                     <span style={{ color: "#B08D57" }}>{LETTERS[i]} - </span>
                     {p.name}
                     {p.hcp && <span className="gsc-hcp">HCP {p.hcp}</span>}
+                    {g.tracksWolf && i === wolfIndexForHole(holeIdx) && (
+                      <span
+                        style={{
+                          marginLeft: 6,
+                          fontSize: 10,
+                          fontWeight: 800,
+                          color: "#fff",
+                          background: "#C1440E",
+                          padding: "2px 7px",
+                          borderRadius: 20,
+                          verticalAlign: "middle",
+                        }}
+                      >
+                        {"\u{1F43A}"} WOLF
+                      </span>
+                    )}
                   </div>
                   <div style={{ display: "flex", gap: 22, marginTop: 8, flexWrap: "wrap" }}>
                     {g.hasScore && (
@@ -5296,6 +5432,66 @@ function computeRoundScoring(round) {
                       </div>
                     </div>
                   ))}
+                </div>
+              );
+            })()}
+
+            {g.tracksWolf && (() => {
+              const wolfIdx = wolfIndexForHole(holeIdx);
+              const wolfPlayer = round.players[wolfIdx];
+              const others = [0, 1, 2, 3].filter((i) => i !== wolfIdx);
+              const current = hs.wolfPartner;
+              return (
+                <div className="gsc-card" style={{ marginTop: 10 }}>
+                  <div className="gsc-label" style={{ marginBottom: 4 }}>
+                    {"\u{1F43A}"} This hole's Wolf: {LETTERS[wolfIdx]} - {wolfPlayer ? wolfPlayer.name : ""}
+                  </div>
+                  <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 10 }}>
+                    Wolf picks a partner after watching the other drives, or goes it alone.
+                  </div>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    {others.map((i) => {
+                      const p = round.players[i];
+                      return (
+                        <button
+                          key={i}
+                          onClick={() => updateHoleWinner("wolfPartner", i)}
+                          style={{
+                            padding: "8px 12px",
+                            borderRadius: 8,
+                            border: current === i ? "2px solid #1B4332" : "1.5px solid #d8d2bd",
+                            background: current === i ? "#EBF0EC" : "#fff",
+                            fontWeight: 700,
+                            fontSize: 13,
+                            cursor: "pointer",
+                          }}
+                        >
+                          {p.avatar && <span style={{ marginRight: 4 }}>{p.avatar}</span>}
+                          {LETTERS[i]} - {p.name}
+                        </button>
+                      );
+                    })}
+                    <button
+                      onClick={() => updateHoleWinner("wolfPartner", "lone")}
+                      style={{
+                        padding: "8px 12px",
+                        borderRadius: 8,
+                        border: current === "lone" ? "2px solid #C1440E" : "1.5px solid #d8d2bd",
+                        background: current === "lone" ? "#FBEFE3" : "#fff",
+                        fontWeight: 700,
+                        fontSize: 13,
+                        cursor: "pointer",
+                        color: current === "lone" ? "#8a4a1f" : undefined,
+                      }}
+                    >
+                      {"\u{1F43A}"} Go Lone Wolf
+                    </button>
+                  </div>
+                  {current == null && (
+                    <div style={{ fontSize: 12, color: "#8a6a2f", marginTop: 10 }}>
+                      No points are awarded for this hole until a partner (or Lone Wolf) is chosen.
+                    </div>
+                  )}
                 </div>
               );
             })()}
