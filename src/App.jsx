@@ -4938,7 +4938,7 @@ function computeRoundScoring(round) {
                   {winners.length > 1 ? "Winners" : "Winner"}
                 </div>
                 <div style={{ fontSize: 19, fontWeight: 700 }}>
-                  {winners.map((w) => `${w.avatar ? w.avatar + " " : ""}${LETTERS[w.idx]} - ${w.name}`).join(" & ")}
+                  {winners.map((w) => `${w.avatar ? w.avatar + " " : ""}${w.name}`).join(" & ")}
                 </div>
                 <div style={{ fontSize: 13, color: "#6b6b63", marginTop: 4 }}>
                   {g.totalScoring
@@ -4968,7 +4968,7 @@ function computeRoundScoring(round) {
                     <div style={{ fontWeight: 700 }}>
                       {isWinner && <span style={{ marginRight: 6 }}>&#127942;</span>}
                       {p.avatar && <span style={{ marginRight: 4 }}>{p.avatar}</span>}
-                      {LETTERS[p.idx]} - {p.name}
+                      {p.name}
                     </div>
                     <div className="gsc-mono" style={{ fontWeight: 700 }}>
                       {g.totalScoring ? (
@@ -5221,7 +5221,7 @@ function computeRoundScoring(round) {
                 <div className="gsc-par-badge">Par {parH} - max {parH + round.cfg.maxOver}</div>
                 {round.game === "seabluffe" && (
                   <div style={{ fontSize: 12, color: "#B08D57", fontWeight: 700, marginTop: 4 }}>
-                    {LETTERS[teamsThisHole[0][0]]}+{LETTERS[teamsThisHole[0][1]]} vs {LETTERS[teamsThisHole[1][0]]}+{LETTERS[teamsThisHole[1][1]]}
+                    {round.players[teamsThisHole[0][0]].name}+{round.players[teamsThisHole[0][1]].name} vs {round.players[teamsThisHole[1][0]].name}+{round.players[teamsThisHole[1][1]].name}
                   </div>
                 )}
               </div>
@@ -5283,7 +5283,7 @@ function computeRoundScoring(round) {
                               }}
                             >
                               {p.avatar && <span style={{ marginRight: 4 }}>{p.avatar}</span>}
-                              {LETTERS[i]} - {p.name}
+                              {p.name}
                             </button>
                           ))}
                         </div>
@@ -5307,7 +5307,7 @@ function computeRoundScoring(round) {
                                   color: met ? "#1B4332" : "#8a6a2f",
                                 }}
                               >
-                                {LETTERS[i]}: {count}/{minDrives} {met && "\u2713"}
+                                {p.name}: {count}/{minDrives} {met && "\u2713"}
                               </div>
                             );
                           })}
@@ -5327,7 +5327,6 @@ function computeRoundScoring(round) {
                 <div key={i} className={`gsc-player-row ${cls}`}>
                   <div className="gsc-player-name">
                     {p.avatar && <span style={{ marginRight: 4 }}>{p.avatar}</span>}
-                    <span style={{ color: "#B08D57" }}>{LETTERS[i]} - </span>
                     {p.name}
                     {p.hcp && <span className="gsc-hcp">HCP {p.hcp}</span>}
                     {g.tracksWolf && i === wolfIndexForHole(holeIdx) && (
@@ -5429,7 +5428,7 @@ function computeRoundScoring(round) {
                             }}
                           >
                             {p.avatar && <span style={{ marginRight: 4 }}>{p.avatar}</span>}
-                            {LETTERS[i]} - {p.name}
+                            {p.name}
                           </button>
                         ))}
                       </div>
@@ -5447,7 +5446,7 @@ function computeRoundScoring(round) {
               return (
                 <div className="gsc-card" style={{ marginTop: 10 }}>
                   <div className="gsc-label" style={{ marginBottom: 4 }}>
-                    {"\u{1F43A}"} This hole's Wolf: {LETTERS[wolfIdx]} - {wolfPlayer ? wolfPlayer.name : ""}
+                    {"\u{1F43A}"} This hole's Wolf: {wolfPlayer ? wolfPlayer.name : ""}
                   </div>
                   <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 10 }}>
                     Wolf picks a partner after watching the other drives, or goes it alone.
@@ -5470,7 +5469,7 @@ function computeRoundScoring(round) {
                           }}
                         >
                           {p.avatar && <span style={{ marginRight: 4 }}>{p.avatar}</span>}
-                          {LETTERS[i]} - {p.name}
+                          {p.name}
                         </button>
                       );
                     })}
@@ -5501,7 +5500,7 @@ function computeRoundScoring(round) {
 
             <div style={{ marginTop: 6 }}>
               {teamsThisHole.map((team, ti) => {
-                const label = g.singleTeam ? "Foursome" : team.map((p) => LETTERS[p]).join("+");
+                const label = g.singleTeam ? "Foursome" : team.map((p) => round.players[p].name).join("+");
                 const r = hr.teamRes[ti];
                 const pts = hr.ptsAwarded[ti];
                 return (
@@ -5597,7 +5596,7 @@ function computeRoundScoring(round) {
               <div key={p.idx} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", borderBottom: "1px solid #eee6cf", fontSize: 13 }}>
                 <div style={{ fontWeight: 700 }}>
                   {p.avatar && <span style={{ marginRight: 4 }}>{p.avatar}</span>}
-                  {LETTERS[p.idx]} - {p.name}
+                  {p.name}
                   {g.totalScoring && holeIdx === 17 && hr.complete && idx === 0 && <span className="gsc-chip gsc-lead">WINNER</span>}
                   {!g.singleTeam && !g.totalScoring && holeIdx === 17 && hr.complete && idx < Math.floor(ranks.length / 2) && <span className="gsc-chip gsc-lead">WIN</span>}
                   {!g.singleTeam && !g.totalScoring && holeIdx === 17 && hr.complete && idx >= Math.ceil(ranks.length / 2) && <span className="gsc-chip gsc-loss">LOSS</span>}
@@ -5635,7 +5634,7 @@ function computeRoundScoring(round) {
                     <th>Par</th>
                     {round.players.map((p, i) => (
                       <th key={i} style={{ minWidth: 56 }}>
-                        {p.avatar ? <span style={{ fontSize: 14 }}>{p.avatar}</span> : LETTERS[i]}
+                        {p.avatar && <span style={{ fontSize: 14 }}>{p.avatar}</span>}
                         <div style={{ fontSize: 9, fontWeight: 700, textTransform: "none", opacity: 0.9, marginTop: 1, whiteSpace: "normal", lineHeight: 1.2 }}>
                           {(p.name || "").trim()}
                         </div>
