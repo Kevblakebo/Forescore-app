@@ -343,6 +343,38 @@ const GAMES = {
       "Great for similar handicap foursomes.",
     ],
   },
+  pontobango: {
+    name: "Ponto Bango Bongo",
+    tag: "Individual points game - up to 4 players",
+    desc: "A points-based game where every hole is worth three points. The Ponto point goes to the first player on the green (proper etiquette applies - furthest from the hole plays first). The Bango point goes to the player closest to the hole once on the green. The Bongo point goes to the longest putt. The player with the most Ponto Bango Bongo points wins.",
+    rotates: false,
+    hasScore: true,
+    hasPutts: true,
+    tracksPontoBangoBongo: true,
+    defaults: { maxOver: 3, maxPutts: 3, mulliganSegment: 1, prize: "Losers buy winners a drink at the 19th hole" },
+    rules: [
+      "Individual strokes and putting game for up to 4 players.",
+      "Total strokes and putts are still kept track of (similar to Swami's Strokes).",
+      {
+        text: "There are however 3 points awarded per hole:",
+        sub: [
+          "The Ponto point goes to the player who is the first player on the green, regardless of the number of shots it took to get there.",
+          "The Bango point goes to the player who is the closest to the hole once all players in the group are on the green.",
+          "The Bongo point goes to the first player to hole out (longest putt).",
+        ],
+      },
+      "The player with the most Ponto Bango Bongo points at the end of the round takes the pot.",
+      "Prize: to be agreed on prior to round.",
+      "Strokes max: to be agreed on prior to round.",
+      "Putts max: to be agreed on prior to round.",
+      "Mulligans: to be agreed on prior to round.",
+      "Play OB shots as a lateral drop (1 out, 1 in) (to be agreed on).",
+      "Must putt all the way into the hole.",
+      "Flagstick can stay in.",
+      "Putts start once on the putting green.",
+      "Handicaps not used in game scoring, but are visible.",
+    ],
+  },
 };
 
 // Reference-only library of other popular golf games/formats - informational,
@@ -2285,6 +2317,21 @@ export default function GolfScorecard() {
     });
   }
 
+  // Generic version of the same pattern, used for Ponto/Bango/Bongo -
+  // three independent hole-level "who achieved this" selections rather
+  // than just one.
+  function updateHoleWinner(field, playerIdx) {
+    lastLocalEditRef.current = Date.now();
+    setRound((r) => {
+      const next = { ...r, scores: { ...r.scores } };
+      const holeScores = { ...(next.scores[holeIdx] || {}) };
+      holeScores[field] = holeScores[field] === playerIdx ? null : playerIdx;
+      next.scores[holeIdx] = holeScores;
+      saveRound(next);
+      return next;
+    });
+  }
+
   const [syncStatus, setSyncStatus] = useState(""); // "", "syncing", "synced", "error"
 
   // Pulls the latest saved version of the round from shared storage and
@@ -2491,11 +2538,21 @@ function computeRoundScoring(round) {
     }
 
     let ptsAwarded = teamsThisHole.map(() => ({ score: 0, putt: 0 }));
-    if (g.hasScore && !g.totalScoring) {
+    if (g.tracksPontoBangoBongo) {
+      // Ponto/Bango/Bongo points are manually observed during play (who
+      // got on the green first, etc.) rather than derived from strokes or
+      // putts, so they can't use the awardLowest() comparison above - each
+      // is a direct hole-level selection of a single winning player.
+      [hs.pontoBy, hs.bangoBy, hs.bongoBy].forEach((winnerIdx) => {
+        if (winnerIdx == null) return;
+        const ti = teamsThisHole.findIndex((team) => team.includes(winnerIdx));
+        if (ti >= 0) ptsAwarded[ti].score += 1;
+      });
+    } else if (g.hasScore && !g.totalScoring) {
       const sums = teamRes.map((t) => t.scoreSum);
       awardLowest(sums).forEach((v, i) => (ptsAwarded[i].score = v));
     }
-    if (g.hasPutts && !g.totalScoring) {
+    if (!g.tracksPontoBangoBongo && g.hasPutts && !g.totalScoring) {
       const sums = teamRes.map((t) => t.puttSum);
       awardLowest(sums).forEach((v, i) => (ptsAwarded[i].putt = v));
     }
@@ -2777,7 +2834,7 @@ function computeRoundScoring(round) {
 
             <div className="gsc-label" style={{ marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Individual Game Formats</div>
             <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>Up to 4 Players</div>
-            {["dstreet", "swami"]
+            {["dstreet", "swami", "pontobango"]
               .map((key) => [key, GAMES[key]])
               .map(([key, g]) => (
                 <div key={key} className="gsc-card gsc-game-card" style={{ marginBottom: 10 }} onClick={() => startNewRound(key)}>
@@ -2955,7 +3012,7 @@ function computeRoundScoring(round) {
 
             <div className="gsc-label" style={{ marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Individual Game Formats</div>
             <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>Up to 4 Players</div>
-            {["dstreet", "swami"]
+            {["dstreet", "swami", "pontobango"]
               .map((key) => [key, GAMES[key]])
               .map(([key, g]) => (
                 <div key={key} className="gsc-card gsc-game-card" style={{ marginBottom: 10 }} onClick={() => startNewRound(key)}>
@@ -3459,12 +3516,15 @@ function computeRoundScoring(round) {
           {wizardStepId === "individualScoring" && (
             <div className="gsc-card">
               <div className="gsc-label" style={{ marginBottom: 10, fontSize: 16 }}>How do you want to decide the winner?</div>
-              <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 12 }}>Both formats keep track of everyone's strokes and putts - this is just about how a winner gets picked.</div>
+              <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 12 }}>All formats keep track of everyone's strokes and putts - this is just about how a winner gets picked.</div>
               <OptionButton onClick={() => wizardGoNext("individualScoring", { individualScoring: "totalscore", resolvedGameKey: "swami", isTournament: false })}>
                 Total Score - lowest score wins, putts settle a tie
               </OptionButton>
               <OptionButton onClick={() => wizardGoNext("individualScoring", { individualScoring: "skins", resolvedGameKey: "dstreet", isTournament: false })}>
                 Skins - points awarded each hole for strokes AND putts
+              </OptionButton>
+              <OptionButton onClick={() => wizardGoNext("individualScoring", { individualScoring: "pontobango", resolvedGameKey: "pontobango", isTournament: false })}>
+                Total Strokes and Putts tracked, but Points awarded for First on, closest to pin, & longest putt
               </OptionButton>
             </div>
           )}
@@ -5199,6 +5259,44 @@ function computeRoundScoring(round) {
               );
             })
             )}
+
+            {g.tracksPontoBangoBongo && (() => {
+              const selectors = [
+                { field: "pontoBy", label: "PONTO - first player on the green" },
+                { field: "bangoBy", label: "BANGO - closest to the pin once everyone's on" },
+                { field: "bongoBy", label: "BONGO - first player to hole out" },
+              ];
+              return (
+                <div className="gsc-card" style={{ marginTop: 10 }}>
+                  <div className="gsc-label" style={{ marginBottom: 10 }}>Ponto Bango Bongo - who won this hole?</div>
+                  {selectors.map(({ field, label }) => (
+                    <div key={field} style={{ marginBottom: 14 }}>
+                      <div style={{ fontSize: 11, color: "#6b6b63", marginBottom: 6 }}>{label}</div>
+                      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                        {round.players.map((p, i) => (
+                          <button
+                            key={i}
+                            onClick={() => updateHoleWinner(field, i)}
+                            style={{
+                              padding: "8px 12px",
+                              borderRadius: 8,
+                              border: hs[field] === i ? "2px solid #1B4332" : "1.5px solid #d8d2bd",
+                              background: hs[field] === i ? "#EBF0EC" : "#fff",
+                              fontWeight: 700,
+                              fontSize: 13,
+                              cursor: "pointer",
+                            }}
+                          >
+                            {p.avatar && <span style={{ marginRight: 4 }}>{p.avatar}</span>}
+                            {LETTERS[i]} - {p.name}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
 
             <div style={{ marginTop: 6 }}>
               {teamsThisHole.map((team, ti) => {
