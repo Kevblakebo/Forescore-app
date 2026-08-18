@@ -4782,7 +4782,7 @@ function computeRoundScoring(round) {
         >
           <div>
             <div style={{ fontWeight: 700, fontSize: 14 }}>
-              {idx + 1}. {row.name} {round && row.id === round.id && <span className="gsc-chip gsc-lead">YOU</span>}
+              {row.name} {round && row.id === round.id && <span className="gsc-chip gsc-lead">YOU</span>}
             </div>
             <div style={{ fontSize: 12, color: "#6b6b63" }}>{row.error ? `Couldn't load (${row.error})` : `Thru ${row[holesKey]} holes`}</div>
             {!row.error && (
