@@ -364,6 +364,7 @@ const GAMES = {
         ],
       },
       "The player with the most Ponto Bango Bongo points at the end of the round takes the pot.",
+      "Proper etiquette must be followed with furthest player from pin shooting first from tee to hole.",
       "Prize: to be agreed on prior to round.",
       "Strokes max: to be agreed on prior to round.",
       "Putts max: to be agreed on prior to round.",
