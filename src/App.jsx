@@ -2858,7 +2858,7 @@ function computeRoundScoring(round) {
             <div className="gsc-label" style={{ marginTop: 14, marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Team Game Formats</div>
             <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>2 vs 2</div>
             {Object.entries(GAMES)
-              .filter(([key]) => key !== "dstreet" && key !== "swami" && !GAMES[key].tournamentOnly)
+              .filter(([key]) => key !== "dstreet" && key !== "swami" && key !== "pontobango" && !GAMES[key].tournamentOnly)
               .map(([key, g]) => (
                 <div key={key} className="gsc-card gsc-game-card" style={{ marginBottom: 10 }} onClick={() => startNewRound(key)}>
                   <div className="gsc-game-title">{g.name}</div>
@@ -3036,7 +3036,7 @@ function computeRoundScoring(round) {
             <div className="gsc-label" style={{ marginTop: 14, marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Team Game Formats</div>
             <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>2 vs 2</div>
             {Object.entries(GAMES)
-              .filter(([key]) => key !== "dstreet" && key !== "swami" && !GAMES[key].tournamentOnly)
+              .filter(([key]) => key !== "dstreet" && key !== "swami" && key !== "pontobango" && !GAMES[key].tournamentOnly)
               .map(([key, g]) => (
                 <div key={key} className="gsc-card gsc-game-card" style={{ marginBottom: 10 }} onClick={() => startNewRound(key)}>
                   <div className="gsc-game-title">{g.name}</div>
