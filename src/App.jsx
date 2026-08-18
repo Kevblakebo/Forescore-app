@@ -1903,7 +1903,11 @@ export default function GolfScorecard() {
     setActiveRound(newRound);
     setRound(newRound);
     setHoleIdx(0);
-    goToScreen("card");
+    if (isTournament) {
+      openTournamentBoard(activeTournament.id);
+    } else {
+      goToScreen("card");
+    }
   }
 
   function startTournamentCreateFlow(preselectedGameKey) {
