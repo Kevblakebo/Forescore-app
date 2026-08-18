@@ -1601,7 +1601,7 @@ export default function GolfScorecard() {
       } else {
         setGameKey(key);
         setCfg({ ...GAMES[key].defaults });
-        const count = key === "swami" || key === "dstreet" ? Math.max(1, Math.min(4, Number(nextAnswers.playerCount) || 4)) : 4;
+        const count = key === "swami" || key === "dstreet" || key === "pontobango" ? Math.max(1, Math.min(4, Number(nextAnswers.playerCount) || 4)) : 4;
         setPlayers((p) => {
           const base = [...p];
           while (base.length < count) base.push({ name: "", hcp: "", avatar: "" });
@@ -1734,10 +1734,11 @@ export default function GolfScorecard() {
   async function finishSetup() {
     setErr("");
     const cleanPlayers = players.map((p) => ({ name: p.name.trim() || "Player", hcp: p.hcp, avatar: p.avatar || "" }));
-    const isIndividual = gameKey === "dstreet" || gameKey === "swami";
+    const isIndividual = gameKey === "dstreet" || gameKey === "swami" || gameKey === "pontobango";
     if (isIndividual) {
-      if (cleanPlayers.length < 1) {
-        setErr("Need at least 1 player.");
+      const minPlayers = gameKey === "pontobango" ? 2 : 1;
+      if (cleanPlayers.length < minPlayers) {
+        setErr(gameKey === "pontobango" ? "Need at least 2 players." : "Need at least 1 player.");
         return;
       }
     } else if (cleanPlayers.length < 4) {
@@ -4129,9 +4130,9 @@ function computeRoundScoring(round) {
 
           <div className="gsc-card">
             <div className="gsc-label" style={{ marginBottom: 10 }}>Players</div>
-            {(gameKey === "swami" || gameKey === "dstreet") && (
+            {(gameKey === "swami" || gameKey === "dstreet" || gameKey === "pontobango") && (
               <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 10 }}>
-                This format supports 1-4 players - add or remove players below to match who's actually playing.
+                This format supports {gameKey === "pontobango" ? "2-4" : "1-4"} players - add or remove players below to match who's actually playing.
               </div>
             )}
             <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 10 }}>
@@ -4168,7 +4169,7 @@ function computeRoundScoring(round) {
                   </button>
                   <input className="gsc-input" placeholder={`Player ${LETTERS[i]} name`} value={p.name} onChange={(e) => updatePlayer(i, "name", e.target.value)} />
                   <input className="gsc-input" style={{ flex: "0 0 70px" }} placeholder="HCP" value={p.hcp} onChange={(e) => updatePlayer(i, "hcp", e.target.value)} />
-                  {(gameKey === "swami" || gameKey === "dstreet") && players.length > 1 && (
+                  {(gameKey === "swami" || gameKey === "dstreet" || gameKey === "pontobango") && players.length > (gameKey === "pontobango" ? 2 : 1) && (
                     <button
                       className="gsc-btn gsc-btn-outline"
                       style={{ flex: "0 0 auto", color: "#C1440E", borderColor: "#C1440E", padding: "9px 12px" }}
@@ -4207,7 +4208,7 @@ function computeRoundScoring(round) {
                 )}
               </div>
             ))}
-            {(gameKey === "swami" || gameKey === "dstreet") && players.length < 4 && (
+            {(gameKey === "swami" || gameKey === "dstreet" || gameKey === "pontobango") && players.length < 4 && (
               <button className="gsc-btn gsc-btn-outline" style={{ width: "100%", marginTop: 4 }} onClick={addPlayerSlot}>
                 + Add another player
               </button>
