@@ -4943,7 +4943,7 @@ function computeRoundScoring(round) {
                 <div style={{ fontSize: 13, color: "#6b6b63", marginTop: 4 }}>
                   {g.totalScoring
                     ? `${winners[0].score} strokes (${winners[0].putts} putts)`
-                    : `${winners[0].points} pts (${winners[0].score}str/${winners[0].putts}put/${formatRelPar(winners[0].relPar)})`}
+                    : `${winners[0].points} pts (${winners[0].score}str/${winners[0].putts}putt/${formatRelPar(winners[0].relPar)})`}
                 </div>
               </div>
             )
@@ -4975,7 +4975,7 @@ function computeRoundScoring(round) {
                         <span style={{ fontSize: 17 }}>{p.score}str/{p.putts}put</span>
                       ) : (
                         <>
-                          {p.points} pts <span style={{ fontWeight: 700, color: "#6b6b63" }}>({p.score}str/{p.putts}put/{formatRelPar(p.relPar)})</span>
+                          {p.points} pts <span style={{ fontWeight: 700, color: "#6b6b63" }}>({p.score}str/{p.putts}putt/{formatRelPar(p.relPar)})</span>
                         </>
                       )}
                     </div>
@@ -5605,9 +5605,9 @@ function computeRoundScoring(round) {
                 <div className="gsc-mono" style={{ fontWeight: 700 }}>
                   {!g.singleTeam && !g.totalScoring && <>{p.points} pts </>}
                   {g.totalScoring ? (
-                    <span style={{ fontWeight: 700, fontSize: 17, whiteSpace: "nowrap" }}>{p.score}str/{p.putts}put/{formatRelPar(p.relPar)}</span>
+                    <span style={{ fontWeight: 700, fontSize: 17, whiteSpace: "nowrap" }}>{p.score}str/{p.putts}putt/{formatRelPar(p.relPar)}</span>
                   ) : (
-                    <span style={{ fontWeight: 700, color: "#6b6b63", whiteSpace: "nowrap" }}>({p.score}str/{p.putts}put/{formatRelPar(p.relPar)})</span>
+                    <span style={{ fontWeight: 700, color: "#6b6b63", whiteSpace: "nowrap" }}>({p.score}str/{p.putts}putt/{formatRelPar(p.relPar)})</span>
                   )}
                 </div>
               </div>
