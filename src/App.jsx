@@ -3906,8 +3906,8 @@ function computeRoundScoring(round) {
           {wizardStepId === "roundMode" && (
             <div className="gsc-card">
               <div className="gsc-label" style={{ marginBottom: 10, fontSize: 16 }}>How do you want to play?</div>
-              <OptionButton onClick={() => wizardGoNext("roundMode", { roundMode: "team" })}>2 vs 2 Teams</OptionButton>
-              <OptionButton onClick={() => wizardGoNext("roundMode", { roundMode: "individual" })}>Individually - every player for themselves</OptionButton>
+              <OptionButton onClick={() => wizardGoNext("roundMode", { roundMode: "team", resolvedGameKey: null })}>2 vs 2 Teams</OptionButton>
+              <OptionButton onClick={() => wizardGoNext("roundMode", { roundMode: "individual", resolvedGameKey: null })}>Individually - every player for themselves</OptionButton>
             </div>
           )}
 
@@ -3920,7 +3920,7 @@ function computeRoundScoring(round) {
               <OptionButton onClick={() => wizardGoNext("teamType", { teamType: "wolf", resolvedGameKey: "moonlightwolf", isTournament: false })}>
                 Rotating teams - new partner every hole (the Wolf selects their partner, or goes "Lone Wolf")
               </OptionButton>
-              <OptionButton onClick={() => wizardGoNext("teamType", { teamType: "fixed" })}>Same teams the whole round</OptionButton>
+              <OptionButton onClick={() => wizardGoNext("teamType", { teamType: "fixed", resolvedGameKey: null })}>Same teams the whole round</OptionButton>
             </div>
           )}
 
