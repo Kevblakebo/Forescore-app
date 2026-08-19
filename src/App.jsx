@@ -1914,7 +1914,7 @@ export default function GolfScorecard() {
 
   async function finishSetup() {
     setErr("");
-    const cleanPlayers = players.map((p) => ({ name: p.name.trim() || "Player", hcp: p.hcp, avatar: p.avatar || "" }));
+    const cleanPlayers = players.map((p, i) => ({ name: p.name.trim() || `Player ${LETTERS[i]}`, hcp: p.hcp, avatar: p.avatar || "" }));
     const isIndividual = gameKey === "dstreet" || gameKey === "swami" || gameKey === "pontobango";
     if (isIndividual) {
       const minPlayers = gameKey === "pontobango" ? 2 : 1;
@@ -2102,7 +2102,7 @@ export default function GolfScorecard() {
     for (const draft of tournamentFoursomesDraft) {
       const foursomeCode = genCode();
       const foursomeName = draft.name.trim() || "Foursome";
-      const cleanPlayers = draft.players.map((p) => ({ name: p.name.trim() || "Player", hcp: p.hcp, avatar: p.avatar || "" }));
+      const cleanPlayers = draft.players.map((p, i) => ({ name: p.name.trim() || `Player ${LETTERS[i]}`, hcp: p.hcp, avatar: p.avatar || "" }));
       const foursomeRound = {
         id: foursomeCode,
         game: tournamentGameKey,
@@ -2269,7 +2269,7 @@ export default function GolfScorecard() {
       return;
     }
     const cleanName = editFoursomeName.trim() || "Foursome";
-    r.players = editFoursomePlayers.map((p) => ({ name: p.name.trim() || "Player", hcp: p.hcp }));
+    r.players = editFoursomePlayers.map((p, i) => ({ name: p.name.trim() || `Player ${LETTERS[i]}`, hcp: p.hcp }));
     if (r.tournamentId) {
       r.foursomeName = cleanName;
       r.name = cleanName + (activeTournament ? ` - ${activeTournament.name}` : "");
@@ -2429,7 +2429,7 @@ export default function GolfScorecard() {
       const playersToCheck = isOneTeamScore ? (r.players || []).slice(0, 1) : r.players || [];
       playersToCheck.forEach((p, i) => {
         const entry = holeScores[i] || {};
-        const playerName = isOneTeamScore ? "Team" : p.name || "Player";
+        const playerName = isOneTeamScore ? "Team" : p.name || `Player ${LETTERS[i]}`;
         if (entry.strokes != null && entry.strokes !== "") {
           const acc = getAccolade("strokes", Number(entry.strokes), prevParH);
           if (acc) newAccolades.push({ ...acc, player: playerName, key: `${Date.now()}-${i}-s` });
