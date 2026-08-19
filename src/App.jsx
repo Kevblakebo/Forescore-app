@@ -2930,7 +2930,7 @@ function computeRoundScoring(round) {
         <style>{STYLE}</style>
         <Header
           title={<><span style={{ fontSize: 23 }}>Foresa Golf</span><div style={{ fontSize: 11, fontWeight: 400, opacity: 0.75, letterSpacing: "0.5px", textTransform: "uppercase", marginTop: 2, fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>Golf Games & Scoring Made Easy</div></>}
-          sub="Share games and scores on the course"
+          sub=""
         />
         <div className="gsc-body gsc-body-tabbed">
           <div style={{ fontSize: 13, color: "#4b4b45", lineHeight: 1.55, margin: "0 0 16px" }}>
@@ -3146,7 +3146,7 @@ function computeRoundScoring(round) {
     return (
       <div className="gsc">
         <style>{STYLE}</style>
-        <Header title={<span style={{ fontSize: 23 }}>Rounds</span>} sub={<>Join, create, or revisit<br />Up to 4 Players</>} />
+        <Header title={<span style={{ fontSize: 23 }}>Rounds</span>} sub="Join, create, or revisit" />
         <div className="gsc-body gsc-body-tabbed">
           {activeRound && !activeRound.tournamentId && (
             <div className="gsc-card" style={{ border: "2px solid #B08D57" }}>
@@ -3297,7 +3297,7 @@ function computeRoundScoring(round) {
     return (
       <div className="gsc">
         <style>{STYLE}</style>
-        <Header title={<span style={{ fontSize: 23 }}>Tournaments</span>} sub={<>Join, create, or revisit<br />Multiple Foursomes</>} />
+        <Header title={<span style={{ fontSize: 23 }}>Tournaments</span>} sub="Join, create, or revisit" />
         <div className="gsc-body gsc-body-tabbed">
           {lastTournament && (
             <div className="gsc-card" style={{ border: "2px solid #B08D57" }}>
@@ -3423,7 +3423,7 @@ function computeRoundScoring(round) {
     return (
       <div className="gsc">
         <style>{STYLE}</style>
-        <Header title={<span style={{ fontSize: 23 }}>Profile</span>} sub={<>Your account & stats<br />Leaderboard & rankings</>} />
+        <Header title={<span style={{ fontSize: 23 }}>Profile</span>} sub="Your account & stats" />
         <div className="gsc-body gsc-body-tabbed">
           <div className="gsc-card" style={{ textAlign: "center", padding: "32px 20px" }}>
             <Lock size={28} color="#8FA998" style={{ marginBottom: 10 }} />
@@ -3452,7 +3452,7 @@ function computeRoundScoring(round) {
     return (
       <div className="gsc">
         <style>{STYLE}</style>
-        <Header title={<span style={{ fontSize: 23 }}>Library</span>} sub={<>Games & about this app<br />Terms and privacy policy</>} />
+        <Header title={<span style={{ fontSize: 23 }}>Library</span>} sub="Games & about this app" />
         <div className="gsc-body gsc-body-tabbed">
           <div className="gsc-card" style={{ cursor: "pointer" }} onClick={() => goToScreen("library")}>
             <div className="gsc-label" style={{ marginBottom: 6 }}>Golf Games Library</div>
