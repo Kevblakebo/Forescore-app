@@ -2968,7 +2968,7 @@ function computeRoundScoring(round) {
         />
         <div className="gsc-body gsc-body-tabbed">
           <div style={{ fontSize: 13, color: "#4b4b45", lineHeight: 1.55, margin: "0 0 16px" }}>
-            No more redoing the math or arguing about the rules. Foresa makes it easy and fun to track various golf game formats, save and share your scores live on the course, and settle who's buying at the 19th hole!
+            We all love playing games on the course, but who wants to keep track of all the scores and rules? Foresa makes it easy to play various golf game formats, share scores live on the course, and settle who's buying at the 19th hole!
             <br />
             <br />
             To start a new round or tournament:
