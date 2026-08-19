@@ -401,7 +401,7 @@ const GAMES = {
   pontobango: {
     name: "Bingo Bango Bongo",
     tag: "Individual points game - up to 4 players",
-    desc: "Each hole is worth three points. The Ponto point goes to the first player on the green. The Bango point goes to the player closest to the pin once on the green. The Bongo point goes to the longest putt. The player with the most points wins. Strokes and putts still tracked.",
+    desc: "Each hole is worth three points. The Bingo point goes to the first player on the green. The Bango point goes to the player closest to the pin once on the green. The Bongo point goes to the longest putt. The player with the most points wins. Strokes and putts still tracked.",
     rotates: false,
     hasScore: true,
     hasPutts: true,
@@ -413,7 +413,7 @@ const GAMES = {
       {
         text: "There are however 3 points awarded per hole:",
         sub: [
-          "The Ponto point goes to the player who is the first player on the green, regardless of the number of shots it took to get there.",
+          "The Bingo point goes to the player who is the first player on the green, regardless of the number of shots it took to get there.",
           "The Bango point goes to the player who is the closest to the hole once all players in the group are on the green.",
           "The Bongo point goes to the first player to hole out (longest putt).",
         ],
@@ -2517,7 +2517,7 @@ export default function GolfScorecard() {
     });
   }
 
-  // Generic version of the same pattern, used for Ponto/Bango/Bongo -
+  // Generic version of the same pattern, used for Bingo/Bango/Bongo -
   // three independent hole-level "who achieved this" selections rather
   // than just one.
   function updateHoleWinner(field, playerIdx) {
@@ -2732,7 +2732,7 @@ function computeRoundScoring(round) {
 
     let ptsAwarded = teamsThisHole.map(() => ({ score: 0, putt: 0 }));
     if (g.tracksPontoBangoBongo) {
-      // Ponto/Bango/Bongo points are manually observed during play (who
+      // Bingo/Bango/Bongo points are manually observed during play (who
       // got on the green first, etc.) rather than derived from strokes or
       // putts, so they can't use the awardLowest() comparison above - each
       // is a direct hole-level selection of a single winning player.
@@ -5750,7 +5750,7 @@ function computeRoundScoring(round) {
 
             {g.tracksPontoBangoBongo && (() => {
               const selectors = [
-                { field: "pontoBy", label: "PONTO - first player on the green" },
+                { field: "pontoBy", label: "BINGO - first player on the green" },
                 { field: "bangoBy", label: "BANGO - closest to the pin once everyone's on" },
                 { field: "bongoBy", label: "BONGO - first player to hole out" },
               ];
