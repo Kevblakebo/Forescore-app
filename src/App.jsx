@@ -205,7 +205,7 @@ const GAMES = {
   beachside: {
     name: "Best Ball",
     tag: "Best-ball teams - 4 players",
-    desc: "Two 2-person teams, best-ball scoring - the lower of the team's two strokes AND the lower of the team's two putts count each hole. Same structure as Team Skins, but best-ball instead of combined. Great for similar handicap pairs.",
+    desc: "Two 2-person teams, best-ball scoring - the lower of the team's two strokes AND the lower of the team's two putts count each hole. Same structure as Team Skins, but best-ball instead of combined. Great for mixed handicap pairs.",
     rotates: false,
     hasScore: true,
     hasPutts: true,
@@ -370,7 +370,7 @@ const GAMES = {
   dstreet: {
     name: "Individual Skins",
     tag: "Individual skins - up to 4 players",
-    desc: "Individual strokes and putting skins game for up to 4 players. Points for low strokes AND low putts each hole. Most points wins. Great for combined handicaps.",
+    desc: "Individual strokes and putting skins game for up to 4 players. Points for low strokes AND low putts each hole. Most points wins. Great for similar handicaps.",
     rotates: false,
     hasScore: true,
     hasPutts: true,
@@ -3100,7 +3100,7 @@ function computeRoundScoring(round) {
 
             <div className="gsc-label" style={{ marginTop: 14, marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Team Game Formats</div>
             <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>2 vs 2</div>
-            {["beachside", "ponto", "seabluffe", "moonlightwolf"]
+            {["ponto", "beachside", "seabluffe", "moonlightwolf"]
               .map((key) => [key, GAMES[key]])
               .map(([key, g]) => (
                 <div key={key} className="gsc-card gsc-game-card" style={{ marginBottom: 10 }} onClick={() => startNewRound(key)}>
@@ -3278,7 +3278,7 @@ function computeRoundScoring(round) {
 
             <div className="gsc-label" style={{ marginTop: 14, marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Team Game Formats</div>
             <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>2 vs 2</div>
-            {["beachside", "ponto", "seabluffe", "moonlightwolf"]
+            {["ponto", "beachside", "seabluffe", "moonlightwolf"]
               .map((key) => [key, GAMES[key]])
               .map(([key, g]) => (
                 <div key={key} className="gsc-card gsc-game-card" style={{ marginBottom: 10 }} onClick={() => startNewRound(key)}>
