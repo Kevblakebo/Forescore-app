@@ -614,6 +614,7 @@ const AVATAR_OPTIONS = [
   "\u{1F60E}", "\u{1F525}", "\u2B50", "\u{1F973}", "\u{1F3AF}", "\u{1F981}", "\u{1F43B}", "\u{1F985}", "\u{1F422}", "\u{1F41D}", "\u{1F30A}", "\u{1F335}",
   "\u{1F9B8}", "\u{1F9B9}", "\u{1F977}", "\u{1F987}", "\u{1F577}\u{FE0F}", "\u26A1", "\u{1F4A5}", "\u{1F6E1}\u{FE0F}", "\u{1F4AA}", "\u{1F680}",
   "\u{1F42F}", "\u{1F988}",
+  "\u{1F40A}", "\u{1F986}", "\u{1F43A}", "\u{1F989}", "\u{1F409}", "\u{1F451}", "\u{1F3A9}", "\u{1F340}", "\u{1F334}", "\u{1F3B2}", "\u{1F947}", "\u{1F9CA}",
 ];
 const TEAM_CLASS = ["gsc-teamA", "gsc-teamB", "gsc-teamC", "gsc-teamD"];
 
@@ -931,6 +932,7 @@ export default function GolfScorecard() {
   const [showManualCourse, setShowManualCourse] = useState(false);
   const [courseSelectedViaSearch, setCourseSelectedViaSearch] = useState(false);
   const [avatarPickerFor, setAvatarPickerFor] = useState(null); // player index currently showing its avatar picker, or null
+  const [scoringAvatarPickerFor, setScoringAvatarPickerFor] = useState(null); // same idea, but for the scoring screen, kept separate since it edits an already-saved round rather than in-progress setup
   const [wizardStepId, setWizardStepId] = useState("playerCount");
   const [wizardAnswers, setWizardAnswers] = useState({});
   const [wizardHistory, setWizardHistory] = useState([]); // stack of actually-visited step ids, for Back
@@ -2532,6 +2534,20 @@ export default function GolfScorecard() {
     });
   }
 
+  // Lets a player change their own avatar mid-round from the scoring
+  // screen, not just during initial setup. Saves immediately so it syncs
+  // to everyone else viewing the same round.
+  function updateRoundPlayerAvatar(playerIdx, avatar) {
+    lastLocalEditRef.current = Date.now();
+    setRound((r) => {
+      const nextPlayers = r.players.map((p, i) => (i === playerIdx ? { ...p, avatar } : p));
+      const next = { ...r, players: nextPlayers };
+      saveRound(next);
+      return next;
+    });
+    setScoringAvatarPickerFor(null);
+  }
+
   const [syncStatus, setSyncStatus] = useState(""); // "", "syncing", "synced", "error"
 
   // Pulls the latest saved version of the round from shared storage and
@@ -2600,6 +2616,10 @@ export default function GolfScorecard() {
   useEffect(() => {
     if (screen === "tournamentFinishCelebration" || screen === "tournamentCreatedCelebration") playFireworksSound();
   }, [screen]);
+
+  useEffect(() => {
+    setScoringAvatarPickerFor(null);
+  }, [holeIdx]);
 
 
   const game = round ? GAMES[round.game] : gameKey ? GAMES[gameKey] : null;
@@ -5674,7 +5694,29 @@ function computeRoundScoring(round) {
               return (
                 <div key={i} className={`gsc-player-row ${cls}`}>
                   <div className="gsc-player-name">
-                    {p.avatar && <span style={{ marginRight: 4 }}>{p.avatar}</span>}
+                    <button
+                      onClick={() => setScoringAvatarPickerFor((cur) => (cur === i ? null : i))}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        width: 24,
+                        height: 24,
+                        borderRadius: "50%",
+                        border: p.avatar ? "1.5px solid #1B4332" : "1.5px dashed #B08D57",
+                        background: p.avatar ? "#fff" : "#EBF0EC",
+                        fontSize: p.avatar ? 15 : 10,
+                        fontWeight: 800,
+                        color: "#1B4332",
+                        cursor: "pointer",
+                        verticalAlign: "middle",
+                        marginRight: 6,
+                        padding: 0,
+                      }}
+                      title="Tap to change avatar"
+                    >
+                      {p.avatar || "+"}
+                    </button>
                     {p.name}
                     {p.hcp && <span className="gsc-hcp">HCP {p.hcp}</span>}
                     {g.tracksWolf && i === wolfIndexForHole(holeIdx) && (
@@ -5694,6 +5736,19 @@ function computeRoundScoring(round) {
                       </span>
                     )}
                   </div>
+                  {scoringAvatarPickerFor === i && (
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8, padding: "10px 0 4px" }}>
+                      {AVATAR_OPTIONS.map((emoji) => (
+                        <button
+                          key={emoji}
+                          onClick={() => updateRoundPlayerAvatar(i, p.avatar === emoji ? "" : emoji)}
+                          style={{ width: 34, height: 34, borderRadius: "50%", border: p.avatar === emoji ? "2px solid #C1440E" : "1.5px solid #d8d2bd", background: "#fff", fontSize: 17, cursor: "pointer" }}
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                   <div style={{ display: "flex", gap: 22, marginTop: 8, flexWrap: "wrap" }}>
                     {g.hasScore && (
                       <div>
