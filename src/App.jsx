@@ -175,7 +175,7 @@ const GAMES = {
     ],
   },
   ponto: {
-    name: "Combined Strokes",
+    name: "Team Skins",
     tag: "Fixed teams - 4 players",
     desc: "Two 2-person teams, same partners all 18 holes. Points for low combined score AND low combined putts each hole. Great for similar handicaps.",
     rotates: false,
@@ -205,7 +205,7 @@ const GAMES = {
   beachside: {
     name: "Best Ball",
     tag: "Best-ball teams - 4 players",
-    desc: "Two 2-person teams, best-ball scoring - the lower of the team's two strokes AND the lower of the team's two putts count each hole. Same structure as Combined Strokes, but best-ball instead of combined. Great for similar handicap pairs.",
+    desc: "Two 2-person teams, best-ball scoring - the lower of the team's two strokes AND the lower of the team's two putts count each hole. Same structure as Team Skins, but best-ball instead of combined. Great for similar handicap pairs.",
     rotates: false,
     hasScore: true,
     hasPutts: true,
@@ -213,7 +213,7 @@ const GAMES = {
     defaults: { maxOver: 3, maxPutts: 3, mulliganSegment: 1, prize: "Losers buy winners a drink at the 19th hole" },
     rules: [
       {
-        text: "Two 2-person team Best-Ball Strokes and Best-Ball Putts Skins competition (same as Combined Strokes, except using best-ball scores from the 2-person team):",
+        text: "Two 2-person team Best-Ball Strokes and Best-Ball Putts Skins competition (same as Team Skins, except using best-ball scores from the 2-person team):",
         sub: [
           "Each player plays their own ball and records their own strokes and putts.",
           "The lower of the team's two strokes scores counts toward the game.",
@@ -344,7 +344,7 @@ const GAMES = {
     ],
   },
   swami: {
-    name: "Strokes Game",
+    name: "Individual Strokes",
     tag: "Individual stroke play - up to 4 players",
     desc: "A standard, no-frills stroke play game for up to 4 players. Lowest total strokes wins; total putts breaks a tie. Great for players who just want to keep an honest scorecard.",
     rotates: false,
@@ -368,15 +368,15 @@ const GAMES = {
     ],
   },
   dstreet: {
-    name: "Skins Game",
+    name: "Individual Skins",
     tag: "Individual skins - up to 4 players",
-    desc: "Individual strokes and putting skins game for up to 4 players (same as Combined Strokes, but no teams). Points for low strokes AND low putts each hole. Great for similar handicap groups.",
+    desc: "Individual strokes and putting skins game for up to 4 players. Points for low strokes AND low putts each hole. Most points wins. Great for combined handicaps.",
     rotates: false,
     hasScore: true,
     hasPutts: true,
     defaults: { maxOver: 3, maxPutts: 3, mulliganSegment: 1, prize: "Losers buy winners a drink at the 19th hole" },
     rules: [
-      "Individual strokes and putting skins game for up to 4 players (same game as Combined Strokes, except no teams).",
+      "Individual strokes and putting skins game for up to 4 players. Points for low strokes AND low putts each hole. Most points wins.",
       {
         text: "0, 1, or 2 points possible per hole per player:",
         sub: [
@@ -409,7 +409,7 @@ const GAMES = {
     defaults: { maxOver: 3, maxPutts: 3, mulliganSegment: 1, prize: "Losers buy winners a drink at the 19th hole" },
     rules: [
       "Individual strokes and putting game for up to 4 players.",
-      "Total strokes and putts are still kept track of (similar to Strokes Game).",
+      "Total strokes and putts are still kept track of (similar to Individual Strokes).",
       {
         text: "There are however 3 points awarded per hole:",
         sub: [
@@ -1889,7 +1889,7 @@ export default function GolfScorecard() {
     });
   }
 
-  // Only used by individual game formats (Strokes Game, Skins Game) -
+  // Only used by individual game formats (Individual Strokes, Individual Skins) -
   // team games and tournaments always need exactly 4 (2v2 or a foursome),
   // so this stays unused/inaccessible there.
   function addPlayerSlot() {
@@ -2712,7 +2712,7 @@ function computeRoundScoring(round) {
       }
     }
 
-    // Combined games (Round Robin, Combined Strokes, Seaside
+    // Combined games (Round Robin, Team Skins, Seaside
     // Skins) sum every team/player's capped strokes or putts. Best-ball
     // games (Best Ball) instead count only the lower of the
     // team's two - each player still records their own strokes/putts,
@@ -3100,7 +3100,7 @@ function computeRoundScoring(round) {
 
             <div className="gsc-label" style={{ marginTop: 14, marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Team Game Formats</div>
             <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>2 vs 2</div>
-            {["seabluffe", "moonlightwolf", "beachside", "ponto"]
+            {["beachside", "ponto", "seabluffe", "moonlightwolf"]
               .map((key) => [key, GAMES[key]])
               .map(([key, g]) => (
                 <div key={key} className="gsc-card gsc-game-card" style={{ marginBottom: 10 }} onClick={() => startNewRound(key)}>
@@ -3278,7 +3278,7 @@ function computeRoundScoring(round) {
 
             <div className="gsc-label" style={{ marginTop: 14, marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Team Game Formats</div>
             <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>2 vs 2</div>
-            {["seabluffe", "moonlightwolf", "beachside", "ponto"]
+            {["beachside", "ponto", "seabluffe", "moonlightwolf"]
               .map((key) => [key, GAMES[key]])
               .map(([key, g]) => (
                 <div key={key} className="gsc-card gsc-game-card" style={{ marginBottom: 10 }} onClick={() => startNewRound(key)}>
@@ -3804,7 +3804,7 @@ function computeRoundScoring(round) {
           <div className="gsc-card">
             <div className="gsc-label" style={{ marginBottom: 8 }}>Which game format(s) have you played? <span style={{ textTransform: "none", fontWeight: 400 }}>(select all that apply)</span></div>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              {["Strokes Game", "Skins Game", "Bingo Bango Bongo", "Best Ball", "Combined Strokes", "Round Robin", "Wolf", "A tournament format"].map((opt) => (
+              {["Individual Strokes", "Individual Skins", "Bingo Bango Bongo", "Best Ball", "Team Skins", "Round Robin", "Wolf", "A tournament format"].map((opt) => (
                 <button key={opt} style={pillBtn(a.formats.includes(opt))} onClick={() => toggleFeedbackFormat(opt)}>{opt}</button>
               ))}
             </div>
@@ -3985,7 +3985,7 @@ function computeRoundScoring(round) {
                 Best-Ball - the lower of your two scores counts
               </OptionButton>
               <OptionButton onClick={() => wizardGoNext("teamScoring", { teamScoring: "combined", resolvedGameKey: "ponto", isTournament: false })}>
-                Combined Strokes - both scores add together
+                Team Skins - both scores add together
               </OptionButton>
             </div>
           )}
@@ -4018,7 +4018,7 @@ function computeRoundScoring(round) {
                 Best-Ball - lowest score on each hole counts
               </OptionButton>
               <OptionButton onClick={() => wizardGoNext("tournamentScoring", { tournamentScoring: "combined", resolvedGameKey: "tourneygg", isTournament: true })}>
-                Combined Strokes - all 4 players add together
+                Team Skins - all 4 players add together
               </OptionButton>
               <OptionButton onClick={() => wizardGoNext("tournamentScoring", { tournamentScoring: "scramble", resolvedGameKey: "avoscramble", isTournament: true })}>
                 One score for the team - Teams play the best shot of the foursome from tee to hole for the score
