@@ -3496,6 +3496,16 @@ function computeRoundScoring(round) {
               Start feedback survey
             </button>
           </div>
+
+          <div className="gsc-card">
+            <div className="gsc-label" style={{ marginBottom: 6 }}>Post to GHIN</div>
+            <div style={{ fontSize: 13, color: "#4b4b45" }}>
+              Head to GHIN.com to post your score toward your official handicap.
+            </div>
+            <a href="https://www.ghin.com" target="_blank" rel="noreferrer" className="gsc-link" style={{ marginTop: 8, fontSize: 12, display: "inline-block" }}>
+              Open GHIN.com {"\u2197"}
+            </a>
+          </div>
         </div>
         <BottomNav />
       </div>
@@ -5341,7 +5351,17 @@ function computeRoundScoring(round) {
             </div>
           )}
 
-          <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 4 }} onClick={finishCelebrationAndGoHome}>
+          <a
+            href="https://www.ghin.com"
+            target="_blank"
+            rel="noreferrer"
+            className="gsc-btn gsc-btn-outline"
+            style={{ width: "100%", marginTop: 4, display: "block", textAlign: "center", textDecoration: "none", boxSizing: "border-box" }}
+          >
+            Post this score to GHIN {"\u2197"}
+          </a>
+
+          <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 10 }} onClick={finishCelebrationAndGoHome}>
             Continue to Home
           </button>
         </div>
