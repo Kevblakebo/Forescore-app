@@ -919,6 +919,8 @@ export default function GolfScorecard() {
   const [players, setPlayers] = useState([]); // {name, hcp}
   const [pontoPairing, setPontoPairing] = useState([[0, 1], [2, 3]]);
   const [par, setPar] = useState(DEFAULT_PAR);
+  const [yardage, setYardage] = useState(Array(18).fill(""));
+  const [strokeIndex, setStrokeIndex] = useState(Array(18).fill(""));
   const [courseName, setCourseName] = useState("");
   const [savedCourses, setSavedCourses] = useState([]);
   const [courseSearchQuery, setCourseSearchQuery] = useState("");
@@ -978,6 +980,8 @@ export default function GolfScorecard() {
   const [tournamentGameKey, setTournamentGameKey] = useState(null);
   const [tournamentRankBy, setTournamentRankBy] = useState("strokes"); // strokes-only for now (game points ranking removed)
   const [tournamentPar, setTournamentPar] = useState(DEFAULT_PAR);
+  const [tournamentYardage, setTournamentYardage] = useState(Array(18).fill(""));
+  const [tournamentStrokeIndex, setTournamentStrokeIndex] = useState(Array(18).fill(""));
   const [tournamentCfg, setTournamentCfg] = useState({});
   const [tournamentFoursomeCount, setTournamentFoursomeCount] = useState(2);
   const [tournamentFoursomesDraft, setTournamentFoursomesDraft] = useState([]);
@@ -1614,15 +1618,25 @@ export default function GolfScorecard() {
   // needs par" check before creating the round will catch anything short.
   function applyCourseTee(tee, forTournament) {
     const holePars = (tee.holes || []).map((h) => h.par);
+    const holeYardage = (tee.holes || []).map((h) => h.yardage);
+    const holeStrokeIndex = (tee.holes || []).map((h) => h.handicap);
     const next = Array(18).fill("");
+    const nextYardage = Array(18).fill("");
+    const nextStrokeIndex = Array(18).fill("");
     for (let i = 0; i < Math.min(18, holePars.length); i++) {
       next[i] = holePars[i];
+      if (holeYardage[i] != null) nextYardage[i] = holeYardage[i];
+      if (holeStrokeIndex[i] != null) nextStrokeIndex[i] = holeStrokeIndex[i];
     }
     if (forTournament) {
       setTournamentPar(next);
+      setTournamentYardage(nextYardage);
+      setTournamentStrokeIndex(nextStrokeIndex);
       setTournamentCourseName(courseTeeOptions.courseLabel);
     } else {
       setPar(next);
+      setYardage(nextYardage);
+      setStrokeIndex(nextStrokeIndex);
       setCourseName(courseTeeOptions.courseLabel);
     }
     if (holePars.length !== 18) {
@@ -1660,6 +1674,8 @@ export default function GolfScorecard() {
     ]);
     setPontoPairing([[0, 1], [2, 3]]);
     setPar(Array(18).fill(""));
+    setYardage(Array(18).fill(""));
+    setStrokeIndex(Array(18).fill(""));
     setCourseName("");
     setCourseSelectedViaSearch(false);
     setCourseMsg("");
@@ -1755,6 +1771,8 @@ export default function GolfScorecard() {
         setTournamentGameKey(key);
         setTournamentCfg({ ...GAMES[key].defaults });
         setTournamentPar(Array(18).fill(""));
+        setTournamentYardage(Array(18).fill(""));
+        setTournamentStrokeIndex(Array(18).fill(""));
         setTournamentCourseName("");
         setCourseSelectedViaSearch(false);
         setTournamentName("");
@@ -1821,6 +1839,8 @@ export default function GolfScorecard() {
     ]);
     setPontoPairing([[0, 1], [2, 3]]);
     setPar(Array(18).fill(""));
+    setYardage(Array(18).fill(""));
+    setStrokeIndex(Array(18).fill(""));
     setCourseName("");
     setCourseSelectedViaSearch(false);
     setCourseMsg("");
@@ -1924,6 +1944,8 @@ export default function GolfScorecard() {
         : null; // seabluffe computes teams per-hole
 
     const cleanPar = par.map((p) => (p === "" || p == null || isNaN(Number(p)) ? 4 : Number(p)));
+    const cleanYardage = yardage.map((y) => (y === "" || y == null || isNaN(Number(y)) ? null : Number(y)));
+    const cleanStrokeIndex = strokeIndex.map((s) => (s === "" || s == null || isNaN(Number(s)) ? null : Number(s)));
     const cleanCfg = {
       ...cfg,
       maxOver: cfg.maxOver === "" || cfg.maxOver == null || isNaN(Number(cfg.maxOver)) ? 3 : Number(cfg.maxOver),
@@ -1938,6 +1960,8 @@ export default function GolfScorecard() {
     const isTournament = !!activeTournament;
     const finalCfg = isTournament ? { ...activeTournament.cfg } : cleanCfg;
     const finalPar = isTournament ? [...activeTournament.par] : cleanPar;
+    const finalYardage = isTournament ? [...(activeTournament.yardage || Array(18).fill(null))] : cleanYardage;
+    const finalStrokeIndex = isTournament ? [...(activeTournament.strokeIndex || Array(18).fill(null))] : cleanStrokeIndex;
     const finalCourse = isTournament ? activeTournament.course || "" : courseName.trim();
     const foursomeName = roundName.trim() || "Foursome";
 
@@ -1951,6 +1975,8 @@ export default function GolfScorecard() {
       players: cleanPlayers,
       teams,
       par: finalPar,
+      yardage: finalYardage,
+      strokeIndex: finalStrokeIndex,
       scores: emptyScores(),
       createdAt: Date.now(),
       tournamentId: isTournament ? activeTournament.id : null,
@@ -1988,6 +2014,8 @@ export default function GolfScorecard() {
     setTournamentGameKey(key);
     setTournamentRankBy("strokes");
     setTournamentPar(Array(18).fill(""));
+    setTournamentYardage(Array(18).fill(""));
+    setTournamentStrokeIndex(Array(18).fill(""));
     setTournamentCfg({ ...GAMES[key].defaults });
     setTournamentFoursomeCount(2);
     setCourseSearchQuery("");
@@ -2054,6 +2082,8 @@ export default function GolfScorecard() {
     }
     const code = genCode();
     const cleanPar = tournamentPar.map((p) => (p === "" || p == null || isNaN(Number(p)) ? 4 : Number(p)));
+    const cleanYardage = tournamentYardage.map((y) => (y === "" || y == null || isNaN(Number(y)) ? null : Number(y)));
+    const cleanStrokeIndex = tournamentStrokeIndex.map((s) => (s === "" || s == null || isNaN(Number(s)) ? null : Number(s)));
     const cleanCfg = {
       ...tournamentCfg,
       maxOver: tournamentCfg.maxOver === "" || tournamentCfg.maxOver == null || isNaN(Number(tournamentCfg.maxOver)) ? 3 : Number(tournamentCfg.maxOver),
@@ -2083,6 +2113,8 @@ export default function GolfScorecard() {
         players: cleanPlayers,
         teams: [[0, 1, 2, 3]],
         par: cleanPar,
+        yardage: cleanYardage,
+        strokeIndex: cleanStrokeIndex,
         scores: emptyScores(),
         createdAt: Date.now(),
         tournamentId: code,
@@ -2106,6 +2138,8 @@ export default function GolfScorecard() {
       rankBy: tournamentRankBy,
       cfg: cleanCfg,
       par: cleanPar,
+      yardage: cleanYardage,
+      strokeIndex: cleanStrokeIndex,
       foursomes: foursomeEntries,
       createdAt: Date.now(),
     };
@@ -5521,6 +5555,18 @@ function computeRoundScoring(round) {
               <div style={{ textAlign: "center" }}>
                 <div className="gsc-hole-big">Hole {holeIdx + 1}</div>
                 <div className="gsc-par-badge">Par {parH} - max {parH + round.cfg.maxOver}</div>
+                {(() => {
+                  const yd = (round.yardage || [])[holeIdx];
+                  const si = (round.strokeIndex || [])[holeIdx];
+                  if (yd == null && si == null) return null;
+                  return (
+                    <div style={{ fontSize: 12, color: "#6b6b63", fontWeight: 600, marginTop: 2 }}>
+                      {yd != null && `${yd} yds`}
+                      {yd != null && si != null && " \u00B7 "}
+                      {si != null && `HCP ${si}`}
+                    </div>
+                  );
+                })()}
                 {round.game === "seabluffe" && (
                   <div style={{ fontSize: 12, color: "#B08D57", fontWeight: 700, marginTop: 4 }}>
                     {round.players[teamsThisHole[0][0]].name}+{round.players[teamsThisHole[0][1]].name} vs {round.players[teamsThisHole[1][0]].name}+{round.players[teamsThisHole[1][1]].name}
@@ -5927,13 +5973,19 @@ function computeRoundScoring(round) {
           )}
 
           <button className="gsc-link" onClick={() => setShowGrid((s) => !s)}>{showGrid ? "Hide" : "Show"} full 18-hole grid</button>
-          {showGrid && (
+          {showGrid && (() => {
+            const hasYardageCol = round.yardage && round.yardage.some((y) => y != null);
+            const hasStrokeIndexCol = round.strokeIndex && round.strokeIndex.some((s) => s != null);
+            const labelColSpan = 2 + (hasYardageCol ? 1 : 0) + (hasStrokeIndexCol ? 1 : 0);
+            return (
             <div className="gsc-card" style={{ overflowX: "auto", marginTop: 10 }}>
               <table className="gsc-grid">
                 <thead>
                   <tr>
                     <th>Hole</th>
                     <th>Par</th>
+                    {hasYardageCol && <th>Yds</th>}
+                    {hasStrokeIndexCol && <th>HCP</th>}
                     {round.players.map((p, i) => (
                       <th key={i} style={{ minWidth: 56 }}>
                         {p.avatar && <span style={{ fontSize: 14 }}>{p.avatar}</span>}
@@ -5950,6 +6002,8 @@ function computeRoundScoring(round) {
                       <tr onClick={() => setHoleIdx(h)} style={{ cursor: "pointer", background: h === holeIdx ? "#F0EEE3" : undefined }}>
                         <td>{h + 1}</td>
                         <td>{round.par[h]}</td>
+                        {hasYardageCol && <td>{round.yardage[h] != null ? round.yardage[h] : "-"}</td>}
+                        {hasStrokeIndexCol && <td>{round.strokeIndex[h] != null ? round.strokeIndex[h] : "-"}</td>}
                         {round.players.map((_, i) => {
                           const e = (round.scores[h] || {})[i] || {};
                           return (
@@ -5963,7 +6017,7 @@ function computeRoundScoring(round) {
                       </tr>
                       {h === 8 && (
                         <tr style={{ fontWeight: 700, background: "#EFEAD9" }}>
-                          <td colSpan={2}>OUT</td>
+                          <td colSpan={labelColSpan}>OUT</td>
                           {round.players.map((_, i) => {
                             const t = frontNineTotals[i];
                             return (
@@ -5978,7 +6032,7 @@ function computeRoundScoring(round) {
                       )}
                       {h === 17 && (
                         <tr style={{ fontWeight: 700, background: "#EFEAD9" }}>
-                          <td colSpan={2}>IN</td>
+                          <td colSpan={labelColSpan}>IN</td>
                           {round.players.map((_, i) => {
                             const t = backNineTotals[i];
                             return (
@@ -5999,7 +6053,7 @@ function computeRoundScoring(round) {
                     <td colSpan={2 + round.players.length} style={{ padding: 0, height: 10, background: "#fff", border: "none" }}></td>
                   </tr>
                   <tr style={{ fontWeight: 700, background: "#F0EEE3" }}>
-                    <td colSpan={2}>Total</td>
+                    <td colSpan={labelColSpan}>Total</td>
                     {round.players.map((_, i) => {
                       const t = gridTotals[i];
                       return (
@@ -6013,7 +6067,7 @@ function computeRoundScoring(round) {
                   </tr>
                   {g.hasScore && (
                     <tr style={{ fontWeight: 700, background: "#F8F1E4" }}>
-                      <td colSpan={2}>+/- Par</td>
+                      <td colSpan={labelColSpan}>+/- Par</td>
                       {round.players.map((_, i) => {
                         const t = gridTotals[i];
                         return <td key={i}>{t.sCount ? formatRelPar(t.relPar) : "-"}</td>;
@@ -6022,7 +6076,7 @@ function computeRoundScoring(round) {
                   )}
                   {!g.totalScoring && (
                     <tr style={{ fontWeight: 700, background: "#EBF0EC" }}>
-                      <td colSpan={2}>Points</td>
+                      <td colSpan={labelColSpan}>Points</td>
                       {round.players.map((_, i) => (
                         <td key={i}>{computed.playerPoints[i]}</td>
                       ))}
@@ -6032,13 +6086,13 @@ function computeRoundScoring(round) {
                     <td colSpan={2 + round.players.length} style={{ padding: 0, height: 10, background: "#fff", border: "none" }}></td>
                   </tr>
                   <tr style={{ fontWeight: 700, background: "#F0EEE3" }}>
-                    <td colSpan={2}>Handicap</td>
+                    <td colSpan={labelColSpan}>Handicap</td>
                     {round.players.map((p, i) => (
                       <td key={i}>{p.hcp !== "" && p.hcp != null ? p.hcp : "-"}</td>
                     ))}
                   </tr>
                   <tr style={{ fontWeight: 700, background: "#F8F1E4" }}>
-                    <td colSpan={2}>Net Strokes</td>
+                    <td colSpan={labelColSpan}>Net Strokes</td>
                     {round.players.map((p, i) => {
                       const t = gridTotals[i];
                       const hcpNum = p.hcp !== "" && p.hcp != null && !isNaN(Number(p.hcp)) ? Number(p.hcp) : null;
@@ -6050,7 +6104,8 @@ function computeRoundScoring(round) {
               </table>
               <div style={{ fontSize: 11, color: "#6b6b63", marginTop: 6 }}>Cell shows strokes/putts. Tap a row to jump to that hole. Total, +/- Par, and Net Strokes only count holes played so far. Net Strokes = Total strokes minus Handicap.</div>
             </div>
-          )}
+            );
+          })()}
 
           <div style={{ fontSize: 12, color: "#8a8a80", textAlign: "center", marginTop: 16 }}>
             Share code <b className="gsc-mono">{round.id}</b> with your group so everyone can enter or view scores.
