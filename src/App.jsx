@@ -87,7 +87,7 @@ const STYLE = `
 
 const GAMES = {
   seabluffe: {
-    name: "Seabluffe Swap",
+    name: "Round Robin",
     tag: "Rotating teams - 4 players",
     desc: "Two 2-person teams that swap partners every 6 holes. Points for low combined score AND low combined putts each hole. Great for mixed handicaps.",
     rotates: true,
@@ -120,7 +120,7 @@ const GAMES = {
     ],
   },
   moonlightwolf: {
-    name: "Moonlight Wolf",
+    name: "Wolf",
     tag: "Rotating team - 4 players",
     desc: "A rotating team four-player game where one player acts as the \"Wolf\" on each hole. The Wolf watches the other drives (tees off last), then either chooses a partner or goes it alone (\"Lone Wolf\"), to win points based on a best-ball lowest strokes and putts format.",
     rotates: true,
@@ -133,7 +133,7 @@ const GAMES = {
       {
         text: "Setting Up the Game",
         sub: [
-          "The foursome: Moonlight Wolf is designed for four players.",
+          "The foursome: Wolf is designed for four players.",
           "Play order: players determine the initial tee-off order prior to the first hole. This will be Player 1, 2, 3, 4 in that order. Player 1 is the first hitter on hole 1, then player 2, then player 3, then player 4 - who is the last hitter and is the Wolf on hole one.",
           "Rotation: this exact rotation order shifts by one player on each subsequent hole. Example: Player 4 on hole one becomes the first hitter on hole two, Player 1 on hole two is the 2nd hitter, Player 2 is the 3rd hitter, and Player 3 is the 4th hitter and becomes the new Wolf. This continues for all 18 holes.",
         ],
@@ -147,7 +147,7 @@ const GAMES = {
         ],
       },
       {
-        text: "Scoring System - 2-on-2 (Wolf picked a partner): best-ball for strokes and putts, same as Beacons Best-Ball scoring:",
+        text: "Scoring System - 2-on-2 (Wolf picked a partner): best-ball for strokes and putts, same as Best Ball scoring:",
         sub: [
           "Each player plays their own ball and records their own strokes and putts.",
           "The lower of the Wolf team's two strokes scores counts toward the game.",
@@ -175,7 +175,7 @@ const GAMES = {
     ],
   },
   ponto: {
-    name: "Cardiff Combine",
+    name: "Combined Strokes",
     tag: "Fixed teams - 4 players",
     desc: "Two 2-person teams, same partners all 18 holes. Points for low combined score AND low combined putts each hole. Great for similar handicaps.",
     rotates: false,
@@ -183,7 +183,7 @@ const GAMES = {
     hasPutts: true,
     defaults: { maxOver: 3, maxPutts: 3, mulliganSegment: 1, prize: "Losers buy winners a drink at the 19th hole" },
     rules: [
-      "Two 2-person team strokes and putting competition (same game as Seabluffe Swap, except no team rotation).",
+      "Two 2-person team strokes and putting competition (same game as Round Robin, except no team rotation).",
       {
         text: "0, 1, or 2 points possible per hole per team:",
         sub: ["1 pt per team for lowest combined putts", "1 pt per team for lowest combined strokes"],
@@ -203,9 +203,9 @@ const GAMES = {
     ],
   },
   beachside: {
-    name: "Beacons Best-Ball",
+    name: "Best Ball",
     tag: "Best-ball teams - 4 players",
-    desc: "Two 2-person teams, best-ball scoring - the lower of the team's two strokes AND the lower of the team's two putts count each hole. Same structure as Cardiff Combine, but best-ball instead of combined. Great for similar handicap pairs.",
+    desc: "Two 2-person teams, best-ball scoring - the lower of the team's two strokes AND the lower of the team's two putts count each hole. Same structure as Combined Strokes, but best-ball instead of combined. Great for similar handicap pairs.",
     rotates: false,
     hasScore: true,
     hasPutts: true,
@@ -213,7 +213,7 @@ const GAMES = {
     defaults: { maxOver: 3, maxPutts: 3, mulliganSegment: 1, prize: "Losers buy winners a drink at the 19th hole" },
     rules: [
       {
-        text: "Two 2-person team Best-Ball Strokes and Best-Ball Putts Skins competition (same as Cardiff Combine, except using best-ball scores from the 2-person team):",
+        text: "Two 2-person team Best-Ball Strokes and Best-Ball Putts Skins competition (same as Combined Strokes, except using best-ball scores from the 2-person team):",
         sub: [
           "Each player plays their own ball and records their own strokes and putts.",
           "The lower of the team's two strokes scores counts toward the game.",
@@ -240,7 +240,7 @@ const GAMES = {
     ],
   },
   tourneybb: {
-    name: "Beacons Best-Ball Tournament",
+    name: "Best Ball Tournament",
     tag: "4-person best-ball - Tournaments only",
     desc: "The whole foursome plays as one best-ball team - no 2-person sub-teams. The lowest strokes and lowest putts among all 4 players count each hole. Used only in Tournaments, where foursomes are ranked against each other by total best-ball strokes and total best-ball putts.",
     rotates: false,
@@ -272,7 +272,7 @@ const GAMES = {
     ],
   },
   tourneygg: {
-    name: "Cardiff Combine Tournament",
+    name: "Combined Strokes Tournament",
     tag: "4-person combined - Tournaments only",
     desc: "The whole foursome plays as one team - no 2-person sub-teams. All 4 players' strokes are added together, and all 4 players' putts are added together, each hole. Used only in Tournaments, where foursomes are ranked against each other by total combined strokes and total combined putts.",
     rotates: false,
@@ -304,7 +304,7 @@ const GAMES = {
     ],
   },
   avoscramble: {
-    name: "Avocado Scramble Tournament",
+    name: "Scramble Tournament",
     tag: "Choose best shot - Tournaments only",
     desc: "The whole foursome plays as one team. Every team member tees off on each hole, the team picks the best shot of the foursome, and all players hit their next shots from that same location. This cycle repeats until the ball is in the hole. The team's strokes score for the hole is then captured.",
     rotates: false,
@@ -344,7 +344,7 @@ const GAMES = {
     ],
   },
   swami: {
-    name: "Swami's Strokes",
+    name: "Strokes Game",
     tag: "Individual stroke play - up to 4 players",
     desc: "A standard, no-frills stroke play game for up to 4 players. Lowest total strokes wins; total putts breaks a tie. Great for players who just want to keep an honest scorecard.",
     rotates: false,
@@ -368,15 +368,15 @@ const GAMES = {
     ],
   },
   dstreet: {
-    name: "Seaside Skins",
+    name: "Skins Game",
     tag: "Individual skins - up to 4 players",
-    desc: "Individual strokes and putting skins game for up to 4 players (same as Cardiff Combine, but no teams). Points for low strokes AND low putts each hole. Great for similar handicap groups.",
+    desc: "Individual strokes and putting skins game for up to 4 players (same as Combined Strokes, but no teams). Points for low strokes AND low putts each hole. Great for similar handicap groups.",
     rotates: false,
     hasScore: true,
     hasPutts: true,
     defaults: { maxOver: 3, maxPutts: 3, mulliganSegment: 1, prize: "Losers buy winners a drink at the 19th hole" },
     rules: [
-      "Individual strokes and putting skins game for up to 4 players (same game as Cardiff Combine, except no teams).",
+      "Individual strokes and putting skins game for up to 4 players (same game as Combined Strokes, except no teams).",
       {
         text: "0, 1, or 2 points possible per hole per player:",
         sub: [
@@ -399,7 +399,7 @@ const GAMES = {
     ],
   },
   pontobango: {
-    name: "Ponto Bango Bongo",
+    name: "Bingo Bango Bongo",
     tag: "Individual points game - up to 4 players",
     desc: "Each hole is worth three points. The Ponto point goes to the first player on the green. The Bango point goes to the player closest to the pin once on the green. The Bongo point goes to the longest putt. The player with the most points wins. Strokes and putts still tracked.",
     rotates: false,
@@ -409,7 +409,7 @@ const GAMES = {
     defaults: { maxOver: 3, maxPutts: 3, mulliganSegment: 1, prize: "Losers buy winners a drink at the 19th hole" },
     rules: [
       "Individual strokes and putting game for up to 4 players.",
-      "Total strokes and putts are still kept track of (similar to Swami's Strokes).",
+      "Total strokes and putts are still kept track of (similar to Strokes Game).",
       {
         text: "There are however 3 points awarded per hole:",
         sub: [
@@ -418,7 +418,7 @@ const GAMES = {
           "The Bongo point goes to the first player to hole out (longest putt).",
         ],
       },
-      "The player with the most Ponto Bango Bongo points at the end of the round takes the pot.",
+      "The player with the most Bingo Bango Bongo points at the end of the round takes the pot.",
       "Proper etiquette must be followed with furthest player from pin shooting first from tee to hole.",
       "Prize: to be agreed on prior to round.",
       "Strokes max: to be agreed on prior to round.",
@@ -749,7 +749,7 @@ function wolfIndexForHole(h) {
 // Single source of truth for "who's on which team this hole" - used by
 // both the scoring engine and the card screen's own render. These two
 // used to compute this independently, which is exactly how a game like
-// Moonlight Wolf (dynamic per-hole teams) could work correctly in the
+// Wolf (dynamic per-hole teams) could work correctly in the
 // engine but still crash on the card screen, which had its own simpler
 // copy that never learned about it.
 function computeTeamsForHole(round, h, hs) {
@@ -1867,7 +1867,7 @@ export default function GolfScorecard() {
     });
   }
 
-  // Only used by individual game formats (Swami's Strokes, Seaside Skins) -
+  // Only used by individual game formats (Strokes Game, Skins Game) -
   // team games and tournaments always need exactly 4 (2v2 or a foursome),
   // so this stays unused/inaccessible there.
   function addPlayerSlot() {
@@ -2444,7 +2444,7 @@ export default function GolfScorecard() {
     });
   }
 
-  // Used by "one team score" games (like Avocado Scramble) where there's
+  // Used by "one team score" games (like Scramble Tournament) where there's
   // only a single shared number per hole, not 4 individual player entries.
   // Writes the same value to all 4 players' slots in one atomic update, so
   // the existing engine (which already knows how to take the minimum of 4
@@ -2552,7 +2552,7 @@ export default function GolfScorecard() {
     return () => clearInterval(interval);
   }, [screen, round && round.id]);
 
-  // "One team score" games (like Avocado Scramble) show the tournament
+  // "One team score" games (like Scramble Tournament) show the tournament
   // leaderboard directly on the scorecard instead of a per-player Standings
   // box, since there's only one shared team score - individual player
   // rankings wouldn't mean anything. Load it once on arrival so it's not
@@ -2580,7 +2580,7 @@ export default function GolfScorecard() {
 // in-foursome scoring engine below, because "the foursome's number" means
 // something different at the tournament level than it does inside the
 // foursome's own game:
-//  - Beacons Best-Ball: the single lowest strokes among all 4 players on
+//  - Best Ball: the single lowest strokes among all 4 players on
 //    a hole is the foursome's stroke score for that hole; likewise the
 //    single lowest putts is the foursome's putt score. (True 4-way best
 //    ball, not the 2-person sub-team best ball used for in-foursome points.)
@@ -2658,9 +2658,9 @@ function computeRoundScoring(round) {
       }
     }
 
-    // Combined games (Seabluffe Swap, Cardiff Combine, Seaside
+    // Combined games (Round Robin, Combined Strokes, Seaside
     // Skins) sum every team/player's capped strokes or putts. Best-ball
-    // games (Beacons Best-Ball) instead count only the lower of the
+    // games (Best Ball) instead count only the lower of the
     // team's two - each player still records their own strokes/putts,
     // but only the best one counts toward the team's total that hole.
     const aggregate = (arr) => (g.bestBall ? Math.min(...arr) : arr.reduce((a, b) => a + b, 0));
@@ -2731,7 +2731,7 @@ function computeRoundScoring(round) {
           ptsAwarded[0].putt = wolfPuttPts;
           ptsAwarded[1].putt = teamPuttPts;
         } else {
-          // Standard 2v2 best-ball, same mechanic as Beacons Best-Ball.
+          // Standard 2v2 best-ball, same mechanic as Best Ball.
           const strokeSums = teamRes.map((t) => t.scoreSum);
           awardLowest(strokeSums).forEach((v, i) => (ptsAwarded[i].score = v));
           const puttSums = teamRes.map((t) => t.puttSum);
@@ -3750,7 +3750,7 @@ function computeRoundScoring(round) {
           <div className="gsc-card">
             <div className="gsc-label" style={{ marginBottom: 8 }}>Which game format(s) have you played? <span style={{ textTransform: "none", fontWeight: 400 }}>(select all that apply)</span></div>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              {["Swami's Strokes", "Seaside Skins", "Ponto Bango Bongo", "Beacons Best-Ball", "Cardiff Combine", "Seabluffe Swap", "Moonlight Wolf", "A tournament format"].map((opt) => (
+              {["Strokes Game", "Skins Game", "Bingo Bango Bongo", "Best Ball", "Combined Strokes", "Round Robin", "Wolf", "A tournament format"].map((opt) => (
                 <button key={opt} style={pillBtn(a.formats.includes(opt))} onClick={() => toggleFeedbackFormat(opt)}>{opt}</button>
               ))}
             </div>
@@ -5710,7 +5710,7 @@ function computeRoundScoring(round) {
               ];
               return (
                 <div className="gsc-card" style={{ marginTop: 10 }}>
-                  <div className="gsc-label" style={{ marginBottom: 10 }}>Ponto Bango Bongo - who won this hole?</div>
+                  <div className="gsc-label" style={{ marginBottom: 10 }}>Bingo Bango Bongo - who won this hole?</div>
                   {selectors.map(({ field, label }) => (
                     <div key={field} style={{ marginBottom: 14 }}>
                       <div style={{ fontSize: 11, color: "#6b6b63", marginBottom: 6 }}>{label}</div>
