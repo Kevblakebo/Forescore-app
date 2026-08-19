@@ -2968,7 +2968,7 @@ function computeRoundScoring(round) {
         />
         <div className="gsc-body gsc-body-tabbed">
           <div style={{ fontSize: 13, color: "#4b4b45", lineHeight: 1.55, margin: "0 0 16px" }}>
-            All the games. None of the math. Foresa makes it easy and fun to play various golf game formats, share your scorecard live on the course, and settle who's buying at the 19th hole!
+            Foresa makes it easy and fun to play various golf game formats, share your scores live on the course, and settle who's buying at the 19th hole!
             <br />
             <br />
             To start a new round or tournament:
