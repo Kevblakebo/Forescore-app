@@ -3100,7 +3100,7 @@ function computeRoundScoring(round) {
       <div className="gsc">
         <style>{STYLE}</style>
         <Header
-          title={<><span style={{ fontSize: 23 }}>RipScore Golf</span><div style={{ fontSize: 11, fontWeight: 400, opacity: 0.75, letterSpacing: "0.5px", textTransform: "uppercase", marginTop: 2, fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>Play the game. We'll keep score.</div></>}
+          title={<><span style={{ fontSize: 23 }}>RipScore</span><div style={{ fontSize: 11, fontWeight: 400, opacity: 0.75, letterSpacing: "0.5px", textTransform: "uppercase", marginTop: 2, fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>Play the game. We'll keep score.</div></>}
           sub=""
         />
         <div className="gsc-body gsc-body-tabbed">
@@ -3798,7 +3798,7 @@ function computeRoundScoring(round) {
               <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>Contact</p>
               <p style={{ margin: 0 }}>
                 Questions about these terms? Reach out at{" "}
-                <a href="mailto:support@foresagolf.com" style={{ color: "#1B4332", fontWeight: 700 }}>support@foresagolf.com</a>.
+                <a href="mailto:support@ripscoregolf.com" style={{ color: "#1B4332", fontWeight: 700 }}>support@ripscoregolf.com</a>.
               </p>
             </div>
           </div>
@@ -3863,7 +3863,7 @@ function computeRoundScoring(round) {
               <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>Contact</p>
               <p style={{ margin: 0 }}>
                 Questions about your data, or want something deleted? Reach out at{" "}
-                <a href="mailto:support@foresagolf.com" style={{ color: "#1B4332", fontWeight: 700 }}>support@foresagolf.com</a>.
+                <a href="mailto:support@ripscoregolf.com" style={{ color: "#1B4332", fontWeight: 700 }}>support@ripscoregolf.com</a>.
               </p>
             </div>
           </div>
