@@ -86,6 +86,37 @@ const STYLE = `
 `;
 
 const GAMES = {
+  teamstrokes: {
+    name: "Team Strokes",
+    tag: "Combined teams - 4 players",
+    desc: "A 4-person, 2 vs 2 team combined strokes competition. Each player plays their own ball and records their own strokes and putts. Lowest team total strokes wins; lowest team total putts settles a tie.",
+    rotates: false,
+    hasScore: true,
+    hasPutts: true,
+    totalScoring: true,
+    rankByTeamTotal: true,
+    defaults: { maxOver: 3, maxPutts: 3, mulliganSegment: 1, prize: "Losers buy winners a drink at the 19th hole" },
+    rules: [
+      "4-person, 2 vs 2 team, combined strokes competition.",
+      "Each player plays their own ball and records their own strokes and putts.",
+      {
+        text: "Each hole, the score is the 2 players' team scores added together:",
+        sub: ["Strokes: 2 players' strokes for that hole, combined.", "Putts: 2 players' putts for that hole, combined."],
+      },
+      "Lowest team total strokes wins. Lowest team total putts settles tie breaker.",
+      "Prize: to be agreed on prior to round.",
+      "Strokes max: to be agreed on prior to round.",
+      "Putts max: to be agreed on prior to round.",
+      "Mulligans: to be agreed on prior to round.",
+      "Play OB shots as a lateral drop (1 out, 1 in).",
+      "Must putt all the way into the hole.",
+      "Flagstick can stay in.",
+      "Putts start once on the putting green.",
+      "No carry-overs on ties.",
+      "Handicaps not used in game scoring.",
+      "Great for mixed handicaps.",
+    ],
+  },
   teamputts: {
     name: "Team Putts",
     tag: "Putting teams - 4 players",
@@ -2040,7 +2071,7 @@ export default function GolfScorecard() {
     }
     const code = genCode();
     const teams =
-      gameKey === "ponto" || gameKey === "beachside" || gameKey === "teamputts"
+      gameKey === "ponto" || gameKey === "beachside" || gameKey === "teamputts" || gameKey === "teamstrokes"
         ? pontoPairing
         : isIndividual
         ? cleanPlayers.map((_, i) => [i]) // individual - each player is their own "team" of one, however many were entered
@@ -2963,13 +2994,32 @@ function computeRoundScoring(round) {
     if (!computed || !round) return [];
     const isTotalScoring = GAMES[round.game] && GAMES[round.game].totalScoring;
     const rankByPutts = GAMES[round.game] && GAMES[round.game].rankByPutts;
+    const rankByTeamTotal = GAMES[round.game] && GAMES[round.game].rankByTeamTotal;
+
+    // For team-total games, both teammates need to show and be ranked by
+    // their COMBINED total, not their own individual total - otherwise two
+    // players on the same team could end up on opposite ends of the
+    // standings despite being on the winning (or losing) team together.
+    let teamScoreOf = null;
+    let teamPuttsOf = null;
+    if (rankByTeamTotal && round.teams) {
+      teamScoreOf = round.players.map((_, i) => {
+        const team = round.teams.find((t) => t.includes(i));
+        return team ? team.reduce((sum, p) => sum + computed.playerTotalScore[p], 0) : computed.playerTotalScore[i];
+      });
+      teamPuttsOf = round.players.map((_, i) => {
+        const team = round.teams.find((t) => t.includes(i));
+        return team ? team.reduce((sum, p) => sum + computed.playerTotalPutts[p], 0) : computed.playerTotalPutts[i];
+      });
+    }
+
     return round.players
       .map((pl, i) => ({
         ...pl,
         idx: i,
         points: computed.playerPoints[i],
-        score: computed.playerTotalScore[i],
-        putts: computed.playerTotalPutts[i],
+        score: rankByTeamTotal ? teamScoreOf[i] : computed.playerTotalScore[i],
+        putts: rankByTeamTotal ? teamPuttsOf[i] : computed.playerTotalPutts[i],
         relPar: computed.playerTotalScore[i] - computed.playerParPlayed[i],
       }))
       .sort((a, b) => {
@@ -3217,7 +3267,7 @@ function computeRoundScoring(round) {
 
             <div className="gsc-label" style={{ marginTop: 14, marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Team Game Formats</div>
             <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>2 vs 2</div>
-            {["ponto", "teamputts", "beachside", "seabluffe", "moonlightwolf"]
+            {["ponto", "teamstrokes", "teamputts", "beachside", "seabluffe", "moonlightwolf"]
               .map((key) => [key, GAMES[key]])
               .map(([key, g]) => (
                 <div key={key} className="gsc-card gsc-game-card" style={{ marginBottom: 10 }} onClick={() => startNewRound(key)}>
@@ -3395,7 +3445,7 @@ function computeRoundScoring(round) {
 
             <div className="gsc-label" style={{ marginTop: 14, marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Team Game Formats</div>
             <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>2 vs 2</div>
-            {["ponto", "teamputts", "beachside", "seabluffe", "moonlightwolf"]
+            {["ponto", "teamstrokes", "teamputts", "beachside", "seabluffe", "moonlightwolf"]
               .map((key) => [key, GAMES[key]])
               .map(([key, g]) => (
                 <div key={key} className="gsc-card gsc-game-card" style={{ marginBottom: 10 }} onClick={() => startNewRound(key)}>
@@ -4191,7 +4241,10 @@ function computeRoundScoring(round) {
                 Best-Ball - the lower of your two scores counts
               </OptionButton>
               <OptionButton onClick={() => wizardGoNext("teamScoring", { teamScoring: "combined", resolvedGameKey: "ponto", isTournament: false })}>
-                Team Skins - both scores add together
+                Team Skins - points for lowest team strokes and putts
+              </OptionButton>
+              <OptionButton onClick={() => wizardGoNext("teamScoring", { teamScoring: "teamstrokes", resolvedGameKey: "teamstrokes", isTournament: false })}>
+                Team Strokes - both scores add together
               </OptionButton>
               <OptionButton onClick={() => wizardGoNext("teamScoring", { teamScoring: "teamputts", resolvedGameKey: "teamputts", isTournament: false })}>
                 Team Putts - point per hole for lowest number of combined team putts
@@ -4558,7 +4611,7 @@ function computeRoundScoring(round) {
 
   if (screen === "setup") {
     const g = GAMES[gameKey];
-    const isTeamGame = gameKey === "seabluffe" || gameKey === "ponto" || gameKey === "beachside" || gameKey === "teamputts";
+    const isTeamGame = gameKey === "seabluffe" || gameKey === "ponto" || gameKey === "beachside" || gameKey === "teamputts" || gameKey === "teamstrokes";
     return (
       <div className="gsc">
         <style>{STYLE}</style>
@@ -4911,7 +4964,7 @@ function computeRoundScoring(round) {
                 Rotation: Holes 1-6 {LETTERS[0]}+{LETTERS[1]} vs {LETTERS[2]}+{LETTERS[3]} - Holes 7-12 {LETTERS[0]}+{LETTERS[2]} vs {LETTERS[1]}+{LETTERS[3]} - Holes 13-18 {LETTERS[0]}+{LETTERS[3]} vs {LETTERS[1]}+{LETTERS[2]}
               </div>
             )}
-            {(gameKey === "ponto" || gameKey === "beachside" || gameKey === "teamputts") && (
+            {(gameKey === "ponto" || gameKey === "beachside" || gameKey === "teamputts" || gameKey === "teamstrokes") && (
               <div style={{ marginTop: 10 }}>
                 <div className="gsc-label">Teams</div>
                 <div className="gsc-row">
@@ -5454,7 +5507,7 @@ function computeRoundScoring(round) {
     const g = GAMES[round.game];
     const ranks = playerRank();
     let winners = [];
-    const isTwoVsTwoGame = round.game === "seabluffe" || round.game === "ponto" || round.game === "beachside" || round.game === "teamputts";
+    const isTwoVsTwoGame = round.game === "seabluffe" || round.game === "ponto" || round.game === "beachside" || round.game === "teamputts" || round.game === "teamstrokes";
     if (!g.singleTeam && ranks.length > 0) {
       if (isTwoVsTwoGame) {
         // These are always 2v2 - the winning team is the top 2 ranked
