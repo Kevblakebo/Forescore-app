@@ -3757,7 +3757,7 @@ function computeRoundScoring(round) {
             <div style={{ fontSize: 12, color: "#8a8a80", marginBottom: 14 }}>Last updated: {new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}</div>
             <div style={{ fontSize: 13, color: "#4b4b45", lineHeight: 1.6 }}>
               <p style={{ margin: "0 0 14px" }}>
-                By using RipScore Golf ("RipScore," "the app," "we," or "us"), you agree to these terms. If you don't agree with them, please don't use the app.
+                By using RipScore ("RipScore," "the app," "we," or "us"), you agree to these terms. If you don't agree with them, please don't use the app.
               </p>
 
               <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>What RipScore Is</p>
@@ -3817,7 +3817,7 @@ function computeRoundScoring(round) {
             <div style={{ fontSize: 12, color: "#8a8a80", marginBottom: 14 }}>Last updated: {new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}</div>
             <div style={{ fontSize: 13, color: "#4b4b45", lineHeight: 1.6 }}>
               <p style={{ margin: "0 0 14px" }}>
-                This page explains what information RipScore Golf collects, how it's used, and who it's shared with. We've tried to write it in plain language rather than dense legal text.
+                This page explains what information RipScore collects, how it's used, and who it's shared with. We've tried to write it in plain language rather than dense legal text.
               </p>
 
               <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>Information Kept Only On Your Device</p>
