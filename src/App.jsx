@@ -425,7 +425,7 @@ const GAMES = {
   },
   dstreet: {
     name: "Individual Skins",
-    tag: "Individual skins - up to 4 players",
+    tag: "Individual points - up to 4 players",
     desc: "Individual strokes and putting skins game for up to 4 players. Points for low strokes AND low putts each hole. Most points wins. Great for similar handicaps.",
     rotates: false,
     hasScore: true,
