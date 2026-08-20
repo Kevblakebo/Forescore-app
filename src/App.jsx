@@ -3157,7 +3157,7 @@ function computeRoundScoring(round) {
         />
         <div className="gsc-body gsc-body-tabbed">
           <div style={{ fontSize: 13, color: "#4b4b45", lineHeight: 1.55, margin: "0 0 16px" }}>
-            We all love playing games on the course, but who wants to keep track of all the scores and rules? RipScore takes care of this for you so you can focus on your game! No more paper scorecards, redoing the math, or questioning the rules. RipScore makes it easy to play various golf games, share scores live on the course, and settle who owes who.
+            We all love playing games on the course, but who wants to keep track of the scores and rules? RipScore does it for you. No paper scorecards, no redoing the math, no arguing about rules, just easy golf games, live shared scores, and a clear answer to who owes who at the 19th hole.
             <br />
             <br />
             To start a new round or tournament:
