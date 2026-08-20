@@ -2940,7 +2940,7 @@ function computeRoundScoring(round) {
 
   const computed = useMemo(() => computeRoundScoring(round), [round]);
 
-  // Foresa is built for phones only - this gate runs after every hook
+  // RipScore is built for phones only - this gate runs after every hook
   // above has already executed (Rules of Hooks requires hooks to run
   // unconditionally), so it's safe to return early here for anyone on a
   // tablet or desktop instead of rendering the app itself.
@@ -2949,8 +2949,8 @@ function computeRoundScoring(round) {
       <div className="gsc" style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: 24, textAlign: "center" }}>
         <style>{STYLE}</style>
         <div>
-          <img src={LOGO_DATA_URI} alt="Foresa logo" style={{ width: 100, height: "auto", marginBottom: 16 }} />
-          <div className="gsc-display" style={{ fontSize: 20, fontWeight: 700, marginBottom: 10 }}>Foresa is built for phones</div>
+          <img src={LOGO_DATA_URI} alt="RipScore logo" style={{ width: 100, height: "auto", marginBottom: 16 }} />
+          <div className="gsc-display" style={{ fontSize: 20, fontWeight: 700, marginBottom: 10 }}>RipScore is built for phones</div>
           <div style={{ fontSize: 14, color: "#4b4b45", lineHeight: 1.6, maxWidth: 360 }}>
             This app is designed for use on a mobile phone out on the course, and isn't optimized for tablets or desktop browsers. Please open this link on your phone to play.
           </div>
@@ -3003,7 +3003,7 @@ function computeRoundScoring(round) {
           {right}
           <img
             src={LOGO_DATA_URI}
-            alt="Foresa logo"
+            alt="RipScore logo"
             style={{ width: 58, height: "auto", objectFit: "contain", flexShrink: 0, alignSelf: "flex-start", marginRight: 0, marginTop: -2 }}
           />
         </div>
@@ -3100,12 +3100,12 @@ function computeRoundScoring(round) {
       <div className="gsc">
         <style>{STYLE}</style>
         <Header
-          title={<><span style={{ fontSize: 23 }}>Foresa Golf</span><div style={{ fontSize: 11, fontWeight: 400, opacity: 0.75, letterSpacing: "0.5px", textTransform: "uppercase", marginTop: 2, fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>Play the game. We'll keep score.</div></>}
+          title={<><span style={{ fontSize: 23 }}>RipScore Golf</span><div style={{ fontSize: 11, fontWeight: 400, opacity: 0.75, letterSpacing: "0.5px", textTransform: "uppercase", marginTop: 2, fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>Play the game. We'll keep score.</div></>}
           sub=""
         />
         <div className="gsc-body gsc-body-tabbed">
           <div style={{ fontSize: 13, color: "#4b4b45", lineHeight: 1.55, margin: "0 0 16px" }}>
-            We all love playing games on the course, but who wants to keep track of all the scores and rules? Foresa makes it easy and fun to play various golf game formats, share scores live on the course, and settle who's buying at the 19th hole!
+            We all love playing games on the course, but who wants to keep track of all the scores and rules? RipScore makes it easy and fun to play various golf game formats, share scores live on the course, and settle who's buying at the 19th hole!
             <br />
             <br />
             To start a new round or tournament:
@@ -3648,7 +3648,7 @@ function computeRoundScoring(round) {
           <div className="gsc-card" style={{ cursor: "pointer" }} onClick={() => goToScreen("about")}>
             <div className="gsc-label" style={{ marginBottom: 6 }}>About this App</div>
             <div style={{ fontSize: 13, color: "#4b4b45" }}>
-              What Foresa tracks for you, and how a round works from tee to tally.
+              What RipScore tracks for you, and how a round works from tee to tally.
             </div>
             <button className="gsc-link" style={{ marginTop: 8, fontSize: 12 }} onClick={() => goToScreen("about")}>
               Read more
@@ -3658,7 +3658,7 @@ function computeRoundScoring(round) {
           <div className="gsc-card" style={{ cursor: "pointer" }} onClick={() => goToScreen("termsOfService")}>
             <div className="gsc-label" style={{ marginBottom: 6 }}>Terms of Service</div>
             <div style={{ fontSize: 13, color: "#4b4b45" }}>
-              The terms for using Foresa.
+              The terms for using RipScore.
             </div>
             <button className="gsc-link" style={{ marginTop: 8, fontSize: 12 }} onClick={() => goToScreen("termsOfService")}>
               Read more
@@ -3668,7 +3668,7 @@ function computeRoundScoring(round) {
           <div className="gsc-card" style={{ cursor: "pointer" }} onClick={() => goToScreen("privacyPolicy")}>
             <div className="gsc-label" style={{ marginBottom: 6 }}>Privacy Policy</div>
             <div style={{ fontSize: 13, color: "#4b4b45" }}>
-              How Foresa handles your data.
+              How RipScore handles your data.
             </div>
             <button className="gsc-link" style={{ marginTop: 8, fontSize: 12 }} onClick={() => goToScreen("privacyPolicy")}>
               Read more
@@ -3724,12 +3724,12 @@ function computeRoundScoring(round) {
     return (
       <div className="gsc">
         <style>{STYLE}</style>
-        <Header title="About this App" sub="What Foresa does for you" onBack={() => goBack("libraryTab")} />
+        <Header title="About this App" sub="What RipScore does for you" onBack={() => goBack("libraryTab")} />
         <div className="gsc-body">
           <div className="gsc-card gsc-no-select">
             <div style={{ fontSize: 13, color: "#4b4b45", lineHeight: 1.6 }}>
               <p style={{ margin: "0 0 14px" }}>
-                The Foresa golf game scorecard app manages and shares the detail of various golf game formats you can play with your group live on the course so you don't have to: game type, rules, players, teams, scoring, max scores, course pars, handicaps, mulligans, dates, and prizes. You no longer have to do it in your head or on a paper scorecard.
+                The RipScore golf game scorecard app manages and shares the detail of various golf game formats you can play with your group live on the course so you don't have to: game type, rules, players, teams, scoring, max scores, course pars, handicaps, mulligans, dates, and prizes. You no longer have to do it in your head or on a paper scorecard.
               </p>
               <p style={{ margin: "0 0 14px" }}>
                 Before you tee off, you can quickly set the details that matter for your group. Just pick a game and enter the details before the round. Then each player enters their own scores during play (or one person can enter for everyone), and everyone can see where things stand as you go. When the round wraps up, points are calculated and saved automatically.
@@ -3751,48 +3751,48 @@ function computeRoundScoring(round) {
     return (
       <div className="gsc">
         <style>{STYLE}</style>
-        <Header title="Terms of Service" sub="The terms for using Foresa" onBack={() => goBack("libraryTab")} />
+        <Header title="Terms of Service" sub="The terms for using RipScore" onBack={() => goBack("libraryTab")} />
         <div className="gsc-body">
           <div className="gsc-card gsc-no-select">
             <div style={{ fontSize: 12, color: "#8a8a80", marginBottom: 14 }}>Last updated: {new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}</div>
             <div style={{ fontSize: 13, color: "#4b4b45", lineHeight: 1.6 }}>
               <p style={{ margin: "0 0 14px" }}>
-                By using Foresa Golf ("Foresa," "the app," "we," or "us"), you agree to these terms. If you don't agree with them, please don't use the app.
+                By using RipScore Golf ("RipScore," "the app," "we," or "us"), you agree to these terms. If you don't agree with them, please don't use the app.
               </p>
 
-              <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>What Foresa Is</p>
+              <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>What RipScore Is</p>
               <p style={{ margin: "0 0 14px" }}>
-                Foresa is a casual scorekeeping companion for golf rounds and tournaments played with friends. It helps you set up game formats, track strokes and putts, and share results with your group live on the course. It's built for fun, organized golf - not as an official scoring, handicap, or ratings authority.
+                RipScore is a casual scorekeeping companion for golf rounds and tournaments played with friends. It helps you set up game formats, track strokes and putts, and share results with your group live on the course. It's built for fun, organized golf - not as an official scoring, handicap, or ratings authority.
               </p>
 
               <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>Not an Official Handicap Service</p>
               <p style={{ margin: "0 0 14px" }}>
-                Foresa is not affiliated with, endorsed by, or connected to the USGA, GHIN, or any official handicapping body. Any link to GHIN.com is provided only as a convenience. Posting scores for handicap purposes is entirely your own responsibility, done directly through GHIN or your club - Foresa does not submit anything on your behalf.
+                RipScore is not affiliated with, endorsed by, or connected to the USGA, GHIN, or any official handicapping body. Any link to GHIN.com is provided only as a convenience. Posting scores for handicap purposes is entirely your own responsibility, done directly through GHIN or your club - RipScore does not submit anything on your behalf.
               </p>
 
               <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>Access via Codes, Not Accounts</p>
               <p style={{ margin: "0 0 14px" }}>
-                Foresa doesn't currently require you to create an account. Rounds and tournaments are accessed using a share code, and anyone with that code can view or enter scores for that round - so treat your codes the way you'd treat access to a shared document, and only share them with people you actually want in your group.
+                RipScore doesn't currently require you to create an account. Rounds and tournaments are accessed using a share code, and anyone with that code can view or enter scores for that round - so treat your codes the way you'd treat access to a shared document, and only share them with people you actually want in your group.
               </p>
 
               <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>Your Responsibilities</p>
               <p style={{ margin: "0 0 14px" }}>
-                You agree to use Foresa for its intended purpose - organizing and tracking casual golf play - and not to misuse it, attempt to disrupt it, or use it to harm, harass, or deceive other players. You're responsible for the accuracy of the names, scores, and other information you or your group enter.
+                You agree to use RipScore for its intended purpose - organizing and tracking casual golf play - and not to misuse it, attempt to disrupt it, or use it to harm, harass, or deceive other players. You're responsible for the accuracy of the names, scores, and other information you or your group enter.
               </p>
 
               <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>Prizes and Wagers Between Players</p>
               <p style={{ margin: "0 0 14px" }}>
-                Some game formats reference a prize or settling up at the 19th hole. Any money, prizes, or wagers exchanged between players are agreements solely between those players. Foresa does not facilitate, process, hold, or guarantee any payment, and takes no responsibility for disputes about them.
+                Some game formats reference a prize or settling up at the 19th hole. Any money, prizes, or wagers exchanged between players are agreements solely between those players. RipScore does not facilitate, process, hold, or guarantee any payment, and takes no responsibility for disputes about them.
               </p>
 
               <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>Provided As-Is</p>
               <p style={{ margin: "0 0 14px" }}>
-                Foresa is provided "as is," without warranties of any kind. We work to keep scores accurate and the app available, but we can't guarantee it will always be error-free, uninterrupted, or available - especially out on the course, where connectivity isn't always reliable. To the fullest extent the law allows, Foresa and its creator aren't liable for any loss, dispute, or damages arising from your use of the app, including lost or inaccurate score data.
+                RipScore is provided "as is," without warranties of any kind. We work to keep scores accurate and the app available, but we can't guarantee it will always be error-free, uninterrupted, or available - especially out on the course, where connectivity isn't always reliable. To the fullest extent the law allows, RipScore and its creator aren't liable for any loss, dispute, or damages arising from your use of the app, including lost or inaccurate score data.
               </p>
 
               <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>Changes</p>
               <p style={{ margin: "0 0 14px" }}>
-                Foresa is an evolving, independent project. Features, game formats, and these terms may change as the app improves. We'll update the date at the top of this page when that happens.
+                RipScore is an evolving, independent project. Features, game formats, and these terms may change as the app improves. We'll update the date at the top of this page when that happens.
               </p>
 
               <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>Contact</p>
@@ -3811,13 +3811,13 @@ function computeRoundScoring(round) {
     return (
       <div className="gsc">
         <style>{STYLE}</style>
-        <Header title="Privacy Policy" sub="How Foresa handles your data" onBack={() => goBack("libraryTab")} />
+        <Header title="Privacy Policy" sub="How RipScore handles your data" onBack={() => goBack("libraryTab")} />
         <div className="gsc-body">
           <div className="gsc-card gsc-no-select">
             <div style={{ fontSize: 12, color: "#8a8a80", marginBottom: 14 }}>Last updated: {new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}</div>
             <div style={{ fontSize: 13, color: "#4b4b45", lineHeight: 1.6 }}>
               <p style={{ margin: "0 0 14px" }}>
-                This page explains what information Foresa Golf collects, how it's used, and who it's shared with. We've tried to write it in plain language rather than dense legal text.
+                This page explains what information RipScore Golf collects, how it's used, and who it's shared with. We've tried to write it in plain language rather than dense legal text.
               </p>
 
               <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>Information Kept Only On Your Device</p>
@@ -3832,32 +3832,32 @@ function computeRoundScoring(round) {
 
               <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>Feedback Submissions</p>
               <p style={{ margin: "0 0 14px" }}>
-                If you use the in-app Feedback form, your answers are sent to the person maintaining Foresa via email. The form is intentionally built to not ask for your name or contact info, so submissions are anonymous on our end.
+                If you use the in-app Feedback form, your answers are sent to the person maintaining RipScore via email. The form is intentionally built to not ask for your name or contact info, so submissions are anonymous on our end.
               </p>
 
               <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>Third-Party Services We Use</p>
               <p style={{ margin: "0 0 14px" }}>
-                Foresa relies on a small number of outside services to work: a golf course database (to look up par and yardage when you search for a course), a cloud database (to store and sync round and tournament data across devices), and an email delivery service (to send Feedback submissions). Each of these only receives the specific information needed to perform its part - for example, the course lookup service only ever receives the course name or location you search for, never your scores or player info.
+                RipScore relies on a small number of outside services to work: a golf course database (to look up par and yardage when you search for a course), a cloud database (to store and sync round and tournament data across devices), and an email delivery service (to send Feedback submissions). Each of these only receives the specific information needed to perform its part - for example, the course lookup service only ever receives the course name or location you search for, never your scores or player info.
               </p>
 
               <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>What We Don't Do</p>
               <p style={{ margin: "0 0 14px" }}>
-                We don't sell your data, show you ads, or use tracking or analytics tools to follow you across other apps or websites. Foresa doesn't currently use cookies.
+                We don't sell your data, show you ads, or use tracking or analytics tools to follow you across other apps or websites. RipScore doesn't currently use cookies.
               </p>
 
               <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>Data Retention and Deletion</p>
               <p style={{ margin: "0 0 14px" }}>
-                Round and tournament data is kept for as long as needed to support the app's features (like viewing past rounds). Since Foresa doesn't have account logins today, there's no self-service "delete my account" option yet - if you'd like a specific round or tournament's data removed, email us and we'll take care of it.
+                Round and tournament data is kept for as long as needed to support the app's features (like viewing past rounds). Since RipScore doesn't have account logins today, there's no self-service "delete my account" option yet - if you'd like a specific round or tournament's data removed, email us and we'll take care of it.
               </p>
 
               <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>Children</p>
               <p style={{ margin: "0 0 14px" }}>
-                Foresa isn't directed at children under 13, and we don't knowingly collect information from them.
+                RipScore isn't directed at children under 13, and we don't knowingly collect information from them.
               </p>
 
               <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>Changes</p>
               <p style={{ margin: "0 0 14px" }}>
-                As Foresa evolves - like if account logins are added in the future - this page will be updated to reflect it, and the date at the top will change accordingly.
+                As RipScore evolves - like if account logins are added in the future - this page will be updated to reflect it, and the date at the top will change accordingly.
               </p>
 
               <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>Contact</p>
@@ -3876,13 +3876,13 @@ function computeRoundScoring(round) {
     return (
       <div className="gsc">
         <style>{STYLE}</style>
-        <Header title="Swag Store" sub="Order your Foresa Golf swag here" onBack={() => goBack("libraryTab")} />
+        <Header title="Swag Store" sub="Order your RipScore Golf swag here" onBack={() => goBack("libraryTab")} />
         <div className="gsc-body">
           <div className="gsc-card" style={{ textAlign: "center", padding: "32px 20px" }}>
             <ShoppingBag size={28} color="#8FA998" style={{ marginBottom: 10 }} />
             <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 6 }}>Swag Store Under Construction</div>
             <div style={{ fontSize: 13, color: "#6b6b63", lineHeight: 1.5 }}>
-              Foresa Golf hats, shirts, and more will be available to order here soon.
+              RipScore Golf hats, shirts, and more will be available to order here soon.
             </div>
           </div>
         </div>
@@ -5476,7 +5476,7 @@ function computeRoundScoring(round) {
         <div style={{ position: "relative", background: "#1B4332", padding: "28px 18px 22px", overflow: "hidden" }}>
           <Fireworks />
           <div style={{ position: "relative", textAlign: "center" }}>
-            <img src={LOGO_DATA_URI} alt="Foresa logo" style={{ width: 54, height: "auto", marginBottom: 10 }} />
+            <img src={LOGO_DATA_URI} alt="RipScore logo" style={{ width: 54, height: "auto", marginBottom: 10 }} />
             <div className="gsc-display" style={{ fontSize: 24, fontWeight: 700, color: "#F3EFE0" }}>Round Complete!</div>
             <div style={{ fontSize: 13, color: "#F3EFE0", opacity: 0.8, marginTop: 4 }}>
               {round.name} - {g.name} - {round.date}
@@ -5583,7 +5583,7 @@ function computeRoundScoring(round) {
         <div style={{ position: "relative", background: "#1B4332", padding: "28px 18px 22px", overflow: "hidden" }}>
           <Fireworks />
           <div style={{ position: "relative", textAlign: "center" }}>
-            <img src={LOGO_DATA_URI} alt="Foresa logo" style={{ width: 54, height: "auto", marginBottom: 10 }} />
+            <img src={LOGO_DATA_URI} alt="RipScore logo" style={{ width: 54, height: "auto", marginBottom: 10 }} />
             <div className="gsc-display" style={{ fontSize: 24, fontWeight: 700, color: "#F3EFE0" }}>You're All Set!</div>
             <div style={{ fontSize: 13, color: "#F3EFE0", opacity: 0.8, marginTop: 4 }}>
               {ct.name} - {GAMES[ct.game].name}
@@ -5622,7 +5622,7 @@ function computeRoundScoring(round) {
         <div style={{ position: "relative", background: "#1B4332", padding: "28px 18px 22px", overflow: "hidden" }}>
           <Fireworks />
           <div style={{ position: "relative", textAlign: "center" }}>
-            <img src={LOGO_DATA_URI} alt="Foresa logo" style={{ width: 54, height: "auto", marginBottom: 10 }} />
+            <img src={LOGO_DATA_URI} alt="RipScore logo" style={{ width: 54, height: "auto", marginBottom: 10 }} />
             <div className="gsc-display" style={{ fontSize: 24, fontWeight: 700, color: "#F3EFE0" }}>Tournament Complete!</div>
             <div style={{ fontSize: 13, color: "#F3EFE0", opacity: 0.8, marginTop: 4 }}>
               {ft.name} - {GAMES[ft.game].name} - {ft.date}
