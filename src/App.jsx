@@ -1097,7 +1097,7 @@ export default function GolfScorecard() {
   const [tournamentCreatedSnapshot, setTournamentCreatedSnapshot] = useState(null); // captured data for the "tournament just created" celebration
 
   // ---- Feedback survey state ----
-  const FEEDBACK_FEATURES = ["Mulligan tracking", "Course search (auto-fill par)", "Avatars", "Tournaments / Leaderboard", "Full 18-hole grid view", "Accolades (birdie/eagle celebrations)"];
+  const FEEDBACK_FEATURES = ["Mulligan tracking", "Course search (auto-fill par)", "Avatars", "Tournaments / Leaderboard", "Full 18-hole scorecard view", "Accolades (birdie/eagle celebrations)"];
   const [feedbackAnswers, setFeedbackAnswers] = useState({
     setupMethod: null,
     setupEase: null,
@@ -5689,7 +5689,7 @@ function computeRoundScoring(round) {
     const foursomeTotals = g.singleTeam ? computeTournamentFoursomeTotals(round) : null;
 
 
-    // Raw totals for the full 18-hole grid's Total and +/- Par rows - these
+    // Raw totals for the full 18-hole scorecard's Total and +/- Par rows - these
     // sum exactly what's shown in each cell (uncapped, as entered), and only
     // count holes that have actually been played so an in-progress round
     // doesn't show a misleading total.
@@ -6276,7 +6276,7 @@ function computeRoundScoring(round) {
           </div>
           )}
 
-          <button className="gsc-link" onClick={() => setShowGrid((s) => !s)}>{showGrid ? "Hide" : "Show"} full 18-hole grid</button>
+          <button className="gsc-link" onClick={() => setShowGrid((s) => !s)}>{showGrid ? "Hide" : "Show"} full 18-hole scorecard</button>
           {showGrid && (() => {
             const hasYardageCol = round.yardage && round.yardage.some((y) => y != null);
             const hasStrokeIndexCol = round.strokeIndex && round.strokeIndex.some((s) => s != null);
