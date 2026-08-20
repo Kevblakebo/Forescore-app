@@ -88,7 +88,7 @@ const STYLE = `
 const GAMES = {
   teamstrokes: {
     name: "Team Strokes",
-    tag: "Combined teams - 4 players",
+    tag: "Fixed teams stroke play - 4 players",
     desc: "A 4-person, 2 vs 2 team combined strokes competition. Each player plays their own ball and records their own strokes and putts. Lowest team total strokes wins; lowest team total putts settles a tie.",
     rotates: false,
     hasScore: true,
@@ -232,7 +232,7 @@ const GAMES = {
   },
   ponto: {
     name: "Team Skins",
-    tag: "Fixed teams - 4 players",
+    tag: "Fixed teams points - 4 players",
     desc: "Two 2-person teams, same partners all 18 holes. Points for low combined score AND low combined putts each hole. Great for similar handicaps.",
     rotates: false,
     hasScore: true,
