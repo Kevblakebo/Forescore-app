@@ -3100,7 +3100,7 @@ function computeRoundScoring(round) {
       <div className="gsc">
         <style>{STYLE}</style>
         <Header
-          title={<><span style={{ fontSize: 23 }}>RipScore</span><div style={{ fontSize: 11, fontWeight: 400, opacity: 0.75, letterSpacing: "0.5px", textTransform: "uppercase", marginTop: 2, fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>Play the game. We'll keep score.</div></>}
+          title={<><span style={{ fontSize: 23 }}>RipScore Golf</span><div style={{ fontSize: 11, fontWeight: 400, opacity: 0.75, letterSpacing: "0.5px", textTransform: "uppercase", marginTop: 2, fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>Play the game. We'll keep score.</div></>}
           sub=""
         />
         <div className="gsc-body gsc-body-tabbed">
@@ -3757,7 +3757,7 @@ function computeRoundScoring(round) {
             <div style={{ fontSize: 12, color: "#8a8a80", marginBottom: 14 }}>Last updated: {new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}</div>
             <div style={{ fontSize: 13, color: "#4b4b45", lineHeight: 1.6 }}>
               <p style={{ margin: "0 0 14px" }}>
-                By using RipScore ("RipScore," "the app," "we," or "us"), you agree to these terms. If you don't agree with them, please don't use the app.
+                By using RipScore ("RipScore Golf", "the app", "we", or "us"), you agree to these terms. If you don't agree with them, please don't use the app.
               </p>
 
               <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>What RipScore Is</p>
