@@ -86,6 +86,31 @@ const STYLE = `
 `;
 
 const GAMES = {
+  teamputts: {
+    name: "Team Putts",
+    tag: "Putting teams - 4 players",
+    desc: "A simple points-based putting game for 4 players, 2 vs 2 teams. The team with the least combined putts earns 1 point per hole. Most points at the end of the round wins. Total strokes also kept track of.",
+    rotates: false,
+    hasScore: true,
+    hasPutts: true,
+    puttsOnlyScoring: true,
+    defaults: { maxOver: 3, maxPutts: 3, mulliganSegment: 1, prize: "Losers buy winners a drink at the 19th hole" },
+    rules: [
+      "Team putting game for 4 players (2 vs 2 teams).",
+      "Total strokes and putts are kept track of.",
+      "1 point is earned per hole by the team with the lowest combined putts.",
+      "0 points are earned for ties. Ties do not carry over.",
+      "Prize: to be agreed on prior to round.",
+      "Strokes max: to be agreed on prior to round.",
+      "Putts max: to be agreed on prior to round.",
+      "Mulligans: to be agreed on prior to round.",
+      "Play OB shots as a lateral drop (1 out, 1 in) (to be agreed on).",
+      "Must putt all the way into the hole.",
+      "Flagstick can stay in.",
+      "Putts start once on the putting green.",
+      "Handicaps not used in game scoring, but are visible.",
+    ],
+  },
   seabluffe: {
     name: "Round Robin",
     tag: "Rotating teams - 4 players",
@@ -396,6 +421,31 @@ const GAMES = {
       "No carry-overs on ties.",
       "Handicaps not used in game scoring.",
       "Great for similar handicap foursomes.",
+    ],
+  },
+  individualputts: {
+    name: "Individual Putts",
+    tag: "Individual putting game - up to 4 players",
+    desc: "A simple total putts game for up to 4 players, every player for themselves. The player with the least amount of putts at the end of the round wins. Total strokes also still kept track of.",
+    rotates: false,
+    hasScore: true,
+    hasPutts: true,
+    totalScoring: true,
+    rankByPutts: true,
+    defaults: { maxOver: 3, maxPutts: 3, mulliganSegment: 1, prize: "Losers buy winners a drink at the 19th hole" },
+    rules: [
+      "Individual putting game for up to 4 players.",
+      "Total strokes and putts are kept track of.",
+      "Lowest amount of putts at the end of the round wins.",
+      "Prize: to be agreed on prior to round.",
+      "Strokes max: to be agreed on prior to round.",
+      "Putts max: to be agreed on prior to round.",
+      "Mulligans: to be agreed on prior to round.",
+      "Play OB shots as a lateral drop (1 out, 1 in) (to be agreed on).",
+      "Must putt all the way into the hole.",
+      "Flagstick can stay in.",
+      "Putts start once on the putting green.",
+      "Handicaps not used in game scoring, but are visible.",
     ],
   },
   pontobango: {
@@ -1834,7 +1884,7 @@ export default function GolfScorecard() {
       } else {
         setGameKey(key);
         setCfg({ ...GAMES[key].defaults });
-        const count = key === "swami" || key === "dstreet" || key === "pontobango" ? Math.max(1, Math.min(4, Number(nextAnswers.playerCount) || 4)) : 4;
+        const count = key === "swami" || key === "dstreet" || key === "pontobango" || key === "individualputts" ? Math.max(1, Math.min(4, Number(nextAnswers.playerCount) || 4)) : 4;
         setPlayers((p) => {
           const base = [...p];
           while (base.length < count) base.push({ name: "", hcp: "", avatar: "" });
@@ -1969,11 +2019,12 @@ export default function GolfScorecard() {
   async function finishSetup() {
     setErr("");
     const cleanPlayers = players.map((p, i) => ({ name: p.name.trim() || `Player ${LETTERS[i]}`, hcp: p.hcp, avatar: p.avatar || "" }));
-    const isIndividual = gameKey === "dstreet" || gameKey === "swami" || gameKey === "pontobango";
+    const isIndividual = gameKey === "dstreet" || gameKey === "swami" || gameKey === "pontobango" || gameKey === "individualputts";
     if (isIndividual) {
-      const minPlayers = gameKey === "pontobango" ? 2 : 1;
+      const needsTwo = gameKey === "pontobango" || gameKey === "individualputts";
+      const minPlayers = needsTwo ? 2 : 1;
       if (cleanPlayers.length < minPlayers) {
-        setErr(gameKey === "pontobango" ? "Need at least 2 players." : "Need at least 1 player.");
+        setErr(needsTwo ? "Need at least 2 players." : "Need at least 1 player.");
         return;
       }
     } else if (cleanPlayers.length < 4) {
@@ -1989,7 +2040,7 @@ export default function GolfScorecard() {
     }
     const code = genCode();
     const teams =
-      gameKey === "ponto" || gameKey === "beachside"
+      gameKey === "ponto" || gameKey === "beachside" || gameKey === "teamputts"
         ? pontoPairing
         : isIndividual
         ? cleanPlayers.map((_, i) => [i]) // individual - each player is their own "team" of one, however many were entered
@@ -2853,7 +2904,7 @@ function computeRoundScoring(round) {
           awardLowest(puttSums).forEach((v, i) => (ptsAwarded[i].putt = v));
         }
       }
-    } else if (g.hasScore && !g.totalScoring) {
+    } else if (g.hasScore && !g.totalScoring && !g.puttsOnlyScoring) {
       const sums = teamRes.map((t) => t.scoreSum);
       awardLowest(sums).forEach((v, i) => (ptsAwarded[i].score = v));
     }
@@ -2911,6 +2962,7 @@ function computeRoundScoring(round) {
   function playerRank() {
     if (!computed || !round) return [];
     const isTotalScoring = GAMES[round.game] && GAMES[round.game].totalScoring;
+    const rankByPutts = GAMES[round.game] && GAMES[round.game].rankByPutts;
     return round.players
       .map((pl, i) => ({
         ...pl,
@@ -2921,6 +2973,10 @@ function computeRoundScoring(round) {
         relPar: computed.playerTotalScore[i] - computed.playerParPlayed[i],
       }))
       .sort((a, b) => {
+        if (rankByPutts) {
+          if (a.putts !== b.putts) return a.putts - b.putts; // lowest putts wins
+          return a.score - b.score; // total strokes breaks a tie
+        }
         if (isTotalScoring) {
           if (a.score !== b.score) return a.score - b.score; // lowest strokes wins
           return a.putts - b.putts; // total putts breaks a tie
@@ -3139,7 +3195,7 @@ function computeRoundScoring(round) {
 
             <div className="gsc-label" style={{ marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Individual Game Formats</div>
             <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>Up to 4 Players</div>
-            {["dstreet", "swami", "pontobango"]
+            {["dstreet", "swami", "individualputts", "pontobango"]
               .map((key) => [key, GAMES[key]])
               .map(([key, g]) => (
                 <div key={key} className="gsc-card gsc-game-card" style={{ marginBottom: 10 }} onClick={() => startNewRound(key)}>
@@ -3161,7 +3217,7 @@ function computeRoundScoring(round) {
 
             <div className="gsc-label" style={{ marginTop: 14, marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Team Game Formats</div>
             <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>2 vs 2</div>
-            {["ponto", "beachside", "seabluffe", "moonlightwolf"]
+            {["ponto", "beachside", "teamputts", "seabluffe", "moonlightwolf"]
               .map((key) => [key, GAMES[key]])
               .map(([key, g]) => (
                 <div key={key} className="gsc-card gsc-game-card" style={{ marginBottom: 10 }} onClick={() => startNewRound(key)}>
@@ -3317,7 +3373,7 @@ function computeRoundScoring(round) {
 
             <div className="gsc-label" style={{ marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Individual Game Formats</div>
             <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>Up to 4 Players</div>
-            {["dstreet", "swami", "pontobango"]
+            {["dstreet", "swami", "individualputts", "pontobango"]
               .map((key) => [key, GAMES[key]])
               .map(([key, g]) => (
                 <div key={key} className="gsc-card gsc-game-card" style={{ marginBottom: 10 }} onClick={() => startNewRound(key)}>
@@ -3339,7 +3395,7 @@ function computeRoundScoring(round) {
 
             <div className="gsc-label" style={{ marginTop: 14, marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Team Game Formats</div>
             <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>2 vs 2</div>
-            {["ponto", "beachside", "seabluffe", "moonlightwolf"]
+            {["ponto", "beachside", "teamputts", "seabluffe", "moonlightwolf"]
               .map((key) => [key, GAMES[key]])
               .map(([key, g]) => (
                 <div key={key} className="gsc-card gsc-game-card" style={{ marginBottom: 10 }} onClick={() => startNewRound(key)}>
@@ -4137,6 +4193,9 @@ function computeRoundScoring(round) {
               <OptionButton onClick={() => wizardGoNext("teamScoring", { teamScoring: "combined", resolvedGameKey: "ponto", isTournament: false })}>
                 Team Skins - both scores add together
               </OptionButton>
+              <OptionButton onClick={() => wizardGoNext("teamScoring", { teamScoring: "teamputts", resolvedGameKey: "teamputts", isTournament: false })}>
+                Team Putts - point per hole for lowest number of combined team putts
+              </OptionButton>
             </div>
           )}
 
@@ -4149,6 +4208,9 @@ function computeRoundScoring(round) {
               </OptionButton>
               <OptionButton onClick={() => wizardGoNext("individualScoring", { individualScoring: "skins", resolvedGameKey: "dstreet", isTournament: false })}>
                 Skins - points awarded each hole for strokes AND putts
+              </OptionButton>
+              <OptionButton onClick={() => wizardGoNext("individualScoring", { individualScoring: "individualputts", resolvedGameKey: "individualputts", isTournament: false })}>
+                Player with lowest number of putts wins (strokes can still be kept track of)
               </OptionButton>
               <OptionButton onClick={() => wizardGoNext("individualScoring", { individualScoring: "pontobango", resolvedGameKey: "pontobango", isTournament: false })}>
                 Points awarded for First on, closest to pin, & longest putt
@@ -4496,7 +4558,7 @@ function computeRoundScoring(round) {
 
   if (screen === "setup") {
     const g = GAMES[gameKey];
-    const isTeamGame = gameKey === "seabluffe" || gameKey === "ponto" || gameKey === "beachside";
+    const isTeamGame = gameKey === "seabluffe" || gameKey === "ponto" || gameKey === "beachside" || gameKey === "teamputts";
     return (
       <div className="gsc">
         <style>{STYLE}</style>
@@ -4761,9 +4823,9 @@ function computeRoundScoring(round) {
 
           <div className="gsc-card">
             <div className="gsc-label" style={{ marginBottom: 10 }}>Players</div>
-            {(gameKey === "swami" || gameKey === "dstreet" || gameKey === "pontobango") && (
+            {(gameKey === "swami" || gameKey === "dstreet" || gameKey === "pontobango" || gameKey === "individualputts") && (
               <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 10 }}>
-                This format supports {gameKey === "pontobango" ? "2-4" : "1-4"} players - add or remove players below to match who's actually playing.
+                This format supports {gameKey === "pontobango" || gameKey === "individualputts" ? "2-4" : "1-4"} players - add or remove players below to match who's actually playing.
               </div>
             )}
             <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 10 }}>
@@ -4800,7 +4862,7 @@ function computeRoundScoring(round) {
                   </button>
                   <input className="gsc-input" placeholder={`Player ${LETTERS[i]} name`} value={p.name} onChange={(e) => updatePlayer(i, "name", e.target.value)} />
                   <input className="gsc-input" style={{ flex: "0 0 70px" }} placeholder="HCP" value={p.hcp} onChange={(e) => updatePlayer(i, "hcp", e.target.value)} />
-                  {(gameKey === "swami" || gameKey === "dstreet" || gameKey === "pontobango") && players.length > (gameKey === "pontobango" ? 2 : 1) && (
+                  {(gameKey === "swami" || gameKey === "dstreet" || gameKey === "pontobango" || gameKey === "individualputts") && players.length > (gameKey === "pontobango" || gameKey === "individualputts" ? 2 : 1) && (
                     <button
                       className="gsc-btn gsc-btn-outline"
                       style={{ flex: "0 0 auto", color: "#C1440E", borderColor: "#C1440E", padding: "9px 12px" }}
@@ -4839,7 +4901,7 @@ function computeRoundScoring(round) {
                 )}
               </div>
             ))}
-            {(gameKey === "swami" || gameKey === "dstreet" || gameKey === "pontobango") && players.length < 4 && (
+            {(gameKey === "swami" || gameKey === "dstreet" || gameKey === "pontobango" || gameKey === "individualputts") && players.length < 4 && (
               <button className="gsc-btn gsc-btn-outline" style={{ width: "100%", marginTop: 4 }} onClick={addPlayerSlot}>
                 + Add another player
               </button>
@@ -4849,7 +4911,7 @@ function computeRoundScoring(round) {
                 Rotation: Holes 1-6 {LETTERS[0]}+{LETTERS[1]} vs {LETTERS[2]}+{LETTERS[3]} - Holes 7-12 {LETTERS[0]}+{LETTERS[2]} vs {LETTERS[1]}+{LETTERS[3]} - Holes 13-18 {LETTERS[0]}+{LETTERS[3]} vs {LETTERS[1]}+{LETTERS[2]}
               </div>
             )}
-            {(gameKey === "ponto" || gameKey === "beachside") && (
+            {(gameKey === "ponto" || gameKey === "beachside" || gameKey === "teamputts") && (
               <div style={{ marginTop: 10 }}>
                 <div className="gsc-label">Teams</div>
                 <div className="gsc-row">
@@ -5392,7 +5454,7 @@ function computeRoundScoring(round) {
     const g = GAMES[round.game];
     const ranks = playerRank();
     let winners = [];
-    const isTwoVsTwoGame = round.game === "seabluffe" || round.game === "ponto" || round.game === "beachside";
+    const isTwoVsTwoGame = round.game === "seabluffe" || round.game === "ponto" || round.game === "beachside" || round.game === "teamputts";
     if (!g.singleTeam && ranks.length > 0) {
       if (isTwoVsTwoGame) {
         // These are always 2v2 - the winning team is the top 2 ranked
@@ -5447,7 +5509,9 @@ function computeRoundScoring(round) {
                   {winners.map((w) => `${w.avatar ? w.avatar + " " : ""}${w.name}`).join(" & ")}
                 </div>
                 <div style={{ fontSize: 13, color: "#6b6b63", marginTop: 4 }}>
-                  {g.totalScoring
+                  {g.rankByPutts
+                    ? `${winners[0].putts} putts (${winners[0].score} strokes)`
+                    : g.totalScoring
                     ? `${winners[0].score} strokes (${winners[0].putts} putts)`
                     : `${winners[0].points} pts (${winners[0].score}str/${winners[0].putts}putt/${formatRelPar(winners[0].relPar)})`}
                 </div>
@@ -5477,7 +5541,9 @@ function computeRoundScoring(round) {
                       {p.name}
                     </div>
                     <div className="gsc-mono" style={{ fontWeight: 700 }}>
-                      {g.totalScoring ? (
+                      {g.rankByPutts ? (
+                        <span style={{ fontSize: 17 }}>{p.putts}put/{p.score}str</span>
+                      ) : g.totalScoring ? (
                         <span style={{ fontSize: 17 }}>{p.score}str/{p.putts}put</span>
                       ) : (
                         <>
@@ -6187,7 +6253,9 @@ function computeRoundScoring(round) {
                 </div>
                 <div className="gsc-mono" style={{ fontWeight: 700 }}>
                   {!g.singleTeam && !g.totalScoring && <>{p.points} pts </>}
-                  {g.totalScoring ? (
+                  {g.rankByPutts ? (
+                    <span style={{ fontWeight: 700, fontSize: 17, whiteSpace: "nowrap" }}>{p.putts}putt/{p.score}str/{formatRelPar(p.relPar)}</span>
+                  ) : g.totalScoring ? (
                     <span style={{ fontWeight: 700, fontSize: 17, whiteSpace: "nowrap" }}>{p.score}str/{p.putts}putt/{formatRelPar(p.relPar)}</span>
                   ) : (
                     <span style={{ fontWeight: 700, color: "#6b6b63", whiteSpace: "nowrap" }}>({p.score}str/{p.putts}putt/{formatRelPar(p.relPar)})</span>
