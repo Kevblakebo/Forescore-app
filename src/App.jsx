@@ -747,6 +747,21 @@ function wolfIndexForHole(h) {
   return 3 - (h % 4);
 }
 
+// Great-circle distance between two GPS points, in yards. Standard
+// Haversine formula - works with coordinates from any data source, so
+// this doesn't need to change no matter which GPS provider eventually
+// supplies the actual green coordinates.
+function haversineYards(lat1, lon1, lat2, lon2) {
+  const R_METERS = 6371000;
+  const toRad = (deg) => (deg * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const meters = R_METERS * c;
+  return meters * 1.09361; // meters -> yards
+}
+
 // Single source of truth for "who's on which team this hole" - used by
 // both the scoring engine and the card screen's own render. These two
 // used to compute this independently, which is exactly how a game like
@@ -933,6 +948,43 @@ export default function GolfScorecard() {
   const [courseSelectedViaSearch, setCourseSelectedViaSearch] = useState(false);
   const [avatarPickerFor, setAvatarPickerFor] = useState(null); // player index currently showing its avatar picker, or null
   const [scoringAvatarPickerFor, setScoringAvatarPickerFor] = useState(null); // same idea, but for the scoring screen, kept separate since it edits an already-saved round rather than in-progress setup
+
+  // ---- Live GPS for distance-to-green ----
+  // This is intentionally provider-independent: it just tracks the
+  // player's own live position. Which data source actually supplies the
+  // green's coordinates (round.holeGPS) is a separate concern - this part
+  // works the same no matter what fills that in later.
+  const [playerGPS, setPlayerGPS] = useState(null); // { lat, lng, accuracy } or null
+  const [gpsStatus, setGpsStatus] = useState("idle"); // "idle" | "locating" | "active" | "denied" | "unsupported" | "error"
+  const gpsWatchIdRef = useRef(null);
+
+  function startGPSWatch() {
+    if (!("geolocation" in navigator)) {
+      setGpsStatus("unsupported");
+      return;
+    }
+    setGpsStatus("locating");
+    gpsWatchIdRef.current = navigator.geolocation.watchPosition(
+      (pos) => {
+        setGpsStatus("active");
+        setPlayerGPS({ lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy });
+      },
+      (err) => {
+        setGpsStatus(err.code === 1 ? "denied" : "error");
+      },
+      { enableHighAccuracy: true, maximumAge: 3000, timeout: 15000 }
+    );
+  }
+
+  function stopGPSWatch() {
+    if (gpsWatchIdRef.current != null && "geolocation" in navigator) {
+      navigator.geolocation.clearWatch(gpsWatchIdRef.current);
+    }
+    gpsWatchIdRef.current = null;
+    setGpsStatus("idle");
+    setPlayerGPS(null);
+  }
+
   const [wizardStepId, setWizardStepId] = useState("playerCount");
   const [wizardAnswers, setWizardAnswers] = useState({});
   const [wizardHistory, setWizardHistory] = useState([]); // stack of actually-visited step ids, for Back
@@ -2621,6 +2673,15 @@ export default function GolfScorecard() {
     setScoringAvatarPickerFor(null);
   }, [holeIdx]);
 
+  useEffect(() => {
+    if (screen === "card") {
+      startGPSWatch();
+    } else {
+      stopGPSWatch();
+    }
+    return () => stopGPSWatch();
+  }, [screen]);
+
 
   const game = round ? GAMES[round.game] : gameKey ? GAMES[gameKey] : null;
 
@@ -3646,11 +3707,53 @@ function computeRoundScoring(round) {
         <style>{STYLE}</style>
         <Header title="Terms of Service" sub="The terms for using Foresa" onBack={() => goBack("libraryTab")} />
         <div className="gsc-body">
-          <div className="gsc-card" style={{ textAlign: "center", padding: "32px 20px" }}>
-            <Lock size={28} color="#8FA998" style={{ marginBottom: 10 }} />
-            <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 6 }}>Terms of Service Under Construction</div>
-            <div style={{ fontSize: 13, color: "#6b6b63", lineHeight: 1.5 }}>
-              The full terms of service will live here soon.
+          <div className="gsc-card gsc-no-select">
+            <div style={{ fontSize: 12, color: "#8a8a80", marginBottom: 14 }}>Last updated: {new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}</div>
+            <div style={{ fontSize: 13, color: "#4b4b45", lineHeight: 1.6 }}>
+              <p style={{ margin: "0 0 14px" }}>
+                By using Foresa Golf ("Foresa," "the app," "we," or "us"), you agree to these terms. If you don't agree with them, please don't use the app.
+              </p>
+
+              <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>What Foresa Is</p>
+              <p style={{ margin: "0 0 14px" }}>
+                Foresa is a casual scorekeeping companion for golf rounds and tournaments played with friends. It helps you set up game formats, track strokes and putts, and share results with your group live on the course. It's built for fun, organized golf - not as an official scoring, handicap, or ratings authority.
+              </p>
+
+              <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>Not an Official Handicap Service</p>
+              <p style={{ margin: "0 0 14px" }}>
+                Foresa is not affiliated with, endorsed by, or connected to the USGA, GHIN, or any official handicapping body. Any link to GHIN.com is provided only as a convenience. Posting scores for handicap purposes is entirely your own responsibility, done directly through GHIN or your club - Foresa does not submit anything on your behalf.
+              </p>
+
+              <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>Access via Codes, Not Accounts</p>
+              <p style={{ margin: "0 0 14px" }}>
+                Foresa doesn't currently require you to create an account. Rounds and tournaments are accessed using a share code, and anyone with that code can view or enter scores for that round - so treat your codes the way you'd treat access to a shared document, and only share them with people you actually want in your group.
+              </p>
+
+              <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>Your Responsibilities</p>
+              <p style={{ margin: "0 0 14px" }}>
+                You agree to use Foresa for its intended purpose - organizing and tracking casual golf play - and not to misuse it, attempt to disrupt it, or use it to harm, harass, or deceive other players. You're responsible for the accuracy of the names, scores, and other information you or your group enter.
+              </p>
+
+              <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>Prizes and Wagers Between Players</p>
+              <p style={{ margin: "0 0 14px" }}>
+                Some game formats reference a prize or settling up at the 19th hole. Any money, prizes, or wagers exchanged between players are agreements solely between those players. Foresa does not facilitate, process, hold, or guarantee any payment, and takes no responsibility for disputes about them.
+              </p>
+
+              <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>Provided As-Is</p>
+              <p style={{ margin: "0 0 14px" }}>
+                Foresa is provided "as is," without warranties of any kind. We work to keep scores accurate and the app available, but we can't guarantee it will always be error-free, uninterrupted, or available - especially out on the course, where connectivity isn't always reliable. To the fullest extent the law allows, Foresa and its creator aren't liable for any loss, dispute, or damages arising from your use of the app, including lost or inaccurate score data.
+              </p>
+
+              <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>Changes</p>
+              <p style={{ margin: "0 0 14px" }}>
+                Foresa is an evolving, independent project. Features, game formats, and these terms may change as the app improves. We'll update the date at the top of this page when that happens.
+              </p>
+
+              <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>Contact</p>
+              <p style={{ margin: 0 }}>
+                Questions about these terms? Reach out at{" "}
+                <a href="mailto:support@foresagolf.com" style={{ color: "#1B4332", fontWeight: 700 }}>support@foresagolf.com</a>.
+              </p>
             </div>
           </div>
         </div>
@@ -3664,11 +3767,58 @@ function computeRoundScoring(round) {
         <style>{STYLE}</style>
         <Header title="Privacy Policy" sub="How Foresa handles your data" onBack={() => goBack("libraryTab")} />
         <div className="gsc-body">
-          <div className="gsc-card" style={{ textAlign: "center", padding: "32px 20px" }}>
-            <Lock size={28} color="#8FA998" style={{ marginBottom: 10 }} />
-            <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 6 }}>Privacy Policy Under Construction</div>
-            <div style={{ fontSize: 13, color: "#6b6b63", lineHeight: 1.5 }}>
-              The full privacy policy will live here soon.
+          <div className="gsc-card gsc-no-select">
+            <div style={{ fontSize: 12, color: "#8a8a80", marginBottom: 14 }}>Last updated: {new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}</div>
+            <div style={{ fontSize: 13, color: "#4b4b45", lineHeight: 1.6 }}>
+              <p style={{ margin: "0 0 14px" }}>
+                This page explains what information Foresa Golf collects, how it's used, and who it's shared with. We've tried to write it in plain language rather than dense legal text.
+              </p>
+
+              <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>Information Kept Only On Your Device</p>
+              <p style={{ margin: "0 0 14px" }}>
+                Some information never leaves your phone: which round you're currently in, your history of past rounds on that device, and your last tournament. This is stored locally in your browser and isn't sent to us or anyone else.
+              </p>
+
+              <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>Information Shared With Your Group</p>
+              <p style={{ margin: "0 0 14px" }}>
+                When you create a round or tournament, details like player names, handicaps, avatars, scores, putts, mulligans used, and prize text are saved so your group can access them from different phones using a share code. Anyone with that code can view and enter scores for that round - it isn't a private, individually-authenticated account system. Please only share codes with people you actually want in your group.
+              </p>
+
+              <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>Feedback Submissions</p>
+              <p style={{ margin: "0 0 14px" }}>
+                If you use the in-app Feedback form, your answers are sent to the person maintaining Foresa via email. The form is intentionally built to not ask for your name or contact info, so submissions are anonymous on our end.
+              </p>
+
+              <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>Third-Party Services We Use</p>
+              <p style={{ margin: "0 0 14px" }}>
+                Foresa relies on a small number of outside services to work: a golf course database (to look up par and yardage when you search for a course), a cloud database (to store and sync round and tournament data across devices), and an email delivery service (to send Feedback submissions). Each of these only receives the specific information needed to perform its part - for example, the course lookup service only ever receives the course name or location you search for, never your scores or player info.
+              </p>
+
+              <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>What We Don't Do</p>
+              <p style={{ margin: "0 0 14px" }}>
+                We don't sell your data, show you ads, or use tracking or analytics tools to follow you across other apps or websites. Foresa doesn't currently use cookies.
+              </p>
+
+              <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>Data Retention and Deletion</p>
+              <p style={{ margin: "0 0 14px" }}>
+                Round and tournament data is kept for as long as needed to support the app's features (like viewing past rounds). Since Foresa doesn't have account logins today, there's no self-service "delete my account" option yet - if you'd like a specific round or tournament's data removed, email us and we'll take care of it.
+              </p>
+
+              <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>Children</p>
+              <p style={{ margin: "0 0 14px" }}>
+                Foresa isn't directed at children under 13, and we don't knowingly collect information from them.
+              </p>
+
+              <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>Changes</p>
+              <p style={{ margin: "0 0 14px" }}>
+                As Foresa evolves - like if account logins are added in the future - this page will be updated to reflect it, and the date at the top will change accordingly.
+              </p>
+
+              <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>Contact</p>
+              <p style={{ margin: 0 }}>
+                Questions about your data, or want something deleted? Reach out at{" "}
+                <a href="mailto:support@foresagolf.com" style={{ color: "#1B4332", fontWeight: 700 }}>support@foresagolf.com</a>.
+              </p>
             </div>
           </div>
         </div>
@@ -5604,6 +5754,27 @@ function computeRoundScoring(round) {
                       {yd != null && `${yd} yds`}
                       {yd != null && si != null && " \u00B7 "}
                       {si != null && `HCP ${si}`}
+                    </div>
+                  );
+                })()}
+                {round.holeGPS && round.holeGPS[holeIdx] && (() => {
+                  const green = round.holeGPS[holeIdx];
+                  let distanceLabel = null;
+                  if (gpsStatus === "active" && playerGPS) {
+                    const yds = Math.round(haversineYards(playerGPS.lat, playerGPS.lng, green.lat, green.lng));
+                    distanceLabel = `${yds} yds to green`;
+                  } else if (gpsStatus === "locating") {
+                    distanceLabel = "Finding your location...";
+                  } else if (gpsStatus === "denied") {
+                    distanceLabel = "Location access denied - enable it to see distance";
+                  } else if (gpsStatus === "unsupported") {
+                    distanceLabel = "Distance to green isn't supported on this device";
+                  } else if (gpsStatus === "error") {
+                    distanceLabel = "Couldn't get your location";
+                  }
+                  return (
+                    <div style={{ display: "inline-flex", alignItems: "center", gap: 5, marginTop: 6, background: "#EBF0EC", color: "#1B4332", fontWeight: 700, fontSize: 13, padding: "5px 12px", borderRadius: 20 }}>
+                      {"\u26F3"} {distanceLabel}
                     </div>
                   );
                 })()}
