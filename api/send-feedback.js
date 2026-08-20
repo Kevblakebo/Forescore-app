@@ -55,7 +55,7 @@ export default async function handler(req, res) {
 
   const html = `
     <div style="font-family: -apple-system, sans-serif; max-width: 560px;">
-      <h2 style="color:#1B4332;">New Foresa Golf feedback</h2>
+      <h2 style="color:#1B4332;">New RipScore Golf feedback</h2>
       <p style="color:#6b6b63; font-size:13px;">Submitted ${escapeHtml(submittedAt || "")}</p>
       <hr style="border:none; border-top:1px solid #e4ded0; margin:16px 0;" />
       ${renderAnswer("How they set up their round", setupMethod)}
@@ -80,9 +80,9 @@ export default async function handler(req, res) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "Foresa Golf Feedback <onboarding@resend.dev>",
+        from: "RipScore Golf Feedback <onboarding@resend.dev>",
         to: [toEmail],
-        subject: "New Foresa Golf feedback response",
+        subject: "New RipScore Golf feedback response",
         html,
       }),
     });
