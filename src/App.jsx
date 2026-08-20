@@ -2949,7 +2949,7 @@ function computeRoundScoring(round) {
       <div className="gsc" style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: 24, textAlign: "center" }}>
         <style>{STYLE}</style>
         <div>
-          <img src={LOGO_DATA_URI} alt="RipScore logo" style={{ width: 100, height: "auto", marginBottom: 16 }} />
+          <img src={LOGO_DATA_URI} alt="RipScore logo" style={{ width: 120, height: "auto", marginBottom: 16 }} />
           <div className="gsc-display" style={{ fontSize: 20, fontWeight: 700, marginBottom: 10 }}>RipScore is built for phones</div>
           <div style={{ fontSize: 14, color: "#4b4b45", lineHeight: 1.6, maxWidth: 360 }}>
             This app is designed for use on a mobile phone out on the course, and isn't optimized for tablets or desktop browsers. Please open this link on your phone to play.
@@ -3004,7 +3004,7 @@ function computeRoundScoring(round) {
           <img
             src={LOGO_DATA_URI}
             alt="RipScore logo"
-            style={{ width: 58, height: "auto", objectFit: "contain", flexShrink: 0, alignSelf: "flex-start", marginRight: 0, marginTop: -2 }}
+            style={{ width: 70, height: "auto", objectFit: "contain", flexShrink: 0, alignSelf: "flex-start", marginRight: 0, marginTop: -2 }}
           />
         </div>
       </div>
@@ -5476,7 +5476,7 @@ function computeRoundScoring(round) {
         <div style={{ position: "relative", background: "#1B4332", padding: "28px 18px 22px", overflow: "hidden" }}>
           <Fireworks />
           <div style={{ position: "relative", textAlign: "center" }}>
-            <img src={LOGO_DATA_URI} alt="RipScore logo" style={{ width: 54, height: "auto", marginBottom: 10 }} />
+            <img src={LOGO_DATA_URI} alt="RipScore logo" style={{ width: 66, height: "auto", marginBottom: 10 }} />
             <div className="gsc-display" style={{ fontSize: 24, fontWeight: 700, color: "#F3EFE0" }}>Round Complete!</div>
             <div style={{ fontSize: 13, color: "#F3EFE0", opacity: 0.8, marginTop: 4 }}>
               {round.name} - {g.name} - {round.date}
@@ -5583,7 +5583,7 @@ function computeRoundScoring(round) {
         <div style={{ position: "relative", background: "#1B4332", padding: "28px 18px 22px", overflow: "hidden" }}>
           <Fireworks />
           <div style={{ position: "relative", textAlign: "center" }}>
-            <img src={LOGO_DATA_URI} alt="RipScore logo" style={{ width: 54, height: "auto", marginBottom: 10 }} />
+            <img src={LOGO_DATA_URI} alt="RipScore logo" style={{ width: 66, height: "auto", marginBottom: 10 }} />
             <div className="gsc-display" style={{ fontSize: 24, fontWeight: 700, color: "#F3EFE0" }}>You're All Set!</div>
             <div style={{ fontSize: 13, color: "#F3EFE0", opacity: 0.8, marginTop: 4 }}>
               {ct.name} - {GAMES[ct.game].name}
@@ -5622,7 +5622,7 @@ function computeRoundScoring(round) {
         <div style={{ position: "relative", background: "#1B4332", padding: "28px 18px 22px", overflow: "hidden" }}>
           <Fireworks />
           <div style={{ position: "relative", textAlign: "center" }}>
-            <img src={LOGO_DATA_URI} alt="RipScore logo" style={{ width: 54, height: "auto", marginBottom: 10 }} />
+            <img src={LOGO_DATA_URI} alt="RipScore logo" style={{ width: 66, height: "auto", marginBottom: 10 }} />
             <div className="gsc-display" style={{ fontSize: 24, fontWeight: 700, color: "#F3EFE0" }}>Tournament Complete!</div>
             <div style={{ fontSize: 13, color: "#F3EFE0", opacity: 0.8, marginTop: 4 }}>
               {ft.name} - {GAMES[ft.game].name} - {ft.date}
