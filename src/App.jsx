@@ -3020,6 +3020,8 @@ function computeRoundScoring(round) {
         points: computed.playerPoints[i],
         score: rankByTeamTotal ? teamScoreOf[i] : computed.playerTotalScore[i],
         putts: rankByTeamTotal ? teamPuttsOf[i] : computed.playerTotalPutts[i],
+        individualScore: computed.playerTotalScore[i],
+        individualPutts: computed.playerTotalPutts[i],
         relPar: computed.playerTotalScore[i] - computed.playerParPlayed[i],
       }))
       .sort((a, b) => {
@@ -6300,13 +6302,21 @@ function computeRoundScoring(round) {
                 <div style={{ fontWeight: 700 }}>
                   {p.avatar && <span style={{ marginRight: 4 }}>{p.avatar}</span>}
                   {p.name}
-                  {g.totalScoring && holeIdx === 17 && hr.complete && idx === 0 && <span className="gsc-chip gsc-lead">WINNER</span>}
+                  {(g.rankByTeamTotal
+                    ? holeIdx === 17 && hr.complete && ranks.length > 0 && round.teams && round.teams.find((t) => t.includes(ranks[0].idx))?.includes(p.idx)
+                    : g.totalScoring && holeIdx === 17 && hr.complete && idx === 0
+                  ) && <span className="gsc-chip gsc-lead">WINNER</span>}
                   {!g.singleTeam && !g.totalScoring && holeIdx === 17 && hr.complete && idx < Math.floor(ranks.length / 2) && <span className="gsc-chip gsc-lead">WIN</span>}
                   {!g.singleTeam && !g.totalScoring && holeIdx === 17 && hr.complete && idx >= Math.ceil(ranks.length / 2) && <span className="gsc-chip gsc-loss">LOSS</span>}
                 </div>
                 <div className="gsc-mono" style={{ fontWeight: 700 }}>
                   {!g.singleTeam && !g.totalScoring && <>{p.points} pts </>}
-                  {g.rankByPutts ? (
+                  {g.rankByTeamTotal ? (
+                    <span style={{ fontWeight: 700, fontSize: 17, whiteSpace: "nowrap" }}>
+                      {p.score}str{" "}
+                      <span style={{ fontWeight: 700, color: "#6b6b63" }}>({p.individualScore}str/{p.individualPutts}putt/{formatRelPar(p.relPar)})</span>
+                    </span>
+                  ) : g.rankByPutts ? (
                     <span style={{ fontWeight: 700, fontSize: 17, whiteSpace: "nowrap" }}>{p.putts}putt/{p.score}str/{formatRelPar(p.relPar)}</span>
                   ) : g.totalScoring ? (
                     <span style={{ fontWeight: 700, fontSize: 17, whiteSpace: "nowrap" }}>{p.score}str/{p.putts}putt/{formatRelPar(p.relPar)}</span>
