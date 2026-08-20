@@ -1,6 +1,6 @@
 {
-  "name": "Foresa Golf",
-  "short_name": "Foresa Golf",
+  "name": "RipScore Golf",
+  "short_name": "RipScore",
   "description": "Golf games scorecard and tournament tracker",
   "start_url": "/",
   "display": "standalone",
