@@ -3599,16 +3599,6 @@ function computeRoundScoring(round) {
             </button>
           </div>
 
-          <div className="gsc-card" style={{ cursor: "pointer" }} onClick={() => goToScreen("swagStore")}>
-            <div className="gsc-label" style={{ marginBottom: 6 }}>Swag Store</div>
-            <div style={{ fontSize: 13, color: "#4b4b45" }}>
-              Order your Foresa Golf swag here.
-            </div>
-            <button className="gsc-link" style={{ marginTop: 8, fontSize: 12 }} onClick={() => goToScreen("swagStore")}>
-              Read more
-            </button>
-          </div>
-
           <div className="gsc-card" style={{ cursor: "pointer" }} onClick={() => goToScreen("termsOfService")}>
             <div className="gsc-label" style={{ marginBottom: 6 }}>Terms of Service</div>
             <div style={{ fontSize: 13, color: "#4b4b45" }}>
