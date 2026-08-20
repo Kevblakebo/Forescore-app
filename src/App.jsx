@@ -3170,7 +3170,7 @@ function computeRoundScoring(round) {
             <div className="gsc-row">
               <input className="gsc-input gsc-mono" id="round-join-code-home" name="round-join-code-home" autoComplete="off" placeholder="ROUND CODE" value={joinCode} onChange={(e) => setJoinCode(e.target.value.toUpperCase())} maxLength={6} />
               <button className="gsc-btn gsc-btn-primary" style={{ flex: "0 0 auto" }} disabled={busy || !joinCode} onClick={() => loadRound(joinCode)}>
-                Open
+                Join
               </button>
             </div>
             {err && <div style={{ color: "#C1440E", fontSize: 13, marginTop: 8 }}>{err}</div>}
@@ -3338,7 +3338,7 @@ function computeRoundScoring(round) {
             <div className="gsc-row" style={{ marginTop: 6 }}>
               <input className="gsc-input gsc-mono" id="round-join-code" name="round-join-code" autoComplete="off" placeholder="ROUND CODE" value={joinCode} onChange={(e) => setJoinCode(e.target.value.toUpperCase())} maxLength={6} />
               <button className="gsc-btn gsc-btn-primary" style={{ flex: "0 0 auto" }} disabled={busy || !joinCode} onClick={() => loadRound(joinCode)}>
-                Open
+                Join
               </button>
             </div>
             {err && <div style={{ color: "#C1440E", fontSize: 13, marginTop: 8 }}>{err}</div>}
