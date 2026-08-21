@@ -2213,7 +2213,12 @@ export default function GolfScorecard() {
 
   async function finishSetup() {
     setErr("");
-    const cleanPlayers = players.map((p, i) => ({ name: p.name.trim() || `Player ${LETTERS[i]}`, hcp: p.hcp, avatar: p.avatar || "" }));
+    const cleanPlayers = players.map((p, i) => ({
+      name: p.name.trim() || `Player ${LETTERS[i]}`,
+      hcp: p.hcp,
+      avatar: p.avatar || "",
+      ...(i === 0 && session ? { user_id: session.user.id } : {}),
+    }));
     const isIndividual = gameKey === "dstreet" || gameKey === "swami" || gameKey === "pontobango" || gameKey === "individualputts";
     if (isIndividual) {
       const needsTwo = gameKey === "pontobango" || gameKey === "individualputts";
@@ -2286,6 +2291,23 @@ export default function GolfScorecard() {
     failCountRef.current = 0;
     setStorageBroken(false);
     await saveRound(newRound);
+    if (session && supabase) {
+      // Best-effort - if this fails, the round itself is still fully
+      // created and playable, it just won't show up in stats later.
+      supabase
+        .from("user_rounds")
+        .insert({
+          user_id: session.user.id,
+          round_code: code,
+          tournament_id: isTournament ? activeTournament.id : null,
+          game: gameKey,
+          round_date: roundDate,
+          foursome_name: isTournament ? foursomeName : null,
+        })
+        .then(({ error }) => {
+          if (error) console.warn("Couldn't index round for stats:", error.message);
+        });
+    }
     if (isTournament) {
       const reg = await registerFoursomeInTournament(activeTournament.id, code, foursomeName);
       if (!reg.ok) {
@@ -2399,10 +2421,16 @@ export default function GolfScorecard() {
     // with the full foursome list already attached - avoids N separate
     // read-modify-write round trips against the tournament record.
     const foursomeEntries = [];
-    for (const draft of tournamentFoursomesDraft) {
+    for (let fi = 0; fi < tournamentFoursomesDraft.length; fi++) {
+      const draft = tournamentFoursomesDraft[fi];
       const foursomeCode = genCode();
       const foursomeName = draft.name.trim() || "Foursome";
-      const cleanPlayers = draft.players.map((p, i) => ({ name: p.name.trim() || `Player ${LETTERS[i]}`, hcp: p.hcp, avatar: p.avatar || "" }));
+      const cleanPlayers = draft.players.map((p, i) => ({
+        name: p.name.trim() || `Player ${LETTERS[i]}`,
+        hcp: p.hcp,
+        avatar: p.avatar || "",
+        ...(fi === 0 && i === 0 && session ? { user_id: session.user.id } : {}),
+      }));
       const foursomeRound = {
         id: foursomeCode,
         game: tournamentGameKey,
@@ -2425,6 +2453,21 @@ export default function GolfScorecard() {
         setTournamentBusy(false);
         setTournamentErr(`Couldn't save "${foursomeName}" (${rw.error}). Try again.`);
         return;
+      }
+      if (fi === 0 && session && supabase) {
+        supabase
+          .from("user_rounds")
+          .insert({
+            user_id: session.user.id,
+            round_code: foursomeCode,
+            tournament_id: code,
+            game: tournamentGameKey,
+            round_date: tournamentDate,
+            foursome_name: foursomeName,
+          })
+          .then(({ error }) => {
+            if (error) console.warn("Couldn't index round for stats:", error.message);
+          });
       }
       foursomeEntries.push({ id: foursomeCode, name: foursomeName });
     }
