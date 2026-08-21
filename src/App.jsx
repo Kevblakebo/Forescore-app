@@ -1627,6 +1627,10 @@ export default function GolfScorecard() {
   const [activeRound, setActiveRound] = useState(null);
   const [resumeChecked, setResumeChecked] = useState(false);
   const [finishedRounds, setFinishedRounds] = useState([]);
+  const finishedRoundsRef = useRef([]);
+  useEffect(() => {
+    finishedRoundsRef.current = finishedRounds;
+  }, [finishedRounds]);
   const [reopenErr, setReopenErr] = useState("");
   const [deleteRoundConfirm, setDeleteRoundConfirm] = useState(null); // {id, name} while confirming a delete
   const [deleteRoundBusy, setDeleteRoundBusy] = useState(false);
@@ -1646,7 +1650,7 @@ export default function GolfScorecard() {
   // real round data moves on, so leaving and hitting "Continue round"
   // would resume from a stale, empty copy instead of where play left off.
   useEffect(() => {
-    if (round && !isRoundFullyComplete(round)) setActiveRound(round);
+    if (round && !isRoundDone(round)) setActiveRound(round);
   }, [round]);
 
   useEffect(() => {
@@ -1702,6 +1706,20 @@ export default function GolfScorecard() {
       if (!filled) return false;
     }
     return true;
+  }
+
+  // The real, authoritative answer to "is this round done" - checks the
+  // actual finished-rounds archive (set explicitly whenever someone taps
+  // "Finish & exit"), not just whether every single cell happens to be
+  // filled in. A round can be explicitly finished without every cell being
+  // filled (that's allowed on purpose), so isRoundFullyComplete alone can
+  // say "not complete" about a round the person already finished and put
+  // away - this is the check that actually matches how the app treats it.
+  function isRoundDone(r, finishedList) {
+    if (!r) return false;
+    if (isRoundFullyComplete(r)) return true;
+    const list = finishedList || finishedRoundsRef.current;
+    return list.some((fr) => fr.id === r.id);
   }
 
   function resumeActiveRound() {
@@ -1777,7 +1795,7 @@ export default function GolfScorecard() {
   // watches for it and self-heals - clearing the stale pointer for good,
   // not just hiding it from view.
   useEffect(() => {
-    if (activeRound && isRoundFullyComplete(activeRound)) {
+    if (activeRound && isRoundDone(activeRound)) {
       discardActiveRound();
     }
   }, [activeRound]);
@@ -1938,7 +1956,7 @@ export default function GolfScorecard() {
     setRound(r);
     setGameKey(r.game);
     setHoleIdx(firstOpenHole(r));
-    if (!isRoundFullyComplete(r)) setActiveRound(r);
+    if (!isRoundDone(r)) setActiveRound(r);
     saveRound(r);
     goToScreen("card");
   }
@@ -2893,7 +2911,7 @@ export default function GolfScorecard() {
     setGameKey(r.game);
     setHoleIdx(firstOpenHole(r));
     rememberCode(r.id, r.name);
-    if (!isRoundFullyComplete(r)) setActiveRound(r);
+    if (!isRoundDone(r)) setActiveRound(r);
     setViewingRoundFromStats(false); // normal join flow - always a real active round, not a read-only view
     saveRound(r);
     goToScreen("card");
@@ -2927,7 +2945,7 @@ export default function GolfScorecard() {
       // every tap. Wait for a manual retry instead.
       return;
     }
-    const complete = isRoundFullyComplete(r);
+    const complete = isRoundDone(r);
     const writes = [storageSet(`golfround:${r.id}`, JSON.stringify(r), true)];
     if (!complete) {
       // A finished round should never become (or stay) the "in progress"
@@ -3632,7 +3650,7 @@ function computeRoundScoring(round) {
             <br />
             You're all set, next hole... the 19th!
           </div>
-          {activeRound && !activeRound.tournamentId && !isRoundFullyComplete(activeRound) && (
+          {activeRound && !activeRound.tournamentId && !isRoundDone(activeRound) && (
             <div className="gsc-card" style={{ border: "2px solid #B08D57" }}>
               <div className="gsc-label">Round in progress</div>
               <div style={{ fontWeight: 700, fontSize: 16, marginTop: 2 }}>{activeRound.name}</div>
@@ -3830,7 +3848,7 @@ function computeRoundScoring(round) {
         <style>{STYLE}</style>
         <Header title={<span style={{ fontSize: 23 }}>Rounds</span>} sub="Join, create, or revisit" />
         <div className="gsc-body gsc-body-tabbed">
-          {activeRound && !activeRound.tournamentId && !isRoundFullyComplete(activeRound) && (
+          {activeRound && !activeRound.tournamentId && !isRoundDone(activeRound) && (
             <div className="gsc-card" style={{ border: "2px solid #B08D57" }}>
               <div className="gsc-label">Round in progress</div>
               <div style={{ fontWeight: 700, fontSize: 16, marginTop: 2 }}>{activeRound.name}</div>
