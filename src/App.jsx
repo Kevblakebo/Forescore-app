@@ -3469,7 +3469,7 @@ function computeRoundScoring(round) {
   }
 
   // ---------- render helpers ----------
-  function Header({ title, sub, onBack, backExtra, right }) {
+  function Header({ title, sub, onBack, backExtra, right, belowLogo }) {
     return (
       <div className="gsc-header">
         <div className="gsc-header-row">
@@ -3490,6 +3490,7 @@ function computeRoundScoring(round) {
             style={{ width: 70, height: "auto", objectFit: "contain", flexShrink: 0, alignSelf: "flex-start", marginRight: 0, marginTop: -2 }}
           />
         </div>
+        {belowLogo && <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 6 }}>{belowLogo}</div>}
       </div>
     );
   }
@@ -3585,10 +3586,10 @@ function computeRoundScoring(round) {
         <Header
           title={<><span style={{ fontSize: 23 }}>RipScore Golf Games</span><div style={{ fontSize: 11, fontWeight: 400, opacity: 0.75, letterSpacing: "0.5px", textTransform: "uppercase", marginTop: 2, fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>Play the game. We'll keep score.</div></>}
           sub=""
-          right={
+          belowLogo={
             <button
               className="gsc-btn gsc-btn-ghost"
-              style={{ padding: "5px 8px", fontSize: 11, whiteSpace: "nowrap", alignSelf: "flex-start", flexShrink: 0 }}
+              style={{ padding: "5px 8px", fontSize: 11, whiteSpace: "nowrap" }}
               onClick={() => goToScreen(session ? "profileTab" : "login")}
             >
               {session ? (profile && profile.name ? profile.name.split(" ")[0] : "Profile") : "Log In"}
