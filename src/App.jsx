@@ -86,6 +86,21 @@ const STYLE = `
   .gsc-modal-row > * { flex:1; }
 `;
 
+// Defines every leaderboard category in one place - how to compute a
+// row's value for it, whether lower is better (strokes/putts) or higher
+// is better (everything else), and how to format it for display. Shared
+// by both the sorting logic and the display, so they can never disagree.
+const LEADERBOARD_CATEGORIES = {
+  rounds_played: { label: "Rounds Played", lowerIsBetter: false, valueOf: (r) => r.rounds_played, format: (v) => String(v) },
+  wins: { label: "Wins", lowerIsBetter: false, valueOf: (r) => r.wins, format: (v) => String(v) },
+  avg_strokes: { label: "Avg Strokes", lowerIsBetter: true, valueOf: (r) => (r.strokes_rounds > 0 ? r.strokes_sum / r.strokes_rounds : null), format: (v) => v.toFixed(1) },
+  avg_putts: { label: "Avg Putts", lowerIsBetter: true, valueOf: (r) => (r.putts_rounds > 0 ? r.putts_sum / r.putts_rounds : null), format: (v) => v.toFixed(1) },
+  birdies: { label: "Birdies", lowerIsBetter: false, valueOf: (r) => r.birdies, format: (v) => String(v) },
+  pars: { label: "Pars", lowerIsBetter: false, valueOf: (r) => r.pars, format: (v) => String(v) },
+  eagles: { label: "Eagles", lowerIsBetter: false, valueOf: (r) => r.eagles, format: (v) => String(v) },
+  holes_in_one: { label: "Holes-in-One", lowerIsBetter: false, valueOf: (r) => r.holes_in_one, format: (v) => String(v) },
+};
+
 const GAMES = {
   teamstrokes: {
     name: "Team Strokes",
@@ -1048,7 +1063,7 @@ export default function GolfScorecard() {
   const [newPasswordConfirm, setNewPasswordConfirm] = useState("");
 
   const [profile, setProfile] = useState(null); // { name, handicap, venmo, home_course } once loaded
-  const [profileForm, setProfileForm] = useState({ name: "", handicap: "", venmo: "", home_course: "" });
+  const [profileForm, setProfileForm] = useState({ name: "", handicap: "", venmo: "", home_course: "", leaderboard_opt_in: false });
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileErr, setProfileErr] = useState("");
@@ -1058,6 +1073,12 @@ export default function GolfScorecard() {
   const [stats, setStats] = useState(null);
   const [statsLoading, setStatsLoading] = useState(false);
   const [statsErr, setStatsErr] = useState("");
+
+  // ---- Leaderboard (opt-in, cross-user) ----
+  const [leaderboard, setLeaderboard] = useState([]);
+  const [leaderboardLoading, setLeaderboardLoading] = useState(false);
+  const [leaderboardErr, setLeaderboardErr] = useState("");
+  const [leaderboardCategory, setLeaderboardCategory] = useState("wins");
 
   // ---- Live GPS for distance-to-green ----
   // This is intentionally provider-independent: it just tracks the
@@ -1140,13 +1161,19 @@ export default function GolfScorecard() {
       loadProfile(session.user.id);
     } else {
       setProfile(null);
-      setProfileForm({ name: "", handicap: "", venmo: "", home_course: "" });
+      setProfileForm({ name: "", handicap: "", venmo: "", home_course: "", leaderboard_opt_in: false });
     }
   }, [session && session.user && session.user.id]);
 
   useEffect(() => {
     if (screen === "profileTab" && session && session.user) {
       loadStats();
+    }
+  }, [screen, session && session.user && session.user.id]);
+
+  useEffect(() => {
+    if (screen === "profileTab" && session && session.user) {
+      loadLeaderboard();
     }
   }, [screen, session && session.user && session.user.id]);
 
@@ -1375,7 +1402,7 @@ export default function GolfScorecard() {
   async function signOutUser() {
     if (supabase) await supabase.auth.signOut();
     setProfile(null);
-    setProfileForm({ name: "", handicap: "", venmo: "", home_course: "" });
+    setProfileForm({ name: "", handicap: "", venmo: "", home_course: "", leaderboard_opt_in: false });
   }
 
   async function loadProfile(userId) {
@@ -1390,11 +1417,11 @@ export default function GolfScorecard() {
     }
     if (data) {
       setProfile(data);
-      setProfileForm({ name: data.name || "", handicap: data.handicap || "", venmo: data.venmo || "", home_course: data.home_course || "" });
+      setProfileForm({ name: data.name || "", handicap: data.handicap || "", venmo: data.venmo || "", home_course: data.home_course || "", leaderboard_opt_in: !!data.leaderboard_opt_in });
     } else {
       // First time - no profile row yet, that's expected, just start with a blank form.
       setProfile(null);
-      setProfileForm({ name: "", handicap: "", venmo: "", home_course: "" });
+      setProfileForm({ name: "", handicap: "", venmo: "", home_course: "", leaderboard_opt_in: false });
     }
   }
 
@@ -1413,6 +1440,18 @@ export default function GolfScorecard() {
     }
     setProfile({ ...profileForm });
     setProfileSaved(true);
+    // Best-effort - immediately reflects the opt-in/out toggle on the
+    // leaderboard row, even before loadStats next refreshes the actual
+    // numbers. If this fails, the profile save itself still succeeded.
+    supabase
+      .from("leaderboard_stats")
+      .upsert(
+        { user_id: session.user.id, display_name: profileForm.name || "Golfer", opted_in: !!profileForm.leaderboard_opt_in },
+        { onConflict: "user_id" }
+      )
+      .then(({ error: lbError }) => {
+        if (lbError) console.warn("Couldn't update leaderboard opt-in:", lbError.message);
+      });
   }
 
   // Pulls together everything recorded in user_rounds since Phase 4 into
@@ -1440,7 +1479,7 @@ export default function GolfScorecard() {
 
     if (!myRoundsIndex || myRoundsIndex.length === 0) {
       setStatsLoading(false);
-      setStats({ roundsPlayed: 0, avgStrokes: null, avgPutts: null, wins: 0, eagles: 0, birdies: 0, pars: 0, recent: [] });
+      setStats({ roundsPlayed: 0, avgStrokes: null, avgPutts: null, wins: 0, eagles: 0, birdies: 0, pars: 0, holesInOne: 0, recent: [] });
       return;
     }
 
@@ -1448,7 +1487,7 @@ export default function GolfScorecard() {
     let strokesSum = 0, strokesCount = 0;
     let puttsSum = 0, puttsCount = 0;
     let wins = 0;
-    let eagles = 0, birdies = 0, pars = 0;
+    let eagles = 0, birdies = 0, pars = 0, holesInOne = 0;
     const recent = [];
 
     for (const ur of myRoundsIndex) {
@@ -1475,7 +1514,12 @@ export default function GolfScorecard() {
           holesPlayed++;
           const strokesVal = Number(entry.strokes);
           myStrokesTotal += strokesVal;
-          if (parH != null) {
+          if (strokesVal === 1) {
+            // Matches getAccolade's own convention - a hole-in-one is its
+            // own category, not also counted as an eagle even though it
+            // would otherwise qualify as one.
+            holesInOne++;
+          } else if (parH != null) {
             const diff = strokesVal - parH;
             if (diff <= -2) eagles++;
             else if (diff === -1) birdies++;
@@ -1486,6 +1530,7 @@ export default function GolfScorecard() {
           myPuttsTotal += Number(entry.putts);
         }
       }
+
 
       if (holesPlayed === 0) continue; // created but never actually played - don't count it
       roundsPlayed++;
@@ -1518,8 +1563,56 @@ export default function GolfScorecard() {
       eagles,
       birdies,
       pars,
+      holesInOne,
       recent: recent.slice(0, 5),
     });
+
+    // Keep the leaderboard's copy of this user's totals fresh, but only
+    // actually write anything if they've opted in - no reason to create a
+    // row at all for someone who's never turned this on.
+    if (profile && profile.leaderboard_opt_in) {
+      supabase
+        .from("leaderboard_stats")
+        .upsert(
+          {
+            user_id: session.user.id,
+            display_name: profile.name || "Golfer",
+            opted_in: true,
+            rounds_played: roundsPlayed,
+            wins,
+            strokes_sum: strokesSum,
+            strokes_rounds: strokesCount,
+            putts_sum: puttsSum,
+            putts_rounds: puttsCount,
+            birdies,
+            pars,
+            eagles,
+            holes_in_one: holesInOne,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "user_id" }
+        )
+        .then(({ error: lbError }) => {
+          if (lbError) console.warn("Couldn't update leaderboard stats:", lbError.message);
+        });
+    }
+  }
+
+  // Fetches everyone who's opted in - RLS on the leaderboard_stats table
+  // already enforces this (only opted_in rows, or your own), but filtering
+  // explicitly here too keeps this from accidentally including your own
+  // row if you haven't opted in yourself.
+  async function loadLeaderboard() {
+    if (!supabase) return;
+    setLeaderboardLoading(true);
+    setLeaderboardErr("");
+    const { data, error } = await supabase.from("leaderboard_stats").select("*").eq("opted_in", true);
+    setLeaderboardLoading(false);
+    if (error) {
+      setLeaderboardErr(`Couldn't load the leaderboard (${error.message}).`);
+      return;
+    }
+    setLeaderboard(data || []);
   }
 
   const [deleteHistoryConfirm, setDeleteHistoryConfirm] = useState(null); // {code, name} while confirming
@@ -4158,6 +4251,21 @@ function computeRoundScoring(round) {
                     <input className="gsc-input" value={profileForm.home_course} onChange={(e) => { setProfileSaved(false); setProfileForm({ ...profileForm, home_course: e.target.value }); }} />
                   </div>
 
+                  <div style={{ display: "flex", alignItems: "flex-start", gap: 10, marginTop: 14, padding: "10px 12px", background: "#F3EFE0", borderRadius: 10 }}>
+                    <input
+                      type="checkbox"
+                      checked={!!profileForm.leaderboard_opt_in}
+                      onChange={(e) => { setProfileSaved(false); setProfileForm({ ...profileForm, leaderboard_opt_in: e.target.checked }); }}
+                      style={{ marginTop: 2, width: 18, height: 18, flexShrink: 0 }}
+                    />
+                    <div>
+                      <div style={{ fontWeight: 700, fontSize: 13 }}>Show me on the leaderboard</div>
+                      <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 2 }}>
+                        Your name and stats become visible to other RipScore users. Turn this off anytime to disappear from it again.
+                      </div>
+                    </div>
+                  </div>
+
                   {profileErr && <div style={{ color: "#C1440E", fontSize: 13, marginTop: 10 }}>{profileErr}</div>}
                   <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 14 }} disabled={profileSaving} onClick={saveProfile}>
                     {profileSaving ? "Saving..." : profileSaved ? "Saved \u2713" : "Save"}
@@ -4252,6 +4360,80 @@ function computeRoundScoring(round) {
                     Refresh stats
                   </button>
                 </>
+              )}
+            </div>
+          )}
+
+          {session && (
+            <div className="gsc-card">
+              <div className="gsc-label" style={{ marginBottom: 10 }}>Leaderboard</div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
+                {Object.entries(LEADERBOARD_CATEGORIES).map(([key, cat]) => (
+                  <button
+                    key={key}
+                    onClick={() => setLeaderboardCategory(key)}
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 700,
+                      padding: "5px 10px",
+                      borderRadius: 20,
+                      border: leaderboardCategory === key ? "1.5px solid #1B4332" : "1.5px solid #d8d2bd",
+                      background: leaderboardCategory === key ? "#1B4332" : "#fff",
+                      color: leaderboardCategory === key ? "#F3EFE0" : "#4b4b45",
+                      cursor: "pointer",
+                    }}
+                  >
+                    {cat.label}
+                  </button>
+                ))}
+              </div>
+
+              {leaderboardLoading ? (
+                <div style={{ fontSize: 13, color: "#6b6b63" }}>Loading the leaderboard...</div>
+              ) : leaderboardErr ? (
+                <div style={{ color: "#C1440E", fontSize: 13 }}>{leaderboardErr}</div>
+              ) : (
+                (() => {
+                  const cat = LEADERBOARD_CATEGORIES[leaderboardCategory];
+                  const ranked = leaderboard
+                    .map((row) => ({ row, value: cat.valueOf(row) }))
+                    .filter((x) => x.value != null)
+                    .sort((a, b) => (cat.lowerIsBetter ? a.value - b.value : b.value - a.value));
+
+                  if (ranked.length === 0) {
+                    return (
+                      <div style={{ fontSize: 13, color: "#6b6b63", lineHeight: 1.5 }}>
+                        Nobody's opted into the leaderboard yet for this category. Turn on "Show me on the leaderboard" above to be the first.
+                      </div>
+                    );
+                  }
+
+                  return ranked.slice(0, 10).map((x, i) => {
+                    const isMe = session && x.row.user_id === session.user.id;
+                    return (
+                      <div
+                        key={x.row.user_id}
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          padding: "7px 0",
+                          borderBottom: i === Math.min(ranked.length, 10) - 1 ? "none" : "1px solid #eee6cf",
+                          background: isMe ? "#EBF0EC" : "transparent",
+                          borderRadius: isMe ? 6 : 0,
+                          paddingLeft: isMe ? 8 : 0,
+                          paddingRight: isMe ? 8 : 0,
+                        }}
+                      >
+                        <div style={{ fontSize: 13, fontWeight: isMe ? 700 : 600, color: "#1B4332" }}>
+                          {i + 1}. {x.row.display_name}
+                          {isMe && <span style={{ fontSize: 10, color: "#B08D57", marginLeft: 6, fontWeight: 700 }}>YOU</span>}
+                        </div>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: "#4b4b45" }}>{cat.format(x.value)}</div>
+                      </div>
+                    );
+                  });
+                })()
               )}
             </div>
           )}
