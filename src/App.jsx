@@ -178,7 +178,7 @@ const GAMES = {
   },
   moonlightwolf: {
     name: "Wolf",
-    tag: "Rotating teams - players",
+    tag: "Best ball rotating teams - 4 players",
     desc: "A rotating team four-player game where one player acts as the \"Wolf\" on each hole. The Wolf watches the other drives (tees off last), then either chooses a partner or goes it alone (\"Lone Wolf\"), to win points based on a best-ball lowest strokes and putts format.",
     rotates: true,
     hasScore: true,
