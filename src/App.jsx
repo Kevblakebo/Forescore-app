@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Home as HomeIcon, Flag as FlagIcon, Trophy as TrophyIcon, User as UserIcon, Lock, Library as LibraryIcon, ShoppingBag } from "lucide-react";
+import { supabase } from "./storage-polyfill.js";
 
 /* ---------- design tokens ----------
    Palette: fairway (#1B4332) deep green, paper (#F3EFE0) cream, ink (#2B2B28),
@@ -1030,6 +1031,26 @@ export default function GolfScorecard() {
   const [avatarPickerFor, setAvatarPickerFor] = useState(null); // player index currently showing its avatar picker, or null
   const [scoringAvatarPickerFor, setScoringAvatarPickerFor] = useState(null); // same idea, but for the scoring screen, kept separate since it edits an already-saved round rather than in-progress setup
 
+  // ---- Account (Supabase Auth) state ----
+  // Logging in is entirely optional throughout the app - this only powers
+  // the Profile tab's saved-defaults and (later) stats. Every other screen
+  // keeps working exactly as before regardless of whether session is set.
+  const [session, setSession] = useState(null); // null = logged out
+  const [authLoading, setAuthLoading] = useState(true); // true while checking for an existing session on load
+  const [authErr, setAuthErr] = useState("");
+  const [authBusy, setAuthBusy] = useState(false);
+  const [authEmail, setAuthEmail] = useState("");
+  const [authPassword, setAuthPassword] = useState("");
+  const [authPasswordConfirm, setAuthPasswordConfirm] = useState("");
+  const [authNotice, setAuthNotice] = useState(""); // e.g. "check your email to confirm"
+
+  const [profile, setProfile] = useState(null); // { name, handicap, venmo, home_course } once loaded
+  const [profileForm, setProfileForm] = useState({ name: "", handicap: "", venmo: "", home_course: "" });
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileErr, setProfileErr] = useState("");
+  const [profileSaved, setProfileSaved] = useState(false);
+
   // ---- Live GPS for distance-to-green ----
   // This is intentionally provider-independent: it just tracks the
   // player's own live position. Which data source actually supplies the
@@ -1081,6 +1102,34 @@ export default function GolfScorecard() {
   // jump around between questions instead of starting cleanly at the top.
   // Deferred via double requestAnimationFrame, and paired with
   // overflow-anchor:none in the stylesheet - both needed because the
+  // Checks for an already-logged-in session as soon as the app loads (so
+  // refreshing the page doesn't log anyone out), then keeps listening for
+  // any future login/logout so the rest of the app can react to it.
+  useEffect(() => {
+    if (!supabase) {
+      setAuthLoading(false);
+      return;
+    }
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+      setAuthLoading(false);
+    });
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      setSession(newSession);
+    });
+    return () => listener.subscription.unsubscribe();
+  }, []);
+
+  // Loads (or clears) the profile row whenever who's logged in changes.
+  useEffect(() => {
+    if (session && session.user) {
+      loadProfile(session.user.id);
+    } else {
+      setProfile(null);
+      setProfileForm({ name: "", handicap: "", venmo: "", home_course: "" });
+    }
+  }, [session && session.user && session.user.id]);
+
   // browser's own scroll-anchoring feature actively tries to preserve
   // scroll position when content above the viewport resizes (exactly
   // what happens switching between a 2-button question and an 18-hole
@@ -1192,6 +1241,110 @@ export default function GolfScorecard() {
       setFeedbackBusy(false);
       setFeedbackErr(`Couldn't send feedback (${e.message || "network error"}). Please try again.`);
     }
+  }
+
+  // ---- Account functions (Supabase Auth) ----
+  async function signUp() {
+    setAuthErr("");
+    setAuthNotice("");
+    if (!authEmail.trim() || !authPassword) {
+      setAuthErr("Enter an email and password.");
+      return;
+    }
+    if (authPassword.length < 6) {
+      setAuthErr("Password must be at least 6 characters.");
+      return;
+    }
+    if (authPassword !== authPasswordConfirm) {
+      setAuthErr("Passwords don't match.");
+      return;
+    }
+    if (!supabase) {
+      setAuthErr("Account login isn't configured yet on this deployment.");
+      return;
+    }
+    setAuthBusy(true);
+    const { data, error } = await supabase.auth.signUp({ email: authEmail.trim(), password: authPassword });
+    setAuthBusy(false);
+    if (error) {
+      setAuthErr(error.message);
+      return;
+    }
+    setAuthPassword("");
+    setAuthPasswordConfirm("");
+    if (data.session) {
+      // Email confirmation is off - already logged in.
+      goToScreen("profileTab");
+    } else {
+      // Email confirmation is on - they'll need to click a link before they can log in.
+      setAuthNotice("Almost there - check your email to confirm your account, then log in.");
+      goToScreen("login");
+    }
+  }
+
+  async function signIn() {
+    setAuthErr("");
+    setAuthNotice("");
+    if (!authEmail.trim() || !authPassword) {
+      setAuthErr("Enter your email and password.");
+      return;
+    }
+    if (!supabase) {
+      setAuthErr("Account login isn't configured yet on this deployment.");
+      return;
+    }
+    setAuthBusy(true);
+    const { error } = await supabase.auth.signInWithPassword({ email: authEmail.trim(), password: authPassword });
+    setAuthBusy(false);
+    if (error) {
+      setAuthErr(error.message);
+      return;
+    }
+    setAuthPassword("");
+    goToScreen("profileTab");
+  }
+
+  async function signOutUser() {
+    if (supabase) await supabase.auth.signOut();
+    setProfile(null);
+    setProfileForm({ name: "", handicap: "", venmo: "", home_course: "" });
+  }
+
+  async function loadProfile(userId) {
+    if (!supabase || !userId) return;
+    setProfileLoading(true);
+    setProfileErr("");
+    const { data, error } = await supabase.from("profiles").select("*").eq("id", userId).maybeSingle();
+    setProfileLoading(false);
+    if (error) {
+      setProfileErr(`Couldn't load your profile (${error.message}).`);
+      return;
+    }
+    if (data) {
+      setProfile(data);
+      setProfileForm({ name: data.name || "", handicap: data.handicap || "", venmo: data.venmo || "", home_course: data.home_course || "" });
+    } else {
+      // First time - no profile row yet, that's expected, just start with a blank form.
+      setProfile(null);
+      setProfileForm({ name: "", handicap: "", venmo: "", home_course: "" });
+    }
+  }
+
+  async function saveProfile() {
+    if (!supabase || !session) return;
+    setProfileSaving(true);
+    setProfileErr("");
+    setProfileSaved(false);
+    const { error } = await supabase
+      .from("profiles")
+      .upsert({ id: session.user.id, ...profileForm, updated_at: new Date().toISOString() }, { onConflict: "id" });
+    setProfileSaving(false);
+    if (error) {
+      setProfileErr(`Couldn't save your profile (${error.message}).`);
+      return;
+    }
+    setProfile({ ...profileForm });
+    setProfileSaved(true);
   }
 
   const [boardErr, setBoardErr] = useState("");
@@ -3648,11 +3801,67 @@ function computeRoundScoring(round) {
         <style>{STYLE}</style>
         <Header title={<span style={{ fontSize: 23 }}>Profile</span>} sub="Your account & stats" />
         <div className="gsc-body gsc-body-tabbed">
-          <div className="gsc-card" style={{ textAlign: "center", padding: "32px 20px" }}>
-            <Lock size={28} color="#8FA998" style={{ marginBottom: 10 }} />
-            <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 6 }}>Profile & Stats Under Construction</div>
-            <div style={{ fontSize: 13, color: "#6b6b63", lineHeight: 1.5 }}>
-              Saved defaults (name, handicap, Venmo, home course), account login, and your stats (rounds played, average strokes and putts, wins) will all live here. Logging in will be optional - you'll always be able to keep playing instantly with just a round or tournament code, the way it works today.
+          {authLoading ? (
+            <div className="gsc-card" style={{ textAlign: "center", padding: "24px" }}>
+              <div style={{ fontSize: 13, color: "#6b6b63" }}>Loading...</div>
+            </div>
+          ) : !session ? (
+            <div className="gsc-card" style={{ textAlign: "center", padding: "28px 20px" }}>
+              <UserIcon size={28} color="#8FA998" style={{ marginBottom: 10 }} />
+              <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 6 }}>You're not logged in</div>
+              <div style={{ fontSize: 13, color: "#6b6b63", lineHeight: 1.5, marginBottom: 16 }}>
+                Log in to save your defaults (name, handicap, Venmo, home course) and unlock stats as we build them out. Logging in is always optional - you can keep playing instantly with just a round or tournament code, exactly like today.
+              </div>
+              <button className="gsc-btn gsc-btn-primary" style={{ width: "100%" }} onClick={() => { setAuthErr(""); goToScreen("login"); }}>
+                Log In
+              </button>
+              <button className="gsc-btn gsc-btn-outline" style={{ width: "100%", marginTop: 10 }} onClick={() => { setAuthErr(""); goToScreen("register"); }}>
+                Create Account
+              </button>
+            </div>
+          ) : (
+            <div className="gsc-card">
+              <div className="gsc-label" style={{ marginBottom: 4 }}>Account</div>
+              <div style={{ fontSize: 13, color: "#6b6b63", marginBottom: 14 }}>{session.user.email}</div>
+
+              {profileLoading ? (
+                <div style={{ fontSize: 13, color: "#6b6b63" }}>Loading your profile...</div>
+              ) : (
+                <>
+                  <div className="gsc-field">
+                    <div className="gsc-label">Name</div>
+                    <input className="gsc-input" value={profileForm.name} onChange={(e) => { setProfileSaved(false); setProfileForm({ ...profileForm, name: e.target.value }); }} />
+                  </div>
+                  <div className="gsc-field" style={{ marginTop: 10 }}>
+                    <div className="gsc-label">Handicap</div>
+                    <input className="gsc-input" value={profileForm.handicap} onChange={(e) => { setProfileSaved(false); setProfileForm({ ...profileForm, handicap: e.target.value }); }} />
+                  </div>
+                  <div className="gsc-field" style={{ marginTop: 10 }}>
+                    <div className="gsc-label">Venmo</div>
+                    <input className="gsc-input" placeholder="@your-venmo" value={profileForm.venmo} onChange={(e) => { setProfileSaved(false); setProfileForm({ ...profileForm, venmo: e.target.value }); }} />
+                  </div>
+                  <div className="gsc-field" style={{ marginTop: 10 }}>
+                    <div className="gsc-label">Home Course</div>
+                    <input className="gsc-input" value={profileForm.home_course} onChange={(e) => { setProfileSaved(false); setProfileForm({ ...profileForm, home_course: e.target.value }); }} />
+                  </div>
+
+                  {profileErr && <div style={{ color: "#C1440E", fontSize: 13, marginTop: 10 }}>{profileErr}</div>}
+                  <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 14 }} disabled={profileSaving} onClick={saveProfile}>
+                    {profileSaving ? "Saving..." : profileSaved ? "Saved \u2713" : "Save"}
+                  </button>
+                </>
+              )}
+
+              <button className="gsc-link" style={{ marginTop: 16, fontSize: 12, color: "#C1440E" }} onClick={signOutUser}>
+                Log out
+              </button>
+            </div>
+          )}
+
+          <div className="gsc-card" style={{ textAlign: "center", padding: "20px" }}>
+            <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Stats coming soon</div>
+            <div style={{ fontSize: 12, color: "#6b6b63", lineHeight: 1.5 }}>
+              Rounds played, average strokes and putts, wins, birdies, and more will live here once you're logged in for a round.
             </div>
           </div>
 
@@ -3936,6 +4145,78 @@ function computeRoundScoring(round) {
             <div style={{ fontSize: 13, color: "#6b6b63", lineHeight: 1.5 }}>
               RipScore Golf hats, shirts, and more will be available to order here soon.
             </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (screen === "login") {
+    return (
+      <div className="gsc">
+        <style>{STYLE}</style>
+        <Header title="Log In" sub="Access your saved profile" onBack={() => goBack("profileTab")} />
+        <div className="gsc-body">
+          {authNotice && (
+            <div className="gsc-card" style={{ background: "#EBF0EC", border: "1px solid #1B4332", marginBottom: 4 }}>
+              <div style={{ fontSize: 13, color: "#1B4332" }}>{authNotice}</div>
+            </div>
+          )}
+          <div className="gsc-card">
+            <div className="gsc-field">
+              <div className="gsc-label">Email</div>
+              <input className="gsc-input" type="email" autoCapitalize="off" autoCorrect="off" value={authEmail} onChange={(e) => setAuthEmail(e.target.value)} />
+            </div>
+            <div className="gsc-field" style={{ marginTop: 10 }}>
+              <div className="gsc-label">Password</div>
+              <input className="gsc-input" type="password" value={authPassword} onChange={(e) => setAuthPassword(e.target.value)} onKeyDown={(e) => e.key === "Enter" && signIn()} />
+            </div>
+            {authErr && <div style={{ color: "#C1440E", fontSize: 13, marginTop: 10 }}>{authErr}</div>}
+            <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 14 }} disabled={authBusy} onClick={signIn}>
+              {authBusy ? "Logging in..." : "Log In"}
+            </button>
+          </div>
+          <div style={{ textAlign: "center", fontSize: 13, color: "#6b6b63" }}>
+            Don't have an account?{" "}
+            <button className="gsc-link" style={{ fontSize: 13 }} onClick={() => { setAuthErr(""); goToScreen("register"); }}>
+              Create one
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (screen === "register") {
+    return (
+      <div className="gsc">
+        <style>{STYLE}</style>
+        <Header title="Create Account" sub="Save your defaults & unlock stats" onBack={() => goBack("profileTab")} />
+        <div className="gsc-body">
+          <div className="gsc-card">
+            <div className="gsc-field">
+              <div className="gsc-label">Email</div>
+              <input className="gsc-input" type="email" autoCapitalize="off" autoCorrect="off" value={authEmail} onChange={(e) => setAuthEmail(e.target.value)} />
+            </div>
+            <div className="gsc-field" style={{ marginTop: 10 }}>
+              <div className="gsc-label">Password</div>
+              <input className="gsc-input" type="password" value={authPassword} onChange={(e) => setAuthPassword(e.target.value)} />
+              <div style={{ fontSize: 11, color: "#8a8a80", marginTop: 4 }}>At least 6 characters.</div>
+            </div>
+            <div className="gsc-field" style={{ marginTop: 10 }}>
+              <div className="gsc-label">Confirm Password</div>
+              <input className="gsc-input" type="password" value={authPasswordConfirm} onChange={(e) => setAuthPasswordConfirm(e.target.value)} onKeyDown={(e) => e.key === "Enter" && signUp()} />
+            </div>
+            {authErr && <div style={{ color: "#C1440E", fontSize: 13, marginTop: 10 }}>{authErr}</div>}
+            <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 14 }} disabled={authBusy} onClick={signUp}>
+              {authBusy ? "Creating account..." : "Create Account"}
+            </button>
+          </div>
+          <div style={{ textAlign: "center", fontSize: 13, color: "#6b6b63" }}>
+            Already have an account?{" "}
+            <button className="gsc-link" style={{ fontSize: 13 }} onClick={() => { setAuthErr(""); goToScreen("login"); }}>
+              Log in
+            </button>
           </div>
         </div>
       </div>
