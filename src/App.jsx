@@ -3586,7 +3586,9 @@ function computeRoundScoring(round) {
         <Header
           title={<><span style={{ fontSize: 23 }}>RipScore Golf Games</span><div style={{ fontSize: 11, fontWeight: 400, opacity: 0.75, letterSpacing: "0.5px", textTransform: "uppercase", marginTop: 2, fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>Play the game. We'll keep score.</div></>}
           sub=""
-          belowLogo={
+        />
+        <div className="gsc-body gsc-body-tabbed">
+          <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 8 }}>
             <button
               className="gsc-btn gsc-btn-ghost"
               style={{ padding: "5px 8px", fontSize: 11, textAlign: "right", maxWidth: "70vw" }}
@@ -3594,9 +3596,7 @@ function computeRoundScoring(round) {
             >
               {session ? (profile && profile.name ? `Welcome back ${profile.name.split(" ")[0]}` : "Welcome back") : "Log In or Create Account"}
             </button>
-          }
-        />
-        <div className="gsc-body gsc-body-tabbed">
+          </div>
           <div style={{ fontSize: 13, color: "#4b4b45", lineHeight: 1.55, margin: "0 0 16px" }}>
             We all love playing games on the course, but who wants to keep track of the scores and rules? RipScore does it for you. No paper scorecards, no redoing the math, no arguing about rules, just easy golf games, live shared scores, and a clear answer to who owes who at the 19th hole.
             <br />
