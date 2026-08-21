@@ -1440,18 +1440,26 @@ export default function GolfScorecard() {
     }
     setProfile({ ...profileForm });
     setProfileSaved(true);
-    // Best-effort - immediately reflects the opt-in/out toggle on the
-    // leaderboard row, even before loadStats next refreshes the actual
-    // numbers. If this fails, the profile save itself still succeeded.
-    supabase
-      .from("leaderboard_stats")
-      .upsert(
-        { user_id: session.user.id, display_name: profileForm.name || "Golfer", opted_in: !!profileForm.leaderboard_opt_in },
-        { onConflict: "user_id" }
-      )
-      .then(({ error: lbError }) => {
-        if (lbError) console.warn("Couldn't update leaderboard opt-in:", lbError.message);
-      });
+    if (profileForm.leaderboard_opt_in) {
+      // Opting in (or already in, saving other fields) - refresh the
+      // leaderboard row with real numbers right away, and refresh the
+      // displayed list too. Passing explicit overrides here (rather than
+      // relying on the profile state above having already settled)
+      // guarantees this always uses this save's real values, not a stale
+      // read.
+      await loadStats({ optIn: true, name: profileForm.name });
+      loadLeaderboard();
+    } else {
+      // Opting out - loadStats only ever writes a row when opted in, so
+      // this needs its own direct path, or an existing row would be
+      // stranded still saying opted_in:true in the database.
+      const { error: lbError } = await supabase
+        .from("leaderboard_stats")
+        .update({ opted_in: false })
+        .eq("user_id", session.user.id);
+      if (lbError) console.warn("Couldn't update leaderboard opt-out:", lbError.message);
+      loadLeaderboard();
+    }
   }
 
   // Pulls together everything recorded in user_rounds since Phase 4 into
@@ -1460,7 +1468,7 @@ export default function GolfScorecard() {
   // then reuses the exact same scoring and winner-determination logic the
   // live scoring screens use, so stats can never silently disagree with
   // what the app already showed you during the round.
-  async function loadStats() {
+  async function loadStats(overrides) {
     if (!session || !supabase) return;
     setStatsLoading(true);
     setStatsErr("");
@@ -1570,13 +1578,15 @@ export default function GolfScorecard() {
     // Keep the leaderboard's copy of this user's totals fresh, but only
     // actually write anything if they've opted in - no reason to create a
     // row at all for someone who's never turned this on.
-    if (profile && profile.leaderboard_opt_in) {
+    const isOptedIn = overrides && overrides.optIn !== undefined ? overrides.optIn : profile && profile.leaderboard_opt_in;
+    const displayName = (overrides && overrides.name) || (profile && profile.name) || "Golfer";
+    if (isOptedIn) {
       supabase
         .from("leaderboard_stats")
         .upsert(
           {
             user_id: session.user.id,
-            display_name: profile.name || "Golfer",
+            display_name: displayName,
             opted_in: true,
             rounds_played: roundsPlayed,
             wins,
