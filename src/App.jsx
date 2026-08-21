@@ -1174,6 +1174,7 @@ export default function GolfScorecard() {
   const [holeIdx, setHoleIdx] = useState(0);
   const [showGrid, setShowGrid] = useState(false);
   const [confirmLeaveOpen, setConfirmLeaveOpen] = useState(false);
+  const [viewingRoundFromStats, setViewingRoundFromStats] = useState(false);
   const [rulesOpenFor, setRulesOpenFor] = useState(null);
 
   // ---- Tournament (multi-foursome) state ----
@@ -1697,6 +1698,14 @@ export default function GolfScorecard() {
   // Guard against accidentally losing an in-progress round: tapping Back
   // during a round asks for confirmation instead of leaving right away.
   function requestLeaveRound() {
+    if (viewingRoundFromStats) {
+      // Just browsing a past round for reference, not an active round in
+      // progress - no confirmation needed, and definitely shouldn't dump
+      // them onto the home screen instead of back where they came from.
+      setViewingRoundFromStats(false);
+      goBack("profileTab");
+      return;
+    }
     setConfirmLeaveOpen(true);
   }
   function confirmLeaveRound() {
@@ -2858,7 +2867,30 @@ export default function GolfScorecard() {
     setHoleIdx(firstOpenHole(r));
     rememberCode(r.id, r.name);
     setActiveRound(r);
+    setViewingRoundFromStats(false); // normal join flow - always a real active round, not a read-only view
     saveRound(r);
+    goToScreen("card");
+  }
+
+  // Opens a round for reference from the Profile page's Recent Rounds list
+  // - deliberately does NOT touch activeRound, so glancing back at an old
+  // round doesn't hijack the "Round in progress" card on Home/Rounds for
+  // whatever round you're actually currently playing (or make it look like
+  // a brand new round is in progress if you weren't playing one at all).
+  async function viewRoundFromProfile(code) {
+    setErr("");
+    setBusy(true);
+    const res = await storageGet(`golfround:${code.toUpperCase().trim()}`, true);
+    setBusy(false);
+    if (!res.ok || !res.value) {
+      setStatsErr("Couldn't open that round right now.");
+      return;
+    }
+    const r = JSON.parse(res.value);
+    setRound(r);
+    setGameKey(r.game);
+    setHoleIdx(firstOpenHole(r));
+    setViewingRoundFromStats(true);
     goToScreen("card");
   }
 
@@ -4147,7 +4179,7 @@ function computeRoundScoring(round) {
                       {stats.recent.map((r, i) => (
                         <div
                           key={i}
-                          onClick={() => loadRound(r.code)}
+                          onClick={() => viewRoundFromProfile(r.code)}
                           style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "7px 0", borderBottom: i === stats.recent.length - 1 ? "none" : "1px solid #eee6cf", cursor: "pointer" }}
                         >
                           <div style={{ fontSize: 13, color: "#1B4332", fontWeight: 600 }}>
