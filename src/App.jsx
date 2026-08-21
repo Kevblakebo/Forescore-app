@@ -3589,10 +3589,10 @@ function computeRoundScoring(round) {
           belowLogo={
             <button
               className="gsc-btn gsc-btn-ghost"
-              style={{ padding: "5px 8px", fontSize: 11, whiteSpace: "nowrap" }}
+              style={{ padding: "5px 8px", fontSize: 11, textAlign: "right", maxWidth: "70vw" }}
               onClick={() => goToScreen(session ? "profileTab" : "login")}
             >
-              {session ? (profile && profile.name ? profile.name.split(" ")[0] : "Profile") : "Log In"}
+              {session ? (profile && profile.name ? `Welcome back ${profile.name.split(" ")[0]}` : "Welcome back") : "Log In or Create Account"}
             </button>
           }
         />
