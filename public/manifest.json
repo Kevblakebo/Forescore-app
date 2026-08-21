@@ -2,6 +2,7 @@
   "name": "RipScore Golf",
   "short_name": "RipScore",
   "description": "Golf games scorecard and tournament tracker",
+  "id": "/",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#1B4332",
