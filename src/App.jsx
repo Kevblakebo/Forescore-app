@@ -1043,6 +1043,9 @@ export default function GolfScorecard() {
   const [authPassword, setAuthPassword] = useState("");
   const [authPasswordConfirm, setAuthPasswordConfirm] = useState("");
   const [authNotice, setAuthNotice] = useState(""); // e.g. "check your email to confirm"
+  const [resetSent, setResetSent] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [newPasswordConfirm, setNewPasswordConfirm] = useState("");
 
   const [profile, setProfile] = useState(null); // { name, handicap, venmo, home_course } once loaded
   const [profileForm, setProfileForm] = useState({ name: "", handicap: "", venmo: "", home_course: "" });
@@ -1119,8 +1122,14 @@ export default function GolfScorecard() {
       setSession(data.session);
       setAuthLoading(false);
     });
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, newSession) => {
+    const { data: listener } = supabase.auth.onAuthStateChange((event, newSession) => {
       setSession(newSession);
+      if (event === "PASSWORD_RECOVERY") {
+        // Fires when someone arrives via a password reset email link -
+        // route them straight to setting a new password rather than just
+        // silently logging them in, which would be a confusing dead end.
+        goToScreen("resetPassword");
+      }
     });
     return () => listener.subscription.unsubscribe();
   }, []);
@@ -1312,6 +1321,53 @@ export default function GolfScorecard() {
       return;
     }
     setAuthPassword("");
+    goToScreen("profileTab");
+  }
+
+  async function sendPasswordReset() {
+    setAuthErr("");
+    setAuthNotice("");
+    if (!authEmail.trim()) {
+      setAuthErr("Enter your email.");
+      return;
+    }
+    if (!supabase) {
+      setAuthErr("Account login isn't configured yet on this deployment.");
+      return;
+    }
+    setAuthBusy(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(authEmail.trim());
+    setAuthBusy(false);
+    if (error) {
+      setAuthErr(error.message);
+      return;
+    }
+    setResetSent(true);
+  }
+
+  async function submitNewPassword() {
+    setAuthErr("");
+    if (!newPassword || newPassword.length < 6) {
+      setAuthErr("Password must be at least 6 characters.");
+      return;
+    }
+    if (newPassword !== newPasswordConfirm) {
+      setAuthErr("Passwords don't match.");
+      return;
+    }
+    if (!supabase) {
+      setAuthErr("Account login isn't configured yet on this deployment.");
+      return;
+    }
+    setAuthBusy(true);
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    setAuthBusy(false);
+    if (error) {
+      setAuthErr(error.message);
+      return;
+    }
+    setNewPassword("");
+    setNewPasswordConfirm("");
     goToScreen("profileTab");
   }
 
@@ -4420,6 +4476,9 @@ function computeRoundScoring(round) {
             <div className="gsc-field" style={{ marginTop: 10 }}>
               <div className="gsc-label">Password</div>
               <input className="gsc-input" type="password" value={authPassword} onChange={(e) => setAuthPassword(e.target.value)} onKeyDown={(e) => e.key === "Enter" && signIn()} />
+              <button className="gsc-link" style={{ fontSize: 12, marginTop: 6 }} onClick={() => { setAuthErr(""); setResetSent(false); goToScreen("forgotPassword"); }}>
+                Forgot password?
+              </button>
             </div>
             {authErr && <div style={{ color: "#C1440E", fontSize: 13, marginTop: 10 }}>{authErr}</div>}
             <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 14 }} disabled={authBusy} onClick={signIn}>
@@ -4430,6 +4489,61 @@ function computeRoundScoring(round) {
             Don't have an account?{" "}
             <button className="gsc-link" style={{ fontSize: 13 }} onClick={() => { setAuthErr(""); goToScreen("register"); }}>
               Create one
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (screen === "forgotPassword") {
+    return (
+      <div className="gsc">
+        <style>{STYLE}</style>
+        <Header title="Reset Password" sub="We'll email you a reset link" onBack={() => goBack("login")} />
+        <div className="gsc-body">
+          {resetSent ? (
+            <div className="gsc-card" style={{ background: "#EBF0EC", border: "1px solid #1B4332" }}>
+              <div style={{ fontSize: 13, color: "#1B4332", lineHeight: 1.5 }}>
+                Check your email for a link to reset your password. Once you click it, you'll be brought right back here to set a new one.
+              </div>
+            </div>
+          ) : (
+            <div className="gsc-card">
+              <div className="gsc-field">
+                <div className="gsc-label">Email</div>
+                <input className="gsc-input" type="email" autoCapitalize="off" autoCorrect="off" value={authEmail} onChange={(e) => setAuthEmail(e.target.value)} onKeyDown={(e) => e.key === "Enter" && sendPasswordReset()} />
+              </div>
+              {authErr && <div style={{ color: "#C1440E", fontSize: 13, marginTop: 10 }}>{authErr}</div>}
+              <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 14 }} disabled={authBusy} onClick={sendPasswordReset}>
+                {authBusy ? "Sending..." : "Send Reset Link"}
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  if (screen === "resetPassword") {
+    return (
+      <div className="gsc">
+        <style>{STYLE}</style>
+        <Header title="Set New Password" sub="Choose a new password for your account" />
+        <div className="gsc-body">
+          <div className="gsc-card">
+            <div className="gsc-field">
+              <div className="gsc-label">New Password</div>
+              <input className="gsc-input" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+              <div style={{ fontSize: 11, color: "#8a8a80", marginTop: 4 }}>At least 6 characters.</div>
+            </div>
+            <div className="gsc-field" style={{ marginTop: 10 }}>
+              <div className="gsc-label">Confirm New Password</div>
+              <input className="gsc-input" type="password" value={newPasswordConfirm} onChange={(e) => setNewPasswordConfirm(e.target.value)} onKeyDown={(e) => e.key === "Enter" && submitNewPassword()} />
+            </div>
+            {authErr && <div style={{ color: "#C1440E", fontSize: 13, marginTop: 10 }}>{authErr}</div>}
+            <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 14 }} disabled={authBusy} onClick={submitNewPassword}>
+              {authBusy ? "Saving..." : "Set New Password"}
             </button>
           </div>
         </div>
