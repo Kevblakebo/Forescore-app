@@ -1051,6 +1051,11 @@ export default function GolfScorecard() {
   const [profileErr, setProfileErr] = useState("");
   const [profileSaved, setProfileSaved] = useState(false);
 
+  // ---- Stats (Phase 5) ----
+  const [stats, setStats] = useState(null);
+  const [statsLoading, setStatsLoading] = useState(false);
+  const [statsErr, setStatsErr] = useState("");
+
   // ---- Live GPS for distance-to-green ----
   // This is intentionally provider-independent: it just tracks the
   // player's own live position. Which data source actually supplies the
@@ -1129,6 +1134,12 @@ export default function GolfScorecard() {
       setProfileForm({ name: "", handicap: "", venmo: "", home_course: "" });
     }
   }, [session && session.user && session.user.id]);
+
+  useEffect(() => {
+    if (screen === "profileTab" && session && session.user) {
+      loadStats();
+    }
+  }, [screen, session && session.user && session.user.id]);
 
   // browser's own scroll-anchoring feature actively tries to preserve
   // scroll position when content above the viewport resizes (exactly
@@ -1345,6 +1356,113 @@ export default function GolfScorecard() {
     }
     setProfile({ ...profileForm });
     setProfileSaved(true);
+  }
+
+  // Pulls together everything recorded in user_rounds since Phase 4 into
+  // real stats. Fetches the actual round data for each entry (the index
+  // table only tracks which rounds are yours, not the scores themselves),
+  // then reuses the exact same scoring and winner-determination logic the
+  // live scoring screens use, so stats can never silently disagree with
+  // what the app already showed you during the round.
+  async function loadStats() {
+    if (!session || !supabase) return;
+    setStatsLoading(true);
+    setStatsErr("");
+
+    const { data: myRoundsIndex, error } = await supabase
+      .from("user_rounds")
+      .select("*")
+      .eq("user_id", session.user.id)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      setStatsLoading(false);
+      setStatsErr(`Couldn't load your stats (${error.message}).`);
+      return;
+    }
+
+    if (!myRoundsIndex || myRoundsIndex.length === 0) {
+      setStatsLoading(false);
+      setStats({ roundsPlayed: 0, avgStrokes: null, avgPutts: null, wins: 0, eagles: 0, birdies: 0, pars: 0, recent: [] });
+      return;
+    }
+
+    let roundsPlayed = 0;
+    let strokesSum = 0, strokesCount = 0;
+    let puttsSum = 0, puttsCount = 0;
+    let wins = 0;
+    let eagles = 0, birdies = 0, pars = 0;
+    const recent = [];
+
+    for (const ur of myRoundsIndex) {
+      const res = await storageGet(`golfround:${ur.round_code}`, true);
+      if (!res.ok || !res.value) continue; // round may have since been deleted - skip it, don't fail the whole list
+      let r;
+      try {
+        r = JSON.parse(res.value);
+      } catch (e) {
+        continue;
+      }
+      if (!r || !r.players || !GAMES[r.game]) continue;
+
+      const myIdx = r.players.findIndex((p) => p.user_id === session.user.id);
+      if (myIdx === -1) continue;
+
+      let holesPlayed = 0;
+      let myStrokesTotal = 0;
+      let myPuttsTotal = 0;
+      for (let h = 0; h < 18; h++) {
+        const entry = r.scores && r.scores[h] ? r.scores[h][myIdx] : null;
+        const parH = r.par ? r.par[h] : null;
+        if (entry && entry.strokes != null && entry.strokes !== "") {
+          holesPlayed++;
+          const strokesVal = Number(entry.strokes);
+          myStrokesTotal += strokesVal;
+          if (parH != null) {
+            const diff = strokesVal - parH;
+            if (diff <= -2) eagles++;
+            else if (diff === -1) birdies++;
+            else if (diff === 0) pars++;
+          }
+        }
+        if (entry && entry.putts != null && entry.putts !== "") {
+          myPuttsTotal += Number(entry.putts);
+        }
+      }
+
+      if (holesPlayed === 0) continue; // created but never actually played - don't count it
+      roundsPlayed++;
+
+      if (holesPlayed === 18) {
+        // Only fully-completed rounds count toward averages and wins - a
+        // 4-hole partial round would otherwise drag the average way down
+        // and can't fairly be scored a win or loss anyway.
+        strokesSum += myStrokesTotal;
+        strokesCount++;
+        puttsSum += myPuttsTotal;
+        puttsCount++;
+
+        const computedForRound = computeRoundScoring(r);
+        if (computedForRound) {
+          const winners = determineWinners(r, computedForRound);
+          if (winners.some((w) => w.idx === myIdx)) wins++;
+        }
+      }
+
+      recent.push({ code: ur.round_code, name: r.name, date: r.date, game: r.game, complete: holesPlayed === 18 });
+    }
+
+    setStatsLoading(false);
+    setStats({
+      roundsPlayed,
+      avgStrokes: strokesCount > 0 ? strokesSum / strokesCount : null,
+      avgPutts: puttsCount > 0 ? puttsSum / puttsCount : null,
+      wins,
+      eagles,
+      birdies,
+      pars,
+      recent: recent.slice(0, 5),
+    });
   }
 
   // Builds a fresh set of 4 empty player slots - if someone's logged in
@@ -3197,11 +3315,13 @@ function computeRoundScoring(round) {
     );
   }
 
-  function playerRank() {
-    if (!computed || !round) return [];
-    const isTotalScoring = GAMES[round.game] && GAMES[round.game].totalScoring;
-    const rankByPutts = GAMES[round.game] && GAMES[round.game].rankByPutts;
-    const rankByTeamTotal = GAMES[round.game] && GAMES[round.game].rankByTeamTotal;
+  function playerRank(roundArg, computedArg) {
+    const r = roundArg || round;
+    const c = computedArg || computed;
+    if (!c || !r) return [];
+    const isTotalScoring = GAMES[r.game] && GAMES[r.game].totalScoring;
+    const rankByPutts = GAMES[r.game] && GAMES[r.game].rankByPutts;
+    const rankByTeamTotal = GAMES[r.game] && GAMES[r.game].rankByTeamTotal;
 
     // For team-total games, both teammates need to show and be ranked by
     // their COMBINED total, not their own individual total - otherwise two
@@ -3209,27 +3329,27 @@ function computeRoundScoring(round) {
     // standings despite being on the winning (or losing) team together.
     let teamScoreOf = null;
     let teamPuttsOf = null;
-    if (rankByTeamTotal && round.teams) {
-      teamScoreOf = round.players.map((_, i) => {
-        const team = round.teams.find((t) => t.includes(i));
-        return team ? team.reduce((sum, p) => sum + computed.playerTotalScore[p], 0) : computed.playerTotalScore[i];
+    if (rankByTeamTotal && r.teams) {
+      teamScoreOf = r.players.map((_, i) => {
+        const team = r.teams.find((t) => t.includes(i));
+        return team ? team.reduce((sum, p) => sum + c.playerTotalScore[p], 0) : c.playerTotalScore[i];
       });
-      teamPuttsOf = round.players.map((_, i) => {
-        const team = round.teams.find((t) => t.includes(i));
-        return team ? team.reduce((sum, p) => sum + computed.playerTotalPutts[p], 0) : computed.playerTotalPutts[i];
+      teamPuttsOf = r.players.map((_, i) => {
+        const team = r.teams.find((t) => t.includes(i));
+        return team ? team.reduce((sum, p) => sum + c.playerTotalPutts[p], 0) : c.playerTotalPutts[i];
       });
     }
 
-    return round.players
+    return r.players
       .map((pl, i) => ({
         ...pl,
         idx: i,
-        points: computed.playerPoints[i],
-        score: rankByTeamTotal ? teamScoreOf[i] : computed.playerTotalScore[i],
-        putts: rankByTeamTotal ? teamPuttsOf[i] : computed.playerTotalPutts[i],
-        individualScore: computed.playerTotalScore[i],
-        individualPutts: computed.playerTotalPutts[i],
-        relPar: computed.playerTotalScore[i] - computed.playerParPlayed[i],
+        points: c.playerPoints[i],
+        score: rankByTeamTotal ? teamScoreOf[i] : c.playerTotalScore[i],
+        putts: rankByTeamTotal ? teamPuttsOf[i] : c.playerTotalPutts[i],
+        individualScore: c.playerTotalScore[i],
+        individualPutts: c.playerTotalPutts[i],
+        relPar: c.playerTotalScore[i] - c.playerParPlayed[i],
       }))
       .sort((a, b) => {
         if (rankByPutts) {
@@ -3912,12 +4032,74 @@ function computeRoundScoring(round) {
             </div>
           )}
 
-          <div className="gsc-card" style={{ textAlign: "center", padding: "20px" }}>
-            <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Stats coming soon</div>
-            <div style={{ fontSize: 12, color: "#6b6b63", lineHeight: 1.5 }}>
-              Rounds played, average strokes and putts, wins, birdies, and more will live here once you're logged in for a round.
+          {session && (
+            <div className="gsc-card">
+              <div className="gsc-label" style={{ marginBottom: 10 }}>Your Stats</div>
+              {statsLoading ? (
+                <div style={{ fontSize: 13, color: "#6b6b63" }}>Loading your stats...</div>
+              ) : statsErr ? (
+                <div style={{ color: "#C1440E", fontSize: 13 }}>{statsErr}</div>
+              ) : !stats || stats.roundsPlayed === 0 ? (
+                <div style={{ fontSize: 13, color: "#6b6b63", lineHeight: 1.5 }}>
+                  No completed rounds yet while logged in. Play a full 18-hole round while logged in and it'll show up here.
+                </div>
+              ) : (
+                <>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                    <div style={{ background: "#F3EFE0", borderRadius: 10, padding: "10px 12px" }}>
+                      <div style={{ fontSize: 20, fontWeight: 800, color: "#1B4332" }}>{stats.roundsPlayed}</div>
+                      <div style={{ fontSize: 11, color: "#6b6b63" }}>Rounds Played</div>
+                    </div>
+                    <div style={{ background: "#F3EFE0", borderRadius: 10, padding: "10px 12px" }}>
+                      <div style={{ fontSize: 20, fontWeight: 800, color: "#1B4332" }}>{stats.wins}</div>
+                      <div style={{ fontSize: 11, color: "#6b6b63" }}>Wins</div>
+                    </div>
+                    <div style={{ background: "#F3EFE0", borderRadius: 10, padding: "10px 12px" }}>
+                      <div style={{ fontSize: 20, fontWeight: 800, color: "#1B4332" }}>{stats.avgStrokes != null ? stats.avgStrokes.toFixed(1) : "-"}</div>
+                      <div style={{ fontSize: 11, color: "#6b6b63" }}>Avg Strokes</div>
+                    </div>
+                    <div style={{ background: "#F3EFE0", borderRadius: 10, padding: "10px 12px" }}>
+                      <div style={{ fontSize: 20, fontWeight: 800, color: "#1B4332" }}>{stats.avgPutts != null ? stats.avgPutts.toFixed(1) : "-"}</div>
+                      <div style={{ fontSize: 11, color: "#6b6b63" }}>Avg Putts</div>
+                    </div>
+                    <div style={{ background: "#F3EFE0", borderRadius: 10, padding: "10px 12px" }}>
+                      <div style={{ fontSize: 20, fontWeight: 800, color: "#1B4332" }}>{stats.birdies}</div>
+                      <div style={{ fontSize: 11, color: "#6b6b63" }}>Birdies</div>
+                    </div>
+                    <div style={{ background: "#F3EFE0", borderRadius: 10, padding: "10px 12px" }}>
+                      <div style={{ fontSize: 20, fontWeight: 800, color: "#1B4332" }}>{stats.pars}</div>
+                      <div style={{ fontSize: 11, color: "#6b6b63" }}>Pars</div>
+                    </div>
+                    {stats.eagles > 0 && (
+                      <div style={{ background: "#F3EFE0", borderRadius: 10, padding: "10px 12px", gridColumn: "span 2" }}>
+                        <div style={{ fontSize: 20, fontWeight: 800, color: "#1B4332" }}>{stats.eagles}</div>
+                        <div style={{ fontSize: 11, color: "#6b6b63" }}>Eagles or better</div>
+                      </div>
+                    )}
+                  </div>
+
+                  {stats.recent.length > 0 && (
+                    <div style={{ marginTop: 16 }}>
+                      <div style={{ fontSize: 11, color: "#8a8a80", textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 700, marginBottom: 8 }}>Recent Rounds</div>
+                      {stats.recent.map((r, i) => (
+                        <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "7px 0", borderBottom: i === stats.recent.length - 1 ? "none" : "1px solid #eee6cf" }}>
+                          <div style={{ fontSize: 13 }}>
+                            {r.name}
+                            {!r.complete && <span style={{ fontSize: 10, color: "#8a8a80", marginLeft: 6 }}>(in progress)</span>}
+                          </div>
+                          <div style={{ fontSize: 12, color: "#6b6b63" }}>{r.date}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <button className="gsc-link" style={{ marginTop: 12, fontSize: 12 }} onClick={loadStats}>
+                    Refresh stats
+                  </button>
+                </>
+              )}
             </div>
-          </div>
+          )}
 
           <div className="gsc-card" style={{ cursor: "pointer" }} onClick={() => goToScreen("feedback")}>
             <div className="gsc-label" style={{ marginBottom: 6 }}>Give Feedback</div>
@@ -5840,24 +6022,32 @@ function computeRoundScoring(round) {
     );
   }
 
+  // Same "who actually won" logic used by the round-complete celebration
+  // screen, pulled out so Phase 5 stats can reuse the exact same rules
+  // rather than risk a second, slightly different copy drifting out of
+  // sync with it over time.
+  function determineWinners(roundArg, computedArg) {
+    const r = roundArg || round;
+    const ranks = playerRank(r, computedArg);
+    const g = GAMES[r.game];
+    let winners = [];
+    const isTwoVsTwoGame = r.game === "seabluffe" || r.game === "ponto" || r.game === "beachside" || r.game === "teamputts" || r.game === "teamstrokes";
+    if (!g.singleTeam && ranks.length > 0) {
+      if (isTwoVsTwoGame) {
+        winners = ranks.slice(0, Math.min(2, ranks.length));
+      } else if (g.totalScoring) {
+        winners = ranks.filter((row) => row.score === ranks[0].score && row.putts === ranks[0].putts);
+      } else {
+        winners = ranks.filter((row) => row.points === ranks[0].points);
+      }
+    }
+    return winners;
+  }
+
   if (screen === "roundComplete" && round && computed) {
     const g = GAMES[round.game];
     const ranks = playerRank();
-    let winners = [];
-    const isTwoVsTwoGame = round.game === "seabluffe" || round.game === "ponto" || round.game === "beachside" || round.game === "teamputts" || round.game === "teamstrokes";
-    if (!g.singleTeam && ranks.length > 0) {
-      if (isTwoVsTwoGame) {
-        // These are always 2v2 - the winning team is the top 2 ranked
-        // players, full stop. Not filtered by an exact points match, since
-        // that's a fragile way to say "the winning team" even though
-        // teammates normally do share identical points.
-        winners = ranks.slice(0, Math.min(2, ranks.length));
-      } else if (g.totalScoring) {
-        winners = ranks.filter((r) => r.score === ranks[0].score && r.putts === ranks[0].putts);
-      } else {
-        winners = ranks.filter((r) => r.points === ranks[0].points);
-      }
-    }
+    const winners = determineWinners();
     const formatRelPar = (n) => (n === 0 ? "E" : n > 0 ? `+${n}` : `${n}`);
 
     return (
