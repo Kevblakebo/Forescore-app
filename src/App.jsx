@@ -1646,8 +1646,8 @@ export default function GolfScorecard() {
   // real round data moves on, so leaving and hitting "Continue round"
   // would resume from a stale, empty copy instead of where play left off.
   useEffect(() => {
-    if (round) setActiveRound(round);
-  }, [round]);
+    if (round && !viewingRoundFromStats) setActiveRound(round);
+  }, [round, viewingRoundFromStats]);
 
   useEffect(() => {
     (async () => {
