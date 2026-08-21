@@ -1646,8 +1646,8 @@ export default function GolfScorecard() {
   // real round data moves on, so leaving and hitting "Continue round"
   // would resume from a stale, empty copy instead of where play left off.
   useEffect(() => {
-    if (round && !viewingRoundFromStats) setActiveRound(round);
-  }, [round, viewingRoundFromStats]);
+    if (round && !isRoundFullyComplete(round)) setActiveRound(round);
+  }, [round]);
 
   useEffect(() => {
     (async () => {
@@ -1686,6 +1686,22 @@ export default function GolfScorecard() {
       if (!filled) return h;
     }
     return 17;
+  }
+
+  // Unambiguous check for "every hole, every player, fully scored" - unlike
+  // firstOpenHole, which can return 17 either because hole 18 is the only
+  // one left, or because everything is already done, this always means
+  // exactly one thing: the round is finished. Used to stop a finished round
+  // from ever being re-marked as "in progress" just because someone opened
+  // it to look something up.
+  function isRoundFullyComplete(r) {
+    if (!r || !r.scores || !r.players) return false;
+    for (let h = 0; h < 18; h++) {
+      const hs = r.scores[h] || {};
+      const filled = r.players.every((_, i) => hs[i] && ((hs[i].strokes != null && hs[i].strokes !== "") || (hs[i].putts != null && hs[i].putts !== "")));
+      if (!filled) return false;
+    }
+    return true;
   }
 
   function resumeActiveRound() {
@@ -1911,7 +1927,7 @@ export default function GolfScorecard() {
     setRound(r);
     setGameKey(r.game);
     setHoleIdx(firstOpenHole(r));
-    setActiveRound(r);
+    if (!isRoundFullyComplete(r)) setActiveRound(r);
     saveRound(r);
     goToScreen("card");
   }
@@ -2866,7 +2882,7 @@ export default function GolfScorecard() {
     setGameKey(r.game);
     setHoleIdx(firstOpenHole(r));
     rememberCode(r.id, r.name);
-    setActiveRound(r);
+    if (!isRoundFullyComplete(r)) setActiveRound(r);
     setViewingRoundFromStats(false); // normal join flow - always a real active round, not a read-only view
     saveRound(r);
     goToScreen("card");
