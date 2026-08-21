@@ -3442,7 +3442,13 @@ function computeRoundScoring(round) {
   // above has already executed (Rules of Hooks requires hooks to run
   // unconditionally), so it's safe to return early here for anyone on a
   // tablet or desktop instead of rendering the app itself.
-  if (!isPhoneDevice()) {
+  // Hidden escape hatch, purely for capturing real app screenshots at a
+  // desktop/wide size (e.g. for app store listings) - visit the site with
+  // ?desktopPreview added to the URL to see the real app instead of the
+  // phones-only block. Not linked or advertised anywhere, so ordinary
+  // desktop visitors still correctly see the block as intended.
+  const desktopPreview = typeof window !== "undefined" && window.location.search.includes("desktopPreview");
+  if (!isPhoneDevice() && !desktopPreview) {
     return (
       <div className="gsc" style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: 24, textAlign: "center" }}>
         <style>{STYLE}</style>
