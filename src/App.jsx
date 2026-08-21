@@ -4534,6 +4534,16 @@ function computeRoundScoring(round) {
               Read more
             </button>
           </div>
+
+          <div className="gsc-card" style={{ cursor: "pointer" }} onClick={() => goToScreen("feedback")}>
+            <div className="gsc-label" style={{ marginBottom: 6 }}>Give Feedback</div>
+            <div style={{ fontSize: 13, color: "#4b4b45" }}>
+              Two minutes, ten questions - tell us what's working and what isn't.
+            </div>
+            <button className="gsc-link" style={{ marginTop: 8, fontSize: 12 }} onClick={() => goToScreen("feedback")}>
+              Start feedback survey
+            </button>
+          </div>
         </div>
         <BottomNav />
       </div>
