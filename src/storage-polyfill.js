@@ -23,13 +23,21 @@ if (SUPABASE_URL && SUPABASE_ANON_KEY) {
   supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 } else {
   // Not fatal - personal (localStorage) storage still works fine. Only
-  // shared features (joining a round/tournament, saved courses) need this.
+  // shared features (joining a round/tournament, saved courses, and now
+  // account login) need this.
   console.warn(
-    "[ForeScore] VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY are not set. " +
+    "[RipScore] VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY are not set. " +
       "Personal storage (this device only) will work, but sharing rounds " +
-      "and tournaments across devices will not, until these are configured."
+      "and tournaments across devices, and account login, will not, until " +
+      "these are configured."
   );
 }
+
+// Exported so App.jsx can use this exact same client for Supabase Auth
+// (login/register/session) - deliberately one shared client instance
+// rather than creating a second one, so auth state and database access
+// are never out of sync with each other.
+export { supabase };
 
 function localGet(key) {
   const raw = localStorage.getItem(key);
