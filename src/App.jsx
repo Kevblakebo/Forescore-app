@@ -1506,7 +1506,7 @@ export default function GolfScorecard() {
         }
       }
 
-      recent.push({ code: ur.round_code, name: r.name, date: r.date, game: r.game, complete: holesPlayed === 18 });
+      recent.push({ code: ur.round_code, name: r.name, date: r.date, game: r.game, complete: holesPlayed === 18, tournamentId: ur.tournament_id || null });
     }
 
     setStatsLoading(false);
@@ -1520,6 +1520,33 @@ export default function GolfScorecard() {
       pars,
       recent: recent.slice(0, 5),
     });
+  }
+
+  const [deleteHistoryConfirm, setDeleteHistoryConfirm] = useState(null); // {code, name} while confirming
+  const [deleteHistoryBusy, setDeleteHistoryBusy] = useState(false);
+  const [deleteHistoryErr, setDeleteHistoryErr] = useState("");
+
+  // Removes a round/tournament from the logged-in user's own history list
+  // only - deliberately does NOT touch the actual shared round or
+  // tournament data, same "never destroy the real thing" principle used
+  // by Discard elsewhere in the app. Anyone with the code (including this
+  // same user) can still open it - it just stops showing up here.
+  async function confirmDeleteFromHistory() {
+    if (!deleteHistoryConfirm || !session || !supabase) return;
+    setDeleteHistoryBusy(true);
+    setDeleteHistoryErr("");
+    const { error } = await supabase
+      .from("user_rounds")
+      .delete()
+      .eq("user_id", session.user.id)
+      .eq("round_code", deleteHistoryConfirm.code);
+    setDeleteHistoryBusy(false);
+    if (error) {
+      setDeleteHistoryErr(`Couldn't remove this (${error.message}).`);
+      return;
+    }
+    setDeleteHistoryConfirm(null);
+    loadStats(); // refresh so the list and every stat reflect the removal
   }
 
   // Builds a fresh set of 4 empty player slots - if someone's logged in
@@ -3952,27 +3979,6 @@ function computeRoundScoring(round) {
           <div style={{ fontSize: 12, color: "#8a8a80", textAlign: "center", marginTop: 4 }}>
             Round data is stored so anyone with the round code can view or edit scores, when sync is working.
           </div>
-
-          {finishedRounds.length > 0 && (
-            <div className="gsc-card" style={{ marginTop: 14 }}>
-              <div className="gsc-label">Finished rounds on this device</div>
-              {finishedRounds.map((f) => (
-                <div key={f.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #eee6cf" }}>
-                  <div>
-                    <div style={{ fontWeight: 700, fontSize: 14 }}>{f.name}</div>
-                    <div style={{ fontSize: 12, color: "#6b6b63" }}>{GAMES[f.game]?.name} - {f.date}</div>
-                  </div>
-                  <div style={{ display: "flex", gap: 6 }}>
-                    <button className="gsc-btn gsc-btn-outline" disabled={busy} onClick={() => openFinishedRound(f.id)}>Reopen</button>
-                    <button className="gsc-btn gsc-btn-outline" style={{ color: "#C1440E", borderColor: "#C1440E" }} onClick={() => requestDeleteFinishedRound(f)}>
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              ))}
-              {reopenErr && <div style={{ color: "#C1440E", fontSize: 12, marginTop: 8 }}>{reopenErr}</div>}
-            </div>
-          )}
         </div>
         {deleteRoundConfirm && (
           <div className="gsc-modal-backdrop" onClick={cancelDeleteFinishedRound}>
@@ -4078,27 +4084,6 @@ function computeRoundScoring(round) {
             })}
           </div>
 
-          {finishedTournaments.length > 0 && (
-            <div className="gsc-card">
-              <div className="gsc-label">Finished tournaments</div>
-              {finishedTournaments.map((t) => (
-                <div key={t.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #eee6cf" }}>
-                  <div>
-                    <div style={{ fontWeight: 700, fontSize: 14 }}>{t.name}</div>
-                    <div style={{ fontSize: 12, color: "#6b6b63" }}>
-                      {GAMES[t.game]?.name} - {t.date}{t.foursomeCount != null ? ` - ${t.foursomeCount} foursome${t.foursomeCount === 1 ? "" : "s"}` : ""}
-                    </div>
-                  </div>
-                  <div style={{ display: "flex", gap: 6 }}>
-                    <button className="gsc-btn gsc-btn-outline" onClick={() => openTournamentBoard(t.id)}>View</button>
-                    <button className="gsc-btn gsc-btn-outline" style={{ color: "#C1440E", borderColor: "#C1440E" }} onClick={() => requestDeleteFinishedTournament(t)}>
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
         {deleteTournamentConfirm && (
           <div className="gsc-modal-backdrop" onClick={cancelDeleteFinishedTournament}>
@@ -4234,19 +4219,28 @@ function computeRoundScoring(round) {
 
                   {stats.recent.length > 0 && (
                     <div style={{ marginTop: 16 }}>
-                      <div style={{ fontSize: 11, color: "#8a8a80", textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 700, marginBottom: 8 }}>Recent Rounds</div>
+                      <div style={{ fontSize: 11, color: "#8a8a80", textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 700, marginBottom: 8 }}>Recent Rounds & Tournaments</div>
+                      {deleteHistoryErr && <div style={{ color: "#C1440E", fontSize: 12, marginBottom: 8 }}>{deleteHistoryErr}</div>}
                       {stats.recent.map((r, i) => (
                         <div
                           key={i}
-                          onClick={() => viewRoundFromProfile(r.code)}
+                          onClick={() => (r.tournamentId ? openTournamentBoard(r.tournamentId) : viewRoundFromProfile(r.code))}
                           style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "7px 0", borderBottom: i === stats.recent.length - 1 ? "none" : "1px solid #eee6cf", cursor: "pointer" }}
                         >
                           <div style={{ fontSize: 13, color: "#1B4332", fontWeight: 600 }}>
                             {r.name}
+                            {r.tournamentId && <span style={{ fontSize: 10, color: "#B08D57", marginLeft: 6, fontWeight: 700 }}>TOURNAMENT</span>}
                             {!r.complete && <span style={{ fontSize: 10, color: "#8a8a80", marginLeft: 6, fontWeight: 400 }}>(in progress)</span>}
                           </div>
-                          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                             <div style={{ fontSize: 12, color: "#6b6b63" }}>{r.date}</div>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setDeleteHistoryErr(""); setDeleteHistoryConfirm({ code: r.code, name: r.name }); }}
+                              style={{ background: "none", border: "none", padding: 4, color: "#C1440E", fontSize: 14, cursor: "pointer", lineHeight: 1 }}
+                              title="Remove from your history"
+                            >
+                              {"\u{1F5D1}"}
+                            </button>
                             <span style={{ color: "#8FA998", fontSize: 14 }}>{"\u203A"}</span>
                           </div>
                         </div>
@@ -4283,6 +4277,22 @@ function computeRoundScoring(round) {
           </div>
         </div>
         <BottomNav />
+        {deleteHistoryConfirm && (
+          <div className="gsc-modal-backdrop" onClick={() => !deleteHistoryBusy && setDeleteHistoryConfirm(null)}>
+            <div className="gsc-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="gsc-modal-title">Remove from your history?</div>
+              <div className="gsc-modal-body">
+                This only removes "{deleteHistoryConfirm.name}" from your own Recent Rounds list - the round itself isn't deleted, and anyone with its code (including you) can still open it.
+              </div>
+              <div className="gsc-modal-row">
+                <button className="gsc-btn gsc-btn-outline" disabled={deleteHistoryBusy} onClick={() => setDeleteHistoryConfirm(null)}>No, keep it</button>
+                <button className="gsc-btn gsc-btn-primary" disabled={deleteHistoryBusy} onClick={confirmDeleteFromHistory}>
+                  {deleteHistoryBusy ? "Removing..." : "Yes, remove"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
