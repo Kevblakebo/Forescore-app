@@ -1347,6 +1347,32 @@ export default function GolfScorecard() {
     setProfileSaved(true);
   }
 
+  // Builds a fresh set of 4 empty player slots - if someone's logged in
+  // and has saved profile info, player 1 (presumably themselves, since
+  // they're the one setting this up) is pre-filled so they don't have to
+  // retype their own name and handicap every single time. Everyone else
+  // still starts blank, same as before.
+  function freshPlayerSlots() {
+    const slots = [
+      { name: "", hcp: "", avatar: "" },
+      { name: "", hcp: "", avatar: "" },
+      { name: "", hcp: "", avatar: "" },
+      { name: "", hcp: "", avatar: "" },
+    ];
+    if (session && profile && (profile.name || profile.handicap)) {
+      slots[0] = { name: profile.name || "", hcp: profile.handicap || "", avatar: "" };
+    }
+    return slots;
+  }
+
+  // Layers a saved Venmo handle on top of a game's normal defaults, if
+  // someone's logged in and has one saved - same idea as freshPlayerSlots,
+  // just for the round-level Venmo field instead of a player slot.
+  function withProfileVenmo(defaults) {
+    if (session && profile && profile.venmo) return { ...defaults, venmo: profile.venmo };
+    return defaults;
+  }
+
   const [boardErr, setBoardErr] = useState("");
   const [lastTournament, setLastTournament] = useState(null); // {id, name} - lets Home screen jump back into a tournament from anywhere
   const [editFoursomeOpen, setEditFoursomeOpen] = useState(false);
@@ -1954,12 +1980,7 @@ export default function GolfScorecard() {
     setTournamentErr("");
     setRoundName("");
     setRoundDate(new Date().toISOString().slice(0, 10));
-    setPlayers([
-      { name: "", hcp: "", avatar: "" },
-      { name: "", hcp: "", avatar: "" },
-      { name: "", hcp: "", avatar: "" },
-      { name: "", hcp: "", avatar: "" },
-    ]);
+    setPlayers(freshPlayerSlots());
     setPontoPairing([[0, 1], [2, 3]]);
     setPar(Array(18).fill(""));
     setYardage(Array(18).fill(""));
@@ -2057,7 +2078,7 @@ export default function GolfScorecard() {
       const key = nextAnswers.resolvedGameKey;
       if (nextAnswers.isTournament) {
         setTournamentGameKey(key);
-        setTournamentCfg({ ...GAMES[key].defaults });
+        setTournamentCfg(withProfileVenmo({ ...GAMES[key].defaults }));
         setTournamentPar(Array(18).fill(""));
         setTournamentYardage(Array(18).fill(""));
         setTournamentStrokeIndex(Array(18).fill(""));
@@ -2067,7 +2088,7 @@ export default function GolfScorecard() {
         setTournamentFoursomeCount(Math.max(2, Math.ceil((Number(nextAnswers.playerCount) || 8) / 4)));
       } else {
         setGameKey(key);
-        setCfg({ ...GAMES[key].defaults });
+        setCfg(withProfileVenmo({ ...GAMES[key].defaults }));
         const count = key === "swami" || key === "dstreet" || key === "pontobango" || key === "individualputts" ? Math.max(1, Math.min(4, Number(nextAnswers.playerCount) || 4)) : 4;
         setPlayers((p) => {
           const base = [...p];
@@ -2116,15 +2137,10 @@ export default function GolfScorecard() {
   function startNewRound(key) {
     setActiveTournament(null);
     setGameKey(key);
-    setCfg({ ...GAMES[key].defaults });
+    setCfg(withProfileVenmo({ ...GAMES[key].defaults }));
     setRoundName("");
     setRoundDate(new Date().toISOString().slice(0, 10));
-    setPlayers([
-      { name: "", hcp: "", avatar: "" },
-      { name: "", hcp: "", avatar: "" },
-      { name: "", hcp: "", avatar: "" },
-      { name: "", hcp: "", avatar: "" },
-    ]);
+    setPlayers(freshPlayerSlots());
     setPontoPairing([[0, 1], [2, 3]]);
     setPar(Array(18).fill(""));
     setYardage(Array(18).fill(""));
@@ -2150,12 +2166,7 @@ export default function GolfScorecard() {
     setCfg({ ...tournament.cfg });
     setRoundName("");
     setRoundDate(tournament.date);
-    setPlayers([
-      { name: "", hcp: "", avatar: "" },
-      { name: "", hcp: "", avatar: "" },
-      { name: "", hcp: "", avatar: "" },
-      { name: "", hcp: "", avatar: "" },
-    ]);
+    setPlayers(freshPlayerSlots());
     setPontoPairing([[0, 1], [2, 3]]);
     setPar([...tournament.par]);
     setCourseName(tournament.course || "");
@@ -2305,7 +2316,7 @@ export default function GolfScorecard() {
     setTournamentPar(Array(18).fill(""));
     setTournamentYardage(Array(18).fill(""));
     setTournamentStrokeIndex(Array(18).fill(""));
-    setTournamentCfg({ ...GAMES[key].defaults });
+    setTournamentCfg(withProfileVenmo({ ...GAMES[key].defaults }));
     setTournamentFoursomeCount(2);
     setCourseSearchQuery("");
     setCourseSearchResults([]);
@@ -2333,7 +2344,7 @@ export default function GolfScorecard() {
     setTournamentFoursomesDraft(
       Array.from({ length: count }, (_, i) => ({
         name: `Foursome ${i + 1}`,
-        players: [
+        players: i === 0 ? freshPlayerSlots() : [
           { name: "", hcp: "", avatar: "" },
           { name: "", hcp: "", avatar: "" },
           { name: "", hcp: "", avatar: "" },
