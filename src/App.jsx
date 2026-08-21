@@ -3481,6 +3481,15 @@ function computeRoundScoring(round) {
         <Header
           title={<><span style={{ fontSize: 23 }}>RipScore Golf Games</span><div style={{ fontSize: 11, fontWeight: 400, opacity: 0.75, letterSpacing: "0.5px", textTransform: "uppercase", marginTop: 2, fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>Play the game. We'll keep score.</div></>}
           sub=""
+          right={
+            <button
+              className="gsc-btn gsc-btn-ghost"
+              style={{ padding: "5px 8px", fontSize: 11, whiteSpace: "nowrap", alignSelf: "flex-start", flexShrink: 0 }}
+              onClick={() => goToScreen(session ? "profileTab" : "login")}
+            >
+              {session ? (profile && profile.name ? profile.name.split(" ")[0] : "Profile") : "Log In"}
+            </button>
+          }
         />
         <div className="gsc-body gsc-body-tabbed">
           <div style={{ fontSize: 13, color: "#4b4b45", lineHeight: 1.55, margin: "0 0 16px" }}>
@@ -3673,12 +3682,10 @@ function computeRoundScoring(round) {
             </div>
           </div>
 
-          <div className="gsc-card gsc-game-card" style={{ opacity: 0.7 }} onClick={() => goToScreen("profileTab")}>
+          <div className="gsc-card gsc-game-card" onClick={() => goToScreen("profileTab")}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <div>
-                <div style={{ fontWeight: 700, fontSize: 15, display: "flex", alignItems: "center", gap: 6 }}>
-                  Profile <Lock size={13} color="#8a8a80" />
-                </div>
+                <div style={{ fontWeight: 700, fontSize: 15 }}>Profile</div>
                 <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 2 }}>Saved defaults and account</div>
                 <div style={{ fontSize: 12, color: "#6b6b63" }}>Stats - your rounds, averages, and wins</div>
               </div>
@@ -4082,12 +4089,19 @@ function computeRoundScoring(round) {
                     <div style={{ marginTop: 16 }}>
                       <div style={{ fontSize: 11, color: "#8a8a80", textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 700, marginBottom: 8 }}>Recent Rounds</div>
                       {stats.recent.map((r, i) => (
-                        <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "7px 0", borderBottom: i === stats.recent.length - 1 ? "none" : "1px solid #eee6cf" }}>
-                          <div style={{ fontSize: 13 }}>
+                        <div
+                          key={i}
+                          onClick={() => loadRound(r.code)}
+                          style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "7px 0", borderBottom: i === stats.recent.length - 1 ? "none" : "1px solid #eee6cf", cursor: "pointer" }}
+                        >
+                          <div style={{ fontSize: 13, color: "#1B4332", fontWeight: 600 }}>
                             {r.name}
-                            {!r.complete && <span style={{ fontSize: 10, color: "#8a8a80", marginLeft: 6 }}>(in progress)</span>}
+                            {!r.complete && <span style={{ fontSize: 10, color: "#8a8a80", marginLeft: 6, fontWeight: 400 }}>(in progress)</span>}
                           </div>
-                          <div style={{ fontSize: 12, color: "#6b6b63" }}>{r.date}</div>
+                          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                            <div style={{ fontSize: 12, color: "#6b6b63" }}>{r.date}</div>
+                            <span style={{ color: "#8FA998", fontSize: 14 }}>{"\u203A"}</span>
+                          </div>
                         </div>
                       ))}
                     </div>
