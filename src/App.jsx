@@ -3599,7 +3599,7 @@ function computeRoundScoring(round) {
         <div className="gsc-body gsc-body-tabbed">
           <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 8 }}>
             <button
-              className="gsc-btn gsc-btn-ghost"
+              className="gsc-btn gsc-btn-outline"
               style={{ padding: "5px 8px", fontSize: 11, textAlign: "right", maxWidth: "70vw" }}
               onClick={() => goToScreen(session ? "profileTab" : "login")}
             >
