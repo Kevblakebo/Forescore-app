@@ -2916,10 +2916,19 @@ export default function GolfScorecard() {
       // every tap. Wait for a manual retry instead.
       return;
     }
-    const [sharedRes, personalRes] = await Promise.all([
-      storageSet(`golfround:${r.id}`, JSON.stringify(r), true),
-      storageSet(ACTIVE_KEY, JSON.stringify(r), false),
-    ]);
+    const complete = isRoundFullyComplete(r);
+    const writes = [storageSet(`golfround:${r.id}`, JSON.stringify(r), true)];
+    if (!complete) {
+      // A finished round should never become (or stay) the "in progress"
+      // pointer - the explicit "Finish & exit" flow already clears this
+      // pointer on its own, so this is purely about not re-writing a
+      // stale, already-done round back into it any other time saveRound
+      // gets called (e.g. just glancing at a finished round from stats).
+      writes.push(storageSet(ACTIVE_KEY, JSON.stringify(r), false));
+    }
+    const results = await Promise.all(writes);
+    const sharedRes = results[0];
+    const personalRes = results[1] || { ok: true };
     if (!sharedRes.ok && !personalRes.ok) {
       failCountRef.current += 1;
       setStorageBroken(true);
