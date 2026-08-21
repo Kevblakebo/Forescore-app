@@ -3632,7 +3632,7 @@ function computeRoundScoring(round) {
               style={{ padding: "5px 8px", fontSize: 11, textAlign: "right", maxWidth: "45vw", float: "right", marginLeft: 10, marginBottom: 6 }}
               onClick={() => goToScreen(session ? "profileTab" : "login")}
             >
-              {session ? (profile && profile.name ? `Welcome back ${profile.name.split(" ")[0]}` : "Welcome back") : "Log In or Create Account"}
+              {session ? (profile && profile.name ? `Welcome ${profile.name.split(" ")[0]}` : "Welcome") : "Log In or Create Account"}
             </button>
             We all love playing games on the course, but who wants to keep track of the scores and rules? RipScore does it for you. No paper scorecards, no redoing the math, no arguing about rules, just easy golf games, live shared scores, and a clear answer to who owes who at the 19th hole.
             <br />
