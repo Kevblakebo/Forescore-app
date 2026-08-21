@@ -1771,6 +1771,17 @@ export default function GolfScorecard() {
     setActiveRound(null);
   }
 
+  // Belt-and-suspenders cleanup: a finished round should never sit in the
+  // "in progress" pointer, no matter how it got there. Rather than relying
+  // solely on every single write path getting this right, this actively
+  // watches for it and self-heals - clearing the stale pointer for good,
+  // not just hiding it from view.
+  useEffect(() => {
+    if (activeRound && isRoundFullyComplete(activeRound)) {
+      discardActiveRound();
+    }
+  }, [activeRound]);
+
   async function discardTournament() {
     // Same idea as discardActiveRound - only clears this device's pointer
     // back to the tournament. The tournament and every foursome's data stay
@@ -3621,7 +3632,7 @@ function computeRoundScoring(round) {
             <br />
             You're all set, next hole... the 19th!
           </div>
-          {activeRound && !activeRound.tournamentId && (
+          {activeRound && !activeRound.tournamentId && !isRoundFullyComplete(activeRound) && (
             <div className="gsc-card" style={{ border: "2px solid #B08D57" }}>
               <div className="gsc-label">Round in progress</div>
               <div style={{ fontWeight: 700, fontSize: 16, marginTop: 2 }}>{activeRound.name}</div>
@@ -3819,7 +3830,7 @@ function computeRoundScoring(round) {
         <style>{STYLE}</style>
         <Header title={<span style={{ fontSize: 23 }}>Rounds</span>} sub="Join, create, or revisit" />
         <div className="gsc-body gsc-body-tabbed">
-          {activeRound && !activeRound.tournamentId && (
+          {activeRound && !activeRound.tournamentId && !isRoundFullyComplete(activeRound) && (
             <div className="gsc-card" style={{ border: "2px solid #B08D57" }}>
               <div className="gsc-label">Round in progress</div>
               <div style={{ fontWeight: 700, fontSize: 16, marginTop: 2 }}>{activeRound.name}</div>
