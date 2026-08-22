@@ -1735,14 +1735,20 @@ export default function GolfScorecard() {
     }
     setJoinGroupBusy(true);
     setJoinGroupErr("");
-    const { error } = await supabase
-      .from("group_members")
-      .upsert({ group_id: code, user_id: session.user.id }, { onConflict: "group_id,user_id" });
+    const { error } = await supabase.from("group_members").insert({ group_id: code, user_id: session.user.id });
     setJoinGroupBusy(false);
     if (error) {
-      // Foreign key violation - the code doesn't match any real group.
-      setJoinGroupErr(error.code === "23503" ? "No group found with that code." : `Couldn't join that group (${error.message}).`);
-      return;
+      if (error.code === "23505") {
+        // Already a member (duplicate key on the group_id+user_id primary
+        // key) - not a real failure, just proceed as if this succeeded.
+      } else if (error.code === "23503") {
+        // Foreign key violation - the code doesn't match any real group.
+        setJoinGroupErr("No group found with that code.");
+        return;
+      } else {
+        setJoinGroupErr(`Couldn't join that group (${error.message}).`);
+        return;
+      }
     }
     // Same fix as createGroup - make sure a leaderboard_stats row exists
     // with the correct name, so joining doesn't leave you missing from
