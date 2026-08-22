@@ -1554,10 +1554,11 @@ export default function GolfScorecard() {
       if (holesPlayed === 0) continue; // created but never actually played - don't count it
       roundsPlayed++;
 
-      if (holesPlayed === 18) {
-        // Only fully-completed rounds count toward averages and wins - a
-        // 4-hole partial round would otherwise drag the average way down
-        // and can't fairly be scored a win or loss anyway.
+      if (r.finished || holesPlayed === 18) {
+        // Only fully-completed (or explicitly finished) rounds count toward
+        // averages and wins - a 4-hole partial round that was never
+        // actually finished would otherwise drag the average way down and
+        // can't fairly be scored a win or loss anyway.
         strokesSum += myStrokesTotal;
         strokesCount++;
         puttsSum += myPuttsTotal;
@@ -1570,7 +1571,7 @@ export default function GolfScorecard() {
         }
       }
 
-      recent.push({ code: ur.round_code, name: r.name, date: r.date, game: r.game, complete: holesPlayed === 18, tournamentId: ur.tournament_id || null });
+      recent.push({ code: ur.round_code, name: r.name, date: r.date, game: r.game, complete: !!r.finished || holesPlayed === 18, tournamentId: ur.tournament_id || null });
     }
 
     setStatsLoading(false);
@@ -1979,6 +1980,7 @@ export default function GolfScorecard() {
   // away - this is the check that actually matches how the app treats it.
   function isRoundDone(r, finishedList) {
     if (!r) return false;
+    if (r.finished) return true;
     if (isRoundFullyComplete(r)) return true;
     const list = finishedList || finishedRoundsRef.current;
     return list.some((fr) => fr.id === r.id);
@@ -2082,6 +2084,26 @@ export default function GolfScorecard() {
     if (!t) return;
     setFinishTournamentErr("");
     setFinishTournamentBusy(true);
+    // Mark every foursome's round data as finished in SHARED storage first
+    // - same reasoning as regular rounds: without this, "finished" only
+    // ever existed in this one device's local index, so nobody else
+    // (including this same account's own Profile stats) could correctly
+    // tell any of these foursomes were actually done.
+    const foursomeList = t.foursomes || [];
+    for (const fs of foursomeList) {
+      const fRes = await storageGet(`golfround:${fs.id}`, true);
+      if (fRes.ok && fRes.value) {
+        try {
+          const fRound = JSON.parse(fRes.value);
+          if (!fRound.finished) {
+            await storageSet(`golfround:${fs.id}`, JSON.stringify({ ...fRound, finished: true }), true);
+          }
+        } catch (e) {
+          // If one foursome's data is unreadable, don't block finishing
+          // the rest of the tournament over it.
+        }
+      }
+    }
     const idxRes = await storageGet(FINISHED_TOURNAMENT_INDEX_KEY, false);
     let idx = [];
     if (idxRes.ok && idxRes.value) {
@@ -2160,7 +2182,19 @@ export default function GolfScorecard() {
     setErr("");
     setArchiveErr("");
     setBusy(true);
-    const savedRoundRes = await storageSet(`${FINISHED_PREFIX}${r.id}`, JSON.stringify(r), false);
+    // Mark the round itself as finished in SHARED storage first - without
+    // this, "finished" only ever existed in this one device's local
+    // archive, meaning nobody else (including this same account viewed
+    // from a different device, like the Profile page's stats) could ever
+    // correctly tell this round was actually done.
+    const finishedRound = { ...r, finished: true };
+    const sharedRes = await storageSet(`golfround:${r.id}`, JSON.stringify(finishedRound), true);
+    if (!sharedRes.ok) {
+      setBusy(false);
+      setArchiveErr(`Couldn't save this round as finished (${sharedRes.error || "storage error"}). Tap "Finish & exit" to retry.`);
+      return;
+    }
+    const savedRoundRes = await storageSet(`${FINISHED_PREFIX}${r.id}`, JSON.stringify(finishedRound), false);
     if (!savedRoundRes.ok) {
       setBusy(false);
       setArchiveErr(`Couldn't save this round (${savedRoundRes.error || "storage error"}). Your round hasn't been touched - tap "Finish & exit" to retry.`);
