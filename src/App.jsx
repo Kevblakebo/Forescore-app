@@ -1683,6 +1683,10 @@ export default function GolfScorecard() {
   const [editFoursomeOpen, setEditFoursomeOpen] = useState(false);
   const [editFoursomeId, setEditFoursomeId] = useState(null);
   const [editFoursomeName, setEditFoursomeName] = useState("");
+  const [editFoursomeIsTournament, setEditFoursomeIsTournament] = useState(false);
+  const [claimSlotDismissed, setClaimSlotDismissed] = useState(false);
+  const [claimSlotBusy, setClaimSlotBusy] = useState(false);
+  const [claimSlotErr, setClaimSlotErr] = useState("");
   const [editFoursomePlayers, setEditFoursomePlayers] = useState([]);
   const [editFoursomeErr, setEditFoursomeErr] = useState("");
   const [editFoursomeBusy, setEditFoursomeBusy] = useState(false);
@@ -1732,8 +1736,8 @@ export default function GolfScorecard() {
     return (
       <div className="gsc-modal-backdrop" onClick={() => setEditFoursomeOpen(false)}>
         <div className="gsc-modal" style={{ maxWidth: 420, maxHeight: "85vh", overflowY: "auto" }} onClick={(e) => e.stopPropagation()}>
-          <div className="gsc-modal-title">Edit Foursome</div>
-          <div className="gsc-label">Foursome name</div>
+          <div className="gsc-modal-title">{editFoursomeIsTournament ? "Edit Foursome" : "Edit Players"}</div>
+          <div className="gsc-label">{editFoursomeIsTournament ? "Foursome name" : "Round name"}</div>
           <input className="gsc-input" style={{ marginBottom: 14 }} value={editFoursomeName} onChange={(e) => setEditFoursomeName(e.target.value)} />
           <div className="gsc-label" style={{ marginBottom: 6 }}>Players</div>
           {editFoursomePlayers.map((p, i) => (
@@ -1782,6 +1786,11 @@ export default function GolfScorecard() {
   useEffect(() => {
     if (round && !isRoundDone(round)) setActiveRound(round);
   }, [round]);
+
+  useEffect(() => {
+    setClaimSlotDismissed(false);
+    setClaimSlotErr("");
+  }, [round && round.id]);
 
   useEffect(() => {
     (async () => {
@@ -2939,8 +2948,9 @@ export default function GolfScorecard() {
   function openEditFoursome(id, roundData) {
     setEditFoursomeErr("");
     setEditFoursomeId(id);
+    setEditFoursomeIsTournament(!!roundData.tournamentId);
     setEditFoursomeName(roundData.foursomeName || roundData.name || "");
-    setEditFoursomePlayers(roundData.players.map((p) => ({ name: p.name, hcp: p.hcp })));
+    setEditFoursomePlayers(roundData.players.map((p) => ({ name: p.name, hcp: p.hcp, originalName: p.name })));
     setEditFoursomeOpen(true);
   }
 
@@ -2970,7 +2980,20 @@ export default function GolfScorecard() {
       return;
     }
     const cleanName = editFoursomeName.trim() || "Foursome";
-    r.players = editFoursomePlayers.map((p, i) => ({ name: p.name.trim() || `Player ${LETTERS[i]}`, hcp: p.hcp }));
+    r.players = editFoursomePlayers.map((p, i) => {
+      const trimmedName = p.name.trim() || `Player ${LETTERS[i]}`;
+      const original = r.players[i] || {};
+      const nameUnchanged = p.originalName !== undefined ? p.name.trim() === p.originalName.trim() : true;
+      return {
+        name: trimmedName,
+        hcp: p.hcp,
+        // A name change likely means this slot now refers to a different
+        // person - carrying over the old avatar or account link in that
+        // case would misattribute stats to whoever it used to be.
+        avatar: nameUnchanged ? original.avatar || "" : "",
+        ...(nameUnchanged && original.user_id ? { user_id: original.user_id } : {}),
+      };
+    });
     if (r.tournamentId) {
       r.foursomeName = cleanName;
       r.name = cleanName + (activeTournament ? ` - ${activeTournament.name}` : "");
@@ -3067,6 +3090,42 @@ export default function GolfScorecard() {
     setHoleIdx(firstOpenHole(r));
     setViewingRoundFromStats(true);
     goToScreen("card");
+  }
+
+  // Lets a logged-in user link themselves to a specific player slot in a
+  // round they're viewing - even if they didn't create it, and even from
+  // a different device than whoever did. This is how someone else's
+  // stats get connected to a round, without ever needing to look up or
+  // search for another user's account.
+  async function claimPlayerSlot(playerIdx) {
+    if (!session || !supabase || !round) return;
+    setClaimSlotBusy(true);
+    setClaimSlotErr("");
+    const nextPlayers = round.players.map((p, i) => (i === playerIdx ? { ...p, user_id: session.user.id } : p));
+    const next = { ...round, players: nextPlayers };
+    setRound(next);
+    await saveRound(next);
+    // Upsert (not insert) - guards against creating a duplicate history
+    // entry if this same round was somehow already linked to this user.
+    const { error } = await supabase
+      .from("user_rounds")
+      .upsert(
+        {
+          user_id: session.user.id,
+          round_code: round.id,
+          tournament_id: round.tournamentId || null,
+          game: round.game,
+          round_date: round.date,
+          foursome_name: round.foursomeName || null,
+        },
+        { onConflict: "user_id,round_code" }
+      );
+    setClaimSlotBusy(false);
+    if (error) {
+      setClaimSlotErr(`You're marked as this player, but couldn't add it to your history yet (${error.message}).`);
+      return;
+    }
+    setClaimSlotDismissed(true);
   }
 
   const saveRound = useCallback(async (r) => {
@@ -6777,6 +6836,9 @@ function computeRoundScoring(round) {
               <button className="gsc-link" style={{ color: "#F3EFE0", fontSize: 11, textDecoration: "underline" }} onClick={() => openRules(round.game)}>
                 Rules
               </button>
+              <button className="gsc-link" style={{ color: "#F3EFE0", fontSize: 11, textDecoration: "underline" }} onClick={() => openEditFoursome(round.id, round)}>
+                Edit Players
+              </button>
               {round.tournamentId && (
                 <button className="gsc-link" style={{ color: "#F3EFE0", fontSize: 11, textDecoration: "underline" }} onClick={() => openTournamentBoard(round.tournamentId)}>
                   Leaderboard
@@ -6785,6 +6847,35 @@ function computeRoundScoring(round) {
             </div>
           }
         />
+        {session && !claimSlotDismissed && !round.players.some((p) => p.user_id === session.user.id) && round.players.some((p) => !p.user_id) && (
+          <div className="gsc-body" style={{ paddingBottom: 0 }}>
+            <div className="gsc-card" style={{ background: "#EBF0EC", border: "1px solid #1B4332" }}>
+              <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 6 }}>Are you one of these players?</div>
+              <div style={{ fontSize: 12, color: "#4b4b45", marginBottom: 10 }}>
+                Tap your name to link this round to your own account and stats.
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {round.players.map((p, i) =>
+                  !p.user_id ? (
+                    <button
+                      key={i}
+                      disabled={claimSlotBusy}
+                      onClick={() => claimPlayerSlot(i)}
+                      className="gsc-btn gsc-btn-outline"
+                      style={{ fontSize: 12, padding: "6px 12px" }}
+                    >
+                      {p.name}
+                    </button>
+                  ) : null
+                )}
+                <button className="gsc-link" style={{ fontSize: 12, marginLeft: 4 }} onClick={() => setClaimSlotDismissed(true)}>
+                  None of these are me
+                </button>
+              </div>
+              {claimSlotErr && <div style={{ color: "#C1440E", fontSize: 12, marginTop: 8 }}>{claimSlotErr}</div>}
+            </div>
+          </div>
+        )}
         {storageBroken ? (
           <div style={{ background: "#F8F1E4", color: "#8a6a2f", fontSize: 12, padding: "8px 16px", textAlign: "center" }}>
             Storage isn't responding right now, so nothing is saving automatically. Your scores are fine for this session -{" "}
