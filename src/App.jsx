@@ -4735,7 +4735,7 @@ function computeRoundScoring(round) {
                     {"\u2039"} Back to my groups
                   </button>
                   <div style={{ fontWeight: 700, fontSize: 15, color: "#1B4332", marginBottom: 6 }}>
-                    {myGroups.find((g) => g.id === selectedGroupId)?.name || "Group"}
+                    {myGroups.find((g) => g.id === selectedGroupId)?.name || "Group"} Leaderboard
                   </div>
                   <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 10 }}>
                     Group code: <span className="gsc-mono" style={{ fontWeight: 700, color: "#1B4332" }}>{selectedGroupId}</span> - share this with anyone you want to invite.
@@ -4810,6 +4810,9 @@ function computeRoundScoring(round) {
                     <div style={{ fontSize: 13, color: "#6b6b63", marginBottom: 12 }}>Loading your groups...</div>
                   ) : myGroups.length > 0 ? (
                     <div style={{ marginBottom: 14 }}>
+                      <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 8 }}>
+                        Select a group to see its leaderboard.
+                      </div>
                       {myGroups.map((grp) => (
                         <div
                           key={grp.id}
