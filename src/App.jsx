@@ -1080,6 +1080,21 @@ export default function GolfScorecard() {
   const [leaderboardErr, setLeaderboardErr] = useState("");
   const [leaderboardCategory, setLeaderboardCategory] = useState("wins");
 
+  // ---- Groups (private, invite-by-code leaderboards) ----
+  const [myGroups, setMyGroups] = useState([]); // [{id, name}]
+  const [groupsLoading, setGroupsLoading] = useState(false);
+  const [groupsErr, setGroupsErr] = useState("");
+  const [createGroupName, setCreateGroupName] = useState("");
+  const [createGroupBusy, setCreateGroupBusy] = useState(false);
+  const [joinGroupCode, setJoinGroupCode] = useState("");
+  const [joinGroupBusy, setJoinGroupBusy] = useState(false);
+  const [joinGroupErr, setJoinGroupErr] = useState("");
+  const [selectedGroupId, setSelectedGroupId] = useState(null);
+  const [groupMembersStats, setGroupMembersStats] = useState([]);
+  const [groupMembersLoading, setGroupMembersLoading] = useState(false);
+  const [groupMembersErr, setGroupMembersErr] = useState("");
+  const [groupCategory, setGroupCategory] = useState("wins");
+
   // ---- Live GPS for distance-to-green ----
   // This is intentionally provider-independent: it just tracks the
   // player's own live position. Which data source actually supplies the
@@ -1177,6 +1192,12 @@ export default function GolfScorecard() {
     }
   }, [screen, session && session.user && session.user.id]);
 
+  useEffect(() => {
+    if (screen === "profileTab" && session && session.user) {
+      loadMyGroups();
+    }
+  }, [screen, session && session.user && session.user.id]);
+
   // browser's own scroll-anchoring feature actively tries to preserve
   // scroll position when content above the viewport resizes (exactly
   // what happens switching between a 2-button question and an 18-hole
@@ -1201,6 +1222,7 @@ export default function GolfScorecard() {
   const [holeIdx, setHoleIdx] = useState(0);
   const [showGrid, setShowGrid] = useState(false);
   const [confirmLeaveOpen, setConfirmLeaveOpen] = useState(false);
+  const [confirmFinishOpen, setConfirmFinishOpen] = useState(false);
   const [viewingRoundFromStats, setViewingRoundFromStats] = useState(false);
   const [rulesOpenFor, setRulesOpenFor] = useState(null);
 
@@ -1440,26 +1462,14 @@ export default function GolfScorecard() {
     }
     setProfile({ ...profileForm });
     setProfileSaved(true);
-    if (profileForm.leaderboard_opt_in) {
-      // Opting in (or already in, saving other fields) - refresh the
-      // leaderboard row with real numbers right away, and refresh the
-      // displayed list too. Passing explicit overrides here (rather than
-      // relying on the profile state above having already settled)
-      // guarantees this always uses this save's real values, not a stale
-      // read.
-      await loadStats({ optIn: true, name: profileForm.name });
-      loadLeaderboard();
-    } else {
-      // Opting out - loadStats only ever writes a row when opted in, so
-      // this needs its own direct path, or an existing row would be
-      // stranded still saying opted_in:true in the database.
-      const { error: lbError } = await supabase
-        .from("leaderboard_stats")
-        .update({ opted_in: false })
-        .eq("user_id", session.user.id);
-      if (lbError) console.warn("Couldn't update leaderboard opt-out:", lbError.message);
-      loadLeaderboard();
-    }
+    // Refresh the leaderboard row with real numbers right away (loadStats
+    // now always maintains this row, with opted_in set correctly either
+    // way), and refresh the displayed leaderboard list too. Passing
+    // explicit overrides here (rather than relying on the profile state
+    // above having already settled) guarantees this always uses this
+    // save's real values, not a stale read.
+    await loadStats({ optIn: profileForm.leaderboard_opt_in, name: profileForm.name });
+    loadLeaderboard();
   }
 
   // Pulls together everything recorded in user_rounds since Phase 4 into
@@ -1575,37 +1585,38 @@ export default function GolfScorecard() {
       recent: recent.slice(0, 5),
     });
 
-    // Keep the leaderboard's copy of this user's totals fresh, but only
-    // actually write anything if they've opted in - no reason to create a
-    // row at all for someone who's never turned this on.
+    // Keep the leaderboard's copy of this user's totals fresh - always,
+    // regardless of global opt-in status. Group membership is its own,
+    // separate form of sharing (a group-mate can see your stats even if
+    // you've never opted into the global leaderboard), so this row needs
+    // to exist either way. The opted_in field is what actually controls
+    // GLOBAL visibility - RLS handles the rest.
     const isOptedIn = overrides && overrides.optIn !== undefined ? overrides.optIn : profile && profile.leaderboard_opt_in;
     const displayName = (overrides && overrides.name) || (profile && profile.name) || "Golfer";
-    if (isOptedIn) {
-      supabase
-        .from("leaderboard_stats")
-        .upsert(
-          {
-            user_id: session.user.id,
-            display_name: displayName,
-            opted_in: true,
-            rounds_played: roundsPlayed,
-            wins,
-            strokes_sum: strokesSum,
-            strokes_rounds: strokesCount,
-            putts_sum: puttsSum,
-            putts_rounds: puttsCount,
-            birdies,
-            pars,
-            eagles,
-            holes_in_one: holesInOne,
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: "user_id" }
-        )
-        .then(({ error: lbError }) => {
-          if (lbError) console.warn("Couldn't update leaderboard stats:", lbError.message);
-        });
-    }
+    supabase
+      .from("leaderboard_stats")
+      .upsert(
+        {
+          user_id: session.user.id,
+          display_name: displayName,
+          opted_in: !!isOptedIn,
+          rounds_played: roundsPlayed,
+          wins,
+          strokes_sum: strokesSum,
+          strokes_rounds: strokesCount,
+          putts_sum: puttsSum,
+          putts_rounds: puttsCount,
+          birdies,
+          pars,
+          eagles,
+          holes_in_one: holesInOne,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "user_id" }
+      )
+      .then(({ error: lbError }) => {
+        if (lbError) console.warn("Couldn't update leaderboard stats:", lbError.message);
+      });
   }
 
   // Fetches everyone who's opted in - RLS on the leaderboard_stats table
@@ -1623,6 +1634,98 @@ export default function GolfScorecard() {
       return;
     }
     setLeaderboard(data || []);
+  }
+
+  // ---- Group functions ----
+
+  async function loadMyGroups() {
+    if (!session || !supabase) return;
+    setGroupsLoading(true);
+    setGroupsErr("");
+    const { data, error } = await supabase
+      .from("group_members")
+      .select("group_id, groups(name)")
+      .eq("user_id", session.user.id);
+    setGroupsLoading(false);
+    if (error) {
+      setGroupsErr(`Couldn't load your groups (${error.message}).`);
+      return;
+    }
+    setMyGroups((data || []).map((row) => ({ id: row.group_id, name: row.groups ? row.groups.name : "Group" })));
+  }
+
+  async function createGroup() {
+    if (!session || !supabase) return;
+    const name = createGroupName.trim();
+    if (!name) {
+      setGroupsErr("Enter a group name.");
+      return;
+    }
+    setCreateGroupBusy(true);
+    setGroupsErr("");
+    const code = genCode();
+    const { error: groupErr } = await supabase.from("groups").insert({ id: code, name, created_by: session.user.id });
+    if (groupErr) {
+      setCreateGroupBusy(false);
+      setGroupsErr(`Couldn't create the group (${groupErr.message}).`);
+      return;
+    }
+    const { error: memberErr } = await supabase.from("group_members").insert({ group_id: code, user_id: session.user.id });
+    setCreateGroupBusy(false);
+    if (memberErr) {
+      setGroupsErr(`Group created, but couldn't add you as a member (${memberErr.message}).`);
+      return;
+    }
+    setCreateGroupName("");
+    loadMyGroups();
+  }
+
+  async function joinGroup() {
+    if (!session || !supabase) return;
+    const code = joinGroupCode.trim().toUpperCase();
+    if (!code) {
+      setJoinGroupErr("Enter a group code.");
+      return;
+    }
+    setJoinGroupBusy(true);
+    setJoinGroupErr("");
+    const { error } = await supabase
+      .from("group_members")
+      .upsert({ group_id: code, user_id: session.user.id }, { onConflict: "group_id,user_id" });
+    setJoinGroupBusy(false);
+    if (error) {
+      // Foreign key violation - the code doesn't match any real group.
+      setJoinGroupErr(error.code === "23503" ? "No group found with that code." : `Couldn't join that group (${error.message}).`);
+      return;
+    }
+    setJoinGroupCode("");
+    loadMyGroups();
+  }
+
+  async function loadGroupLeaderboard(groupId) {
+    if (!supabase) return;
+    setSelectedGroupId(groupId);
+    setGroupMembersLoading(true);
+    setGroupMembersErr("");
+    const { data: members, error: memErr } = await supabase.from("group_members").select("user_id").eq("group_id", groupId);
+    if (memErr) {
+      setGroupMembersLoading(false);
+      setGroupMembersErr(`Couldn't load this group (${memErr.message}).`);
+      return;
+    }
+    const userIds = (members || []).map((m) => m.user_id);
+    if (userIds.length === 0) {
+      setGroupMembersLoading(false);
+      setGroupMembersStats([]);
+      return;
+    }
+    const { data: stats, error: statsErr } = await supabase.from("leaderboard_stats").select("*").in("user_id", userIds);
+    setGroupMembersLoading(false);
+    if (statsErr) {
+      setGroupMembersErr(`Couldn't load this group's stats (${statsErr.message}).`);
+      return;
+    }
+    setGroupMembersStats(stats || []);
   }
 
   const [deleteHistoryConfirm, setDeleteHistoryConfirm] = useState(null); // {code, name} while confirming
@@ -4304,7 +4407,7 @@ function computeRoundScoring(round) {
               ) : (
                 <>
                   <div className="gsc-field">
-                    <div className="gsc-label">Name</div>
+                    <div className="gsc-label">User Name</div>
                     <input className="gsc-input" value={profileForm.name} onChange={(e) => { setProfileSaved(false); setProfileForm({ ...profileForm, name: e.target.value }); }} />
                   </div>
                   <div className="gsc-field" style={{ marginTop: 10 }}>
@@ -4503,6 +4606,128 @@ function computeRoundScoring(round) {
                     );
                   });
                 })()
+              )}
+            </div>
+          )}
+
+          {session && (
+            <div className="gsc-card">
+              <div className="gsc-label" style={{ marginBottom: 10 }}>Groups</div>
+
+              {selectedGroupId ? (
+                <>
+                  <button className="gsc-link" style={{ fontSize: 12, marginBottom: 10 }} onClick={() => setSelectedGroupId(null)}>
+                    {"\u2039"} Back to my groups
+                  </button>
+                  <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 10 }}>
+                    Group code: <span className="gsc-mono" style={{ fontWeight: 700, color: "#1B4332" }}>{selectedGroupId}</span> - share this with anyone you want to invite.
+                  </div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
+                    {Object.entries(LEADERBOARD_CATEGORIES).map(([key, cat]) => (
+                      <button
+                        key={key}
+                        onClick={() => setGroupCategory(key)}
+                        style={{
+                          fontSize: 11,
+                          fontWeight: 700,
+                          padding: "5px 10px",
+                          borderRadius: 20,
+                          border: groupCategory === key ? "1.5px solid #1B4332" : "1.5px solid #d8d2bd",
+                          background: groupCategory === key ? "#1B4332" : "#fff",
+                          color: groupCategory === key ? "#F3EFE0" : "#4b4b45",
+                          cursor: "pointer",
+                        }}
+                      >
+                        {cat.label}
+                      </button>
+                    ))}
+                  </div>
+                  {groupMembersLoading ? (
+                    <div style={{ fontSize: 13, color: "#6b6b63" }}>Loading this group...</div>
+                  ) : groupMembersErr ? (
+                    <div style={{ color: "#C1440E", fontSize: 13 }}>{groupMembersErr}</div>
+                  ) : (
+                    (() => {
+                      const cat = LEADERBOARD_CATEGORIES[groupCategory];
+                      const ranked = groupMembersStats
+                        .map((row) => ({ row, value: cat.valueOf(row) }))
+                        .filter((x) => x.value != null)
+                        .sort((a, b) => (cat.lowerIsBetter ? a.value - b.value : b.value - a.value));
+
+                      if (ranked.length === 0) {
+                        return <div style={{ fontSize: 13, color: "#6b6b63" }}>Nobody in this group has stats for this category yet.</div>;
+                      }
+
+                      return ranked.map((x, i) => {
+                        const isMe = session && x.row.user_id === session.user.id;
+                        return (
+                          <div
+                            key={x.row.user_id}
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "center",
+                              padding: "7px 0",
+                              borderBottom: i === ranked.length - 1 ? "none" : "1px solid #eee6cf",
+                              background: isMe ? "#EBF0EC" : "transparent",
+                              borderRadius: isMe ? 6 : 0,
+                              paddingLeft: isMe ? 8 : 0,
+                              paddingRight: isMe ? 8 : 0,
+                            }}
+                          >
+                            <div style={{ fontSize: 13, fontWeight: isMe ? 700 : 600, color: "#1B4332" }}>
+                              {i + 1}. {x.row.display_name}
+                              {isMe && <span style={{ fontSize: 10, color: "#B08D57", marginLeft: 6, fontWeight: 700 }}>YOU</span>}
+                            </div>
+                            <div style={{ fontSize: 13, fontWeight: 700, color: "#4b4b45" }}>{cat.format(x.value)}</div>
+                          </div>
+                        );
+                      });
+                    })()
+                  )}
+                </>
+              ) : (
+                <>
+                  {groupsLoading ? (
+                    <div style={{ fontSize: 13, color: "#6b6b63", marginBottom: 12 }}>Loading your groups...</div>
+                  ) : myGroups.length > 0 ? (
+                    <div style={{ marginBottom: 14 }}>
+                      {myGroups.map((grp) => (
+                        <div
+                          key={grp.id}
+                          onClick={() => loadGroupLeaderboard(grp.id)}
+                          style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #eee6cf", cursor: "pointer" }}
+                        >
+                          <div style={{ fontSize: 13, fontWeight: 600, color: "#1B4332" }}>{grp.name}</div>
+                          <span style={{ color: "#8FA998", fontSize: 14 }}>{"\u203A"}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div style={{ fontSize: 13, color: "#6b6b63", marginBottom: 14 }}>
+                      You're not in any groups yet. Create one or join one with a code below.
+                    </div>
+                  )}
+
+                  {groupsErr && <div style={{ color: "#C1440E", fontSize: 12, marginBottom: 10 }}>{groupsErr}</div>}
+
+                  <div style={{ fontSize: 11, color: "#8a8a80", textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 700, marginBottom: 6 }}>Create a Group</div>
+                  <div className="gsc-row" style={{ marginBottom: 14 }}>
+                    <input className="gsc-input" placeholder="Group name" value={createGroupName} onChange={(e) => setCreateGroupName(e.target.value)} />
+                    <button className="gsc-btn gsc-btn-primary" style={{ flex: "0 0 auto" }} disabled={createGroupBusy || !createGroupName.trim()} onClick={createGroup}>
+                      {createGroupBusy ? "Creating..." : "Create"}
+                    </button>
+                  </div>
+
+                  <div style={{ fontSize: 11, color: "#8a8a80", textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 700, marginBottom: 6 }}>Join a Group</div>
+                  <div className="gsc-row">
+                    <input className="gsc-input gsc-mono" placeholder="GROUP CODE" value={joinGroupCode} onChange={(e) => setJoinGroupCode(e.target.value.toUpperCase())} />
+                    <button className="gsc-btn gsc-btn-outline" style={{ flex: "0 0 auto" }} disabled={joinGroupBusy || !joinGroupCode.trim()} onClick={joinGroup}>
+                      {joinGroupBusy ? "Joining..." : "Join"}
+                    </button>
+                  </div>
+                  {joinGroupErr && <div style={{ color: "#C1440E", fontSize: 12, marginTop: 8 }}>{joinGroupErr}</div>}
+                </>
               )}
             </div>
           )}
@@ -7524,7 +7749,7 @@ function computeRoundScoring(round) {
           <div style={{ fontSize: 12, color: "#8a8a80", textAlign: "center", marginTop: 16 }}>
             Share code <b className="gsc-mono">{round.id}</b> with your group so everyone can enter or view scores.
           </div>
-          <button className="gsc-btn gsc-btn-outline" style={{ width: "100%", marginTop: 14 }} disabled={busy} onClick={() => archiveAndExitRound(round)}>
+          <button className="gsc-btn gsc-btn-outline" style={{ width: "100%", marginTop: 14 }} disabled={busy} onClick={() => setConfirmFinishOpen(true)}>
             {busy ? "Saving..." : "Finish & exit this round"}
           </button>
           {archiveErr && <div style={{ color: "#C1440E", fontSize: 12, textAlign: "center", marginTop: 8 }}>{archiveErr}</div>}
@@ -7544,6 +7769,22 @@ function computeRoundScoring(round) {
               <div className="gsc-modal-row">
                 <button className="gsc-btn gsc-btn-outline" onClick={cancelLeaveRound}>No, stay</button>
                 <button className="gsc-btn gsc-btn-primary" onClick={confirmLeaveRound}>Yes, leave</button>
+              </div>
+            </div>
+          </div>
+        )}
+        {confirmFinishOpen && (
+          <div className="gsc-modal-backdrop" onClick={() => setConfirmFinishOpen(false)}>
+            <div className="gsc-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="gsc-modal-title">Finish this round?</div>
+              <div className="gsc-modal-body">
+                This will exit and save the round as finished. Are you sure?
+              </div>
+              <div className="gsc-modal-row">
+                <button className="gsc-btn gsc-btn-outline" onClick={() => setConfirmFinishOpen(false)}>No, go back</button>
+                <button className="gsc-btn gsc-btn-primary" disabled={busy} onClick={() => { setConfirmFinishOpen(false); archiveAndExitRound(round); }}>
+                  {busy ? "Saving..." : "Yes, finish"}
+                </button>
               </div>
             </div>
           </div>
