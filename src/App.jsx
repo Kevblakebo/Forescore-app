@@ -4641,6 +4641,9 @@ function computeRoundScoring(round) {
                   <button className="gsc-link" style={{ fontSize: 12, marginBottom: 10 }} onClick={() => setSelectedGroupId(null)}>
                     {"\u2039"} Back to my groups
                   </button>
+                  <div style={{ fontWeight: 700, fontSize: 15, color: "#1B4332", marginBottom: 6 }}>
+                    {myGroups.find((g) => g.id === selectedGroupId)?.name || "Group"}
+                  </div>
                   <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 10 }}>
                     Group code: <span className="gsc-mono" style={{ fontWeight: 700, color: "#1B4332" }}>{selectedGroupId}</span> - share this with anyone you want to invite.
                   </div>
