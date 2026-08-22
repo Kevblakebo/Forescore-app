@@ -1677,6 +1677,16 @@ export default function GolfScorecard() {
       setGroupsErr(`Group created, but couldn't add you as a member (${memberErr.message}).`);
       return;
     }
+    // Make sure a leaderboard_stats row exists with the correct name -
+    // without this, someone who's never visited their own stats before
+    // would have no row at all, and simply be missing from this group's
+    // leaderboard rather than just showing the wrong name.
+    supabase
+      .from("leaderboard_stats")
+      .upsert({ user_id: session.user.id, display_name: (profile && profile.name) || "Golfer" }, { onConflict: "user_id", ignoreDuplicates: false })
+      .then(({ error: lbError }) => {
+        if (lbError) console.warn("Couldn't sync leaderboard name:", lbError.message);
+      });
     setCreateGroupName("");
     loadMyGroups();
   }
@@ -1699,6 +1709,15 @@ export default function GolfScorecard() {
       setJoinGroupErr(error.code === "23503" ? "No group found with that code." : `Couldn't join that group (${error.message}).`);
       return;
     }
+    // Same fix as createGroup - make sure a leaderboard_stats row exists
+    // with the correct name, so joining doesn't leave you missing from
+    // this group's leaderboard if you'd never visited your own stats.
+    supabase
+      .from("leaderboard_stats")
+      .upsert({ user_id: session.user.id, display_name: (profile && profile.name) || "Golfer" }, { onConflict: "user_id", ignoreDuplicates: false })
+      .then(({ error: lbError }) => {
+        if (lbError) console.warn("Couldn't sync leaderboard name:", lbError.message);
+      });
     setJoinGroupCode("");
     loadMyGroups();
   }
@@ -5732,6 +5751,18 @@ function computeRoundScoring(round) {
               <div className="gsc-field" style={{ marginTop: 10 }}>
                 <div className="gsc-label">Mulligans per player{wizardAnswers.resolvedGameKey === "seabluffe" ? ", per 6 holes" : ""}</div>
                 <input className="gsc-input" type="number" min="0" placeholder="0" value={activeCfg.mulliganSegment} onChange={(e) => setActiveCfg({ ...activeCfg, mulliganSegment: cleanNumericText(e.target.value) })} />
+              </div>
+              <div className="gsc-field" style={{ marginTop: 10 }}>
+                <div className="gsc-label">Earn a bonus mulligan (optional)</div>
+                <input
+                  className="gsc-input"
+                  placeholder="e.g. Down a beer, do a shot, pay $5 to the pot"
+                  value={activeCfg.mulliganChallenge}
+                  onChange={(e) => setActiveCfg({ ...activeCfg, mulliganChallenge: e.target.value })}
+                />
+                <div style={{ fontSize: 11, color: "#8a8a80", marginTop: 4 }}>
+                  If set, anyone can award a player an extra mulligan on the scoring screen once they've done this.
+                </div>
               </div>
               {g.tracksDrives && (
                 <div className="gsc-field" style={{ marginTop: 10 }}>
