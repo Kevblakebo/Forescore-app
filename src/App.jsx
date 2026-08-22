@@ -111,7 +111,7 @@ const GAMES = {
     hasPutts: true,
     totalScoring: true,
     rankByTeamTotal: true,
-    defaults: { maxOver: 3, maxPutts: 3, mulliganSegment: 1, prize: "Losers buy winners a drink at the 19th hole" },
+    defaults: { maxOver: 3, maxPutts: 3, mulliganSegment: 1, mulliganChallenge: "", prize: "Losers buy winners a drink at the 19th hole" },
     rules: [
       "4-person, 2 vs 2 team, combined strokes competition.",
       "Each player plays their own ball and records their own strokes and putts.",
@@ -141,7 +141,7 @@ const GAMES = {
     hasScore: true,
     hasPutts: true,
     puttsOnlyScoring: true,
-    defaults: { maxOver: 3, maxPutts: 3, mulliganSegment: 1, prize: "Losers buy winners a drink at the 19th hole" },
+    defaults: { maxOver: 3, maxPutts: 3, mulliganSegment: 1, mulliganChallenge: "", prize: "Losers buy winners a drink at the 19th hole" },
     rules: [
       "Team putting game for 4 players (2 vs 2 teams).",
       "Total strokes and putts are kept track of.",
@@ -165,7 +165,7 @@ const GAMES = {
     rotates: true,
     hasScore: true,
     hasPutts: true,
-    defaults: { maxOver: 3, maxPutts: 3, mulliganSegment: 1, prize: "Losers buy winners a drink at the 19th hole" },
+    defaults: { maxOver: 3, maxPutts: 3, mulliganSegment: 1, mulliganChallenge: "", prize: "Losers buy winners a drink at the 19th hole" },
     rules: [
       "Rotating team overall and putting game.",
       {
@@ -200,7 +200,7 @@ const GAMES = {
     hasPutts: true,
     bestBall: true,
     tracksWolf: true,
-    defaults: { maxOver: 3, maxPutts: 3, mulliganSegment: 1, prize: "Losers buy winners a drink at the 19th hole" },
+    defaults: { maxOver: 3, maxPutts: 3, mulliganSegment: 1, mulliganChallenge: "", prize: "Losers buy winners a drink at the 19th hole" },
     rules: [
       {
         text: "Setting Up the Game",
@@ -253,7 +253,7 @@ const GAMES = {
     rotates: false,
     hasScore: true,
     hasPutts: true,
-    defaults: { maxOver: 3, maxPutts: 3, mulliganSegment: 1, prize: "Losers buy winners a drink at the 19th hole" },
+    defaults: { maxOver: 3, maxPutts: 3, mulliganSegment: 1, mulliganChallenge: "", prize: "Losers buy winners a drink at the 19th hole" },
     rules: [
       "Two 2-person team strokes and putting competition (same game as Round Robin, except no team rotation).",
       {
@@ -282,7 +282,7 @@ const GAMES = {
     hasScore: true,
     hasPutts: true,
     bestBall: true,
-    defaults: { maxOver: 3, maxPutts: 3, mulliganSegment: 1, prize: "Losers buy winners a drink at the 19th hole" },
+    defaults: { maxOver: 3, maxPutts: 3, mulliganSegment: 1, mulliganChallenge: "", prize: "Losers buy winners a drink at the 19th hole" },
     rules: [
       {
         text: "Two 2-person team Best-Ball Strokes and Best-Ball Putts Skins competition (same as Team Skins, except using best-ball scores from the 2-person team):",
@@ -321,7 +321,7 @@ const GAMES = {
     bestBall: true,
     singleTeam: true,
     tournamentOnly: true,
-    defaults: { maxOver: 3, maxPutts: 3, mulliganSegment: 1, prize: "Losers buy winners a drink at the 19th hole" },
+    defaults: { maxOver: 3, maxPutts: 3, mulliganSegment: 1, mulliganChallenge: "", prize: "Losers buy winners a drink at the 19th hole" },
     rules: [
       "4-person team best-ball strokes and best-ball putts competition - the whole foursome plays as one team, not split into 2-person sub-teams.",
       "Each player plays their own ball and records their own strokes and putts.",
@@ -353,7 +353,7 @@ const GAMES = {
     bestBall: false,
     singleTeam: true,
     tournamentOnly: true,
-    defaults: { maxOver: 3, maxPutts: 3, mulliganSegment: 1, prize: "Losers buy winners a drink at the 19th hole" },
+    defaults: { maxOver: 3, maxPutts: 3, mulliganSegment: 1, mulliganChallenge: "", prize: "Losers buy winners a drink at the 19th hole" },
     rules: [
       "4-person team combined strokes and combined putts competition - the whole foursome plays as one team, not split into 2-person sub-teams.",
       "Each player plays their own ball and records their own strokes and putts.",
@@ -387,7 +387,7 @@ const GAMES = {
     oneTeamScore: true,
     tournamentOnly: true,
     tracksDrives: true,
-    defaults: { maxOver: 3, maxPutts: 3, mulliganSegment: 1, minDrives: 3, prize: "Losers buy winners a drink at the 19th hole" },
+    defaults: { maxOver: 3, maxPutts: 3, mulliganSegment: 1, mulliganChallenge: "", minDrives: 3, prize: "Losers buy winners a drink at the 19th hole" },
     rules: [
       "4-person team strokes competition - the whole foursome plays as one team",
       {
@@ -423,7 +423,7 @@ const GAMES = {
     hasScore: true,
     hasPutts: true,
     totalScoring: true,
-    defaults: { maxOver: "", maxPutts: "", mulliganSegment: "", prize: "" },
+    defaults: { maxOver: "", maxPutts: "", mulliganSegment: "", mulliganChallenge: "", prize: "" },
     rules: [
       "Individual strokes and putting game for up to 4 players.",
       "Total strokes and putts are kept track of.",
@@ -446,7 +446,7 @@ const GAMES = {
     rotates: false,
     hasScore: true,
     hasPutts: true,
-    defaults: { maxOver: 3, maxPutts: 3, mulliganSegment: 1, prize: "Losers buy winners a drink at the 19th hole" },
+    defaults: { maxOver: 3, maxPutts: 3, mulliganSegment: 1, mulliganChallenge: "", prize: "Losers buy winners a drink at the 19th hole" },
     rules: [
       "Individual strokes and putting skins game for up to 4 players. Points for low strokes AND low putts each hole. Most points wins.",
       {
@@ -479,7 +479,7 @@ const GAMES = {
     hasPutts: true,
     totalScoring: true,
     rankByPutts: true,
-    defaults: { maxOver: 3, maxPutts: 3, mulliganSegment: 1, prize: "Losers buy winners a drink at the 19th hole" },
+    defaults: { maxOver: 3, maxPutts: 3, mulliganSegment: 1, mulliganChallenge: "", prize: "Losers buy winners a drink at the 19th hole" },
     rules: [
       "Individual putting game for up to 4 players.",
       "Total strokes and putts are kept track of.",
@@ -503,7 +503,7 @@ const GAMES = {
     hasScore: true,
     hasPutts: true,
     tracksPontoBangoBongo: true,
-    defaults: { maxOver: 3, maxPutts: 3, mulliganSegment: 1, prize: "Losers buy winners a drink at the 19th hole" },
+    defaults: { maxOver: 3, maxPutts: 3, mulliganSegment: 1, mulliganChallenge: "", prize: "Losers buy winners a drink at the 19th hole" },
     rules: [
       "Individual strokes and putting game for up to 4 players.",
       "Total strokes and putts are still kept track of (similar to Individual Strokes).",
@@ -712,6 +712,7 @@ const AVATAR_OPTIONS = [
   "\u{1F9B8}", "\u{1F9B9}", "\u{1F977}", "\u{1F987}", "\u{1F577}\u{FE0F}", "\u26A1", "\u{1F4A5}", "\u{1F6E1}\u{FE0F}", "\u{1F4AA}", "\u{1F680}",
   "\u{1F42F}", "\u{1F988}",
   "\u{1F40A}", "\u{1F986}", "\u{1F43A}", "\u{1F989}", "\u{1F409}", "\u{1F451}", "\u{1F3A9}", "\u{1F340}", "\u{1F334}", "\u{1F3B2}", "\u{1F947}", "\u{1F9CA}",
+  "\u26CF\u{FE0F}", "\u26F3", "\u{1F3C6}", "\u{1F426}", "\u{1F37A}", "\u2600\u{FE0F}",
 ];
 const TEAM_CLASS = ["gsc-teamA", "gsc-teamB", "gsc-teamC", "gsc-teamD"];
 
@@ -2753,6 +2754,7 @@ export default function GolfScorecard() {
       yardage: finalYardage,
       strokeIndex: finalStrokeIndex,
       scores: emptyScores(),
+      bonusMulligans: [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]],
       createdAt: Date.now(),
       tournamentId: isTournament ? activeTournament.id : null,
       foursomeName: isTournament ? foursomeName : null,
@@ -2914,6 +2916,7 @@ export default function GolfScorecard() {
         yardage: cleanYardage,
         strokeIndex: cleanStrokeIndex,
         scores: emptyScores(),
+        bonusMulligans: [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]],
         createdAt: Date.now(),
         tournamentId: code,
         foursomeName,
@@ -3422,6 +3425,25 @@ export default function GolfScorecard() {
       const holeScores = { ...(next.scores[holeIdx] || {}) };
       holeScores[field] = holeScores[field] === playerIdx ? null : playerIdx;
       next.scores[holeIdx] = holeScores;
+      saveRound(next);
+      return next;
+    });
+  }
+
+  // Lets anyone award a player an extra mulligan mid-round, once they've
+  // done whatever the group agreed on (down a beer, pay into the pot,
+  // etc). Scoped to the segment they're currently playing in, matching
+  // how mulligansUsed is already tracked per-segment - defensively
+  // rebuilds the array if this round predates the feature.
+  function awardBonusMulligan(playerIdx) {
+    lastLocalEditRef.current = Date.now();
+    setRound((r) => {
+      const seg = Math.floor(holeIdx / mulliganWindow(r.game));
+      const bonus = r.bonusMulligans
+        ? r.bonusMulligans.map((arr) => [...arr])
+        : [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]];
+      bonus[playerIdx][seg] = (bonus[playerIdx][seg] || 0) + 1;
+      const next = { ...r, bonusMulligans: bonus };
       saveRound(next);
       return next;
     });
@@ -6097,6 +6119,20 @@ function computeRoundScoring(round) {
                 />
               </div>
             )}
+            {g.rotates !== undefined && g.hasScore && (
+              <div className="gsc-field">
+                <div className="gsc-label">Earn a bonus mulligan (optional)</div>
+                <input
+                  className="gsc-input"
+                  placeholder="e.g. Down a beer, do a shot, pay $5 to the pot"
+                  value={cfg.mulliganChallenge}
+                  onChange={(e) => setCfg({ ...cfg, mulliganChallenge: e.target.value })}
+                />
+                <div style={{ fontSize: 11, color: "#8a8a80", marginTop: 4 }}>
+                  If set, anyone can award a player an extra mulligan on the scoring screen once they've done this.
+                </div>
+              </div>
+            )}
             <div className="gsc-field">
               <div className="gsc-label">Prize / stakes</div>
               <input className="gsc-input" value={cfg.prize} onChange={(e) => setCfg({ ...cfg, prize: e.target.value })} />
@@ -6451,6 +6487,20 @@ function computeRoundScoring(round) {
                     if (e.target.value === "") setTournamentCfg((c) => ({ ...c, mulliganSegment: 1 }));
                   }}
                 />
+              </div>
+            )}
+            {tg.hasScore && (
+              <div className="gsc-field">
+                <div className="gsc-label">Earn a bonus mulligan (optional)</div>
+                <input
+                  className="gsc-input"
+                  placeholder="e.g. Down a beer, do a shot, pay $5 to the pot"
+                  value={tournamentCfg.mulliganChallenge}
+                  onChange={(e) => setTournamentCfg({ ...tournamentCfg, mulliganChallenge: e.target.value })}
+                />
+                <div style={{ fontSize: 11, color: "#8a8a80", marginTop: 4 }}>
+                  If set, anyone can award a player an extra mulligan on the scoring screen once they've done this.
+                </div>
               </div>
             )}
             {tg.tracksDrives && (
@@ -7101,6 +7151,23 @@ function computeRoundScoring(round) {
             </div>
           </div>
         )}
+        {round.cfg.mulliganChallenge && (
+          <div className="gsc-body" style={{ paddingBottom: 0 }}>
+            <div className="gsc-card" style={{ background: "#F8F1E4", border: "1px solid #B08D57" }}>
+              <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 6 }}>{"\u{1F37B}"} Earn a bonus mulligan</div>
+              <div style={{ fontSize: 12, color: "#4b4b45", marginBottom: 10 }}>
+                {round.cfg.mulliganChallenge}
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {round.players.map((p, i) => (
+                  <button key={i} onClick={() => awardBonusMulligan(i)} className="gsc-btn gsc-btn-outline" style={{ fontSize: 12, padding: "6px 12px" }}>
+                    +1 for {p.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
         {storageBroken ? (
           <div style={{ background: "#F8F1E4", color: "#8a6a2f", fontSize: 12, padding: "8px 16px", textAlign: "center" }}>
             Storage isn't responding right now, so nothing is saving automatically. Your scores are fine for this session -{" "}
@@ -7264,7 +7331,8 @@ function computeRoundScoring(round) {
               const teamIdxInHole = teamsThisHole.findIndex((t) => t.includes(i));
               const cls = TEAM_CLASS[teamIdxInHole % 4];
               const e = hs[i] || {};
-              const mulLeft = g.hasScore ? (round.cfg.mulliganSegment ?? 1) - computed.mulligansUsed[i][mulSeg] : null;
+              const bonusForSeg = round.bonusMulligans && round.bonusMulligans[i] ? round.bonusMulligans[i][mulSeg] || 0 : 0;
+              const mulLeft = g.hasScore ? (round.cfg.mulliganSegment ?? 1) + bonusForSeg - computed.mulligansUsed[i][mulSeg] : null;
               return (
                 <div key={i} className={`gsc-player-row ${cls}`}>
                   <div className="gsc-player-name">
