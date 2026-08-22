@@ -928,6 +928,22 @@ function isNotFoundStorageError(msg) {
   return m.includes("not found") || m.includes("unexpected response type") || m.includes("no such key") || m.includes("does not exist");
 }
 
+// Handles a known, occasional Supabase infrastructure issue - "JWT issued
+// at future" - a brief clock mismatch between Supabase's own internal
+// services, most likely to surface right after a fresh login. It's not
+// something wrong with this app or a user's device, and it typically
+// clears up within a couple seconds on its own, so this quietly retries
+// once before giving up and returning the real error.
+async function withJwtRetry(queryFn, delayMs = 2500) {
+  const result = await queryFn();
+  const msg = (result && result.error && result.error.message) || "";
+  if (/issued at future/i.test(msg)) {
+    await new Promise((resolve) => setTimeout(resolve, delayMs));
+    return await queryFn();
+  }
+  return result;
+}
+
 async function storageGet(key, shared, attempt = 1) {
   try {
     if (!window.storage || !window.storage.get) return { ok: false, value: null, error: "Storage isn't available in this session." };
@@ -1432,7 +1448,7 @@ export default function GolfScorecard() {
     if (!supabase || !userId) return;
     setProfileLoading(true);
     setProfileErr("");
-    const { data, error } = await supabase.from("profiles").select("*").eq("id", userId).maybeSingle();
+    const { data, error } = await withJwtRetry(() => supabase.from("profiles").select("*").eq("id", userId).maybeSingle());
     setProfileLoading(false);
     if (error) {
       setProfileErr(`Couldn't load your profile (${error.message}).`);
@@ -1484,11 +1500,9 @@ export default function GolfScorecard() {
     setStatsLoading(true);
     setStatsErr("");
 
-    const { data: myRoundsIndex, error } = await supabase
-      .from("user_rounds")
-      .select("*")
-      .eq("user_id", session.user.id)
-      .order("created_at", { ascending: false });
+    const { data: myRoundsIndex, error } = await withJwtRetry(() =>
+      supabase.from("user_rounds").select("*").eq("user_id", session.user.id).order("created_at", { ascending: false })
+    );
 
     if (error) {
       setStatsLoading(false);
@@ -1629,7 +1643,7 @@ export default function GolfScorecard() {
     if (!supabase) return;
     setLeaderboardLoading(true);
     setLeaderboardErr("");
-    const { data, error } = await supabase.from("leaderboard_stats").select("*").eq("opted_in", true);
+    const { data, error } = await withJwtRetry(() => supabase.from("leaderboard_stats").select("*").eq("opted_in", true));
     setLeaderboardLoading(false);
     if (error) {
       setLeaderboardErr(`Couldn't load the leaderboard (${error.message}).`);
@@ -1644,10 +1658,9 @@ export default function GolfScorecard() {
     if (!session || !supabase) return;
     setGroupsLoading(true);
     setGroupsErr("");
-    const { data, error } = await supabase
-      .from("group_members")
-      .select("group_id, groups(name)")
-      .eq("user_id", session.user.id);
+    const { data, error } = await withJwtRetry(() =>
+      supabase.from("group_members").select("group_id, groups(name)").eq("user_id", session.user.id)
+    );
     setGroupsLoading(false);
     if (error) {
       setGroupsErr(`Couldn't load your groups (${error.message}).`);
@@ -1728,7 +1741,7 @@ export default function GolfScorecard() {
     setSelectedGroupId(groupId);
     setGroupMembersLoading(true);
     setGroupMembersErr("");
-    const { data: members, error: memErr } = await supabase.from("group_members").select("user_id").eq("group_id", groupId);
+    const { data: members, error: memErr } = await withJwtRetry(() => supabase.from("group_members").select("user_id").eq("group_id", groupId));
     if (memErr) {
       setGroupMembersLoading(false);
       setGroupMembersErr(`Couldn't load this group (${memErr.message}).`);
@@ -1740,7 +1753,7 @@ export default function GolfScorecard() {
       setGroupMembersStats([]);
       return;
     }
-    const { data: stats, error: statsErr } = await supabase.from("leaderboard_stats").select("*").in("user_id", userIds);
+    const { data: stats, error: statsErr } = await withJwtRetry(() => supabase.from("leaderboard_stats").select("*").in("user_id", userIds));
     setGroupMembersLoading(false);
     if (statsErr) {
       setGroupMembersErr(`Couldn't load this group's stats (${statsErr.message}).`);
