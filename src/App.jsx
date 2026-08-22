@@ -1182,6 +1182,17 @@ export default function GolfScorecard() {
         // route them straight to setting a new password rather than just
         // silently logging them in, which would be a confusing dead end.
         goToScreen("resetPassword");
+      } else if (event === "SIGNED_IN" && newSession) {
+        // Supabase includes type=signup in the redirect URL specifically
+        // when someone arrives via an email confirmation link - checking
+        // both the query string and hash fragment since the exact format
+        // has varied across versions. This only appears right after
+        // clicking that link, so normal logins and session restores on
+        // every other page load are completely unaffected.
+        const urlSignal = window.location.search + window.location.hash;
+        if (/type=signup/i.test(urlSignal)) {
+          goToScreen("profileTab");
+        }
       }
     });
     return () => listener.subscription.unsubscribe();
@@ -1362,6 +1373,16 @@ export default function GolfScorecard() {
     if (data.session) {
       // Email confirmation is off - already logged in.
       goToScreen("profileTab");
+    } else if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+      // Supabase deliberately returns what looks like a success response
+      // here (no error, no session) when the email is already registered
+      // - it's a security measure to stop attackers from being able to
+      // probe which emails exist. This is the one documented, reliable
+      // way to tell "brand new signup" and "this email already has an
+      // account" apart. No confirmation email is actually sent in this
+      // case, since no new account was created.
+      setAuthErr("An account with this email already exists. Please log in instead.");
+      goToScreen("login");
     } else {
       // Email confirmation is on - they'll need to click a link before they can log in.
       setAuthNotice("Almost there - check your email to confirm your account, then log in.");
