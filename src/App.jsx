@@ -4429,7 +4429,7 @@ function computeRoundScoring(round) {
               ) : (
                 <>
                   <div className="gsc-field">
-                    <div className="gsc-label">User Name</div>
+                    <div className="gsc-label">User Name (Handle)</div>
                     <input className="gsc-input" value={profileForm.name} onChange={(e) => { setProfileSaved(false); setProfileForm({ ...profileForm, name: e.target.value }); }} />
                   </div>
                   <div className="gsc-field" style={{ marginTop: 10 }}>
