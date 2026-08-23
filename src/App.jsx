@@ -1091,6 +1091,8 @@ export default function GolfScorecard() {
   const [stats, setStats] = useState(null);
   const [statsLoading, setStatsLoading] = useState(false);
   const [statsErr, setStatsErr] = useState("");
+  const [statsDateFrom, setStatsDateFrom] = useState("");
+  const [statsDateTo, setStatsDateTo] = useState("");
 
   // ---- Leaderboard (opt-in, cross-user) ----
   const [leaderboard, setLeaderboard] = useState([]);
@@ -1523,7 +1525,7 @@ export default function GolfScorecard() {
     setStatsLoading(true);
     setStatsErr("");
 
-    const { data: myRoundsIndex, error } = await withJwtRetry(() =>
+    const { data: myRoundsIndexRaw, error } = await withJwtRetry(() =>
       supabase.from("user_rounds").select("*").eq("user_id", session.user.id).order("created_at", { ascending: false })
     );
 
@@ -1532,6 +1534,20 @@ export default function GolfScorecard() {
       setStatsErr(`Couldn't load your stats (${error.message}).`);
       return;
     }
+
+    // Date range is optional - if set, only rounds played within it count
+    // toward these stats. String comparison works directly here since
+    // round_date is always stored as YYYY-MM-DD. Explicit overrides (not
+    // just reading state directly) avoid a stale read if this runs right
+    // after setStatsDateFrom/setStatsDateTo, before that state has
+    // actually settled.
+    const dateFrom = overrides && overrides.dateFrom !== undefined ? overrides.dateFrom : statsDateFrom;
+    const dateTo = overrides && overrides.dateTo !== undefined ? overrides.dateTo : statsDateTo;
+    const myRoundsIndex = (myRoundsIndexRaw || []).filter((ur) => {
+      if (dateFrom && ur.round_date < dateFrom) return false;
+      if (dateTo && ur.round_date > dateTo) return false;
+      return true;
+    });
 
     if (!myRoundsIndex || myRoundsIndex.length === 0) {
       setStatsLoading(false);
@@ -1630,8 +1646,14 @@ export default function GolfScorecard() {
     // you've never opted into the global leaderboard), so this row needs
     // to exist either way. The opted_in field is what actually controls
     // GLOBAL visibility - RLS handles the rest.
+    //
+    // Only does this when viewing all-time stats (no date filter active) -
+    // the leaderboard should always reflect full history, never get
+    // overwritten with a filtered, partial snapshot from someone just
+    // browsing their own profile with a date range applied.
     const isOptedIn = overrides && overrides.optIn !== undefined ? overrides.optIn : profile && profile.leaderboard_opt_in;
     const displayName = (overrides && overrides.name) || (profile && profile.name) || "Golfer";
+    if (!dateFrom && !dateTo) {
     supabase
       .from("leaderboard_stats")
       .upsert(
@@ -1656,6 +1678,7 @@ export default function GolfScorecard() {
       .then(({ error: lbError }) => {
         if (lbError) console.warn("Couldn't update leaderboard stats:", lbError.message);
       });
+    }
   }
 
   // Fetches everyone who's opted in - RLS on the leaderboard_stats table
@@ -4665,13 +4688,43 @@ function computeRoundScoring(round) {
           {session && (
             <div className="gsc-card">
               <div className="gsc-label" style={{ marginBottom: 10 }}>Your Stats</div>
+
+              <div style={{ display: "flex", alignItems: "flex-end", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
+                <div style={{ flex: "1 1 120px" }}>
+                  <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 3 }}>From</div>
+                  <input type="date" className="gsc-input" value={statsDateFrom} onChange={(e) => setStatsDateFrom(e.target.value)} />
+                </div>
+                <div style={{ flex: "1 1 120px" }}>
+                  <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 3 }}>To</div>
+                  <input type="date" className="gsc-input" value={statsDateTo} onChange={(e) => setStatsDateTo(e.target.value)} />
+                </div>
+                <button className="gsc-btn gsc-btn-primary" style={{ flex: "0 0 auto" }} disabled={statsLoading} onClick={() => loadStats()}>
+                  Apply
+                </button>
+                {(statsDateFrom || statsDateTo) && (
+                  <button
+                    className="gsc-link"
+                    style={{ fontSize: 12 }}
+                    onClick={() => {
+                      setStatsDateFrom("");
+                      setStatsDateTo("");
+                      loadStats({ dateFrom: "", dateTo: "" });
+                    }}
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+
               {statsLoading ? (
                 <div style={{ fontSize: 13, color: "#6b6b63" }}>Loading your stats...</div>
               ) : statsErr ? (
                 <div style={{ color: "#C1440E", fontSize: 13 }}>{statsErr}</div>
               ) : !stats || stats.roundsPlayed === 0 ? (
                 <div style={{ fontSize: 13, color: "#6b6b63", lineHeight: 1.5 }}>
-                  No completed rounds yet while logged in. Play a full 18-hole round while logged in and it'll show up here.
+                  {statsDateFrom || statsDateTo
+                    ? "No completed rounds found in that date range."
+                    : "No completed rounds yet while logged in. Play a full 18-hole round while logged in and it'll show up here."}
                 </div>
               ) : (
                 <>
