@@ -1851,10 +1851,6 @@ export default function GolfScorecard() {
   const [editFoursomeName, setEditFoursomeName] = useState("");
   const [editFoursomeIsTournament, setEditFoursomeIsTournament] = useState(false);
   const [claimSlotDismissed, setClaimSlotDismissed] = useState(false);
-  const [gpsCourseQuery, setGpsCourseQuery] = useState("");
-  const [gpsCourseResults, setGpsCourseResults] = useState([]);
-  const [gpsCourseSearching, setGpsCourseSearching] = useState(false);
-  const [gpsCourseErr, setGpsCourseErr] = useState("");
   const [claimSlotBusy, setClaimSlotBusy] = useState(false);
   const [claimSlotErr, setClaimSlotErr] = useState("");
   const [editFoursomePlayers, setEditFoursomePlayers] = useState([]);
@@ -2448,7 +2444,7 @@ export default function GolfScorecard() {
     setCourseSearchErr("");
     setCourseSearchResults([]);
     try {
-      const res = await fetch(`/api/course-search?q=${encodeURIComponent(q)}`);
+      const res = await fetch(`/api/course-gps-search?q=${encodeURIComponent(q)}`);
       const data = await res.json().catch(() => null);
       if (!res.ok || !data) {
         setCourseSearchErr((data && data.error) || "Course search isn't available right now. You can still enter par manually below.");
@@ -2463,33 +2459,6 @@ export default function GolfScorecard() {
       setCourseSearchErr("Course search isn't available right now. You can still enter par manually below.");
     }
     setCourseSearchBusy(false);
-  }
-
-  async function searchGpsCourses() {
-    const q = gpsCourseQuery.trim();
-    if (q.length < 2) {
-      setGpsCourseErr("Type at least 2 characters to search.");
-      return;
-    }
-    setGpsCourseSearching(true);
-    setGpsCourseErr("");
-    setGpsCourseResults([]);
-    try {
-      const res = await fetch(`/api/course-gps-search?q=${encodeURIComponent(q)}`);
-      const data = await res.json().catch(() => null);
-      if (!res.ok || !data) {
-        setGpsCourseErr((data && data.error) || "Course GPS search isn't available right now.");
-        setGpsCourseSearching(false);
-        return;
-      }
-      setGpsCourseResults(data.courses || []);
-      if (!data.courses || data.courses.length === 0) {
-        setGpsCourseErr("No matches. Try a shorter or differently spelled name.");
-      }
-    } catch (e) {
-      setGpsCourseErr("Course GPS search isn't available right now.");
-    }
-    setGpsCourseSearching(false);
   }
 
   // Filters the raw coordinate dump down to just the green points (poi 1 -
@@ -2507,65 +2476,34 @@ export default function GolfScorecard() {
     return holeGPS;
   }
 
-  // Fetches and processes coordinates immediately on selection (not
-  // deferred to round creation) so the person gets instant confirmation
-  // GPS data actually exists for this course, rather than only finding
-  // out after finishing the rest of setup.
-  async function selectGpsCourse(course, isTournament) {
-    const setActiveCfg = isTournament ? setTournamentCfg : setCfg;
-    setGpsCourseSearching(true);
-    setGpsCourseErr("");
-    try {
-      const res = await fetch(`/api/course-gps-coordinates?id=${encodeURIComponent(course.courseID)}`);
-      const data = await res.json().catch(() => null);
-      if (!res.ok || !data || !data.coordinates) {
-        setGpsCourseErr((data && data.error) || "Couldn't fetch GPS data for that course.");
-        setGpsCourseSearching(false);
-        return;
-      }
-      const holeGPS = processGpsCoordinates(data.coordinates);
-      setActiveCfg((c) => ({
-        ...c,
-        gpsCourseId: course.courseID,
-        gpsCourseLabel: `${course.courseName ? course.courseName + " - " : ""}${course.clubName}`.trim(),
-        gpsHoleData: holeGPS,
-      }));
-      setGpsCourseResults([]);
-      setGpsCourseQuery("");
-    } catch (e) {
-      setGpsCourseErr("Couldn't fetch GPS data for that course.");
-    }
-    setGpsCourseSearching(false);
-  }
-
   // Fetches full detail (every tee, every hole's par) for a chosen course,
   // then shows a tee picker rather than guessing which tee to use.
   async function selectCourseResult(course) {
     setCourseDetailBusy(true);
     setCourseSearchErr("");
     try {
-      const res = await fetch(`/api/course-detail?id=${encodeURIComponent(course.id)}`);
+      const res = await fetch(`/api/course-gps-detail?id=${encodeURIComponent(course.courseID)}`);
       const data = await res.json().catch(() => null);
       if (!res.ok || !data) {
         setCourseSearchErr((data && data.error) || "Couldn't load that course's details. You can still enter par manually below.");
         setCourseDetailBusy(false);
         return;
       }
-      // The course fields may come back at the top level, or wrapped in a
-      // "course" key (mirroring how search results are wrapped in
-      // "courses") - handle either shape rather than assuming one.
-      const courseObj = data.course && typeof data.course === "object" ? data.course : data;
-      const allTees = Object.values(courseObj.tees || {}).flat();
-      if (allTees.length === 0) {
-        setCourseSearchErr(
-          `That course doesn't have hole-by-hole par data available. You can still enter par manually below. (debug: response keys were ${Object.keys(data).join(", ")})`
-        );
+      const parsMen = data.parsMen || [];
+      const indexesMen = data.indexesMen || [];
+      const tees = data.tees || [];
+      if (parsMen.length === 0 || tees.length === 0) {
+        setCourseSearchErr("That course doesn't have hole-by-hole par data available. You can still enter par manually below.");
         setCourseDetailBusy(false);
         return;
       }
       setCourseTeeOptions({
-        courseLabel: courseObj.club_name === courseObj.course_name ? courseObj.club_name : `${courseObj.club_name} - ${courseObj.course_name}`,
-        tees: allTees,
+        courseLabel: course.courseName && course.courseName !== course.clubName ? `${course.clubName} - ${course.courseName}` : course.clubName,
+        courseID: course.courseID,
+        parsMen,
+        indexesMen,
+        numHoles: Number(data.numHoles) || parsMen.length,
+        tees,
       });
     } catch (e) {
       setCourseSearchErr("Couldn't load that course's details. You can still enter par manually below.");
@@ -2573,42 +2511,63 @@ export default function GolfScorecard() {
     setCourseDetailBusy(false);
   }
 
-  // Applies a specific tee's par values. Courses aren't always 18 holes
-  // exactly in the database, so this fills in whatever's available and
-  // leaves the rest blank rather than guessing - the existing "every hole
-  // needs par" check before creating the round will catch anything short.
+  // Applies a specific tee's yardage, paired with the course-level par and
+  // stroke index (those don't change by tee, only yardage does). Courses
+  // aren't always 18 holes exactly, so this fills in whatever's available
+  // and leaves the rest blank rather than guessing - the existing "every
+  // hole needs par" check before creating the round will catch anything
+  // short.
   function applyCourseTee(tee, forTournament) {
-    const holePars = (tee.holes || []).map((h) => h.par);
-    const holeYardage = (tee.holes || []).map((h) => h.yardage);
-    const holeStrokeIndex = (tee.holes || []).map((h) => h.handicap);
+    const { parsMen, indexesMen, numHoles, courseLabel, courseID } = courseTeeOptions;
+    const holeCount = Math.min(18, numHoles || parsMen.length);
     const next = Array(18).fill("");
     const nextYardage = Array(18).fill("");
     const nextStrokeIndex = Array(18).fill("");
-    for (let i = 0; i < Math.min(18, holePars.length); i++) {
-      next[i] = holePars[i];
-      if (holeYardage[i] != null) nextYardage[i] = holeYardage[i];
-      if (holeStrokeIndex[i] != null) nextStrokeIndex[i] = holeStrokeIndex[i];
+    for (let i = 0; i < holeCount; i++) {
+      if (parsMen[i] != null) next[i] = parsMen[i];
+      if (indexesMen[i] != null) nextStrokeIndex[i] = indexesMen[i];
+      const len = tee[`length${i + 1}`];
+      if (len != null) nextYardage[i] = len;
     }
     if (forTournament) {
       setTournamentPar(next);
       setTournamentYardage(nextYardage);
       setTournamentStrokeIndex(nextStrokeIndex);
-      setTournamentCourseName(courseTeeOptions.courseLabel);
+      setTournamentCourseName(courseLabel);
     } else {
       setPar(next);
       setYardage(nextYardage);
       setStrokeIndex(nextStrokeIndex);
-      setCourseName(courseTeeOptions.courseLabel);
+      setCourseName(courseLabel);
     }
-    if (holePars.length !== 18) {
-      setCourseMsg(`Loaded ${holePars.length} of 18 holes from "${courseTeeOptions.courseLabel}" (${tee.tee_name}) - fill in the rest manually.`);
+    if (holeCount !== 18) {
+      setCourseMsg(`Loaded ${holeCount} of 18 holes from "${courseLabel}" (${tee.teeName}) - fill in the rest manually.`);
     } else {
-      setCourseMsg(`Loaded par for "${courseTeeOptions.courseLabel}" (${tee.tee_name}).`);
+      setCourseMsg(`Loaded par for "${courseLabel}" (${tee.teeName}).`);
     }
     setCourseTeeOptions(null);
     setCourseSearchResults([]);
     setCourseSearchQuery("");
     setCourseSelectedViaSearch(true);
+
+    // Best-effort, silent GPS fetch for logged-in users - this is the
+    // actual point of consolidating into one search: picking a tee now
+    // also fills in live distance-to-green automatically, with no second
+    // search required. Doesn't block or show an error if it fails, since
+    // GPS here is a bonus on top of the par/yardage that already loaded
+    // successfully, not something this step depends on.
+    if (session) {
+      const setActiveCfgFn = forTournament ? setTournamentCfg : setCfg;
+      fetch(`/api/course-gps-coordinates?id=${encodeURIComponent(courseID)}`)
+        .then((r) => r.json().catch(() => null))
+        .then((gpsData) => {
+          if (gpsData && gpsData.coordinates) {
+            const holeGPS = processGpsCoordinates(gpsData.coordinates);
+            setActiveCfgFn((c) => ({ ...c, gpsCourseId: courseID, gpsCourseLabel: courseLabel, gpsHoleData: holeGPS }));
+          }
+        })
+        .catch(() => {});
+    }
   }
 
   // ---------- Game Wizard ----------
@@ -5866,9 +5825,9 @@ function computeRoundScoring(round) {
               {courseSearchResults.length > 0 && !courseTeeOptions && (
                 <div style={{ marginTop: 10 }}>
                   {courseSearchResults.slice(0, 8).map((c) => (
-                    <div key={c.id} className="gsc-card gsc-game-card" style={{ marginBottom: 8, padding: 10 }} onClick={() => selectCourseResult(c)}>
-                      <div style={{ fontWeight: 700, fontSize: 14 }}>{c.club_name === c.course_name ? c.club_name : `${c.club_name} - ${c.course_name}`}</div>
-                      {c.location && <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 2 }}>{c.location.address}</div>}
+                    <div key={c.courseID} className="gsc-card gsc-game-card" style={{ marginBottom: 8, padding: 10 }} onClick={() => selectCourseResult(c)}>
+                      <div style={{ fontWeight: 700, fontSize: 14 }}>{c.courseName && c.courseName !== c.clubName ? `${c.clubName} - ${c.courseName}` : c.clubName}</div>
+                      {(c.city || c.state) && <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 2 }}>{c.city}{c.city && c.state ? ", " : ""}{c.state}</div>}
                     </div>
                   ))}
                   {courseDetailBusy && <div style={{ fontSize: 12, color: "#6b6b63" }}>Loading course details...</div>}
@@ -5879,9 +5838,9 @@ function computeRoundScoring(round) {
                   <div className="gsc-label">Pick a tee ({courseTeeOptions.courseLabel})</div>
                   {courseTeeOptions.tees.map((tee, i) => (
                     <div key={i} className="gsc-card gsc-game-card" style={{ marginBottom: 8, padding: 10 }} onClick={() => applyCourseTee(tee, isTournament)}>
-                      <div style={{ fontWeight: 700, fontSize: 14 }}>{tee.tee_name}</div>
+                      <div style={{ fontWeight: 700, fontSize: 14 }}>{tee.teeName}</div>
                       <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 2 }}>
-                        Par {tee.par_total} - {tee.number_of_holes} holes{tee.total_yards ? ` - ${tee.total_yards} yds` : ""}
+                        Par {(courseTeeOptions.parsMen || []).slice(0, courseTeeOptions.numHoles || 18).reduce((a, b) => a + (b || 0), 0)} - {courseTeeOptions.numHoles} holes{Array.from({ length: courseTeeOptions.numHoles || 18 }, (_, h) => tee[`length${h + 1}`]).some((v) => v != null) ? ` - ${Array.from({ length: courseTeeOptions.numHoles || 18 }, (_, h) => tee[`length${h + 1}`] || 0).reduce((a, b) => a + b, 0)} yds` : ""}
                       </div>
                     </div>
                   ))}
@@ -5979,41 +5938,19 @@ function computeRoundScoring(round) {
                 </div>
               </div>
               <div className="gsc-field" style={{ marginTop: 10 }}>
-                <div className="gsc-label">Distance to Green GPS (optional)</div>
+                <div className="gsc-label">Distance to Green GPS</div>
                 {!session ? (
                   <div style={{ fontSize: 12, color: "#6b6b63", padding: "8px 10px", background: "#F8F1E4", borderRadius: 8 }}>
                     {"\u26F3"} Log in to unlock live distance-to-green GPS.
                   </div>
                 ) : activeCfg.gpsCourseLabel ? (
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 10px", background: "#EBF0EC", borderRadius: 8 }}>
-                    <div style={{ fontSize: 12, color: "#1B4332", fontWeight: 600 }}>{"\u26F3"} {activeCfg.gpsCourseLabel}</div>
-                    <button className="gsc-link" style={{ fontSize: 11 }} onClick={() => setActiveCfg({ ...activeCfg, gpsCourseId: null, gpsCourseLabel: "", gpsHoleData: null })}>
-                      Remove
-                    </button>
+                  <div style={{ fontSize: 12, color: "#1B4332", fontWeight: 600, padding: "8px 10px", background: "#EBF0EC", borderRadius: 8 }}>
+                    {"\u26F3"} Enabled for {activeCfg.gpsCourseLabel}
                   </div>
                 ) : (
-                  <>
-                    <div className="gsc-row">
-                      <input className="gsc-input" placeholder="Search course name" value={gpsCourseQuery} onChange={(e) => setGpsCourseQuery(e.target.value)} onKeyDown={(e) => e.key === "Enter" && searchGpsCourses()} />
-                      <button className="gsc-btn gsc-btn-outline" style={{ flex: "0 0 auto" }} disabled={gpsCourseSearching} onClick={searchGpsCourses}>
-                        {gpsCourseSearching ? "..." : "Search"}
-                      </button>
-                    </div>
-                    {gpsCourseErr && <div style={{ color: "#C1440E", fontSize: 11, marginTop: 6 }}>{gpsCourseErr}</div>}
-                    {gpsCourseResults.length > 0 && (
-                      <div style={{ marginTop: 8, maxHeight: 180, overflowY: "auto" }}>
-                        {gpsCourseResults.map((c, i) => (
-                          <div key={i} onClick={() => selectGpsCourse(c, isTournament)} style={{ padding: "6px 8px", borderBottom: "1px solid #eee6cf", cursor: "pointer", fontSize: 12 }}>
-                            <div style={{ fontWeight: 600 }}>{c.courseName ? `${c.courseName} - ` : ""}{c.clubName}</div>
-                            <div style={{ color: "#6b6b63" }}>{c.city}{c.city && c.state ? ", " : ""}{c.state}</div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    <div style={{ fontSize: 11, color: "#8a8a80", marginTop: 4 }}>
-                      Find your course to show live distance to the green during play.
-                    </div>
-                  </>
+                  <div style={{ fontSize: 12, color: "#6b6b63" }}>
+                    Automatically enabled when you search and select your course above, if GPS data is available for it.
+                  </div>
                 )}
               </div>
               {g.tracksDrives && (
@@ -6241,13 +6178,13 @@ function computeRoundScoring(round) {
                   <div style={{ marginTop: 10 }}>
                     {courseSearchResults.slice(0, 8).map((c) => (
                       <div
-                        key={c.id}
+                        key={c.courseID}
                         className="gsc-card gsc-game-card"
                         style={{ marginBottom: 8, padding: 10 }}
                         onClick={() => selectCourseResult(c)}
                       >
-                        <div style={{ fontWeight: 700, fontSize: 14 }}>{c.club_name === c.course_name ? c.club_name : `${c.club_name} - ${c.course_name}`}</div>
-                        {c.location && <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 2 }}>{c.location.address}</div>}
+                        <div style={{ fontWeight: 700, fontSize: 14 }}>{c.courseName && c.courseName !== c.clubName ? `${c.clubName} - ${c.courseName}` : c.clubName}</div>
+                        {(c.city || c.state) && <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 2 }}>{c.city}{c.city && c.state ? ", " : ""}{c.state}</div>}
                       </div>
                     ))}
                     {courseDetailBusy && <div style={{ fontSize: 12, color: "#6b6b63" }}>Loading course details...</div>}
@@ -6267,9 +6204,9 @@ function computeRoundScoring(round) {
                         style={{ marginBottom: 8, padding: 10 }}
                         onClick={() => applyCourseTee(tee)}
                       >
-                        <div style={{ fontWeight: 700, fontSize: 14 }}>{tee.tee_name}</div>
+                        <div style={{ fontWeight: 700, fontSize: 14 }}>{tee.teeName}</div>
                         <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 2 }}>
-                          Par {tee.par_total} - {tee.number_of_holes} holes{tee.total_yards ? ` - ${tee.total_yards} yds` : ""}
+                          Par {(courseTeeOptions.parsMen || []).slice(0, courseTeeOptions.numHoles || 18).reduce((a, b) => a + (b || 0), 0)} - {courseTeeOptions.numHoles} holes{Array.from({ length: courseTeeOptions.numHoles || 18 }, (_, h) => tee[`length${h + 1}`]).some((v) => v != null) ? ` - ${Array.from({ length: courseTeeOptions.numHoles || 18 }, (_, h) => tee[`length${h + 1}`] || 0).reduce((a, b) => a + b, 0)} yds` : ""}
                         </div>
                       </div>
                     ))}
@@ -6421,41 +6358,19 @@ function computeRoundScoring(round) {
             )}
             {g.hasScore && (
               <div className="gsc-field" style={{ marginTop: 10 }}>
-                <div className="gsc-label">Distance to Green GPS (optional)</div>
+                <div className="gsc-label">Distance to Green GPS</div>
                 {!session ? (
                   <div style={{ fontSize: 12, color: "#6b6b63", padding: "8px 10px", background: "#F8F1E4", borderRadius: 8 }}>
                     {"\u26F3"} Log in to unlock live distance-to-green GPS.
                   </div>
                 ) : cfg.gpsCourseLabel ? (
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 10px", background: "#EBF0EC", borderRadius: 8 }}>
-                    <div style={{ fontSize: 12, color: "#1B4332", fontWeight: 600 }}>{"\u26F3"} {cfg.gpsCourseLabel}</div>
-                    <button className="gsc-link" style={{ fontSize: 11 }} onClick={() => setCfg({ ...cfg, gpsCourseId: null, gpsCourseLabel: "", gpsHoleData: null })}>
-                      Remove
-                    </button>
+                  <div style={{ fontSize: 12, color: "#1B4332", fontWeight: 600, padding: "8px 10px", background: "#EBF0EC", borderRadius: 8 }}>
+                    {"\u26F3"} Enabled for {cfg.gpsCourseLabel}
                   </div>
                 ) : (
-                  <>
-                    <div className="gsc-row">
-                      <input className="gsc-input" placeholder="Search course name" value={gpsCourseQuery} onChange={(e) => setGpsCourseQuery(e.target.value)} onKeyDown={(e) => e.key === "Enter" && searchGpsCourses()} />
-                      <button className="gsc-btn gsc-btn-outline" style={{ flex: "0 0 auto" }} disabled={gpsCourseSearching} onClick={searchGpsCourses}>
-                        {gpsCourseSearching ? "..." : "Search"}
-                      </button>
-                    </div>
-                    {gpsCourseErr && <div style={{ color: "#C1440E", fontSize: 11, marginTop: 6 }}>{gpsCourseErr}</div>}
-                    {gpsCourseResults.length > 0 && (
-                      <div style={{ marginTop: 8, maxHeight: 180, overflowY: "auto" }}>
-                        {gpsCourseResults.map((c, i) => (
-                          <div key={i} onClick={() => selectGpsCourse(c, false)} style={{ padding: "6px 8px", borderBottom: "1px solid #eee6cf", cursor: "pointer", fontSize: 12 }}>
-                            <div style={{ fontWeight: 600 }}>{c.courseName ? `${c.courseName} - ` : ""}{c.clubName}</div>
-                            <div style={{ color: "#6b6b63" }}>{c.city}{c.city && c.state ? ", " : ""}{c.state}</div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    <div style={{ fontSize: 11, color: "#8a8a80", marginTop: 4 }}>
-                      Find your course to show live distance to the green during play.
-                    </div>
-                  </>
+                  <div style={{ fontSize: 12, color: "#6b6b63" }}>
+                    Automatically enabled when you search and select your course above, if GPS data is available for it.
+                  </div>
                 )}
               </div>
             )}
@@ -6656,13 +6571,13 @@ function computeRoundScoring(round) {
                 <div style={{ marginTop: 10 }}>
                   {courseSearchResults.slice(0, 8).map((c) => (
                     <div
-                      key={c.id}
+                      key={c.courseID}
                       className="gsc-card gsc-game-card"
                       style={{ marginBottom: 8, padding: 10 }}
                       onClick={() => selectCourseResult(c)}
                     >
-                      <div style={{ fontWeight: 700, fontSize: 14 }}>{c.club_name === c.course_name ? c.club_name : `${c.club_name} - ${c.course_name}`}</div>
-                      {c.location && <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 2 }}>{c.location.address}</div>}
+                      <div style={{ fontWeight: 700, fontSize: 14 }}>{c.courseName && c.courseName !== c.clubName ? `${c.clubName} - ${c.courseName}` : c.clubName}</div>
+                      {(c.city || c.state) && <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 2 }}>{c.city}{c.city && c.state ? ", " : ""}{c.state}</div>}
                     </div>
                   ))}
                   {courseDetailBusy && <div style={{ fontSize: 12, color: "#6b6b63" }}>Loading course details...</div>}
@@ -6682,9 +6597,9 @@ function computeRoundScoring(round) {
                       style={{ marginBottom: 8, padding: 10 }}
                       onClick={() => applyCourseTee(tee, true)}
                     >
-                      <div style={{ fontWeight: 700, fontSize: 14 }}>{tee.tee_name}</div>
+                      <div style={{ fontWeight: 700, fontSize: 14 }}>{tee.teeName}</div>
                       <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 2 }}>
-                        Par {tee.par_total} - {tee.number_of_holes} holes{tee.total_yards ? ` - ${tee.total_yards} yds` : ""}
+                        Par {(courseTeeOptions.parsMen || []).slice(0, courseTeeOptions.numHoles || 18).reduce((a, b) => a + (b || 0), 0)} - {courseTeeOptions.numHoles} holes{Array.from({ length: courseTeeOptions.numHoles || 18 }, (_, h) => tee[`length${h + 1}`]).some((v) => v != null) ? ` - ${Array.from({ length: courseTeeOptions.numHoles || 18 }, (_, h) => tee[`length${h + 1}`] || 0).reduce((a, b) => a + b, 0)} yds` : ""}
                       </div>
                     </div>
                   ))}
@@ -6831,41 +6746,19 @@ function computeRoundScoring(round) {
             )}
             {tg.hasScore && (
               <div className="gsc-field" style={{ marginTop: 10 }}>
-                <div className="gsc-label">Distance to Green GPS (optional)</div>
+                <div className="gsc-label">Distance to Green GPS</div>
                 {!session ? (
                   <div style={{ fontSize: 12, color: "#6b6b63", padding: "8px 10px", background: "#F8F1E4", borderRadius: 8 }}>
                     {"\u26F3"} Log in to unlock live distance-to-green GPS.
                   </div>
                 ) : tournamentCfg.gpsCourseLabel ? (
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 10px", background: "#EBF0EC", borderRadius: 8 }}>
-                    <div style={{ fontSize: 12, color: "#1B4332", fontWeight: 600 }}>{"\u26F3"} {tournamentCfg.gpsCourseLabel}</div>
-                    <button className="gsc-link" style={{ fontSize: 11 }} onClick={() => setTournamentCfg({ ...tournamentCfg, gpsCourseId: null, gpsCourseLabel: "", gpsHoleData: null })}>
-                      Remove
-                    </button>
+                  <div style={{ fontSize: 12, color: "#1B4332", fontWeight: 600, padding: "8px 10px", background: "#EBF0EC", borderRadius: 8 }}>
+                    {"\u26F3"} Enabled for {tournamentCfg.gpsCourseLabel} (applies to every foursome)
                   </div>
                 ) : (
-                  <>
-                    <div className="gsc-row">
-                      <input className="gsc-input" placeholder="Search course name" value={gpsCourseQuery} onChange={(e) => setGpsCourseQuery(e.target.value)} onKeyDown={(e) => e.key === "Enter" && searchGpsCourses()} />
-                      <button className="gsc-btn gsc-btn-outline" style={{ flex: "0 0 auto" }} disabled={gpsCourseSearching} onClick={searchGpsCourses}>
-                        {gpsCourseSearching ? "..." : "Search"}
-                      </button>
-                    </div>
-                    {gpsCourseErr && <div style={{ color: "#C1440E", fontSize: 11, marginTop: 6 }}>{gpsCourseErr}</div>}
-                    {gpsCourseResults.length > 0 && (
-                      <div style={{ marginTop: 8, maxHeight: 180, overflowY: "auto" }}>
-                        {gpsCourseResults.map((c, i) => (
-                          <div key={i} onClick={() => selectGpsCourse(c, true)} style={{ padding: "6px 8px", borderBottom: "1px solid #eee6cf", cursor: "pointer", fontSize: 12 }}>
-                            <div style={{ fontWeight: 600 }}>{c.courseName ? `${c.courseName} - ` : ""}{c.clubName}</div>
-                            <div style={{ color: "#6b6b63" }}>{c.city}{c.city && c.state ? ", " : ""}{c.state}</div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    <div style={{ fontSize: 11, color: "#8a8a80", marginTop: 4 }}>
-                      Find your course to show live distance to the green during play, for every foursome in this tournament.
-                    </div>
-                  </>
+                  <div style={{ fontSize: 12, color: "#6b6b63" }}>
+                    Automatically enabled when you search and select your course above, if GPS data is available for it.
+                  </div>
                 )}
               </div>
             )}
