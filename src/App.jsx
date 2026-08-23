@@ -4141,7 +4141,7 @@ function computeRoundScoring(round) {
             <br />
             2) Set up your round detail
             <br />
-            3) Enter your strokes for each hole as you play
+            3) Enter the strokes for your group as you play
             <br />
             <br />
             You're all set, next hole... the 19th!
