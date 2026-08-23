@@ -7977,7 +7977,7 @@ function computeRoundScoring(round) {
             </div>
           ) : (
           <div className="gsc-card">
-            <div className="gsc-label" style={{ marginBottom: 8 }}>Standings</div>
+            <div className="gsc-label" style={{ marginBottom: 8, fontSize: 15, color: "#1B4332", fontWeight: 800 }}>Standings</div>
             {ranks.map((p, idx) => (
               <div key={p.idx} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", borderBottom: "1px solid #eee6cf", fontSize: 13 }}>
                 <div style={{ fontWeight: 700 }}>
