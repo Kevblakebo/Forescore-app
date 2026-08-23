@@ -4,11 +4,10 @@
 // ever sees the real key, read from an environment variable that Vite
 // never exposes to client code (no VITE_ prefix).
 //
-// NOTE: the exact base URL and response field names below are our best
-// reading of golfapi.io's documentation, which is a JavaScript-rendered
-// page we can't fully inspect - this needs to be tested against the real
-// API once deployed, and the URL/field names adjusted if needed based on
-// what actually comes back.
+// Base URL and /v2.3 version confirmed working via a real test URL from
+// golfapi.io. The "search" query parameter name below is still our best
+// guess for the /courses search endpoint specifically - not yet confirmed
+// against their real docs.
 export default async function handler(req, res) {
   const q = (req.query.q || "").toString().trim();
   if (q.length < 2) {
@@ -22,7 +21,7 @@ export default async function handler(req, res) {
 
   try {
     const upstream = await fetch(
-      `https://golfapi.io/api/courses?search=${encodeURIComponent(q)}`,
+      `https://golfapi.io/api/v2.3/courses?search=${encodeURIComponent(q)}`,
       { headers: { Authorization: `Bearer ${apiKey}` } }
     );
     if (!upstream.ok) {

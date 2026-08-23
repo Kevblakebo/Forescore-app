@@ -2,10 +2,9 @@
 // key out of the browser bundle - see course-gps-search.js for the full
 // explanation of why this pattern exists.
 //
-// NOTE: same caveat as course-gps-search.js - the base URL and response
-// shape here are our best reading of golfapi.io's docs, not something
-// we've been able to test directly yet. Expect to adjust this once we see
-// a real response.
+// Base URL, /v2.3 version, and this exact endpoint path confirmed working
+// via a real test URL from golfapi.io (they tested /clubs/{id}, same
+// pattern applies to /coordinates/{id}).
 export default async function handler(req, res) {
   const id = (req.query.id || "").toString().trim();
   if (!id) {
@@ -19,7 +18,7 @@ export default async function handler(req, res) {
 
   try {
     const upstream = await fetch(
-      `https://golfapi.io/api/coordinates/${encodeURIComponent(id)}`,
+      `https://golfapi.io/api/v2.3/coordinates/${encodeURIComponent(id)}`,
       { headers: { Authorization: `Bearer ${apiKey}` } }
     );
     if (!upstream.ok) {
