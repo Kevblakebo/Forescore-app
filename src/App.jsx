@@ -4126,11 +4126,11 @@ function computeRoundScoring(round) {
           )}
           <div style={{ fontSize: 13, color: "#4b4b45", lineHeight: 1.55, margin: "0 0 16px" }}>
             <button
-              className="gsc-btn gsc-btn-outline"
+              className={session ? "gsc-btn gsc-btn-outline" : "gsc-btn gsc-btn-primary"}
               style={{ padding: "5px 8px", fontSize: 11, textAlign: "right", maxWidth: "45vw", float: "right", marginLeft: 10, marginBottom: 6 }}
               onClick={() => goToScreen(session ? "profileTab" : "login")}
             >
-              {session ? (profile && profile.name ? `Welcome ${profile.name.split(" ")[0]}` : "Welcome") : "Log In or Create Account"}
+              {session ? (profile && profile.name ? `Welcome ${profile.name.split(" ")[0]}` : "Welcome") : "Log In or Create Account Now"}
             </button>
             We all love playing games on the course, but who wants to keep track of the scores and rules? RipScore does it for you. No paper scorecards, no redoing the math, no arguing about rules, just easy golf games, live shared scores, and a clear answer to who owes who at the 19th hole.
             <br />
@@ -5341,11 +5341,8 @@ function computeRoundScoring(round) {
             <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 14 }} disabled={authBusy} onClick={signIn}>
               {authBusy ? "Logging in..." : "Log In"}
             </button>
-          </div>
-          <div style={{ textAlign: "center", fontSize: 13, color: "#6b6b63" }}>
-            Don't have an account?{" "}
-            <button className="gsc-link" style={{ fontSize: 13 }} onClick={() => { setAuthErr(""); goToScreen("register"); }}>
-              Create one
+            <button className="gsc-btn gsc-btn-outline" style={{ width: "100%", marginTop: 10 }} onClick={() => { setAuthErr(""); goToScreen("register"); }}>
+              Create Account
             </button>
           </div>
         </div>
