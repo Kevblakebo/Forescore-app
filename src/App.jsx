@@ -4132,7 +4132,7 @@ function computeRoundScoring(round) {
             >
               {session ? (profile && profile.name ? `Welcome ${profile.name.split(" ")[0]}` : "Welcome") : "Log In or Create Account"}
             </button>
-            We all love playing games on the course, but who wants to keep track of the scores and rules? RipScore does it for you. No paper scorecards, no redoing the math, no arguing about rules, just easy golf games, live shared scores, and a clear answer to who owes who at the 19th hole.
+            We all love playing games on the course, but who wants to keep track of the scores and rules? RipScore does it for you. No paper scorecards, no redoing the math, no arguing about rules, just easy golf games, live shared scores, and a clear answer to who owes who.
             <br />
             <br />
             To start a new round or tournament:
@@ -4141,7 +4141,9 @@ function computeRoundScoring(round) {
             <br />
             2) Set up your round detail
             <br />
-            3) Enter the strokes for your group as you play
+            3) Share your round code with your group
+            <br />
+            4) Enter the strokes for your group as you play
             <br />
             <br />
             You're all set, next hole... the 19th!
