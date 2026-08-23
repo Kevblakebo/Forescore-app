@@ -4132,7 +4132,7 @@ function computeRoundScoring(round) {
             >
               {session ? (profile && profile.name ? `Welcome ${profile.name.split(" ")[0]}` : "Welcome") : "Log In or Create Account"}
             </button>
-            We all love playing games on the course, but who wants to keep track of the scores and rules? RipScore does it for you. No paper scorecards, no redoing the math, no arguing about rules, just easy golf games, live shared scores, live GPS, and a clear answer to who owes who at the 19th hole.
+            We all love playing games on the course, but who wants to keep track of the scores and rules? RipScore does it for you. No paper scorecards, no redoing the math, no arguing about rules, just easy golf games, live shared scores, live GPS, course info, and a clear answer to who owes who at the 19th hole.
             <br />
             <br />
             To start a new round or tournament:
@@ -4588,7 +4588,7 @@ function computeRoundScoring(round) {
               <UserIcon size={28} color="#8FA998" style={{ marginBottom: 10 }} />
               <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 6 }}>You're not logged in</div>
               <div style={{ fontSize: 13, color: "#6b6b63", lineHeight: 1.5, marginBottom: 16 }}>
-                Log in to save your defaults (avatar, name, handicap, Venmo, home course) and unlock GPS, stats, groups, leaderboards, and prior saved rounds. Logging in is always optional - you can keep playing instantly with just a round or tournament code. Your round will only be added to your personal history if you're logged in when you play it.
+                Log in to save your defaults (avatar, name, handicap, Venmo, home course) and unlock GPS, course info, stats, groups, leaderboards, and prior saved rounds. Logging in is always optional - you can keep playing instantly with just a round or tournament code. Your round will only be added to your personal history if you're logged in when you play it.
               </div>
               <button className="gsc-btn gsc-btn-primary" style={{ width: "100%" }} onClick={() => { setAuthErr(""); goToScreen("login"); }}>
                 Log In
