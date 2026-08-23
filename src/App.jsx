@@ -1061,6 +1061,7 @@ export default function GolfScorecard() {
   const [showManualCourse, setShowManualCourse] = useState(false);
   const [courseSelectedViaSearch, setCourseSelectedViaSearch] = useState(false);
   const [avatarPickerFor, setAvatarPickerFor] = useState(null); // player index currently showing its avatar picker, or null
+  const [profileAvatarPickerOpen, setProfileAvatarPickerOpen] = useState(false);
   const [scoringAvatarPickerFor, setScoringAvatarPickerFor] = useState(null); // same idea, but for the scoring screen, kept separate since it edits an already-saved round rather than in-progress setup
 
   // ---- Account (Supabase Auth) state ----
@@ -1080,7 +1081,7 @@ export default function GolfScorecard() {
   const [newPasswordConfirm, setNewPasswordConfirm] = useState("");
 
   const [profile, setProfile] = useState(null); // { name, handicap, venmo, home_course } once loaded
-  const [profileForm, setProfileForm] = useState({ name: "", handicap: "", venmo: "", home_course: "", leaderboard_opt_in: false });
+  const [profileForm, setProfileForm] = useState({ name: "", handicap: "", venmo: "", home_course: "", leaderboard_opt_in: false, avatar: "" });
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileErr, setProfileErr] = useState("");
@@ -1204,7 +1205,7 @@ export default function GolfScorecard() {
       loadProfile(session.user.id);
     } else {
       setProfile(null);
-      setProfileForm({ name: "", handicap: "", venmo: "", home_course: "", leaderboard_opt_in: false });
+      setProfileForm({ name: "", handicap: "", venmo: "", home_course: "", leaderboard_opt_in: false, avatar: "" });
     }
   }, [session && session.user && session.user.id]);
 
@@ -1248,6 +1249,7 @@ export default function GolfScorecard() {
   // active round
   const [round, setRound] = useState(null); // full round object once loaded/created
   const [holeIdx, setHoleIdx] = useState(0);
+  const [holeNoteDraft, setHoleNoteDraft] = useState("");
   const [showGrid, setShowGrid] = useState(false);
   const [confirmLeaveOpen, setConfirmLeaveOpen] = useState(false);
   const [confirmFinishOpen, setConfirmFinishOpen] = useState(false);
@@ -1462,7 +1464,7 @@ export default function GolfScorecard() {
   async function signOutUser() {
     if (supabase) await supabase.auth.signOut();
     setProfile(null);
-    setProfileForm({ name: "", handicap: "", venmo: "", home_course: "", leaderboard_opt_in: false });
+    setProfileForm({ name: "", handicap: "", venmo: "", home_course: "", leaderboard_opt_in: false, avatar: "" });
   }
 
   async function loadProfile(userId) {
@@ -1477,11 +1479,11 @@ export default function GolfScorecard() {
     }
     if (data) {
       setProfile(data);
-      setProfileForm({ name: data.name || "", handicap: data.handicap || "", venmo: data.venmo || "", home_course: data.home_course || "", leaderboard_opt_in: !!data.leaderboard_opt_in });
+      setProfileForm({ name: data.name || "", handicap: data.handicap || "", venmo: data.venmo || "", home_course: data.home_course || "", leaderboard_opt_in: !!data.leaderboard_opt_in, avatar: data.avatar || "" });
     } else {
       // First time - no profile row yet, that's expected, just start with a blank form.
       setProfile(null);
-      setProfileForm({ name: "", handicap: "", venmo: "", home_course: "", leaderboard_opt_in: false });
+      setProfileForm({ name: "", handicap: "", venmo: "", home_course: "", leaderboard_opt_in: false, avatar: "" });
     }
   }
 
@@ -1828,8 +1830,8 @@ export default function GolfScorecard() {
       { name: "", hcp: "", avatar: "" },
       { name: "", hcp: "", avatar: "" },
     ];
-    if (session && profile && (profile.name || profile.handicap)) {
-      slots[0] = { name: profile.name || "", hcp: profile.handicap || "", avatar: "" };
+    if (session && profile && (profile.name || profile.handicap || profile.avatar)) {
+      slots[0] = { name: profile.name || "", hcp: profile.handicap || "", avatar: profile.avatar || "" };
     }
     return slots;
   }
@@ -1959,6 +1961,10 @@ export default function GolfScorecard() {
     setClaimSlotDismissed(false);
     setClaimSlotErr("");
   }, [round && round.id]);
+
+  useEffect(() => {
+    setHoleNoteDraft((round && round.holeNotes && round.holeNotes[holeIdx]) || "");
+  }, [holeIdx, round && round.id]);
 
   useEffect(() => {
     (async () => {
@@ -3621,7 +3627,20 @@ export default function GolfScorecard() {
     });
   }
 
-  // Lets a player change their own avatar mid-round from the scoring
+  // Saves the free-form note for the current hole - called on blur, not on
+  // every keystroke, since firing a real network save per character typed
+  // would be wasteful and could feel laggy for a longer note.
+  function updateHoleNote(text) {
+    lastLocalEditRef.current = Date.now();
+    setRound((r) => {
+      const notes = { ...(r.holeNotes || {}) };
+      notes[holeIdx] = text;
+      const next = { ...r, holeNotes: notes };
+      saveRound(next);
+      return next;
+    });
+  }
+
   // screen, not just during initial setup. Saves immediately so it syncs
   // to everyone else viewing the same round.
   function updateRoundPlayerAvatar(playerIdx, avatar) {
@@ -4606,6 +4625,40 @@ function computeRoundScoring(round) {
               ) : (
                 <>
                   <div className="gsc-field">
+                    <div className="gsc-label">Avatar</div>
+                    <button
+                      onClick={() => setProfileAvatarPickerOpen((v) => !v)}
+                      style={{ width: 44, height: 44, borderRadius: "50%", border: "1.5px solid #d8d2bd", background: "#fff", fontSize: 20, cursor: "pointer", position: "relative" }}
+                    >
+                      {profileForm.avatar || "\u{1F464}"}
+                      {!profileForm.avatar && (
+                        <span style={{ position: "absolute", bottom: -2, right: -2, width: 16, height: 16, borderRadius: "50%", background: "#C1440E", color: "#fff", fontSize: 11, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", border: "1.5px solid #F3EFE0" }}>
+                          +
+                        </span>
+                      )}
+                    </button>
+                    {profileAvatarPickerOpen && (
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, padding: "10px 0 0" }}>
+                        {AVATAR_OPTIONS.map((emoji) => (
+                          <button
+                            key={emoji}
+                            onClick={() => {
+                              setProfileSaved(false);
+                              setProfileForm({ ...profileForm, avatar: profileForm.avatar === emoji ? "" : emoji });
+                              setProfileAvatarPickerOpen(false);
+                            }}
+                            style={{ width: 36, height: 36, borderRadius: "50%", border: profileForm.avatar === emoji ? "2px solid #C1440E" : "1.5px solid #d8d2bd", background: "#fff", fontSize: 18, cursor: "pointer" }}
+                          >
+                            {emoji}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    <div style={{ fontSize: 11, color: "#8a8a80", marginTop: 6 }}>
+                      Saved here, it fills in automatically as your avatar whenever you start a new round or tournament.
+                    </div>
+                  </div>
+                  <div className="gsc-field" style={{ marginTop: 10 }}>
                     <div className="gsc-label">User Name (Handle)</div>
                     <input className="gsc-input" value={profileForm.name} onChange={(e) => { setProfileSaved(false); setProfileForm({ ...profileForm, name: e.target.value }); }} />
                   </div>
@@ -7920,6 +7973,22 @@ function computeRoundScoring(round) {
               })()}
             </div>
           )}
+
+          <div className="gsc-card">
+            <div className="gsc-label" style={{ marginBottom: 8 }}>Notes (ex: What clubs did you use on this hole)</div>
+            <textarea
+              className="gsc-input"
+              style={{ width: "100%", minHeight: 60, resize: "vertical", fontFamily: "inherit" }}
+              placeholder="Optional - add any notes for this hole"
+              value={holeNoteDraft}
+              onChange={(e) => setHoleNoteDraft(e.target.value)}
+              onBlur={() => {
+                if (holeNoteDraft !== ((round.holeNotes && round.holeNotes[holeIdx]) || "")) {
+                  updateHoleNote(holeNoteDraft);
+                }
+              }}
+            />
+          </div>
 
           {g.oneTeamScore && round.tournamentId ? (
             <div className="gsc-card">
