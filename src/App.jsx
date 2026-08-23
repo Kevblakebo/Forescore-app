@@ -4118,6 +4118,11 @@ function computeRoundScoring(round) {
           sub=""
         />
         <div className="gsc-body gsc-body-tabbed">
+          {!session && (
+            <div style={{ fontSize: 13, fontWeight: 700, color: "#1B4332", lineHeight: 1.5, margin: "0 0 16px" }}>
+              Create or Log In to your Account now to access premium features including GPS, stats, groups, and leaderboards!
+            </div>
+          )}
           <div style={{ fontSize: 13, color: "#4b4b45", lineHeight: 1.55, margin: "0 0 16px" }}>
             <button
               className="gsc-btn gsc-btn-outline"
@@ -4140,11 +4145,6 @@ function computeRoundScoring(round) {
             <br />
             You're all set, next hole... the 19th!
           </div>
-          {!session && (
-            <div style={{ fontSize: 13, fontWeight: 700, color: "#1B4332", lineHeight: 1.5, margin: "0 0 16px" }}>
-              Create or Log In to your Account now to access premium features including GPS, stats, groups, and leaderboards!
-            </div>
-          )}
           {activeRound && !activeRound.tournamentId && !isRoundDone(activeRound) && (
             <div className="gsc-card" style={{ border: "2px solid #B08D57" }}>
               <div className="gsc-label">Round in progress</div>
@@ -5924,6 +5924,44 @@ function computeRoundScoring(round) {
                 <div style={{ fontSize: 11, color: "#8a8a80", marginTop: 4 }}>
                   If set, anyone can award a player an extra mulligan on the scoring screen once they've done this.
                 </div>
+              </div>
+              <div className="gsc-field" style={{ marginTop: 10 }}>
+                <div className="gsc-label">Distance to Green GPS (optional)</div>
+                {!session ? (
+                  <div style={{ fontSize: 12, color: "#6b6b63", padding: "8px 10px", background: "#F8F1E4", borderRadius: 8 }}>
+                    {"\u26F3"} Log in to unlock live distance-to-green GPS.
+                  </div>
+                ) : activeCfg.gpsCourseLabel ? (
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 10px", background: "#EBF0EC", borderRadius: 8 }}>
+                    <div style={{ fontSize: 12, color: "#1B4332", fontWeight: 600 }}>{"\u26F3"} {activeCfg.gpsCourseLabel}</div>
+                    <button className="gsc-link" style={{ fontSize: 11 }} onClick={() => setActiveCfg({ ...activeCfg, gpsCourseId: null, gpsCourseLabel: "", gpsHoleData: null })}>
+                      Remove
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <div className="gsc-row">
+                      <input className="gsc-input" placeholder="Search course name" value={gpsCourseQuery} onChange={(e) => setGpsCourseQuery(e.target.value)} onKeyDown={(e) => e.key === "Enter" && searchGpsCourses()} />
+                      <button className="gsc-btn gsc-btn-outline" style={{ flex: "0 0 auto" }} disabled={gpsCourseSearching} onClick={searchGpsCourses}>
+                        {gpsCourseSearching ? "..." : "Search"}
+                      </button>
+                    </div>
+                    {gpsCourseErr && <div style={{ color: "#C1440E", fontSize: 11, marginTop: 6 }}>{gpsCourseErr}</div>}
+                    {gpsCourseResults.length > 0 && (
+                      <div style={{ marginTop: 8, maxHeight: 180, overflowY: "auto" }}>
+                        {gpsCourseResults.map((c, i) => (
+                          <div key={i} onClick={() => selectGpsCourse(c, isTournament)} style={{ padding: "6px 8px", borderBottom: "1px solid #eee6cf", cursor: "pointer", fontSize: 12 }}>
+                            <div style={{ fontWeight: 600 }}>{c.courseName ? `${c.courseName} - ` : ""}{c.clubName}</div>
+                            <div style={{ color: "#6b6b63" }}>{c.city}{c.city && c.state ? ", " : ""}{c.state}</div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <div style={{ fontSize: 11, color: "#8a8a80", marginTop: 4 }}>
+                      Find your course to show live distance to the green during play.
+                    </div>
+                  </>
+                )}
               </div>
               {g.tracksDrives && (
                 <div className="gsc-field" style={{ marginTop: 10 }}>
