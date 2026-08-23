@@ -1849,6 +1849,10 @@ export default function GolfScorecard() {
   const [editFoursomeName, setEditFoursomeName] = useState("");
   const [editFoursomeIsTournament, setEditFoursomeIsTournament] = useState(false);
   const [claimSlotDismissed, setClaimSlotDismissed] = useState(false);
+  const [gpsCourseQuery, setGpsCourseQuery] = useState("");
+  const [gpsCourseResults, setGpsCourseResults] = useState([]);
+  const [gpsCourseSearching, setGpsCourseSearching] = useState(false);
+  const [gpsCourseErr, setGpsCourseErr] = useState("");
   const [claimSlotBusy, setClaimSlotBusy] = useState(false);
   const [claimSlotErr, setClaimSlotErr] = useState("");
   const [editFoursomePlayers, setEditFoursomePlayers] = useState([]);
@@ -2455,6 +2459,79 @@ export default function GolfScorecard() {
     setCourseSearchBusy(false);
   }
 
+  async function searchGpsCourses() {
+    const q = gpsCourseQuery.trim();
+    if (q.length < 2) {
+      setGpsCourseErr("Type at least 2 characters to search.");
+      return;
+    }
+    setGpsCourseSearching(true);
+    setGpsCourseErr("");
+    setGpsCourseResults([]);
+    try {
+      const res = await fetch(`/api/course-gps-search?q=${encodeURIComponent(q)}`);
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data) {
+        setGpsCourseErr((data && data.error) || "Course GPS search isn't available right now.");
+        setGpsCourseSearching(false);
+        return;
+      }
+      setGpsCourseResults(data.courses || []);
+      if (!data.courses || data.courses.length === 0) {
+        setGpsCourseErr("No matches. Try a shorter or differently spelled name.");
+      }
+    } catch (e) {
+      setGpsCourseErr("Course GPS search isn't available right now.");
+    }
+    setGpsCourseSearching(false);
+  }
+
+  // Filters the raw coordinate dump down to just the green points (poi 1 -
+  // golfapi.io also returns tee markers and hazards we don't need for
+  // this), and converts from their 1-indexed holes to this app's existing
+  // 0-indexed convention (matching round.scores/round.par).
+  function processGpsCoordinates(rawCoords) {
+    const holeGPS = {};
+    for (const pt of rawCoords || []) {
+      if (pt.poi !== 1) continue;
+      const idx = pt.hole - 1;
+      if (!holeGPS[idx]) holeGPS[idx] = [];
+      holeGPS[idx].push({ lat: pt.latitude, lng: pt.longitude });
+    }
+    return holeGPS;
+  }
+
+  // Fetches and processes coordinates immediately on selection (not
+  // deferred to round creation) so the person gets instant confirmation
+  // GPS data actually exists for this course, rather than only finding
+  // out after finishing the rest of setup.
+  async function selectGpsCourse(course, isTournament) {
+    const setActiveCfg = isTournament ? setTournamentCfg : setCfg;
+    setGpsCourseSearching(true);
+    setGpsCourseErr("");
+    try {
+      const res = await fetch(`/api/course-gps-coordinates?id=${encodeURIComponent(course.courseID)}`);
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data || !data.coordinates) {
+        setGpsCourseErr((data && data.error) || "Couldn't fetch GPS data for that course.");
+        setGpsCourseSearching(false);
+        return;
+      }
+      const holeGPS = processGpsCoordinates(data.coordinates);
+      setActiveCfg((c) => ({
+        ...c,
+        gpsCourseId: course.courseID,
+        gpsCourseLabel: `${course.courseName ? course.courseName + " - " : ""}${course.clubName}`.trim(),
+        gpsHoleData: holeGPS,
+      }));
+      setGpsCourseResults([]);
+      setGpsCourseQuery("");
+    } catch (e) {
+      setGpsCourseErr("Couldn't fetch GPS data for that course.");
+    }
+    setGpsCourseSearching(false);
+  }
+
   // Fetches full detail (every tee, every hole's par) for a chosen course,
   // then shows a tee picker rather than guessing which tee to use.
   async function selectCourseResult(course) {
@@ -2848,6 +2925,7 @@ export default function GolfScorecard() {
       strokeIndex: finalStrokeIndex,
       scores: emptyScores(),
       bonusMulligans: [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]],
+      holeGPS: finalCfg.gpsHoleData || null,
       createdAt: Date.now(),
       tournamentId: isTournament ? activeTournament.id : null,
       foursomeName: isTournament ? foursomeName : null,
@@ -3010,6 +3088,7 @@ export default function GolfScorecard() {
         strokeIndex: cleanStrokeIndex,
         scores: emptyScores(),
         bonusMulligans: [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]],
+        holeGPS: cleanCfg.gpsHoleData || null,
         createdAt: Date.now(),
         tournamentId: code,
         foursomeName,
@@ -4061,6 +4140,11 @@ function computeRoundScoring(round) {
             <br />
             You're all set, next hole... the 19th!
           </div>
+          {!session && (
+            <div style={{ fontSize: 13, fontWeight: 700, color: "#1B4332", lineHeight: 1.5, margin: "0 0 16px" }}>
+              Create or Log In to your Account now to access premium features including GPS, stats, groups, and leaderboards!
+            </div>
+          )}
           {activeRound && !activeRound.tournamentId && !isRoundDone(activeRound) && (
             <div className="gsc-card" style={{ border: "2px solid #B08D57" }}>
               <div className="gsc-label">Round in progress</div>
@@ -6244,6 +6328,46 @@ function computeRoundScoring(round) {
                 </div>
               </div>
             )}
+            {g.hasScore && (
+              <div className="gsc-field" style={{ marginTop: 10 }}>
+                <div className="gsc-label">Distance to Green GPS (optional)</div>
+                {!session ? (
+                  <div style={{ fontSize: 12, color: "#6b6b63", padding: "8px 10px", background: "#F8F1E4", borderRadius: 8 }}>
+                    {"\u26F3"} Log in to unlock live distance-to-green GPS.
+                  </div>
+                ) : cfg.gpsCourseLabel ? (
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 10px", background: "#EBF0EC", borderRadius: 8 }}>
+                    <div style={{ fontSize: 12, color: "#1B4332", fontWeight: 600 }}>{"\u26F3"} {cfg.gpsCourseLabel}</div>
+                    <button className="gsc-link" style={{ fontSize: 11 }} onClick={() => setCfg({ ...cfg, gpsCourseId: null, gpsCourseLabel: "", gpsHoleData: null })}>
+                      Remove
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <div className="gsc-row">
+                      <input className="gsc-input" placeholder="Search course name" value={gpsCourseQuery} onChange={(e) => setGpsCourseQuery(e.target.value)} onKeyDown={(e) => e.key === "Enter" && searchGpsCourses()} />
+                      <button className="gsc-btn gsc-btn-outline" style={{ flex: "0 0 auto" }} disabled={gpsCourseSearching} onClick={searchGpsCourses}>
+                        {gpsCourseSearching ? "..." : "Search"}
+                      </button>
+                    </div>
+                    {gpsCourseErr && <div style={{ color: "#C1440E", fontSize: 11, marginTop: 6 }}>{gpsCourseErr}</div>}
+                    {gpsCourseResults.length > 0 && (
+                      <div style={{ marginTop: 8, maxHeight: 180, overflowY: "auto" }}>
+                        {gpsCourseResults.map((c, i) => (
+                          <div key={i} onClick={() => selectGpsCourse(c, false)} style={{ padding: "6px 8px", borderBottom: "1px solid #eee6cf", cursor: "pointer", fontSize: 12 }}>
+                            <div style={{ fontWeight: 600 }}>{c.courseName ? `${c.courseName} - ` : ""}{c.clubName}</div>
+                            <div style={{ color: "#6b6b63" }}>{c.city}{c.city && c.state ? ", " : ""}{c.state}</div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <div style={{ fontSize: 11, color: "#8a8a80", marginTop: 4 }}>
+                      Find your course to show live distance to the green during play.
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
             <div className="gsc-field">
               <div className="gsc-label">Prize / stakes</div>
               <input className="gsc-input" value={cfg.prize} onChange={(e) => setCfg({ ...cfg, prize: e.target.value })} />
@@ -6612,6 +6736,46 @@ function computeRoundScoring(round) {
                 <div style={{ fontSize: 11, color: "#8a8a80", marginTop: 4 }}>
                   If set, anyone can award a player an extra mulligan on the scoring screen once they've done this.
                 </div>
+              </div>
+            )}
+            {tg.hasScore && (
+              <div className="gsc-field" style={{ marginTop: 10 }}>
+                <div className="gsc-label">Distance to Green GPS (optional)</div>
+                {!session ? (
+                  <div style={{ fontSize: 12, color: "#6b6b63", padding: "8px 10px", background: "#F8F1E4", borderRadius: 8 }}>
+                    {"\u26F3"} Log in to unlock live distance-to-green GPS.
+                  </div>
+                ) : tournamentCfg.gpsCourseLabel ? (
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 10px", background: "#EBF0EC", borderRadius: 8 }}>
+                    <div style={{ fontSize: 12, color: "#1B4332", fontWeight: 600 }}>{"\u26F3"} {tournamentCfg.gpsCourseLabel}</div>
+                    <button className="gsc-link" style={{ fontSize: 11 }} onClick={() => setTournamentCfg({ ...tournamentCfg, gpsCourseId: null, gpsCourseLabel: "", gpsHoleData: null })}>
+                      Remove
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <div className="gsc-row">
+                      <input className="gsc-input" placeholder="Search course name" value={gpsCourseQuery} onChange={(e) => setGpsCourseQuery(e.target.value)} onKeyDown={(e) => e.key === "Enter" && searchGpsCourses()} />
+                      <button className="gsc-btn gsc-btn-outline" style={{ flex: "0 0 auto" }} disabled={gpsCourseSearching} onClick={searchGpsCourses}>
+                        {gpsCourseSearching ? "..." : "Search"}
+                      </button>
+                    </div>
+                    {gpsCourseErr && <div style={{ color: "#C1440E", fontSize: 11, marginTop: 6 }}>{gpsCourseErr}</div>}
+                    {gpsCourseResults.length > 0 && (
+                      <div style={{ marginTop: 8, maxHeight: 180, overflowY: "auto" }}>
+                        {gpsCourseResults.map((c, i) => (
+                          <div key={i} onClick={() => selectGpsCourse(c, true)} style={{ padding: "6px 8px", borderBottom: "1px solid #eee6cf", cursor: "pointer", fontSize: 12 }}>
+                            <div style={{ fontWeight: 600 }}>{c.courseName ? `${c.courseName} - ` : ""}{c.clubName}</div>
+                            <div style={{ color: "#6b6b63" }}>{c.city}{c.city && c.state ? ", " : ""}{c.state}</div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <div style={{ fontSize: 11, color: "#8a8a80", marginTop: 4 }}>
+                      Find your course to show live distance to the green during play, for every foursome in this tournament.
+                    </div>
+                  </>
+                )}
               </div>
             )}
             {tg.tracksDrives && (
@@ -7318,24 +7482,37 @@ function computeRoundScoring(round) {
                     </div>
                   );
                 })()}
-                {round.holeGPS && round.holeGPS[holeIdx] && (() => {
-                  const green = round.holeGPS[holeIdx];
-                  let distanceLabel = null;
+                {session && round.holeGPS && round.holeGPS[holeIdx] && round.holeGPS[holeIdx].length > 0 && (() => {
+                  const greenPoints = round.holeGPS[holeIdx];
+                  let content = null;
                   if (gpsStatus === "active" && playerGPS) {
-                    const yds = Math.round(haversineYards(playerGPS.lat, playerGPS.lng, green.lat, green.lng));
-                    distanceLabel = `${yds} yds to green`;
+                    // Distance to each of the green's 3 points (front/center/back
+                    // as surveyed), sorted by actual distance from wherever the
+                    // golfer is standing right now - the closest point is "front"
+                    // and the farthest is "back" from their own approach, rather
+                    // than assuming which raw point golfapi.io calls which.
+                    const dists = greenPoints
+                      .map((g) => Math.round(haversineYards(playerGPS.lat, playerGPS.lng, g.lat, g.lng)))
+                      .sort((a, b) => a - b);
+                    if (dists.length >= 3) {
+                      content = `F ${dists[0]} \u00B7 C ${dists[1]} \u00B7 B ${dists[2]} yds`;
+                    } else if (dists.length === 2) {
+                      content = `${dists[0]}-${dists[1]} yds to green`;
+                    } else {
+                      content = `${dists[0]} yds to green`;
+                    }
                   } else if (gpsStatus === "locating") {
-                    distanceLabel = "Finding your location...";
+                    content = "Finding your location...";
                   } else if (gpsStatus === "denied") {
-                    distanceLabel = "Location access denied - enable it to see distance";
+                    content = "Location access denied - enable it to see distance";
                   } else if (gpsStatus === "unsupported") {
-                    distanceLabel = "Distance to green isn't supported on this device";
+                    content = "Distance to green isn't supported on this device";
                   } else if (gpsStatus === "error") {
-                    distanceLabel = "Couldn't get your location";
+                    content = "Couldn't get your location";
                   }
                   return (
                     <div style={{ display: "inline-flex", alignItems: "center", gap: 5, marginTop: 6, background: "#EBF0EC", color: "#1B4332", fontWeight: 700, fontSize: 13, padding: "5px 12px", borderRadius: 20 }}>
-                      {"\u26F3"} {distanceLabel}
+                      {"\u26F3"} {content}
                     </div>
                   );
                 })()}
