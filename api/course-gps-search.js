@@ -5,9 +5,11 @@
 // never exposes to client code (no VITE_ prefix).
 //
 // Base URL and /v2.3 version confirmed working via a real test URL from
-// golfapi.io. The "search" query parameter name below is still our best
-// guess for the /courses search endpoint specifically - not yet confirmed
-// against their real docs.
+// golfapi.io. The query parameter name for filtering /courses by name is
+// still unconfirmed - the response for search=q came back unfiltered
+// (alphabetically first courses, ignoring the search term entirely),
+// so this sends several likely candidate names at once and we'll see
+// from the actual filtered results which one golfapi.io recognizes.
 export default async function handler(req, res) {
   const q = (req.query.q || "").toString().trim();
   if (q.length < 2) {
@@ -20,8 +22,15 @@ export default async function handler(req, res) {
   }
 
   try {
+    const params = new URLSearchParams({
+      search: q,
+      clubName: q,
+      courseName: q,
+      name: q,
+      q,
+    });
     const upstream = await fetch(
-      `https://golfapi.io/api/v2.3/courses?search=${encodeURIComponent(q)}`,
+      `https://golfapi.io/api/v2.3/courses?${params.toString()}`,
       { headers: { Authorization: `Bearer ${apiKey}` } }
     );
     if (!upstream.ok) {
