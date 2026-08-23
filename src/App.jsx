@@ -4098,7 +4098,7 @@ function computeRoundScoring(round) {
         <div className="gsc-body gsc-body-tabbed">
           {!session && (
             <div style={{ fontSize: 13, fontWeight: 700, color: "#1B4332", lineHeight: 1.5, margin: "0 0 16px" }}>
-              Create or Log In to your Account now to access premium features including GPS, stats, groups, and leaderboards!
+              Create or Log In to your Account now to access premium features including GPS, stats, groups, leaderboards, and prior saved rounds!
             </div>
           )}
           <div style={{ fontSize: 13, color: "#4b4b45", lineHeight: 1.55, margin: "0 0 16px" }}>
@@ -4565,7 +4565,7 @@ function computeRoundScoring(round) {
               <UserIcon size={28} color="#8FA998" style={{ marginBottom: 10 }} />
               <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 6 }}>You're not logged in</div>
               <div style={{ fontSize: 13, color: "#6b6b63", lineHeight: 1.5, marginBottom: 16 }}>
-                Log in to save your defaults (name, handicap, Venmo, home course) and unlock stats, leaderboards, and prior saved rounds. Logging in is always optional - you can keep playing instantly with just a round or tournament code, exactly like today. Your round will only be added to your personal history if you're logged in when you play it.
+                Log in to save your defaults (avatar, name, handicap, Venmo, home course) and unlock GPS, stats, groups, leaderboards, and prior saved rounds. Logging in is always optional - you can keep playing instantly with just a round or tournament code, exactly like today. Your round will only be added to your personal history if you're logged in when you play it.
               </div>
               <button className="gsc-btn gsc-btn-primary" style={{ width: "100%" }} onClick={() => { setAuthErr(""); goToScreen("login"); }}>
                 Log In
