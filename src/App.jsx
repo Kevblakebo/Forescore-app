@@ -4956,56 +4956,57 @@ function computeRoundScoring(round) {
                   <button className="gsc-link" style={{ fontSize: 12, marginBottom: 10 }} onClick={() => setSelectedGroupId(null)}>
                     {"\u2039"} Back to my groups
                   </button>
-                  <div style={{ fontWeight: 700, fontSize: 15, color: "#1B4332", marginBottom: 6 }}>
+                  <div style={{ fontWeight: 700, fontSize: 15, color: "#1B4332", marginBottom: 6, display: "flex", alignItems: "center", gap: 8 }}>
                     {(() => {
                       const g = myGroups.find((g) => g.id === selectedGroupId);
+                      const canEdit = g && session && g.createdBy === session.user.id;
                       return (
                         <>
-                          {g && g.avatar && <span style={{ marginRight: 6 }}>{g.avatar}</span>}
+                          {canEdit ? (
+                            <button
+                              onClick={() => setEditGroupAvatarPickerOpen((v) => !v)}
+                              style={{ width: 30, height: 30, borderRadius: "50%", border: "1.5px solid #d8d2bd", background: "#fff", fontSize: 15, cursor: "pointer", position: "relative", flexShrink: 0 }}
+                              title="Change this group's avatar"
+                            >
+                              {(g && g.avatar) || "\u{1F465}"}
+                              {g && !g.avatar && (
+                                <span style={{ position: "absolute", bottom: -2, right: -2, width: 12, height: 12, borderRadius: "50%", background: "#C1440E", color: "#fff", fontSize: 8, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", border: "1.5px solid #F3EFE0" }}>
+                                  +
+                                </span>
+                              )}
+                            </button>
+                          ) : (
+                            g && g.avatar && <span style={{ fontSize: 18 }}>{g.avatar}</span>
+                          )}
                           {(g && g.name) || "Group"} Leaderboard
                         </>
                       );
                     })()}
                   </div>
-                  <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 10 }}>
-                    Group code: <span className="gsc-mono" style={{ fontWeight: 700, color: "#1B4332" }}>{selectedGroupId}</span> - share this with anyone you want to invite.
-                  </div>
                   {(() => {
                     const g = myGroups.find((g) => g.id === selectedGroupId);
-                    if (!g || !session || g.createdBy !== session.user.id) return null;
+                    const canEdit = g && session && g.createdBy === session.user.id;
+                    if (!canEdit || !editGroupAvatarPickerOpen) return null;
                     return (
-                      <div style={{ marginBottom: 12 }}>
-                        <button
-                          onClick={() => setEditGroupAvatarPickerOpen((v) => !v)}
-                          style={{ width: 36, height: 36, borderRadius: "50%", border: "1.5px solid #d8d2bd", background: "#fff", fontSize: 16, cursor: "pointer", position: "relative" }}
-                          title="Change this group's avatar"
-                        >
-                          {g.avatar || "\u{1F465}"}
-                          {!g.avatar && (
-                            <span style={{ position: "absolute", bottom: -2, right: -2, width: 13, height: 13, borderRadius: "50%", background: "#C1440E", color: "#fff", fontSize: 9, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", border: "1.5px solid #F3EFE0" }}>
-                              +
-                            </span>
-                          )}
-                        </button>
-                        {editGroupAvatarPickerOpen && (
-                          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, padding: "8px 0 0" }}>
-                            {AVATAR_OPTIONS.map((emoji) => (
-                              <button
-                                key={emoji}
-                                onClick={() => {
-                                  updateGroupAvatar(g.id, g.avatar === emoji ? "" : emoji);
-                                  setEditGroupAvatarPickerOpen(false);
-                                }}
-                                style={{ width: 32, height: 32, borderRadius: "50%", border: g.avatar === emoji ? "2px solid #C1440E" : "1.5px solid #d8d2bd", background: "#fff", fontSize: 16, cursor: "pointer" }}
-                              >
-                                {emoji}
-                              </button>
-                            ))}
-                          </div>
-                        )}
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, padding: "0 0 10px" }}>
+                        {AVATAR_OPTIONS.map((emoji) => (
+                          <button
+                            key={emoji}
+                            onClick={() => {
+                              updateGroupAvatar(g.id, g.avatar === emoji ? "" : emoji);
+                              setEditGroupAvatarPickerOpen(false);
+                            }}
+                            style={{ width: 32, height: 32, borderRadius: "50%", border: g.avatar === emoji ? "2px solid #C1440E" : "1.5px solid #d8d2bd", background: "#fff", fontSize: 16, cursor: "pointer" }}
+                          >
+                            {emoji}
+                          </button>
+                        ))}
                       </div>
                     );
                   })()}
+                  <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 10 }}>
+                    Group code: <span className="gsc-mono" style={{ fontWeight: 700, color: "#1B4332" }}>{selectedGroupId}</span> - share this with anyone you want to invite.
+                  </div>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
                     {Object.entries(LEADERBOARD_CATEGORIES).map(([key, cat]) => (
                       <button
