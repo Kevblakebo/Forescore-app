@@ -4172,7 +4172,7 @@ function computeRoundScoring(round) {
             >
               {session ? (profile && profile.name ? `Welcome ${profile.name.split(" ")[0]}` : "Welcome") : "Log In or Create Account"}
             </button>
-            We all love playing games on the course, but who wants to keep track of the scores and rules? RipScore does it for you. No paper scorecards, no redoing the math, no arguing about rules, just easy golf games, live shared scores, and a clear answer to who the winner is.
+            We all love playing games on the course, but who wants to keep track of the scores and rules? RipScore does it for you. No paper scorecards, no redoing the math, no arguing about rules, just easy golf games, live shared scores, and a clear answer to who owes who at the 19th hole!
             <br />
             <br />
             To start a new round or tournament:
@@ -4257,6 +4257,37 @@ function computeRoundScoring(round) {
                 ))}
               </div>
             )}
+          </div>
+
+          <div className="gsc-card">
+            <div className="gsc-label" style={{ marginBottom: 6, fontSize: 17 }}>Quick Pick Game List</div>
+            {[
+              ["teamstrokes", GAMES.teamstrokes.name],
+              ["teamputts", GAMES.teamputts.name],
+              ["seabluffe", GAMES.seabluffe.name],
+              ["moonlightwolf", GAMES.moonlightwolf.name],
+              ["ponto", GAMES.ponto.name],
+              ["beachside", GAMES.beachside.name],
+              ["tourneybb", GAMES.tourneybb.name],
+              ["tourneygg", GAMES.tourneygg.name],
+              ["avoscramble", GAMES.avoscramble.name],
+              ["swami", GAMES.swami.name],
+              ["dstreet", GAMES.dstreet.name],
+              ["individualputts", GAMES.individualputts.name],
+              ["pontobango", GAMES.pontobango.name],
+            ].map(([key, name], i) => (
+              <div
+                key={key}
+                style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "9px 0", borderBottom: i === 12 ? "none" : "1px solid #eee6cf" }}
+              >
+                <button className="gsc-link" style={{ fontSize: 14, fontWeight: 600, color: "#1B4332" }} onClick={() => startNewRound(key)}>
+                  {name}
+                </button>
+                <button className="gsc-link" style={{ fontSize: 12 }} onClick={() => openRules(key)}>
+                  View full rules
+                </button>
+              </div>
+            ))}
           </div>
 
           <div className="gsc-card">
