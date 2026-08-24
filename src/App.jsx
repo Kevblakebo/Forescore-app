@@ -1063,6 +1063,14 @@ export default function GolfScorecard() {
   const [showManualCourse, setShowManualCourse] = useState(false);
   const [courseSelectedViaSearch, setCourseSelectedViaSearch] = useState(false);
   const [avatarPickerFor, setAvatarPickerFor] = useState(null); // player index currently showing its avatar picker, or null
+  const [groupmatePickerFor, setGroupmatePickerFor] = useState(null); // player index currently showing the "pick from group" list, or null
+  const [groupmates, setGroupmates] = useState(null); // null = not loaded yet, [] = loaded but empty
+  const [groupmatesErr, setGroupmatesErr] = useState("");
+  const [postRoundGroupName, setPostRoundGroupName] = useState("");
+  const [postRoundGroupBusy, setPostRoundGroupBusy] = useState(false);
+  const [postRoundGroupErr, setPostRoundGroupErr] = useState("");
+  const [postRoundGroupCreated, setPostRoundGroupCreated] = useState(false);
+  const [postRoundGroupDismissed, setPostRoundGroupDismissed] = useState(false);
   const [profileAvatarPickerOpen, setProfileAvatarPickerOpen] = useState(false);
   const [scoringAvatarPickerFor, setScoringAvatarPickerFor] = useState(null); // same idea, but for the scoring screen, kept separate since it edits an already-saved round rather than in-progress setup
 
@@ -1527,7 +1535,7 @@ export default function GolfScorecard() {
     // explicit overrides here (rather than relying on the profile state
     // above having already settled) guarantees this always uses this
     // save's real values, not a stale read.
-    await loadStats({ optIn: profileForm.leaderboard_opt_in, name: profileForm.name });
+    await loadStats({ optIn: profileForm.leaderboard_opt_in, name: profileForm.name, avatar: profileForm.avatar });
     loadLeaderboard();
   }
 
@@ -1677,6 +1685,7 @@ export default function GolfScorecard() {
         {
           user_id: session.user.id,
           display_name: displayName,
+          avatar: (overrides && overrides.avatar !== undefined ? overrides.avatar : profile && profile.avatar) || "",
           opted_in: !!isOptedIn,
           rounds_played: roundsPlayed,
           wins,
@@ -1790,6 +1799,50 @@ export default function GolfScorecard() {
       return;
     }
     setMyGroups((prev) => prev.map((g) => (g.id === groupId ? { ...g, avatar } : g)));
+  }
+
+  // Creates a group from whoever was actually account-linked in a
+  // just-finished round, adding them all as members directly rather than
+  // requiring each person to separately join via the group's code - relies
+  // on the "group creator can add members directly" policy, scoped to only
+  // groups this account itself creates.
+  async function createGroupFromRound() {
+    if (!session || !supabase || !round) return;
+    const name = postRoundGroupName.trim();
+    if (!name) {
+      setPostRoundGroupErr("Enter a name for the group.");
+      return;
+    }
+    setPostRoundGroupBusy(true);
+    setPostRoundGroupErr("");
+    const linkedPlayers = round.players.filter((p) => p.user_id);
+    const code = genCode();
+    const { error: groupErr } = await supabase.from("groups").insert({ id: code, name, avatar: round.avatar || "", created_by: session.user.id });
+    if (groupErr) {
+      setPostRoundGroupBusy(false);
+      setPostRoundGroupErr(`Couldn't create the group (${groupErr.message}).`);
+      return;
+    }
+    const memberRows = linkedPlayers.map((p) => ({ group_id: code, user_id: p.user_id }));
+    const { error: memErr } = await supabase.from("group_members").insert(memberRows);
+    if (memErr) {
+      setPostRoundGroupBusy(false);
+      setPostRoundGroupErr(`The group was created, but not everyone could be added (${memErr.message}). You can invite them with the code: ${code}`);
+      return;
+    }
+    // Make sure everyone added has a leaderboard_stats row with a real
+    // name, same reasoning as when joining a group by code - without
+    // this, someone who's never visited their own stats page would just
+    // be missing from this new group's leaderboard.
+    supabase
+      .from("leaderboard_stats")
+      .upsert({ user_id: session.user.id, display_name: (profile && profile.name) || "Golfer" }, { onConflict: "user_id", ignoreDuplicates: false })
+      .then(({ error: lbError }) => {
+        if (lbError) console.warn("Couldn't sync leaderboard name:", lbError.message);
+      });
+    setPostRoundGroupBusy(false);
+    setPostRoundGroupCreated(true);
+    loadMyGroups();
   }
 
   async function joinGroup() {
@@ -2029,6 +2082,13 @@ export default function GolfScorecard() {
   useEffect(() => {
     setEditGroupAvatarPickerOpen(false);
   }, [selectedGroupId]);
+
+  useEffect(() => {
+    setPostRoundGroupName("");
+    setPostRoundGroupErr("");
+    setPostRoundGroupCreated(false);
+    setPostRoundGroupDismissed(false);
+  }, [round && round.id]);
 
   useEffect(() => {
     (async () => {
@@ -2860,6 +2920,69 @@ export default function GolfScorecard() {
     });
   }
 
+  // Loaded lazily (only when someone actually opens the "pick from group"
+  // list), not automatically for every setup screen, since most people
+  // won't use this and there's no reason to fire the extra queries for
+  // them. Two-step: find every group I'm in, then every OTHER member of
+  // those groups, deduplicated - both steps rely on RLS policies that
+  // already exist for the group leaderboard feature, so no new database
+  // access rules are needed here.
+  async function loadGroupmates() {
+    if (!session || !supabase) return;
+    setGroupmatesErr("");
+    const { data: myMemberships, error: memErr } = await withJwtRetry(() =>
+      supabase.from("group_members").select("group_id").eq("user_id", session.user.id)
+    );
+    if (memErr) {
+      setGroupmatesErr(`Couldn't load your groups (${memErr.message}).`);
+      setGroupmates([]);
+      return;
+    }
+    const groupIds = [...new Set((myMemberships || []).map((m) => m.group_id))];
+    if (groupIds.length === 0) {
+      setGroupmates([]);
+      return;
+    }
+    const { data: allMembers, error: allErr } = await withJwtRetry(() =>
+      supabase.from("group_members").select("user_id").in("group_id", groupIds)
+    );
+    if (allErr) {
+      setGroupmatesErr(`Couldn't load group members (${allErr.message}).`);
+      setGroupmates([]);
+      return;
+    }
+    const otherUserIds = [...new Set((allMembers || []).map((m) => m.user_id))].filter((id) => id !== session.user.id);
+    if (otherUserIds.length === 0) {
+      setGroupmates([]);
+      return;
+    }
+    const { data: stats, error: statsErr } = await withJwtRetry(() =>
+      supabase.from("leaderboard_stats").select("user_id, display_name, avatar").in("user_id", otherUserIds)
+    );
+    if (statsErr) {
+      setGroupmatesErr(`Couldn't load group members (${statsErr.message}).`);
+      setGroupmates([]);
+      return;
+    }
+    setGroupmates((stats || []).map((s) => ({ user_id: s.user_id, name: s.display_name || "Golfer", avatar: s.avatar || "" })));
+  }
+
+  // Fills a slot with a groupmate's name, avatar, and account link all at
+  // once. Per an explicit choice made about this feature, this links
+  // their account immediately (their stats count right away) rather than
+  // requiring them to separately claim the slot themselves the way an
+  // unrecognized name would - the reasoning being that group membership
+  // already reflects mutual, established consent between these two
+  // people, unlike linking an arbitrary stranger's account would be.
+  function selectGroupmateForSlot(i, mate) {
+    setPlayers((p) => {
+      const next = [...p];
+      next[i] = { ...next[i], name: mate.name, avatar: mate.avatar, user_id: mate.user_id };
+      return next;
+    });
+    setGroupmatePickerFor(null);
+  }
+
   // Only used by individual game formats (Individual Strokes, Individual Skins) -
   // team games and tournaments always need exactly 4 (2v2 or a foursome),
   // so this stays unused/inaccessible there.
@@ -2891,7 +3014,7 @@ export default function GolfScorecard() {
       name: p.name.trim() || `Player ${LETTERS[i]}`,
       hcp: p.hcp,
       avatar: p.avatar || "",
-      ...(i === 0 && session ? { user_id: session.user.id } : {}),
+      ...(i === 0 && session ? { user_id: session.user.id } : p.user_id ? { user_id: p.user_id } : {}),
     }));
     const isIndividual = gameKey === "dstreet" || gameKey === "swami" || gameKey === "pontobango" || gameKey === "individualputts";
     if (isIndividual) {
@@ -2985,6 +3108,28 @@ export default function GolfScorecard() {
           if (error) console.warn("Couldn't index round for stats:", error.message);
         });
     }
+    // Any other slot linked to a real account via the "pick from group"
+    // feature (not just the creator in slot 0) needs this same indexing,
+    // or their stats/history would never actually pick up this round
+    // despite their account already being linked on the round itself.
+    if (supabase) {
+      cleanPlayers.forEach((p, i) => {
+        if (i === 0 || !p.user_id) return;
+        supabase
+          .from("user_rounds")
+          .insert({
+            user_id: p.user_id,
+            round_code: code,
+            tournament_id: isTournament ? activeTournament.id : null,
+            game: gameKey,
+            round_date: roundDate,
+            foursome_name: isTournament ? foursomeName : null,
+          })
+          .then(({ error }) => {
+            if (error) console.warn("Couldn't index round for a linked player's stats:", error.message);
+          });
+      });
+    }
     if (isTournament) {
       const reg = await registerFoursomeInTournament(activeTournament.id, code, foursomeName);
       if (!reg.ok) {
@@ -3072,6 +3217,19 @@ export default function GolfScorecard() {
     });
   }
 
+  // Same idea as selectGroupmateForSlot, for the multi-foursome tournament
+  // draft's different data shape.
+  function selectGroupmateForFoursomeSlot(fi, pi, mate) {
+    setTournamentFoursomesDraft((draft) => {
+      const next = [...draft];
+      const players = [...next[fi].players];
+      players[pi] = { ...players[pi], name: mate.name, avatar: mate.avatar, user_id: mate.user_id };
+      next[fi] = { ...next[fi], players };
+      return next;
+    });
+    setGroupmatePickerFor(null);
+  }
+
   async function finishTournamentCreate() {
     setTournamentErr("");
     const name = tournamentName.trim();
@@ -3106,7 +3264,7 @@ export default function GolfScorecard() {
         name: p.name.trim() || `Player ${LETTERS[i]}`,
         hcp: p.hcp,
         avatar: p.avatar || "",
-        ...(fi === 0 && i === 0 && session ? { user_id: session.user.id } : {}),
+        ...(fi === 0 && i === 0 && session ? { user_id: session.user.id } : p.user_id ? { user_id: p.user_id } : {}),
       }));
       const foursomeRound = {
         id: foursomeCode,
@@ -4956,7 +5114,7 @@ function computeRoundScoring(round) {
 
           {session && (
             <div className="gsc-card">
-              <div className="gsc-label" style={{ marginBottom: 10 }}>Groups</div>
+              <div className="gsc-label" style={{ marginBottom: 10 }}>My Groups</div>
 
               {selectedGroupId ? (
                 <>
@@ -6363,6 +6521,51 @@ function computeRoundScoring(round) {
                       ))}
                     </div>
                   )}
+                  {session && (
+                    <div style={{ padding: "4px 4px 0 46px" }}>
+                      {p.user_id ? (
+                        <div style={{ fontSize: 11, color: "#1B4332", fontWeight: 700 }}>
+                          {"\u2713"} Linked to {p.name}'s account
+                        </div>
+                      ) : (
+                        <button
+                          className="gsc-link"
+                          style={{ fontSize: 11 }}
+                          onClick={() => {
+                            if (groupmatePickerFor === i) {
+                              setGroupmatePickerFor(null);
+                            } else {
+                              setGroupmatePickerFor(i);
+                              if (groupmates === null) loadGroupmates();
+                            }
+                          }}
+                        >
+                          {"\u{1F465}"} Pick from your group
+                        </button>
+                      )}
+                      {groupmatePickerFor === i && (
+                        <div style={{ marginTop: 6 }}>
+                          {groupmatesErr && <div style={{ color: "#C1440E", fontSize: 11 }}>{groupmatesErr}</div>}
+                          {groupmates === null ? (
+                            <div style={{ fontSize: 11, color: "#8a8a80" }}>Loading...</div>
+                          ) : groupmates.length === 0 ? (
+                            <div style={{ fontSize: 11, color: "#8a8a80" }}>You're not sharing a group with anyone yet.</div>
+                          ) : (
+                            groupmates.map((mate) => (
+                              <button
+                                key={mate.user_id}
+                                onClick={() => selectGroupmateForSlot(i, mate)}
+                                style={{ display: "flex", alignItems: "center", gap: 6, width: "100%", textAlign: "left", padding: "5px 0", background: "none", border: "none", borderBottom: "1px solid #eee6cf", cursor: "pointer", fontSize: 12 }}
+                              >
+                                <span>{mate.avatar || "\u{1F464}"}</span>
+                                <span>{mate.name}</span>
+                              </button>
+                            ))
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               ))}
               <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 14 }} onClick={() => wizardGoNext("field_players", {})}>
@@ -6800,6 +7003,51 @@ function computeRoundScoring(round) {
                         {emoji}
                       </button>
                     ))}
+                  </div>
+                )}
+                {session && (
+                  <div style={{ padding: "4px 4px 0 46px" }}>
+                    {p.user_id ? (
+                      <div style={{ fontSize: 11, color: "#1B4332", fontWeight: 700 }}>
+                        {"\u2713"} Linked to {p.name}'s account
+                      </div>
+                    ) : (
+                      <button
+                        className="gsc-link"
+                        style={{ fontSize: 11 }}
+                        onClick={() => {
+                          if (groupmatePickerFor === i) {
+                            setGroupmatePickerFor(null);
+                          } else {
+                            setGroupmatePickerFor(i);
+                            if (groupmates === null) loadGroupmates();
+                          }
+                        }}
+                      >
+                        {"\u{1F465}"} Pick from your group
+                      </button>
+                    )}
+                    {groupmatePickerFor === i && (
+                      <div style={{ marginTop: 6 }}>
+                        {groupmatesErr && <div style={{ color: "#C1440E", fontSize: 11 }}>{groupmatesErr}</div>}
+                        {groupmates === null ? (
+                          <div style={{ fontSize: 11, color: "#8a8a80" }}>Loading...</div>
+                        ) : groupmates.length === 0 ? (
+                          <div style={{ fontSize: 11, color: "#8a8a80" }}>You're not sharing a group with anyone yet.</div>
+                        ) : (
+                          groupmates.map((mate) => (
+                            <button
+                              key={mate.user_id}
+                              onClick={() => selectGroupmateForSlot(i, mate)}
+                              style={{ display: "flex", alignItems: "center", gap: 6, width: "100%", textAlign: "left", padding: "5px 0", background: "none", border: "none", borderBottom: "1px solid #eee6cf", cursor: "pointer", fontSize: 12 }}
+                            >
+                              <span>{mate.avatar || "\u{1F464}"}</span>
+                              <span>{mate.name}</span>
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -7277,6 +7525,51 @@ function computeRoundScoring(round) {
                       ))}
                     </div>
                   )}
+                  {session && (
+                    <div style={{ padding: "4px 4px 0 46px" }}>
+                      {p.user_id ? (
+                        <div style={{ fontSize: 11, color: "#1B4332", fontWeight: 700 }}>
+                          {"\u2713"} Linked to {p.name}'s account
+                        </div>
+                      ) : (
+                        <button
+                          className="gsc-link"
+                          style={{ fontSize: 11 }}
+                          onClick={() => {
+                            if (groupmatePickerFor === avatarKey) {
+                              setGroupmatePickerFor(null);
+                            } else {
+                              setGroupmatePickerFor(avatarKey);
+                              if (groupmates === null) loadGroupmates();
+                            }
+                          }}
+                        >
+                          {"\u{1F465}"} Pick from your group
+                        </button>
+                      )}
+                      {groupmatePickerFor === avatarKey && (
+                        <div style={{ marginTop: 6 }}>
+                          {groupmatesErr && <div style={{ color: "#C1440E", fontSize: 11 }}>{groupmatesErr}</div>}
+                          {groupmates === null ? (
+                            <div style={{ fontSize: 11, color: "#8a8a80" }}>Loading...</div>
+                          ) : groupmates.length === 0 ? (
+                            <div style={{ fontSize: 11, color: "#8a8a80" }}>You're not sharing a group with anyone yet.</div>
+                          ) : (
+                            groupmates.map((mate) => (
+                              <button
+                                key={mate.user_id}
+                                onClick={() => selectGroupmateForFoursomeSlot(fi, pi, mate)}
+                                style={{ display: "flex", alignItems: "center", gap: 6, width: "100%", textAlign: "left", padding: "5px 0", background: "none", border: "none", borderBottom: "1px solid #eee6cf", cursor: "pointer", fontSize: 12 }}
+                              >
+                                <span>{mate.avatar || "\u{1F464}"}</span>
+                                <span>{mate.name}</span>
+                              </button>
+                            ))
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
                 );
               })}
@@ -7527,6 +7820,37 @@ function computeRoundScoring(round) {
                   </div>
                 );
               })}
+            </div>
+          )}
+
+          {(() => {
+            if (!session || postRoundGroupCreated === true) return null;
+            if (postRoundGroupDismissed) return null;
+            const linkedPlayers = round.players.filter((p) => p.user_id);
+            if (linkedPlayers.length < 2) return null;
+            return (
+              <div className="gsc-card">
+                <div className="gsc-label" style={{ marginBottom: 6 }}>Create a Group?</div>
+                <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>
+                  Start a group with {linkedPlayers.map((p) => p.name).join(", ")} to compare stats and see a shared leaderboard next time you play.
+                </div>
+                <div className="gsc-row">
+                  <input className="gsc-input" placeholder="Group name" value={postRoundGroupName} onChange={(e) => setPostRoundGroupName(e.target.value)} />
+                  <button className="gsc-btn gsc-btn-primary" style={{ flex: "0 0 auto" }} disabled={postRoundGroupBusy || !postRoundGroupName.trim()} onClick={createGroupFromRound}>
+                    {postRoundGroupBusy ? "Creating..." : "Create"}
+                  </button>
+                </div>
+                {postRoundGroupErr && <div style={{ color: "#C1440E", fontSize: 12, marginTop: 8 }}>{postRoundGroupErr}</div>}
+                <button className="gsc-link" style={{ fontSize: 12, marginTop: 10 }} onClick={() => setPostRoundGroupDismissed(true)}>
+                  No thanks
+                </button>
+              </div>
+            );
+          })()}
+
+          {postRoundGroupCreated && (
+            <div className="gsc-card" style={{ background: "#EBF0EC" }}>
+              <div style={{ fontSize: 13, color: "#1B4332", fontWeight: 700 }}>{"\u2713"} Group created! Find it on your Profile page anytime.</div>
             </div>
           )}
 
