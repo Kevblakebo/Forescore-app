@@ -219,7 +219,7 @@ const GAMES = {
         ],
       },
       {
-        text: "Scoring System - 2-on-2 (Wolf picked a partner): best-ball for strokes and putts, same as Best Ball scoring:",
+        text: "Scoring System - 2-on-2 (Wolf picked a partner): best-ball for strokes and putts, same as Team Best Ball scoring:",
         sub: [
           "Each player plays their own ball and records their own strokes and putts.",
           "The lower of the Wolf team's two strokes scores counts toward the game.",
@@ -275,7 +275,7 @@ const GAMES = {
     ],
   },
   beachside: {
-    name: "Best Ball",
+    name: "Team Best Ball",
     tag: "Best-ball teams - 4 players",
     desc: "Two 2-person teams, best-ball scoring - the lower of the team's two strokes AND the lower of the team's two putts count each hole. Same structure as Team Skins, but best-ball instead of combined. Great for mixed handicap pairs.",
     rotates: false,
@@ -3936,7 +3936,7 @@ export default function GolfScorecard() {
 // in-foursome scoring engine below, because "the foursome's number" means
 // something different at the tournament level than it does inside the
 // foursome's own game:
-//  - Best Ball: the single lowest strokes among all 4 players on
+//  - Team Best Ball: the single lowest strokes among all 4 players on
 //    a hole is the foursome's stroke score for that hole; likewise the
 //    single lowest putts is the foursome's putt score. (True 4-way best
 //    ball, not the 2-person sub-team best ball used for in-foursome points.)
@@ -4016,7 +4016,7 @@ function computeRoundScoring(round) {
 
     // Combined games (Round Robin, Team Skins, Seaside
     // Skins) sum every team/player's capped strokes or putts. Best-ball
-    // games (Best Ball) instead count only the lower of the
+    // games (Team Best Ball) instead count only the lower of the
     // team's two - each player still records their own strokes/putts,
     // but only the best one counts toward the team's total that hole.
     const aggregate = (arr) => (g.bestBall ? Math.min(...arr) : arr.reduce((a, b) => a + b, 0));
@@ -4087,7 +4087,7 @@ function computeRoundScoring(round) {
           ptsAwarded[0].putt = wolfPuttPts;
           ptsAwarded[1].putt = teamPuttPts;
         } else {
-          // Standard 2v2 best-ball, same mechanic as Best Ball.
+          // Standard 2v2 best-ball, same mechanic as Team Best Ball.
           const strokeSums = teamRes.map((t) => t.scoreSum);
           awardLowest(strokeSums).forEach((v, i) => (ptsAwarded[i].score = v));
           const puttSums = teamRes.map((t) => t.puttSum);
@@ -5946,7 +5946,7 @@ function computeRoundScoring(round) {
           <div className="gsc-card">
             <div className="gsc-label" style={{ marginBottom: 8 }}>Which game format(s) have you played? <span style={{ textTransform: "none", fontWeight: 400 }}>(select all that apply)</span></div>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              {["Individual Strokes", "Individual Skins", "Bingo Bango Bongo", "Best Ball", "Team Skins", "Round Robin", "Wolf", "A tournament format"].map((opt) => (
+              {["Individual Strokes", "Individual Skins", "Bingo Bango Bongo", "Team Best Ball", "Team Skins", "Round Robin", "Wolf", "A tournament format"].map((opt) => (
                 <button key={opt} style={pillBtn(a.formats.includes(opt))} onClick={() => toggleFeedbackFormat(opt)}>{opt}</button>
               ))}
             </div>
