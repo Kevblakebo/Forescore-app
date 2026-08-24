@@ -2920,6 +2920,19 @@ export default function GolfScorecard() {
     });
   }
 
+  // Undoes a "pick from group" selection in one clean update, giving the
+  // slot a completely blank slate to either retype manually or pick a
+  // different groupmate - clearing all three fields separately via
+  // updatePlayer would work but is needlessly awkward for something this
+  // closely related.
+  function unlinkPlayerSlot(i) {
+    setPlayers((p) => {
+      const next = [...p];
+      next[i] = { ...next[i], name: "", avatar: "", user_id: null };
+      return next;
+    });
+  }
+
   // Loaded lazily (only when someone actually opens the "pick from group"
   // list), not automatically for every setup screen, since most people
   // won't use this and there's no reason to fire the extra queries for
@@ -3228,6 +3241,18 @@ export default function GolfScorecard() {
       return next;
     });
     setGroupmatePickerFor(null);
+  }
+
+  // Same idea as unlinkPlayerSlot, for the multi-foursome tournament
+  // draft's different data shape.
+  function unlinkFoursomePlayerSlot(fi, pi) {
+    setTournamentFoursomesDraft((draft) => {
+      const next = [...draft];
+      const players = [...next[fi].players];
+      players[pi] = { ...players[pi], name: "", avatar: "", user_id: null };
+      next[fi] = { ...next[fi], players };
+      return next;
+    });
   }
 
   async function finishTournamentCreate() {
@@ -6524,8 +6549,13 @@ function computeRoundScoring(round) {
                   {session && (
                     <div style={{ padding: "4px 4px 0 46px" }}>
                       {p.user_id ? (
-                        <div style={{ fontSize: 11, color: "#1B4332", fontWeight: 700 }}>
-                          {"\u2713"} Linked to {p.name}'s account
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <div style={{ fontSize: 11, color: "#1B4332", fontWeight: 700 }}>
+                            {"\u2713"} Linked to {p.name}'s account
+                          </div>
+                          <button className="gsc-link" style={{ fontSize: 11 }} onClick={() => unlinkPlayerSlot(i)}>
+                            Change
+                          </button>
                         </div>
                       ) : (
                         <button
@@ -6540,7 +6570,7 @@ function computeRoundScoring(round) {
                             }
                           }}
                         >
-                          {"\u{1F465}"} Pick from your group
+                          {"\u{1F465}"} Pick from your groups
                         </button>
                       )}
                       {groupmatePickerFor === i && (
@@ -7008,8 +7038,13 @@ function computeRoundScoring(round) {
                 {session && (
                   <div style={{ padding: "4px 4px 0 46px" }}>
                     {p.user_id ? (
-                      <div style={{ fontSize: 11, color: "#1B4332", fontWeight: 700 }}>
-                        {"\u2713"} Linked to {p.name}'s account
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <div style={{ fontSize: 11, color: "#1B4332", fontWeight: 700 }}>
+                          {"\u2713"} Linked to {p.name}'s account
+                        </div>
+                        <button className="gsc-link" style={{ fontSize: 11 }} onClick={() => unlinkFoursomePlayerSlot(fi, pi)}>
+                          Change
+                        </button>
                       </div>
                     ) : (
                       <button
@@ -7024,7 +7059,7 @@ function computeRoundScoring(round) {
                           }
                         }}
                       >
-                        {"\u{1F465}"} Pick from your group
+                        {"\u{1F465}"} Pick from your groups
                       </button>
                     )}
                     {groupmatePickerFor === i && (
@@ -7528,8 +7563,13 @@ function computeRoundScoring(round) {
                   {session && (
                     <div style={{ padding: "4px 4px 0 46px" }}>
                       {p.user_id ? (
-                        <div style={{ fontSize: 11, color: "#1B4332", fontWeight: 700 }}>
-                          {"\u2713"} Linked to {p.name}'s account
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <div style={{ fontSize: 11, color: "#1B4332", fontWeight: 700 }}>
+                            {"\u2713"} Linked to {p.name}'s account
+                          </div>
+                          <button className="gsc-link" style={{ fontSize: 11 }} onClick={() => unlinkPlayerSlot(i)}>
+                            Change
+                          </button>
                         </div>
                       ) : (
                         <button
@@ -7544,7 +7584,7 @@ function computeRoundScoring(round) {
                             }
                           }}
                         >
-                          {"\u{1F465}"} Pick from your group
+                          {"\u{1F465}"} Pick from your groups
                         </button>
                       )}
                       {groupmatePickerFor === avatarKey && (
