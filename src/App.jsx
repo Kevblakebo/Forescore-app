@@ -3128,7 +3128,7 @@ export default function GolfScorecard() {
         ? pontoPairing
         : isIndividual
         ? cleanPlayers.map((_, i) => [i]) // individual - each player is their own "team" of one, however many were entered
-        : gameKey === "tourneybb" || gameKey === "tourneygg"
+        : gameKey === "tourneybb" || gameKey === "tourneygg" || gameKey === "avoscramble"
         ? [[0, 1, 2, 3]] // whole foursome as a single team - no sub-teams
         : null; // seabluffe computes teams per-hole
 
@@ -4592,7 +4592,11 @@ function computeRoundScoring(round) {
                 key={key}
                 style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "9px 0", borderBottom: i === 12 ? "none" : "1px solid #eee6cf" }}
               >
-                <button className="gsc-link" style={{ fontSize: 14, fontWeight: 600, color: "#1B4332" }} onClick={() => startNewRound(key)}>
+                <button
+                  className="gsc-link"
+                  style={{ fontSize: 14, fontWeight: 600, color: "#1B4332" }}
+                  onClick={() => (GAMES[key].tournamentOnly ? startTournamentCreateFlow(key) : startNewRound(key))}
+                >
                   {name}
                 </button>
                 <button className="gsc-link" style={{ fontSize: 12 }} onClick={() => openRules(key)}>
