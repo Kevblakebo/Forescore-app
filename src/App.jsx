@@ -4262,19 +4262,19 @@ function computeRoundScoring(round) {
           <div className="gsc-card">
             <div className="gsc-label" style={{ marginBottom: 6, fontSize: 17 }}>Quick Pick Game List</div>
             {[
-              ["teamstrokes", GAMES.teamstrokes.name],
-              ["teamputts", GAMES.teamputts.name],
-              ["seabluffe", GAMES.seabluffe.name],
-              ["moonlightwolf", GAMES.moonlightwolf.name],
-              ["ponto", GAMES.ponto.name],
-              ["beachside", GAMES.beachside.name],
-              ["tourneybb", GAMES.tourneybb.name],
-              ["tourneygg", GAMES.tourneygg.name],
-              ["avoscramble", GAMES.avoscramble.name],
-              ["swami", GAMES.swami.name],
               ["dstreet", GAMES.dstreet.name],
+              ["swami", GAMES.swami.name],
               ["individualputts", GAMES.individualputts.name],
               ["pontobango", GAMES.pontobango.name],
+              ["ponto", GAMES.ponto.name],
+              ["teamstrokes", GAMES.teamstrokes.name],
+              ["teamputts", GAMES.teamputts.name],
+              ["beachside", GAMES.beachside.name],
+              ["seabluffe", GAMES.seabluffe.name],
+              ["moonlightwolf", GAMES.moonlightwolf.name],
+              ["avoscramble", GAMES.avoscramble.name],
+              ["tourneybb", GAMES.tourneybb.name],
+              ["tourneygg", GAMES.tourneygg.name],
             ].map(([key, name], i) => (
               <div
                 key={key}
