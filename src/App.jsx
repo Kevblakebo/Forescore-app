@@ -1195,14 +1195,21 @@ export default function GolfScorecard() {
         // silently logging them in, which would be a confusing dead end.
         goToScreen("resetPassword");
       } else if (event === "SIGNED_IN" && newSession) {
-        // Supabase includes type=signup in the redirect URL specifically
-        // when someone arrives via an email confirmation link - checking
-        // both the query string and hash fragment since the exact format
-        // has varied across versions. This only appears right after
-        // clicking that link, so normal logins and session restores on
-        // every other page load are completely unaffected.
-        const urlSignal = window.location.search + window.location.hash;
-        if (/type=signup/i.test(urlSignal)) {
+        // Detects "this SIGNED_IN event is from just clicking an email
+        // confirmation link" without depending on URL parameters, since
+        // Supabase scrubs custom params during the redirect and the
+        // documented shape of the final URL back to this app doesn't
+        // reliably carry a "type=signup" marker the way earlier code here
+        // assumed - that approach looked right but never actually worked.
+        // Instead, this checks the session's own data: email_confirmed_at
+        // being very recent (right now, not just close to when the
+        // account was created) is only ever true in the moments right
+        // after confirming - a normal login next week has the exact same
+        // confirmed_at timestamp, just no longer "recent", so this won't
+        // misfire on every future login the way comparing confirmed_at to
+        // created_at alone would have.
+        const confirmedAt = newSession.user && newSession.user.email_confirmed_at ? new Date(newSession.user.email_confirmed_at).getTime() : null;
+        if (confirmedAt && Date.now() - confirmedAt < 2 * 60 * 1000) {
           goToScreen("profileTab");
         }
       }
