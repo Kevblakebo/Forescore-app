@@ -1430,7 +1430,7 @@ export default function GolfScorecard() {
       return;
     }
     setAuthPassword("");
-    goToScreen("profileTab");
+    goBack("profileTab");
   }
 
   async function sendPasswordReset() {
