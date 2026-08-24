@@ -712,7 +712,8 @@ const AVATAR_OPTIONS = [
   "\u{1F9B8}", "\u{1F9B9}", "\u{1F977}", "\u{1F987}", "\u{1F577}\u{FE0F}", "\u26A1", "\u{1F4A5}", "\u{1F6E1}\u{FE0F}", "\u{1F4AA}", "\u{1F680}",
   "\u{1F42F}", "\u{1F988}",
   "\u{1F40A}", "\u{1F986}", "\u{1F43A}", "\u{1F989}", "\u{1F409}", "\u{1F451}", "\u{1F3A9}", "\u{1F340}", "\u{1F334}", "\u{1F3B2}", "\u{1F947}", "\u{1F9CA}",
-  "\u26CF\u{FE0F}", "\u26F3", "\u{1F3C6}", "\u{1F426}", "\u{1F37A}", "\u2600\u{FE0F}",
+  "\u26CF\u{FE0F}", "\u26F3", "\u{1F355}", "\u{1F426}", "\u{1F37A}", "\u2600\u{FE0F}",
+  "\u{1F42C}", "\u{1F428}", "\u{1F98A}", "\u{1F98B}", "\u{1F308}", "\u{1F996}",
 ];
 const TEAM_CLASS = ["gsc-teamA", "gsc-teamB", "gsc-teamC", "gsc-teamD"];
 
@@ -1112,6 +1113,7 @@ export default function GolfScorecard() {
   const [createGroupName, setCreateGroupName] = useState("");
   const [createGroupAvatar, setCreateGroupAvatar] = useState("");
   const [createGroupAvatarPickerOpen, setCreateGroupAvatarPickerOpen] = useState(false);
+  const [editGroupAvatarPickerOpen, setEditGroupAvatarPickerOpen] = useState(false);
   const [createGroupBusy, setCreateGroupBusy] = useState(false);
   const [joinGroupCode, setJoinGroupCode] = useState("");
   const [joinGroupBusy, setJoinGroupBusy] = useState(false);
@@ -1713,14 +1715,21 @@ export default function GolfScorecard() {
     setGroupsLoading(true);
     setGroupsErr("");
     const { data, error } = await withJwtRetry(() =>
-      supabase.from("group_members").select("group_id, groups(name, avatar)").eq("user_id", session.user.id)
+      supabase.from("group_members").select("group_id, groups(name, avatar, created_by)").eq("user_id", session.user.id)
     );
     setGroupsLoading(false);
     if (error) {
       setGroupsErr(`Couldn't load your groups (${error.message}).`);
       return;
     }
-    setMyGroups((data || []).map((row) => ({ id: row.group_id, name: row.groups ? row.groups.name : "Group", avatar: row.groups ? row.groups.avatar : "" })));
+    setMyGroups(
+      (data || []).map((row) => ({
+        id: row.group_id,
+        name: row.groups ? row.groups.name : "Group",
+        avatar: row.groups ? row.groups.avatar : "",
+        createdBy: row.groups ? row.groups.created_by : null,
+      }))
+    );
   }
 
   async function createGroup() {
@@ -1759,6 +1768,21 @@ export default function GolfScorecard() {
     setCreateGroupAvatar("");
     setCreateGroupAvatarPickerOpen(false);
     loadMyGroups();
+  }
+
+  // Only the group's creator can do this - matches the existing RLS
+  // update policy on the groups table, so anyone else's attempt would be
+  // rejected server-side anyway. Updates local state directly rather than
+  // a full reload, so the change reflects instantly.
+  async function updateGroupAvatar(groupId, avatar) {
+    if (!session || !supabase) return;
+    setGroupsErr("");
+    const { error } = await supabase.from("groups").update({ avatar }).eq("id", groupId);
+    if (error) {
+      setGroupsErr(`Couldn't update the group's avatar (${error.message}).`);
+      return;
+    }
+    setMyGroups((prev) => prev.map((g) => (g.id === groupId ? { ...g, avatar } : g)));
   }
 
   async function joinGroup() {
@@ -1994,6 +2018,10 @@ export default function GolfScorecard() {
   useEffect(() => {
     setHoleNoteDraft((round && round.holeNotes && round.holeNotes[holeIdx]) || "");
   }, [holeIdx, round && round.id]);
+
+  useEffect(() => {
+    setEditGroupAvatarPickerOpen(false);
+  }, [selectedGroupId]);
 
   useEffect(() => {
     (async () => {
@@ -4911,6 +4939,42 @@ function computeRoundScoring(round) {
                   <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 10 }}>
                     Group code: <span className="gsc-mono" style={{ fontWeight: 700, color: "#1B4332" }}>{selectedGroupId}</span> - share this with anyone you want to invite.
                   </div>
+                  {(() => {
+                    const g = myGroups.find((g) => g.id === selectedGroupId);
+                    if (!g || !session || g.createdBy !== session.user.id) return null;
+                    return (
+                      <div style={{ marginBottom: 12 }}>
+                        <button
+                          onClick={() => setEditGroupAvatarPickerOpen((v) => !v)}
+                          style={{ width: 36, height: 36, borderRadius: "50%", border: "1.5px solid #d8d2bd", background: "#fff", fontSize: 16, cursor: "pointer", position: "relative" }}
+                          title="Change this group's avatar"
+                        >
+                          {g.avatar || "\u{1F465}"}
+                          {!g.avatar && (
+                            <span style={{ position: "absolute", bottom: -2, right: -2, width: 13, height: 13, borderRadius: "50%", background: "#C1440E", color: "#fff", fontSize: 9, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", border: "1.5px solid #F3EFE0" }}>
+                              +
+                            </span>
+                          )}
+                        </button>
+                        {editGroupAvatarPickerOpen && (
+                          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, padding: "8px 0 0" }}>
+                            {AVATAR_OPTIONS.map((emoji) => (
+                              <button
+                                key={emoji}
+                                onClick={() => {
+                                  updateGroupAvatar(g.id, g.avatar === emoji ? "" : emoji);
+                                  setEditGroupAvatarPickerOpen(false);
+                                }}
+                                style={{ width: 32, height: 32, borderRadius: "50%", border: g.avatar === emoji ? "2px solid #C1440E" : "1.5px solid #d8d2bd", background: "#fff", fontSize: 16, cursor: "pointer" }}
+                              >
+                                {emoji}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
                     {Object.entries(LEADERBOARD_CATEGORIES).map(([key, cat]) => (
                       <button
