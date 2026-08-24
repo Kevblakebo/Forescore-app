@@ -2041,10 +2041,62 @@ export default function GolfScorecard() {
           <input className="gsc-input" style={{ marginBottom: 14 }} value={editFoursomeName} onChange={(e) => setEditFoursomeName(e.target.value)} />
           <div className="gsc-label" style={{ marginBottom: 6 }}>Players</div>
           {editFoursomePlayers.map((p, i) => (
-            <div className="gsc-row" key={i} style={{ marginBottom: 8 }}>
-              <div style={{ flex: "0 0 22px", fontWeight: 800, color: "#1B4332", paddingTop: 9 }}>{LETTERS[i] || i + 1}</div>
-              <input className="gsc-input" placeholder="Name" value={p.name} onChange={(e) => updateEditFoursomePlayer(i, "name", e.target.value)} />
-              <input className="gsc-input" style={{ flex: "0 0 70px" }} placeholder="HCP" value={p.hcp} onChange={(e) => updateEditFoursomePlayer(i, "hcp", e.target.value)} />
+            <div key={i} style={{ marginBottom: 8 }}>
+              <div className="gsc-row">
+                <div style={{ flex: "0 0 22px", fontWeight: 800, color: "#1B4332", paddingTop: 9 }}>{LETTERS[i] || i + 1}</div>
+                <input className="gsc-input" placeholder="Name" value={p.name} onChange={(e) => updateEditFoursomePlayerName(i, e.target.value)} />
+                <input className="gsc-input" style={{ flex: "0 0 70px" }} placeholder="HCP" value={p.hcp} onChange={(e) => updateEditFoursomePlayer(i, "hcp", e.target.value)} />
+              </div>
+              {session && (
+                <div style={{ padding: "4px 4px 0 30px" }}>
+                  {p.user_id ? (
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <div style={{ fontSize: 11, color: "#1B4332", fontWeight: 700 }}>
+                        {"\u2713"} Linked to {p.name}'s account
+                      </div>
+                      <button className="gsc-link" style={{ fontSize: 11 }} onClick={() => updateEditFoursomePlayerName(i, "")}>
+                        Change
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      className="gsc-link"
+                      style={{ fontSize: 11 }}
+                      onClick={() => {
+                        if (groupmatePickerFor === i) {
+                          setGroupmatePickerFor(null);
+                        } else {
+                          setGroupmatePickerFor(i);
+                          if (groupmates === null) loadGroupmates();
+                        }
+                      }}
+                    >
+                      {"\u{1F465}"} Pick from your groups
+                    </button>
+                  )}
+                  {groupmatePickerFor === i && (
+                    <div style={{ marginTop: 6 }}>
+                      {groupmatesErr && <div style={{ color: "#C1440E", fontSize: 11 }}>{groupmatesErr}</div>}
+                      {groupmates === null ? (
+                        <div style={{ fontSize: 11, color: "#8a8a80" }}>Loading...</div>
+                      ) : groupmates.length === 0 ? (
+                        <div style={{ fontSize: 11, color: "#8a8a80" }}>You're not sharing a group with anyone yet.</div>
+                      ) : (
+                        groupmates.map((mate) => (
+                          <button
+                            key={mate.user_id}
+                            onClick={() => selectGroupmateForEditSlot(i, mate)}
+                            style={{ display: "flex", alignItems: "center", gap: 6, width: "100%", textAlign: "left", padding: "5px 0", background: "none", border: "none", borderBottom: "1px solid #eee6cf", cursor: "pointer", fontSize: 12 }}
+                          >
+                            <span>{mate.avatar || "\u{1F464}"}</span>
+                            <span>{mate.name}{session && mate.user_id === session.user.id ? " (You)" : ""}</span>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           ))}
           {editFoursomeErr && <div style={{ color: "#C1440E", fontSize: 13, margin: "8px 0" }}>{editFoursomeErr}</div>}
@@ -3466,7 +3518,7 @@ export default function GolfScorecard() {
     setEditFoursomeId(id);
     setEditFoursomeIsTournament(!!roundData.tournamentId);
     setEditFoursomeName(roundData.foursomeName || roundData.name || "");
-    setEditFoursomePlayers(roundData.players.map((p) => ({ name: p.name, hcp: p.hcp, originalName: p.name })));
+    setEditFoursomePlayers(roundData.players.map((p) => ({ name: p.name, hcp: p.hcp, originalName: p.name, avatar: p.avatar || "", user_id: p.user_id || null })));
     setEditFoursomeOpen(true);
   }
 
@@ -3476,6 +3528,31 @@ export default function GolfScorecard() {
       next[i] = { ...next[i], [field]: val };
       return next;
     });
+  }
+
+  // Manually retyping a name means this slot might now be a different
+  // person - clears any avatar/account link that came from the original
+  // player or a previous group pick, so stats don't get misattributed to
+  // whoever used to be here. Separate from updateEditFoursomePlayer since
+  // that's also used for the handicap field, which shouldn't clear
+  // anything.
+  function updateEditFoursomePlayerName(i, val) {
+    setEditFoursomePlayers((p) => {
+      const next = [...p];
+      next[i] = { ...next[i], name: val, avatar: "", user_id: null };
+      return next;
+    });
+  }
+
+  // Fills a slot with a groupmate's name, avatar, and account link all at
+  // once - same reasoning as selectGroupmateForSlot during initial setup.
+  function selectGroupmateForEditSlot(i, mate) {
+    setEditFoursomePlayers((p) => {
+      const next = [...p];
+      next[i] = { ...next[i], name: mate.name, avatar: mate.avatar, user_id: mate.user_id };
+      return next;
+    });
+    setGroupmatePickerFor(null);
   }
 
   async function saveEditFoursome() {
@@ -3496,18 +3573,18 @@ export default function GolfScorecard() {
       return;
     }
     const cleanName = editFoursomeName.trim() || "Foursome";
+    // The draft's own avatar/user_id are always accurate at this point -
+    // openEditFoursome seeded them from the original player, retyping a
+    // name clears them, and picking a groupmate sets fresh correct ones -
+    // no need to re-derive anything by comparing names here.
+    const previousUserIds = r.players.map((p) => p.user_id || null);
     r.players = editFoursomePlayers.map((p, i) => {
       const trimmedName = p.name.trim() || `Player ${LETTERS[i]}`;
-      const original = r.players[i] || {};
-      const nameUnchanged = p.originalName !== undefined ? p.name.trim() === p.originalName.trim() : true;
       return {
         name: trimmedName,
         hcp: p.hcp,
-        // A name change likely means this slot now refers to a different
-        // person - carrying over the old avatar or account link in that
-        // case would misattribute stats to whoever it used to be.
-        avatar: nameUnchanged ? original.avatar || "" : "",
-        ...(nameUnchanged && original.user_id ? { user_id: original.user_id } : {}),
+        avatar: p.avatar || "",
+        ...(p.user_id ? { user_id: p.user_id } : {}),
       };
     });
     if (r.tournamentId) {
@@ -3521,6 +3598,29 @@ export default function GolfScorecard() {
       setEditFoursomeBusy(false);
       setEditFoursomeErr(`Couldn't save those changes (${w.error}). Try again.`);
       return;
+    }
+    // Any slot newly linked to an account via "pick from group" (wasn't
+    // already linked to that same person before this edit) needs the same
+    // stats indexing given at round creation, or their history would
+    // never actually pick up this round despite the link itself being
+    // saved.
+    if (supabase) {
+      editFoursomePlayers.forEach((p, i) => {
+        if (!p.user_id || p.user_id === previousUserIds[i]) return;
+        supabase
+          .from("user_rounds")
+          .insert({
+            user_id: p.user_id,
+            round_code: editFoursomeId,
+            tournament_id: r.tournamentId || null,
+            game: r.game,
+            round_date: r.date,
+            foursome_name: r.tournamentId ? cleanName : null,
+          })
+          .then(({ error }) => {
+            if (error) console.warn("Couldn't index round for a linked player's stats:", error.message);
+          });
+      });
     }
     // Keep the tournament's foursome index label in sync too.
     if (r.tournamentId) {
