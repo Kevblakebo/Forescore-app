@@ -1074,6 +1074,10 @@ export default function GolfScorecard() {
   const [authBusy, setAuthBusy] = useState(false);
   const [authEmail, setAuthEmail] = useState("");
   const [authPassword, setAuthPassword] = useState("");
+  const [showAuthPassword, setShowAuthPassword] = useState(false);
+  const [showAuthPasswordConfirm, setShowAuthPasswordConfirm] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showNewPasswordConfirm, setShowNewPasswordConfirm] = useState(false);
   const [authPasswordConfirm, setAuthPasswordConfirm] = useState("");
   const [authNotice, setAuthNotice] = useState(""); // e.g. "check your email to confirm"
   const [resetSent, setResetSent] = useState(false);
@@ -5334,7 +5338,24 @@ function computeRoundScoring(round) {
             </div>
             <div className="gsc-field" style={{ marginTop: 10 }}>
               <div className="gsc-label">Password</div>
-              <input className="gsc-input" type="password" value={authPassword} onChange={(e) => setAuthPassword(e.target.value)} onKeyDown={(e) => e.key === "Enter" && signIn()} />
+              <div style={{ position: "relative" }}>
+                <input
+                  className="gsc-input"
+                  type={showAuthPassword ? "text" : "password"}
+                  style={{ paddingRight: 40 }}
+                  value={authPassword}
+                  onChange={(e) => setAuthPassword(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && signIn()}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowAuthPassword((v) => !v)}
+                  style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", fontSize: 16, cursor: "pointer", padding: 4 }}
+                  title={showAuthPassword ? "Hide password" : "Show password"}
+                >
+                  {showAuthPassword ? "\u{1F648}" : "\u{1F441}\u{FE0F}"}
+                </button>
+              </div>
               <button className="gsc-link" style={{ fontSize: 12, marginTop: 6 }} onClick={() => { setAuthErr(""); setResetSent(false); goToScreen("forgotPassword"); }}>
                 Forgot password?
               </button>
@@ -5390,12 +5411,39 @@ function computeRoundScoring(round) {
           <div className="gsc-card">
             <div className="gsc-field">
               <div className="gsc-label">New Password</div>
-              <input className="gsc-input" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+              <div style={{ position: "relative" }}>
+                <input className="gsc-input" type={showNewPassword ? "text" : "password"} style={{ paddingRight: 40 }} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPassword((v) => !v)}
+                  style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", fontSize: 16, cursor: "pointer", padding: 4 }}
+                  title={showNewPassword ? "Hide password" : "Show password"}
+                >
+                  {showNewPassword ? "\u{1F648}" : "\u{1F441}\u{FE0F}"}
+                </button>
+              </div>
               <div style={{ fontSize: 11, color: "#8a8a80", marginTop: 4 }}>At least 6 characters.</div>
             </div>
             <div className="gsc-field" style={{ marginTop: 10 }}>
               <div className="gsc-label">Confirm New Password</div>
-              <input className="gsc-input" type="password" value={newPasswordConfirm} onChange={(e) => setNewPasswordConfirm(e.target.value)} onKeyDown={(e) => e.key === "Enter" && submitNewPassword()} />
+              <div style={{ position: "relative" }}>
+                <input
+                  className="gsc-input"
+                  type={showNewPasswordConfirm ? "text" : "password"}
+                  style={{ paddingRight: 40 }}
+                  value={newPasswordConfirm}
+                  onChange={(e) => setNewPasswordConfirm(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && submitNewPassword()}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPasswordConfirm((v) => !v)}
+                  style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", fontSize: 16, cursor: "pointer", padding: 4 }}
+                  title={showNewPasswordConfirm ? "Hide password" : "Show password"}
+                >
+                  {showNewPasswordConfirm ? "\u{1F648}" : "\u{1F441}\u{FE0F}"}
+                </button>
+              </div>
             </div>
             {authErr && <div style={{ color: "#C1440E", fontSize: 13, marginTop: 10 }}>{authErr}</div>}
             <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 14 }} disabled={authBusy} onClick={submitNewPassword}>
@@ -5420,12 +5468,39 @@ function computeRoundScoring(round) {
             </div>
             <div className="gsc-field" style={{ marginTop: 10 }}>
               <div className="gsc-label">Password</div>
-              <input className="gsc-input" type="password" value={authPassword} onChange={(e) => setAuthPassword(e.target.value)} />
+              <div style={{ position: "relative" }}>
+                <input className="gsc-input" type={showAuthPassword ? "text" : "password"} style={{ paddingRight: 40 }} value={authPassword} onChange={(e) => setAuthPassword(e.target.value)} />
+                <button
+                  type="button"
+                  onClick={() => setShowAuthPassword((v) => !v)}
+                  style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", fontSize: 16, cursor: "pointer", padding: 4 }}
+                  title={showAuthPassword ? "Hide password" : "Show password"}
+                >
+                  {showAuthPassword ? "\u{1F648}" : "\u{1F441}\u{FE0F}"}
+                </button>
+              </div>
               <div style={{ fontSize: 11, color: "#8a8a80", marginTop: 4 }}>At least 6 characters.</div>
             </div>
             <div className="gsc-field" style={{ marginTop: 10 }}>
               <div className="gsc-label">Confirm Password</div>
-              <input className="gsc-input" type="password" value={authPasswordConfirm} onChange={(e) => setAuthPasswordConfirm(e.target.value)} onKeyDown={(e) => e.key === "Enter" && signUp()} />
+              <div style={{ position: "relative" }}>
+                <input
+                  className="gsc-input"
+                  type={showAuthPasswordConfirm ? "text" : "password"}
+                  style={{ paddingRight: 40 }}
+                  value={authPasswordConfirm}
+                  onChange={(e) => setAuthPasswordConfirm(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && signUp()}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowAuthPasswordConfirm((v) => !v)}
+                  style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", fontSize: 16, cursor: "pointer", padding: 4 }}
+                  title={showAuthPasswordConfirm ? "Hide password" : "Show password"}
+                >
+                  {showAuthPasswordConfirm ? "\u{1F648}" : "\u{1F441}\u{FE0F}"}
+                </button>
+              </div>
             </div>
             {authErr && <div style={{ color: "#C1440E", fontSize: 13, marginTop: 10 }}>{authErr}</div>}
             <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 14 }} disabled={authBusy} onClick={signUp}>
