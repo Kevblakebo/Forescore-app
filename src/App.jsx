@@ -2731,11 +2731,13 @@ export default function GolfScorecard() {
       setTournamentYardage(nextYardage);
       setTournamentStrokeIndex(nextStrokeIndex);
       setTournamentCourseName(courseLabel);
+      setTournamentCfg((c) => ({ ...c, teeName: tee.teeName || "" }));
     } else {
       setPar(next);
       setYardage(nextYardage);
       setStrokeIndex(nextStrokeIndex);
       setCourseName(courseLabel);
+      setCfg((c) => ({ ...c, teeName: tee.teeName || "" }));
     }
     if (holeCount !== 18) {
       setCourseMsg(`Loaded ${holeCount} of 18 holes from "${courseLabel}" (${tee.teeName}) - fill in the rest manually.`);
@@ -8324,6 +8326,11 @@ function computeRoundScoring(round) {
                     </div>
                   );
                 })()}
+                {round.cfg.teeName && (
+                  <div style={{ fontSize: 11, color: "#8a8a80", marginTop: 2 }}>
+                    {round.cfg.teeName} tees
+                  </div>
+                )}
                 {session && round.holeGPS && round.holeGPS[holeIdx] && round.holeGPS[holeIdx].length > 0 && (() => {
                   const greenPoints = round.holeGPS[holeIdx];
                   let content = null;
