@@ -2964,13 +2964,16 @@ export default function GolfScorecard() {
       setGroupmates([]);
       return;
     }
-    const otherUserIds = [...new Set((allMembers || []).map((m) => m.user_id))].filter((id) => id !== session.user.id);
-    if (otherUserIds.length === 0) {
+    // Includes yourself, not just other members - useful for testing with
+    // one account across multiple slots, or fixing a slot you cleared by
+    // mistake, without needing to retype your own name manually.
+    const memberUserIds = [...new Set((allMembers || []).map((m) => m.user_id))];
+    if (memberUserIds.length === 0) {
       setGroupmates([]);
       return;
     }
     const { data: stats, error: statsErr } = await withJwtRetry(() =>
-      supabase.from("leaderboard_stats").select("user_id, display_name, avatar").in("user_id", otherUserIds)
+      supabase.from("leaderboard_stats").select("user_id, display_name, avatar").in("user_id", memberUserIds)
     );
     if (statsErr) {
       setGroupmatesErr(`Couldn't load group members (${statsErr.message}).`);
@@ -5125,7 +5128,7 @@ function computeRoundScoring(round) {
                         }}
                       >
                         <div style={{ fontSize: 13, fontWeight: isMe ? 700 : 600, color: "#1B4332" }}>
-                          {i + 1}. {x.row.display_name}
+                          {i + 1}. {x.row.avatar ? `${x.row.avatar} ` : ""}{x.row.display_name}
                           {isMe && <span style={{ fontSize: 10, color: "#B08D57", marginLeft: 6, fontWeight: 700 }}>YOU</span>}
                         </div>
                         <div style={{ fontSize: 13, fontWeight: 700, color: "#4b4b45" }}>{cat.format(x.value)}</div>
@@ -5251,7 +5254,7 @@ function computeRoundScoring(round) {
                             }}
                           >
                             <div style={{ fontSize: 13, fontWeight: isMe ? 700 : 600, color: "#1B4332" }}>
-                              {i + 1}. {x.row.display_name}
+                              {i + 1}. {x.row.avatar ? `${x.row.avatar} ` : ""}{x.row.display_name}
                               {isMe && <span style={{ fontSize: 10, color: "#B08D57", marginLeft: 6, fontWeight: 700 }}>YOU</span>}
                             </div>
                             <div style={{ fontSize: 13, fontWeight: 700, color: "#4b4b45" }}>{cat.format(x.value)}</div>
@@ -6149,7 +6152,7 @@ function computeRoundScoring(round) {
             <div className="gsc-card">
               <div className="gsc-label" style={{ marginBottom: 10, fontSize: 16 }}>How should your team's score work each hole?</div>
               <OptionButton onClick={() => wizardGoNext("teamScoring", { teamScoring: "bestball", resolvedGameKey: "beachside", isTournament: false })}>
-                Best-Ball - the lower of your two scores counts
+                Team Best Ball - the lower of your two scores counts
               </OptionButton>
               <OptionButton onClick={() => wizardGoNext("teamScoring", { teamScoring: "combined", resolvedGameKey: "ponto", isTournament: false })}>
                 Team Skins - points for lowest team strokes and putts
@@ -6588,7 +6591,7 @@ function computeRoundScoring(round) {
                                 style={{ display: "flex", alignItems: "center", gap: 6, width: "100%", textAlign: "left", padding: "5px 0", background: "none", border: "none", borderBottom: "1px solid #eee6cf", cursor: "pointer", fontSize: 12 }}
                               >
                                 <span>{mate.avatar || "\u{1F464}"}</span>
-                                <span>{mate.name}</span>
+                                <span>{mate.name}{session && mate.user_id === session.user.id ? " (You)" : ""}</span>
                               </button>
                             ))
                           )}
@@ -7077,7 +7080,7 @@ function computeRoundScoring(round) {
                               style={{ display: "flex", alignItems: "center", gap: 6, width: "100%", textAlign: "left", padding: "5px 0", background: "none", border: "none", borderBottom: "1px solid #eee6cf", cursor: "pointer", fontSize: 12 }}
                             >
                               <span>{mate.avatar || "\u{1F464}"}</span>
-                              <span>{mate.name}</span>
+                              <span>{mate.name}{session && mate.user_id === session.user.id ? " (You)" : ""}</span>
                             </button>
                           ))
                         )}
@@ -7602,7 +7605,7 @@ function computeRoundScoring(round) {
                                 style={{ display: "flex", alignItems: "center", gap: 6, width: "100%", textAlign: "left", padding: "5px 0", background: "none", border: "none", borderBottom: "1px solid #eee6cf", cursor: "pointer", fontSize: 12 }}
                               >
                                 <span>{mate.avatar || "\u{1F464}"}</span>
-                                <span>{mate.name}</span>
+                                <span>{mate.name}{session && mate.user_id === session.user.id ? " (You)" : ""}</span>
                               </button>
                             ))
                           )}
