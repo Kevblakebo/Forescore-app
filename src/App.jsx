@@ -1045,6 +1045,7 @@ export default function GolfScorecard() {
   const [gameKey, setGameKey] = useState(null);
   const [cfg, setCfg] = useState({});
   const [roundName, setRoundName] = useState("");
+  const [roundAvatarPickerOpen, setRoundAvatarPickerOpen] = useState(false);
   const [roundDate, setRoundDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [players, setPlayers] = useState([]); // {name, hcp}
   const [pontoPairing, setPontoPairing] = useState([[0, 1], [2, 3]]);
@@ -1109,6 +1110,8 @@ export default function GolfScorecard() {
   const [groupsLoading, setGroupsLoading] = useState(false);
   const [groupsErr, setGroupsErr] = useState("");
   const [createGroupName, setCreateGroupName] = useState("");
+  const [createGroupAvatar, setCreateGroupAvatar] = useState("");
+  const [createGroupAvatarPickerOpen, setCreateGroupAvatarPickerOpen] = useState(false);
   const [createGroupBusy, setCreateGroupBusy] = useState(false);
   const [joinGroupCode, setJoinGroupCode] = useState("");
   const [joinGroupBusy, setJoinGroupBusy] = useState(false);
@@ -1265,6 +1268,7 @@ export default function GolfScorecard() {
   // ---- Tournament (multi-foursome) state ----
   const [activeTournament, setActiveTournament] = useState(null); // tournament object once created/joined, drives "foursome mode" in setup
   const [tournamentName, setTournamentName] = useState("");
+  const [tournamentAvatarPickerOpen, setTournamentAvatarPickerOpen] = useState(false);
   const [tournamentDate, setTournamentDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [tournamentCourseName, setTournamentCourseName] = useState("");
   const [tournamentGameKey, setTournamentGameKey] = useState(null);
@@ -1709,14 +1713,14 @@ export default function GolfScorecard() {
     setGroupsLoading(true);
     setGroupsErr("");
     const { data, error } = await withJwtRetry(() =>
-      supabase.from("group_members").select("group_id, groups(name)").eq("user_id", session.user.id)
+      supabase.from("group_members").select("group_id, groups(name, avatar)").eq("user_id", session.user.id)
     );
     setGroupsLoading(false);
     if (error) {
       setGroupsErr(`Couldn't load your groups (${error.message}).`);
       return;
     }
-    setMyGroups((data || []).map((row) => ({ id: row.group_id, name: row.groups ? row.groups.name : "Group" })));
+    setMyGroups((data || []).map((row) => ({ id: row.group_id, name: row.groups ? row.groups.name : "Group", avatar: row.groups ? row.groups.avatar : "" })));
   }
 
   async function createGroup() {
@@ -1729,7 +1733,7 @@ export default function GolfScorecard() {
     setCreateGroupBusy(true);
     setGroupsErr("");
     const code = genCode();
-    const { error: groupErr } = await supabase.from("groups").insert({ id: code, name, created_by: session.user.id });
+    const { error: groupErr } = await supabase.from("groups").insert({ id: code, name, avatar: createGroupAvatar, created_by: session.user.id });
     if (groupErr) {
       setCreateGroupBusy(false);
       setGroupsErr(`Couldn't create the group (${groupErr.message}).`);
@@ -1752,6 +1756,8 @@ export default function GolfScorecard() {
         if (lbError) console.warn("Couldn't sync leaderboard name:", lbError.message);
       });
     setCreateGroupName("");
+    setCreateGroupAvatar("");
+    setCreateGroupAvatarPickerOpen(false);
     loadMyGroups();
   }
 
@@ -2918,6 +2924,7 @@ export default function GolfScorecard() {
       scores: emptyScores(),
       bonusMulligans: [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]],
       holeGPS: finalCfg.gpsHoleData || null,
+      avatar: finalCfg.roundAvatar || "",
       createdAt: Date.now(),
       tournamentId: isTournament ? activeTournament.id : null,
       foursomeName: isTournament ? foursomeName : null,
@@ -3081,6 +3088,7 @@ export default function GolfScorecard() {
         scores: emptyScores(),
         bonusMulligans: [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]],
         holeGPS: cleanCfg.gpsHoleData || null,
+        avatar: cleanCfg.roundAvatar || "",
         createdAt: Date.now(),
         tournamentId: code,
         foursomeName,
@@ -4890,7 +4898,15 @@ function computeRoundScoring(round) {
                     {"\u2039"} Back to my groups
                   </button>
                   <div style={{ fontWeight: 700, fontSize: 15, color: "#1B4332", marginBottom: 6 }}>
-                    {myGroups.find((g) => g.id === selectedGroupId)?.name || "Group"} Leaderboard
+                    {(() => {
+                      const g = myGroups.find((g) => g.id === selectedGroupId);
+                      return (
+                        <>
+                          {g && g.avatar && <span style={{ marginRight: 6 }}>{g.avatar}</span>}
+                          {(g && g.name) || "Group"} Leaderboard
+                        </>
+                      );
+                    })()}
                   </div>
                   <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 10 }}>
                     Group code: <span className="gsc-mono" style={{ fontWeight: 700, color: "#1B4332" }}>{selectedGroupId}</span> - share this with anyone you want to invite.
@@ -4974,7 +4990,10 @@ function computeRoundScoring(round) {
                           onClick={() => loadGroupLeaderboard(grp.id)}
                           style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #eee6cf", cursor: "pointer" }}
                         >
-                          <div style={{ fontSize: 13, fontWeight: 600, color: "#1B4332" }}>{grp.name}</div>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: "#1B4332", display: "flex", alignItems: "center", gap: 8 }}>
+                            {grp.avatar && <span style={{ fontSize: 16 }}>{grp.avatar}</span>}
+                            {grp.name}
+                          </div>
                           <span style={{ color: "#8FA998", fontSize: 14 }}>{"\u203A"}</span>
                         </div>
                       ))}
@@ -4988,12 +5007,40 @@ function computeRoundScoring(round) {
                   {groupsErr && <div style={{ color: "#C1440E", fontSize: 12, marginBottom: 10 }}>{groupsErr}</div>}
 
                   <div style={{ fontSize: 11, color: "#8a8a80", textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 700, marginBottom: 6 }}>Create a Group</div>
-                  <div className="gsc-row" style={{ marginBottom: 14 }}>
+                  <div className="gsc-row" style={{ marginBottom: 8, alignItems: "center" }}>
+                    <button
+                      onClick={() => setCreateGroupAvatarPickerOpen((v) => !v)}
+                      style={{ width: 40, height: 40, borderRadius: "50%", border: "1.5px solid #d8d2bd", background: "#fff", fontSize: 18, cursor: "pointer", flex: "0 0 auto", position: "relative" }}
+                    >
+                      {createGroupAvatar || "\u{1F465}"}
+                      {!createGroupAvatar && (
+                        <span style={{ position: "absolute", bottom: -2, right: -2, width: 14, height: 14, borderRadius: "50%", background: "#C1440E", color: "#fff", fontSize: 10, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", border: "1.5px solid #F3EFE0" }}>
+                          +
+                        </span>
+                      )}
+                    </button>
                     <input className="gsc-input" placeholder="Group name" value={createGroupName} onChange={(e) => setCreateGroupName(e.target.value)} />
                     <button className="gsc-btn gsc-btn-primary" style={{ flex: "0 0 auto" }} disabled={createGroupBusy || !createGroupName.trim()} onClick={createGroup}>
                       {createGroupBusy ? "Creating..." : "Create"}
                     </button>
                   </div>
+                  {createGroupAvatarPickerOpen && (
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8, padding: "4px 0 10px" }}>
+                      {AVATAR_OPTIONS.map((emoji) => (
+                        <button
+                          key={emoji}
+                          onClick={() => {
+                            setCreateGroupAvatar(createGroupAvatar === emoji ? "" : emoji);
+                            setCreateGroupAvatarPickerOpen(false);
+                          }}
+                          style={{ width: 32, height: 32, borderRadius: "50%", border: createGroupAvatar === emoji ? "2px solid #C1440E" : "1.5px solid #d8d2bd", background: "#fff", fontSize: 16, cursor: "pointer" }}
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  <div style={{ marginBottom: 14 }} />
 
                   <div style={{ fontSize: 11, color: "#8a8a80", textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 700, marginBottom: 6 }}>Join a Group</div>
                   <div className="gsc-row">
@@ -5895,6 +5942,36 @@ function computeRoundScoring(round) {
                 value={isTournament ? tournamentName : roundName}
                 onChange={(e) => (isTournament ? setTournamentName(e.target.value) : setRoundName(e.target.value))}
               />
+              <div className="gsc-field" style={{ marginTop: 12 }}>
+                <div className="gsc-label">Round Avatar (optional)</div>
+                <button
+                  onClick={() => setRoundAvatarPickerOpen((v) => !v)}
+                  style={{ width: 44, height: 44, borderRadius: "50%", border: "1.5px solid #d8d2bd", background: "#fff", fontSize: 20, cursor: "pointer", position: "relative" }}
+                >
+                  {activeCfg.roundAvatar || "\u{1F3CC}\u{FE0F}"}
+                  {!activeCfg.roundAvatar && (
+                    <span style={{ position: "absolute", bottom: -2, right: -2, width: 16, height: 16, borderRadius: "50%", background: "#C1440E", color: "#fff", fontSize: 11, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", border: "1.5px solid #F3EFE0" }}>
+                      +
+                    </span>
+                  )}
+                </button>
+                {roundAvatarPickerOpen && (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8, padding: "10px 0 0" }}>
+                    {AVATAR_OPTIONS.map((emoji) => (
+                      <button
+                        key={emoji}
+                        onClick={() => {
+                          setActiveCfg({ ...activeCfg, roundAvatar: activeCfg.roundAvatar === emoji ? "" : emoji });
+                          setRoundAvatarPickerOpen(false);
+                        }}
+                        style={{ width: 36, height: 36, borderRadius: "50%", border: activeCfg.roundAvatar === emoji ? "2px solid #C1440E" : "1.5px solid #d8d2bd", background: "#fff", fontSize: 18, cursor: "pointer" }}
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
               <button
                 className="gsc-btn gsc-btn-primary"
                 style={{ width: "100%", marginTop: 14 }}
@@ -6257,6 +6334,38 @@ function computeRoundScoring(round) {
               value={roundName}
               onChange={(e) => setRoundName(e.target.value)}
             />
+            {!activeTournament && (
+              <div className="gsc-field" style={{ marginTop: 12 }}>
+                <div className="gsc-label">Round Avatar (optional)</div>
+                <button
+                  onClick={() => setRoundAvatarPickerOpen((v) => !v)}
+                  style={{ width: 44, height: 44, borderRadius: "50%", border: "1.5px solid #d8d2bd", background: "#fff", fontSize: 20, cursor: "pointer", position: "relative" }}
+                >
+                  {cfg.roundAvatar || "\u{1F3CC}\u{FE0F}"}
+                  {!cfg.roundAvatar && (
+                    <span style={{ position: "absolute", bottom: -2, right: -2, width: 16, height: 16, borderRadius: "50%", background: "#C1440E", color: "#fff", fontSize: 11, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", border: "1.5px solid #F3EFE0" }}>
+                      +
+                    </span>
+                  )}
+                </button>
+                {roundAvatarPickerOpen && (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8, padding: "10px 0 0" }}>
+                    {AVATAR_OPTIONS.map((emoji) => (
+                      <button
+                        key={emoji}
+                        onClick={() => {
+                          setCfg({ ...cfg, roundAvatar: cfg.roundAvatar === emoji ? "" : emoji });
+                          setRoundAvatarPickerOpen(false);
+                        }}
+                        style={{ width: 36, height: 36, borderRadius: "50%", border: cfg.roundAvatar === emoji ? "2px solid #C1440E" : "1.5px solid #d8d2bd", background: "#fff", fontSize: 18, cursor: "pointer" }}
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
             {!activeTournament && (
               <div className="gsc-field" style={{ marginTop: 12 }}>
                 <div className="gsc-label">Date</div>
@@ -6653,6 +6762,36 @@ function computeRoundScoring(round) {
           <div className="gsc-card">
             <div className="gsc-label">Tournament name</div>
             <input className="gsc-input" placeholder="e.g. Club Championship" value={tournamentName} onChange={(e) => setTournamentName(e.target.value)} />
+            <div className="gsc-field" style={{ marginTop: 12 }}>
+              <div className="gsc-label">Round Avatar (optional)</div>
+              <button
+                onClick={() => setTournamentAvatarPickerOpen((v) => !v)}
+                style={{ width: 44, height: 44, borderRadius: "50%", border: "1.5px solid #d8d2bd", background: "#fff", fontSize: 20, cursor: "pointer", position: "relative" }}
+              >
+                {tournamentCfg.roundAvatar || "\u{1F3CC}\u{FE0F}"}
+                {!tournamentCfg.roundAvatar && (
+                  <span style={{ position: "absolute", bottom: -2, right: -2, width: 16, height: 16, borderRadius: "50%", background: "#C1440E", color: "#fff", fontSize: 11, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", border: "1.5px solid #F3EFE0" }}>
+                    +
+                  </span>
+                )}
+              </button>
+              {tournamentAvatarPickerOpen && (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8, padding: "10px 0 0" }}>
+                  {AVATAR_OPTIONS.map((emoji) => (
+                    <button
+                      key={emoji}
+                      onClick={() => {
+                        setTournamentCfg({ ...tournamentCfg, roundAvatar: tournamentCfg.roundAvatar === emoji ? "" : emoji });
+                        setTournamentAvatarPickerOpen(false);
+                      }}
+                      style={{ width: 36, height: 36, borderRadius: "50%", border: tournamentCfg.roundAvatar === emoji ? "2px solid #C1440E" : "1.5px solid #d8d2bd", background: "#fff", fontSize: 18, cursor: "pointer" }}
+                    >
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
             <div className="gsc-field" style={{ marginTop: 12 }}>
               <div className="gsc-label">Date</div>
               <input className="gsc-input" type="date" value={tournamentDate} onChange={(e) => setTournamentDate(e.target.value)} />
@@ -7504,6 +7643,11 @@ function computeRoundScoring(round) {
                 <button className="gsc-link" style={{ color: "#F3EFE0", fontSize: 11, textDecoration: "underline" }} onClick={() => openTournamentBoard(round.tournamentId)}>
                   Leaderboard
                 </button>
+              )}
+              {round.avatar && (
+                <div style={{ fontSize: 24, marginTop: 2 }} title="Round avatar">
+                  {round.avatar}
+                </div>
               )}
             </div>
           }
