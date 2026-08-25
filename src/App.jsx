@@ -8737,7 +8737,7 @@ function computeRoundScoring(round) {
           )}
 
           <div className="gsc-card">
-            <div className="gsc-label" style={{ marginBottom: 8 }}>Notes (ex: What clubs did you use on this hole)</div>
+            <div className="gsc-label" style={{ marginBottom: 8 }}>Notes</div>
             <textarea
               className="gsc-input"
               style={{ width: "100%", minHeight: 60, resize: "vertical", fontFamily: "inherit" }}
