@@ -1115,6 +1115,10 @@ export default function GolfScorecard() {
   const [profileForm, setProfileForm] = useState({ name: "", handicap: "", venmo: "", home_course: "", leaderboard_opt_in: false, avatar: "" });
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileSaving, setProfileSaving] = useState(false);
+  const [deleteAccountOpen, setDeleteAccountOpen] = useState(false);
+  const [deleteAccountConfirmText, setDeleteAccountConfirmText] = useState("");
+  const [deleteAccountBusy, setDeleteAccountBusy] = useState(false);
+  const [deleteAccountErr, setDeleteAccountErr] = useState("");
   const [profileErr, setProfileErr] = useState("");
   const [profileSaved, setProfileSaved] = useState(false);
 
@@ -1510,6 +1514,37 @@ export default function GolfScorecard() {
     if (supabase) await supabase.auth.signOut();
     setProfile(null);
     setProfileForm({ name: "", handicap: "", venmo: "", home_course: "", leaderboard_opt_in: false, avatar: "" });
+  }
+
+  async function deleteMyAccount() {
+    if (!session || !supabase) return;
+    setDeleteAccountErr("");
+    setDeleteAccountBusy(true);
+    try {
+      const res = await fetch("/api/delete-account", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data || !data.success) {
+        setDeleteAccountBusy(false);
+        setDeleteAccountErr((data && data.error) || "Couldn't delete your account. Please try again or contact support.");
+        return;
+      }
+    } catch (e) {
+      setDeleteAccountBusy(false);
+      setDeleteAccountErr("Couldn't reach the server. Please check your connection and try again.");
+      return;
+    }
+    // The account and its data are gone server-side - clear local state
+    // and sign out, same as a normal logout, then land back on Home.
+    await supabase.auth.signOut();
+    setProfile(null);
+    setProfileForm({ name: "", handicap: "", venmo: "", home_course: "", leaderboard_opt_in: false, avatar: "" });
+    setDeleteAccountBusy(false);
+    setDeleteAccountOpen(false);
+    setDeleteAccountConfirmText("");
+    goToScreen("home");
   }
 
   async function loadProfile(userId) {
@@ -5089,6 +5124,49 @@ function computeRoundScoring(round) {
               <button className="gsc-link" style={{ marginTop: 16, fontSize: 12, color: "#C1440E" }} onClick={signOutUser}>
                 Log out
               </button>
+
+              {!deleteAccountOpen ? (
+                <button
+                  className="gsc-link"
+                  style={{ marginTop: 10, fontSize: 12, color: "#8a8a80" }}
+                  onClick={() => { setDeleteAccountOpen(true); setDeleteAccountErr(""); setDeleteAccountConfirmText(""); }}
+                >
+                  Delete account
+                </button>
+              ) : (
+                <div style={{ marginTop: 14, padding: 14, background: "#FBEAE5", border: "1px solid #C1440E", borderRadius: 10 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: "#C1440E", marginBottom: 6 }}>
+                    This permanently deletes your account
+                  </div>
+                  <div style={{ fontSize: 12, color: "#4b4b45", marginBottom: 10 }}>
+                    Your profile, saved defaults, personal round history, and group memberships will all be permanently removed. This cannot be undone. Scores you've entered in rounds shared with other players may remain visible to them.
+                  </div>
+                  <div style={{ fontSize: 12, color: "#4b4b45", marginBottom: 6 }}>
+                    Type <strong>DELETE</strong> to confirm:
+                  </div>
+                  <input
+                    className="gsc-input"
+                    style={{ marginBottom: 10 }}
+                    value={deleteAccountConfirmText}
+                    onChange={(e) => setDeleteAccountConfirmText(e.target.value)}
+                    placeholder="DELETE"
+                  />
+                  {deleteAccountErr && <div style={{ color: "#C1440E", fontSize: 12, marginBottom: 10 }}>{deleteAccountErr}</div>}
+                  <div className="gsc-row">
+                    <button
+                      className="gsc-btn"
+                      style={{ background: "#C1440E", color: "#fff" }}
+                      disabled={deleteAccountBusy || deleteAccountConfirmText.trim().toUpperCase() !== "DELETE"}
+                      onClick={deleteMyAccount}
+                    >
+                      {deleteAccountBusy ? "Deleting..." : "Permanently delete my account"}
+                    </button>
+                    <button className="gsc-btn gsc-btn-outline" style={{ flex: "0 0 auto" }} onClick={() => setDeleteAccountOpen(false)}>
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
