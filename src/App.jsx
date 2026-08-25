@@ -1143,6 +1143,8 @@ export default function GolfScorecard() {
   const [createGroupAvatar, setCreateGroupAvatar] = useState("");
   const [createGroupAvatarPickerOpen, setCreateGroupAvatarPickerOpen] = useState(false);
   const [editGroupAvatarPickerOpen, setEditGroupAvatarPickerOpen] = useState(false);
+  const [deleteGroupConfirming, setDeleteGroupConfirming] = useState(false);
+  const [deleteGroupBusy, setDeleteGroupBusy] = useState(false);
   const [createGroupBusy, setCreateGroupBusy] = useState(false);
   const [joinGroupCode, setJoinGroupCode] = useState("");
   const [joinGroupBusy, setJoinGroupBusy] = useState(false);
@@ -1854,6 +1856,33 @@ export default function GolfScorecard() {
     setMyGroups((prev) => prev.map((g) => (g.id === groupId ? { ...g, avatar } : g)));
   }
 
+  // Only the group's creator can do this - matches the new RLS delete
+  // policies, so anyone else's attempt would be rejected server-side
+  // anyway. Removes member rows first, then the group itself, since a
+  // cascade delete on the members table isn't something we can assume
+  // was set up when groups were first built.
+  async function deleteGroup(groupId) {
+    if (!session || !supabase) return;
+    setGroupsErr("");
+    setDeleteGroupBusy(true);
+    const { error: memErr } = await supabase.from("group_members").delete().eq("group_id", groupId);
+    if (memErr) {
+      setDeleteGroupBusy(false);
+      setGroupsErr(`Couldn't delete the group (${memErr.message}).`);
+      return;
+    }
+    const { error: groupErr } = await supabase.from("groups").delete().eq("id", groupId);
+    if (groupErr) {
+      setDeleteGroupBusy(false);
+      setGroupsErr(`Couldn't delete the group (${groupErr.message}).`);
+      return;
+    }
+    setMyGroups((prev) => prev.filter((g) => g.id !== groupId));
+    setDeleteGroupBusy(false);
+    setDeleteGroupConfirming(false);
+    setSelectedGroupId(null);
+  }
+
   // Creates a group from whoever was actually account-linked in a
   // just-finished round, adding them all as members directly rather than
   // requiring each person to separately join via the group's code - relies
@@ -2214,6 +2243,7 @@ export default function GolfScorecard() {
 
   useEffect(() => {
     setEditGroupAvatarPickerOpen(false);
+    setDeleteGroupConfirming(false);
   }, [selectedGroupId]);
 
   useEffect(() => {
@@ -5417,6 +5447,46 @@ function computeRoundScoring(round) {
                             {emoji}
                           </button>
                         ))}
+                      </div>
+                    );
+                  })()}
+                  {(() => {
+                    const g = myGroups.find((g) => g.id === selectedGroupId);
+                    const canEdit = g && session && g.createdBy === session.user.id;
+                    if (!canEdit) return null;
+                    if (!deleteGroupConfirming) {
+                      return (
+                        <button
+                          className="gsc-link"
+                          style={{ fontSize: 12, color: "#8a8a80", marginBottom: 12 }}
+                          onClick={() => setDeleteGroupConfirming(true)}
+                        >
+                          Delete group
+                        </button>
+                      );
+                    }
+                    return (
+                      <div style={{ marginBottom: 12, padding: 12, background: "#FBEAE5", border: "1px solid #C1440E", borderRadius: 10 }}>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: "#C1440E", marginBottom: 6 }}>
+                          Delete "{g.name}"?
+                        </div>
+                        <div style={{ fontSize: 12, color: "#4b4b45", marginBottom: 10 }}>
+                          This removes the group and its leaderboard for everyone in it. This cannot be undone.
+                        </div>
+                        {groupsErr && <div style={{ color: "#C1440E", fontSize: 12, marginBottom: 10 }}>{groupsErr}</div>}
+                        <div className="gsc-row">
+                          <button
+                            className="gsc-btn"
+                            style={{ background: "#C1440E", color: "#fff" }}
+                            disabled={deleteGroupBusy}
+                            onClick={() => deleteGroup(g.id)}
+                          >
+                            {deleteGroupBusy ? "Deleting..." : "Yes, delete this group"}
+                          </button>
+                          <button className="gsc-btn gsc-btn-outline" style={{ flex: "0 0 auto" }} onClick={() => setDeleteGroupConfirming(false)}>
+                            Cancel
+                          </button>
+                        </div>
                       </div>
                     );
                   })()}
