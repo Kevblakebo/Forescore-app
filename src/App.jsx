@@ -5076,7 +5076,7 @@ function computeRoundScoring(round) {
 
           {session && (
             <div className="gsc-card">
-              <div className="gsc-label" style={{ marginBottom: 10 }}>Your Stats</div>
+              <div className="gsc-label" style={{ marginBottom: 10 }}>My Stats</div>
 
               <div style={{ display: "flex", alignItems: "flex-end", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
                 <div style={{ flex: "1 1 120px" }}>
