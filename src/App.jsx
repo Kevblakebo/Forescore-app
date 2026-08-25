@@ -4501,7 +4501,7 @@ function computeRoundScoring(round) {
         />
         <div className="gsc-body gsc-body-tabbed">
           {!session && (
-            <div style={{ fontSize: 13, fontWeight: 700, color: "#1B4332", lineHeight: 1.5, margin: "0 0 16px" }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "#1B4332", lineHeight: 1.5, margin: "0 0 16px", padding: "10px 12px", border: "1px solid #C1440E", borderRadius: 8, background: "#EBF0EC" }}>
               Create or Log In to your Account now to access premium features including GPS, course info, stats, groups, leaderboards, and prior saved rounds!
             </div>
           )}
