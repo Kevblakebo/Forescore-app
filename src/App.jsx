@@ -4046,7 +4046,7 @@ export default function GolfScorecard() {
   }
 
   // Lets anyone award a player an extra mulligan mid-round, once they've
-  // done whatever the group agreed on (down a beer, pay into the pot,
+  // done whatever the group agreed on (give to charity, pay into the pot,
   // etc). Scoped to the segment they're currently playing in, matching
   // how mulligansUsed is already tracked per-segment - defensively
   // rebuilds the array if this round predates the feature.
@@ -6584,7 +6584,7 @@ function computeRoundScoring(round) {
                 <div className="gsc-label">Earn a bonus mulligan (optional)</div>
                 <input
                   className="gsc-input"
-                  placeholder="e.g. Down a beer, do a shot, pay $5 to the pot"
+                  placeholder="e.g. Give to charity"
                   value={activeCfg.mulliganChallenge}
                   onChange={(e) => setActiveCfg({ ...activeCfg, mulliganChallenge: e.target.value })}
                 />
@@ -7089,7 +7089,7 @@ function computeRoundScoring(round) {
                 <div className="gsc-label">Earn a bonus mulligan (optional)</div>
                 <input
                   className="gsc-input"
-                  placeholder="e.g. Down a beer, do a shot, pay $5 to the pot"
+                  placeholder="e.g. Give to charity"
                   value={cfg.mulliganChallenge}
                   onChange={(e) => setCfg({ ...cfg, mulliganChallenge: e.target.value })}
                 />
@@ -7560,7 +7560,7 @@ function computeRoundScoring(round) {
                 <div className="gsc-label">Earn a bonus mulligan (optional)</div>
                 <input
                   className="gsc-input"
-                  placeholder="e.g. Down a beer, do a shot, pay $5 to the pot"
+                  placeholder="e.g. Give to charity"
                   value={tournamentCfg.mulliganChallenge}
                   onChange={(e) => setTournamentCfg({ ...tournamentCfg, mulliganChallenge: e.target.value })}
                 />
