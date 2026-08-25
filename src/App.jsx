@@ -2159,6 +2159,24 @@ export default function GolfScorecard() {
     setPostRoundGroupDismissed(false);
   }, [round && round.id]);
 
+  // If a course was already picked while logged out, GPS couldn't fetch
+  // at that moment (it's gated behind login), so selectedCourseId gets
+  // stored regardless of login status specifically to make this possible:
+  // once login happens, retroactively fetch GPS for whatever course is
+  // already sitting there without it. Self-limiting - once gpsCourseLabel
+  // is actually set, the condition here goes false, so this won't keep
+  // re-fetching on every subsequent session change (e.g. a token refresh
+  // that doesn't reflect an actual new login).
+  useEffect(() => {
+    if (!session) return;
+    if (cfg.selectedCourseId && !cfg.gpsCourseLabel) {
+      fetchAndApplyGps(cfg.selectedCourseId, courseName || cfg.selectedCourseId, setCfg);
+    }
+    if (tournamentCfg.selectedCourseId && !tournamentCfg.gpsCourseLabel) {
+      fetchAndApplyGps(tournamentCfg.selectedCourseId, tournamentCourseName || tournamentCfg.selectedCourseId, setTournamentCfg);
+    }
+  }, [session]);
+
   useEffect(() => {
     (async () => {
       const res = await storageGet(ACTIVE_KEY, false);
@@ -2731,13 +2749,13 @@ export default function GolfScorecard() {
       setTournamentYardage(nextYardage);
       setTournamentStrokeIndex(nextStrokeIndex);
       setTournamentCourseName(courseLabel);
-      setTournamentCfg((c) => ({ ...c, teeName: tee.teeName || "" }));
+      setTournamentCfg((c) => ({ ...c, teeName: tee.teeName || "", selectedCourseId: courseID }));
     } else {
       setPar(next);
       setYardage(nextYardage);
       setStrokeIndex(nextStrokeIndex);
       setCourseName(courseLabel);
-      setCfg((c) => ({ ...c, teeName: tee.teeName || "" }));
+      setCfg((c) => ({ ...c, teeName: tee.teeName || "", selectedCourseId: courseID }));
     }
     if (holeCount !== 18) {
       setCourseMsg(`Loaded ${holeCount} of 18 holes from "${courseLabel}" (${tee.teeName}) - fill in the rest manually.`);
@@ -2754,19 +2772,30 @@ export default function GolfScorecard() {
     // also fills in live distance-to-green automatically, with no second
     // search required. Doesn't block or show an error if it fails, since
     // GPS here is a bonus on top of the par/yardage that already loaded
-    // successfully, not something this step depends on.
+    // successfully, not something this step depends on. selectedCourseId
+    // is stored above regardless of login status specifically so that if
+    // someone logs in *after* this point, a separate effect can retry
+    // this same fetch retroactively for whatever course they already
+    // picked, rather than requiring them to have logged in first.
     if (session) {
-      const setActiveCfgFn = forTournament ? setTournamentCfg : setCfg;
-      fetch(`/api/course-gps-coordinates?id=${encodeURIComponent(courseID)}`)
-        .then((r) => r.json().catch(() => null))
-        .then((gpsData) => {
-          if (gpsData && gpsData.coordinates) {
-            const holeGPS = processGpsCoordinates(gpsData.coordinates);
-            setActiveCfgFn((c) => ({ ...c, gpsCourseId: courseID, gpsCourseLabel: courseLabel, gpsHoleData: holeGPS }));
-          }
-        })
-        .catch(() => {});
+      fetchAndApplyGps(courseID, courseLabel, forTournament ? setTournamentCfg : setCfg);
     }
+  }
+
+  // Fetches and stores GPS coordinates for a given course - shared by
+  // applyCourseTee (fetched right when a tee is picked, if already logged
+  // in) and the retroactive-fetch effect below (fetched after logging in,
+  // for a course that was picked while still logged out).
+  function fetchAndApplyGps(courseID, courseLabel, setActiveCfgFn) {
+    fetch(`/api/course-gps-coordinates?id=${encodeURIComponent(courseID)}`)
+      .then((r) => r.json().catch(() => null))
+      .then((gpsData) => {
+        if (gpsData && gpsData.coordinates) {
+          const holeGPS = processGpsCoordinates(gpsData.coordinates);
+          setActiveCfgFn((c) => ({ ...c, gpsCourseId: courseID, gpsCourseLabel: courseLabel, gpsHoleData: holeGPS }));
+        }
+      })
+      .catch(() => {});
   }
 
   // ---------- Game Wizard ----------
@@ -6404,6 +6433,27 @@ function computeRoundScoring(round) {
           {wizardStepId === "field_course" && (
             <div className="gsc-card">
               <div className="gsc-label" style={{ marginBottom: 10, fontSize: 16 }}>What course are you playing?</div>
+              {g.hasScore && (
+                <div className="gsc-field" style={{ marginBottom: 14 }}>
+                  <div className="gsc-label">Distance to Green GPS</div>
+                  {!session ? (
+                    <button
+                      onClick={() => goToScreen("login")}
+                      style={{ display: "block", width: "100%", textAlign: "left", fontSize: 12, color: "#6b6b63", padding: "8px 10px", background: "#F8F1E4", border: "none", borderRadius: 8, cursor: "pointer" }}
+                    >
+                      {"\u26F3"} Log in to unlock live distance-to-green GPS. <span style={{ textDecoration: "underline", fontWeight: 700 }}>Tap to log in</span>
+                    </button>
+                  ) : activeCfg.gpsCourseLabel ? (
+                    <div style={{ fontSize: 12, color: "#1B4332", fontWeight: 600, padding: "8px 10px", background: "#EBF0EC", borderRadius: 8 }}>
+                      {"\u26F3"} Enabled for {activeCfg.gpsCourseLabel}
+                    </div>
+                  ) : (
+                    <div style={{ fontSize: 12, color: "#6b6b63" }}>
+                      Automatically enabled when you search and select your course below, if GPS data is available for it.
+                    </div>
+                  )}
+                </div>
+              )}
               {activeCourseName && courseSelectedViaSearch ? (
                 <div className="gsc-card gsc-winner-card" style={{ padding: 12 }}>
                   <div className="gsc-label" style={{ marginBottom: 4 }}>Selected Course</div>
@@ -6552,25 +6602,6 @@ function computeRoundScoring(round) {
                 <div style={{ fontSize: 11, color: "#8a8a80", marginTop: 4 }}>
                   If set, anyone can award a player an extra mulligan on the scoring screen once they've done this.
                 </div>
-              </div>
-              <div className="gsc-field" style={{ marginTop: 10 }}>
-                <div className="gsc-label">Distance to Green GPS</div>
-                {!session ? (
-                  <button
-                    onClick={() => goToScreen("login")}
-                    style={{ display: "block", width: "100%", textAlign: "left", fontSize: 12, color: "#6b6b63", padding: "8px 10px", background: "#F8F1E4", border: "none", borderRadius: 8, cursor: "pointer" }}
-                  >
-                    {"\u26F3"} Log in to unlock live distance-to-green GPS. <span style={{ textDecoration: "underline", fontWeight: 700 }}>Tap to log in</span>
-                  </button>
-                ) : activeCfg.gpsCourseLabel ? (
-                  <div style={{ fontSize: 12, color: "#1B4332", fontWeight: 600, padding: "8px 10px", background: "#EBF0EC", borderRadius: 8 }}>
-                    {"\u26F3"} Enabled for {activeCfg.gpsCourseLabel}
-                  </div>
-                ) : (
-                  <div style={{ fontSize: 12, color: "#6b6b63" }}>
-                    Automatically enabled when you search and select your course above, if GPS data is available for it.
-                  </div>
-                )}
               </div>
               {g.tracksDrives && (
                 <div className="gsc-field" style={{ marginTop: 10 }}>
@@ -6837,6 +6868,27 @@ function computeRoundScoring(round) {
                 <input className="gsc-input" type="date" value={roundDate} onChange={(e) => setRoundDate(e.target.value)} />
               </div>
             )}
+            {!activeTournament && g.hasScore && (
+              <div className="gsc-field" style={{ marginTop: 12 }}>
+                <div className="gsc-label">Distance to Green GPS</div>
+                {!session ? (
+                  <button
+                    onClick={() => goToScreen("login")}
+                    style={{ display: "block", width: "100%", textAlign: "left", fontSize: 12, color: "#6b6b63", padding: "8px 10px", background: "#F8F1E4", border: "none", borderRadius: 8, cursor: "pointer" }}
+                  >
+                    {"\u26F3"} Log in to unlock live distance-to-green GPS. <span style={{ textDecoration: "underline", fontWeight: 700 }}>Tap to log in</span>
+                  </button>
+                ) : cfg.gpsCourseLabel ? (
+                  <div style={{ fontSize: 12, color: "#1B4332", fontWeight: 600, padding: "8px 10px", background: "#EBF0EC", borderRadius: 8 }}>
+                    {"\u26F3"} Enabled for {cfg.gpsCourseLabel}
+                  </div>
+                ) : (
+                  <div style={{ fontSize: 12, color: "#6b6b63" }}>
+                    Automatically enabled when you search and select your course below, if GPS data is available for it.
+                  </div>
+                )}
+              </div>
+            )}
             {!activeTournament && (
               <div className="gsc-field" style={{ marginTop: 12 }}>
                 {courseName && courseSelectedViaSearch ? (
@@ -7055,27 +7107,6 @@ function computeRoundScoring(round) {
                 <div style={{ fontSize: 11, color: "#8a8a80", marginTop: 4 }}>
                   If set, anyone can award a player an extra mulligan on the scoring screen once they've done this.
                 </div>
-              </div>
-            )}
-            {g.hasScore && (
-              <div className="gsc-field" style={{ marginTop: 10 }}>
-                <div className="gsc-label">Distance to Green GPS</div>
-                {!session ? (
-                  <button
-                    onClick={() => goToScreen("login")}
-                    style={{ display: "block", width: "100%", textAlign: "left", fontSize: 12, color: "#6b6b63", padding: "8px 10px", background: "#F8F1E4", border: "none", borderRadius: 8, cursor: "pointer" }}
-                  >
-                    {"\u26F3"} Log in to unlock live distance-to-green GPS. <span style={{ textDecoration: "underline", fontWeight: 700 }}>Tap to log in</span>
-                  </button>
-                ) : cfg.gpsCourseLabel ? (
-                  <div style={{ fontSize: 12, color: "#1B4332", fontWeight: 600, padding: "8px 10px", background: "#EBF0EC", borderRadius: 8 }}>
-                    {"\u26F3"} Enabled for {cfg.gpsCourseLabel}
-                  </div>
-                ) : (
-                  <div style={{ fontSize: 12, color: "#6b6b63" }}>
-                    Automatically enabled when you search and select your course above, if GPS data is available for it.
-                  </div>
-                )}
               </div>
             )}
             <div className="gsc-field">
@@ -7314,6 +7345,27 @@ function computeRoundScoring(round) {
               <div className="gsc-label">Date</div>
               <input className="gsc-input" type="date" value={tournamentDate} onChange={(e) => setTournamentDate(e.target.value)} />
             </div>
+            {tg.hasScore && (
+              <div className="gsc-field" style={{ marginTop: 12 }}>
+                <div className="gsc-label">Distance to Green GPS</div>
+                {!session ? (
+                  <button
+                    onClick={() => goToScreen("login")}
+                    style={{ display: "block", width: "100%", textAlign: "left", fontSize: 12, color: "#6b6b63", padding: "8px 10px", background: "#F8F1E4", border: "none", borderRadius: 8, cursor: "pointer" }}
+                  >
+                    {"\u26F3"} Log in to unlock live distance-to-green GPS. <span style={{ textDecoration: "underline", fontWeight: 700 }}>Tap to log in</span>
+                  </button>
+                ) : tournamentCfg.gpsCourseLabel ? (
+                  <div style={{ fontSize: 12, color: "#1B4332", fontWeight: 600, padding: "8px 10px", background: "#EBF0EC", borderRadius: 8 }}>
+                    {"\u26F3"} Enabled for {tournamentCfg.gpsCourseLabel} (applies to every foursome)
+                  </div>
+                ) : (
+                  <div style={{ fontSize: 12, color: "#6b6b63" }}>
+                    Automatically enabled when you search and select your course below, if GPS data is available for it.
+                  </div>
+                )}
+              </div>
+            )}
             <div className="gsc-field" style={{ marginTop: 12 }}>
               {tournamentCourseName && courseSelectedViaSearch ? (
                 <div className="gsc-card gsc-winner-card" style={{ padding: 12 }}>
@@ -7526,27 +7578,6 @@ function computeRoundScoring(round) {
                 <div style={{ fontSize: 11, color: "#8a8a80", marginTop: 4 }}>
                   If set, anyone can award a player an extra mulligan on the scoring screen once they've done this.
                 </div>
-              </div>
-            )}
-            {tg.hasScore && (
-              <div className="gsc-field" style={{ marginTop: 10 }}>
-                <div className="gsc-label">Distance to Green GPS</div>
-                {!session ? (
-                  <button
-                    onClick={() => goToScreen("login")}
-                    style={{ display: "block", width: "100%", textAlign: "left", fontSize: 12, color: "#6b6b63", padding: "8px 10px", background: "#F8F1E4", border: "none", borderRadius: 8, cursor: "pointer" }}
-                  >
-                    {"\u26F3"} Log in to unlock live distance-to-green GPS. <span style={{ textDecoration: "underline", fontWeight: 700 }}>Tap to log in</span>
-                  </button>
-                ) : tournamentCfg.gpsCourseLabel ? (
-                  <div style={{ fontSize: 12, color: "#1B4332", fontWeight: 600, padding: "8px 10px", background: "#EBF0EC", borderRadius: 8 }}>
-                    {"\u26F3"} Enabled for {tournamentCfg.gpsCourseLabel} (applies to every foursome)
-                  </div>
-                ) : (
-                  <div style={{ fontSize: 12, color: "#6b6b63" }}>
-                    Automatically enabled when you search and select your course above, if GPS data is available for it.
-                  </div>
-                )}
               </div>
             )}
             {tg.tracksDrives && (
