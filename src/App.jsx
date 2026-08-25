@@ -4485,8 +4485,8 @@ function computeRoundScoring(round) {
     { key: "home", label: "Home", icon: HomeIcon },
     { key: "roundsTab", label: "Rounds", icon: FlagIcon },
     { key: "tournamentsTab", label: "Tournaments", icon: TrophyIcon },
-    { key: "libraryTab", label: "Library", icon: LibraryIcon },
     { key: "profileTab", label: "Profile", icon: UserIcon },
+    { key: "libraryTab", label: "Library", icon: LibraryIcon },
   ];
 
   // Persistent bottom tab bar - only rendered on the five top-level "tab"
@@ -4716,17 +4716,6 @@ function computeRoundScoring(round) {
             </div>
           </div>
 
-          <div className="gsc-card gsc-game-card" onClick={() => goToScreen("libraryTab")}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <div>
-                <div style={{ fontWeight: 700, fontSize: 15 }}>Library</div>
-                <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 2 }}>Golf Games Library</div>
-                <div style={{ fontSize: 12, color: "#6b6b63" }}>About this App</div>
-              </div>
-              <LibraryIcon size={20} color="#8FA998" />
-            </div>
-          </div>
-
           <div className="gsc-card gsc-game-card" onClick={() => goToScreen("profileTab")}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <div>
@@ -4735,6 +4724,17 @@ function computeRoundScoring(round) {
                 <div style={{ fontSize: 12, color: "#6b6b63" }}>Stats - your rounds, averages, and wins</div>
               </div>
               <UserIcon size={20} color="#8FA998" />
+            </div>
+          </div>
+
+          <div className="gsc-card gsc-game-card" onClick={() => goToScreen("libraryTab")}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: 15 }}>Library</div>
+                <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 2 }}>Golf Games Library</div>
+                <div style={{ fontSize: 12, color: "#6b6b63" }}>About this App</div>
+              </div>
+              <LibraryIcon size={20} color="#8FA998" />
             </div>
           </div>
         </div>
