@@ -1298,6 +1298,7 @@ export default function GolfScorecard() {
   const [confirmFinishOpen, setConfirmFinishOpen] = useState(false);
   const [viewingRoundFromStats, setViewingRoundFromStats] = useState(false);
   const [rulesOpenFor, setRulesOpenFor] = useState(null);
+  const [quickInfoFor, setQuickInfoFor] = useState(null);
 
   // ---- Tournament (multi-foursome) state ----
   const [activeTournament, setActiveTournament] = useState(null); // tournament object once created/joined, drives "foursome mode" in setup
@@ -2024,6 +2025,34 @@ export default function GolfScorecard() {
             )}
           </ul>
           <button className="gsc-btn gsc-btn-primary" style={{ width: "100%" }} onClick={closeRules}>
+            Close
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  function QuickInfoModal() {
+    if (!quickInfoFor) return null;
+    const qg = GAMES[quickInfoFor];
+    if (!qg) return null;
+    return (
+      <div className="gsc-modal-backdrop" onClick={() => setQuickInfoFor(null)}>
+        <div className="gsc-modal" style={{ maxWidth: 400 }} onClick={(e) => e.stopPropagation()}>
+          <div className="gsc-modal-title">{qg.name}</div>
+          {qg.tag && <div className="gsc-tag" style={{ marginBottom: 14 }}>{qg.tag}</div>}
+          <div style={{ fontSize: 14, color: "#4b4b45", lineHeight: 1.6, marginBottom: 16 }}>{qg.desc}</div>
+          <button
+            className="gsc-link"
+            style={{ fontSize: 13, fontWeight: 700, marginBottom: 16, display: "block" }}
+            onClick={() => {
+              setQuickInfoFor(null);
+              openRules(quickInfoFor);
+            }}
+          >
+            View full rules
+          </button>
+          <button className="gsc-btn gsc-btn-primary" style={{ width: "100%" }} onClick={() => setQuickInfoFor(null)}>
             Close
           </button>
         </div>
@@ -4624,11 +4653,11 @@ function computeRoundScoring(round) {
                   <div
                     key={key}
                     onClick={() => (GAMES[key].tournamentOnly ? startTournamentCreateFlow(key) : startNewRound(key))}
-                    style={{ position: "relative", background: bg, borderRadius: 12, padding: "16px 6px 12px", textAlign: "center", cursor: "pointer" }}
+                    style={{ position: "relative", background: bg, borderRadius: 12, padding: "16px 6px 12px", textAlign: "center", cursor: "pointer", minHeight: 108, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}
                   >
                     <button
-                      onClick={(e) => { e.stopPropagation(); openRules(key); }}
-                      title="View full rules"
+                      onClick={(e) => { e.stopPropagation(); setQuickInfoFor(key); }}
+                      title="Quick info"
                       style={{ position: "absolute", top: 4, right: 4, width: 20, height: 20, borderRadius: "50%", background: "rgba(255,255,255,0.25)", border: "none", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
                     >
                       i
@@ -4757,6 +4786,7 @@ function computeRoundScoring(round) {
           </div>
         </div>
         {RulesModal()}
+        {QuickInfoModal()}
         <BottomNav />
       </div>
     );
