@@ -7205,7 +7205,7 @@ function computeRoundScoring(round) {
                         <div style={{ fontSize: 11, color: "#1B4332", fontWeight: 700 }}>
                           {"\u2713"} Linked to {p.name}'s account
                         </div>
-                        <button className="gsc-link" style={{ fontSize: 11 }} onClick={() => unlinkFoursomePlayerSlot(fi, pi)}>
+                        <button className="gsc-link" style={{ fontSize: 11 }} onClick={() => unlinkPlayerSlot(i)}>
                           Change
                         </button>
                       </div>
@@ -7733,7 +7733,7 @@ function computeRoundScoring(round) {
                           <div style={{ fontSize: 11, color: "#1B4332", fontWeight: 700 }}>
                             {"\u2713"} Linked to {p.name}'s account
                           </div>
-                          <button className="gsc-link" style={{ fontSize: 11 }} onClick={() => unlinkPlayerSlot(i)}>
+                          <button className="gsc-link" style={{ fontSize: 11 }} onClick={() => unlinkFoursomePlayerSlot(fi, pi)}>
                             Change
                           </button>
                         </div>
