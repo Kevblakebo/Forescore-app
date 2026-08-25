@@ -5121,19 +5121,23 @@ function computeRoundScoring(round) {
                 </>
               )}
 
-              <button className="gsc-link" style={{ marginTop: 16, fontSize: 12, color: "#C1440E" }} onClick={signOutUser}>
-                Log out
-              </button>
-
-              {!deleteAccountOpen ? (
-                <button
-                  className="gsc-link"
-                  style={{ marginTop: 10, fontSize: 12, color: "#8a8a80" }}
-                  onClick={() => { setDeleteAccountOpen(true); setDeleteAccountErr(""); setDeleteAccountConfirmText(""); }}
-                >
-                  Delete account
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 16 }}>
+                <button className="gsc-link" style={{ fontSize: 12, color: "#C1440E" }} onClick={signOutUser}>
+                  Log out
                 </button>
-              ) : (
+
+                {!deleteAccountOpen && (
+                  <button
+                    className="gsc-link"
+                    style={{ fontSize: 12, color: "#8a8a80" }}
+                    onClick={() => { setDeleteAccountOpen(true); setDeleteAccountErr(""); setDeleteAccountConfirmText(""); }}
+                  >
+                    Delete account
+                  </button>
+                )}
+              </div>
+
+              {deleteAccountOpen && (
                 <div style={{ marginTop: 14, padding: 14, background: "#FBEAE5", border: "1px solid #C1440E", borderRadius: 10 }}>
                   <div style={{ fontSize: 13, fontWeight: 700, color: "#C1440E", marginBottom: 6 }}>
                     This permanently deletes your account
