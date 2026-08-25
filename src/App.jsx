@@ -3722,6 +3722,51 @@ export default function GolfScorecard() {
     }
   }
 
+  // Tries a round code first (the more common case), then falls back to a
+  // tournament code if nothing matches - lets the Home screen offer one
+  // join box for both, without touching loadRound or joinTournament
+  // themselves (both still used separately on the Rounds/Tournaments
+  // tabs, each managing their own error state).
+  async function joinRoundOrTournament(codeRaw) {
+    const code = (codeRaw || "").toUpperCase().trim();
+    if (!code) return;
+    setErr("");
+    setBusy(true);
+    const roundRes = await storageGet(`golfround:${code}`, true);
+    if (roundRes.ok && roundRes.value) {
+      const r = JSON.parse(roundRes.value);
+      setRound(r);
+      setGameKey(r.game);
+      setHoleIdx(firstOpenHole(r));
+      rememberCode(r.id, r.name);
+      if (!isRoundDone(r)) setActiveRound(r);
+      setViewingRoundFromStats(false);
+      saveRound(r);
+      setBusy(false);
+      goToScreen("card");
+      return;
+    }
+    // Not a round code - try it as a tournament code instead.
+    const tournamentRes = await storageGet(`${TOURNAMENT_PREFIX}${code}`, true);
+    setBusy(false);
+    if (!tournamentRes.ok) {
+      setErr(`Couldn't reach shared rounds (${tournamentRes.error}). Please try again in a moment.`);
+      return;
+    }
+    if (!tournamentRes.value) {
+      setErr("No round or tournament found with that code.");
+      return;
+    }
+    let tournament;
+    try {
+      tournament = JSON.parse(tournamentRes.value);
+    } catch (e) {
+      setErr("That tournament's data looks corrupted.");
+      return;
+    }
+    startTournamentFoursome(tournament);
+  }
+
   async function loadRound(code) {
     setErr("");
     setBusy(true);
@@ -4605,10 +4650,10 @@ function computeRoundScoring(round) {
           </div>
 
           <div className="gsc-card">
-            <div className="gsc-label" style={{ marginBottom: 6, fontSize: 17 }}>Join an Existing Round</div>
+            <div className="gsc-label" style={{ marginBottom: 6, fontSize: 17 }}>Join an Existing Round or Tournament</div>
             <div className="gsc-row">
-              <input className="gsc-input gsc-mono" id="round-join-code-home" name="round-join-code-home" autoComplete="off" placeholder="ROUND CODE" value={joinCode} onChange={(e) => setJoinCode(e.target.value.toUpperCase())} maxLength={6} />
-              <button className="gsc-btn gsc-btn-primary" style={{ flex: "0 0 auto" }} disabled={busy || !joinCode} onClick={() => loadRound(joinCode)}>
+              <input className="gsc-input gsc-mono" id="join-code-home" name="join-code-home" autoComplete="off" placeholder="ROUND OR TOURNAMENT CODE" value={joinCode} onChange={(e) => setJoinCode(e.target.value.toUpperCase())} maxLength={6} />
+              <button className="gsc-btn gsc-btn-primary" style={{ flex: "0 0 auto" }} disabled={busy || !joinCode} onClick={() => joinRoundOrTournament(joinCode)}>
                 Join
               </button>
             </div>
@@ -4630,7 +4675,8 @@ function computeRoundScoring(round) {
           </div>
 
           <div className="gsc-card">
-            <div className="gsc-label" style={{ marginBottom: 6, fontSize: 17 }}>Quick Pick Game List</div>
+            <div className="gsc-label" style={{ marginBottom: 2, fontSize: 17 }}>Quick Pick Game List</div>
+            <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 10 }}>Start a new game</div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
               {[
                 ["dstreet", GAMES.dstreet.name, "\u{1F4B0}"],
@@ -4668,99 +4714,6 @@ function computeRoundScoring(round) {
                 );
               })}
             </div>
-          </div>
-
-          <div className="gsc-card">
-            <div className="gsc-label" style={{ marginBottom: 6, fontSize: 17 }}>Start a New Round</div>
-
-            <div className="gsc-label" style={{ marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Individual Game Formats</div>
-            <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>Up to 4 Players</div>
-            {["dstreet", "swami", "individualputts", "pontobango"]
-              .map((key) => [key, GAMES[key]])
-              .map(([key, g]) => (
-                <div key={key} className="gsc-card gsc-game-card" style={{ marginBottom: 10 }} onClick={() => startNewRound(key)}>
-                  <div className="gsc-game-title">{g.name}</div>
-                  <div className="gsc-tag">{g.tag}</div>
-                  <div className="gsc-no-select" style={{ fontSize: 13, marginTop: 8, color: "#4b4b45" }}>{g.desc}</div>
-                  <button
-                    className="gsc-link"
-                    style={{ marginTop: 8, fontSize: 12 }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      openRules(key);
-                    }}
-                  >
-                    View full rules
-                  </button>
-                </div>
-              ))}
-
-            <div className="gsc-label" style={{ marginTop: 14, marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Team Game Formats</div>
-            <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>2 vs 2</div>
-            {["ponto", "teamstrokes", "teamputts", "beachside", "seabluffe", "moonlightwolf"]
-              .map((key) => [key, GAMES[key]])
-              .map(([key, g]) => (
-                <div key={key} className="gsc-card gsc-game-card" style={{ marginBottom: 10 }} onClick={() => startNewRound(key)}>
-                  <div className="gsc-game-title">{g.name}</div>
-                  <div className="gsc-tag">{g.tag}</div>
-                  <div className="gsc-no-select" style={{ fontSize: 13, marginTop: 8, color: "#4b4b45" }}>{g.desc}</div>
-                  <button
-                    className="gsc-link"
-                    style={{ marginTop: 8, fontSize: 12 }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      openRules(key);
-                    }}
-                  >
-                    View full rules
-                  </button>
-                </div>
-              ))}
-          </div>
-
-          <div className="gsc-card">
-            <div className="gsc-label" style={{ marginBottom: 6, fontSize: 17 }}>Start a New Tournament</div>
-
-            <div className="gsc-label" style={{ marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Tournament Game Formats</div>
-            <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>Multiple Foursomes</div>
-            {TOURNAMENT_GAME_KEYS.map((key) => {
-              const g = GAMES[key];
-              return (
-                <div key={key} className="gsc-card gsc-game-card" style={{ marginBottom: 10 }} onClick={() => startTournamentCreateFlow(key)}>
-                  <div className="gsc-game-title">{g.name}</div>
-                  <div className="gsc-tag">{g.tag}</div>
-                  <div className="gsc-no-select" style={{ fontSize: 13, marginTop: 8, color: "#4b4b45" }}>{g.desc}</div>
-                  <button
-                    className="gsc-link"
-                    style={{ marginTop: 8, fontSize: 12 }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      openRules(key);
-                    }}
-                  >
-                    View full rules
-                  </button>
-                </div>
-              );
-            })}
-
-            <div className="gsc-label" style={{ marginTop: 14, marginBottom: 6 }}>Join an existing tournament</div>
-            <div className="gsc-row">
-              <input
-                className="gsc-input gsc-mono"
-                id="tournament-join-code-home"
-                name="tournament-join-code-home"
-                autoComplete="off"
-                placeholder="TOURNAMENT CODE"
-                value={tournamentJoinCode}
-                onChange={(e) => setTournamentJoinCode(e.target.value.toUpperCase())}
-                maxLength={6}
-              />
-              <button className="gsc-btn gsc-btn-primary" style={{ flex: "0 0 auto" }} disabled={tournamentBusy || !tournamentJoinCode} onClick={() => joinTournament(tournamentJoinCode)}>
-                Join
-              </button>
-            </div>
-            {tournamentErr && <div style={{ color: "#C1440E", fontSize: 13, marginTop: 8 }}>{tournamentErr}</div>}
           </div>
 
           <div className="gsc-card gsc-game-card" onClick={() => goToScreen("libraryTab")}>
