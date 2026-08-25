@@ -4602,37 +4602,43 @@ function computeRoundScoring(round) {
 
           <div className="gsc-card">
             <div className="gsc-label" style={{ marginBottom: 6, fontSize: 17 }}>Quick Pick Game List</div>
-            {[
-              ["dstreet", GAMES.dstreet.name],
-              ["swami", GAMES.swami.name],
-              ["individualputts", GAMES.individualputts.name],
-              ["pontobango", GAMES.pontobango.name],
-              ["ponto", GAMES.ponto.name],
-              ["teamstrokes", GAMES.teamstrokes.name],
-              ["teamputts", GAMES.teamputts.name],
-              ["beachside", GAMES.beachside.name],
-              ["seabluffe", GAMES.seabluffe.name],
-              ["moonlightwolf", GAMES.moonlightwolf.name],
-              ["avoscramble", GAMES.avoscramble.name],
-              ["tourneybb", GAMES.tourneybb.name],
-              ["tourneygg", GAMES.tourneygg.name],
-            ].map(([key, name], i) => (
-              <div
-                key={key}
-                style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "9px 0", borderBottom: i === 12 ? "none" : "1px solid #eee6cf" }}
-              >
-                <button
-                  className="gsc-link"
-                  style={{ fontSize: 14, fontWeight: 600, color: "#1B4332" }}
-                  onClick={() => (GAMES[key].tournamentOnly ? startTournamentCreateFlow(key) : startNewRound(key))}
-                >
-                  {name}
-                </button>
-                <button className="gsc-link" style={{ fontSize: 12 }} onClick={() => openRules(key)}>
-                  View full rules
-                </button>
-              </div>
-            ))}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
+              {[
+                ["dstreet", GAMES.dstreet.name, "\u{1F4B0}"],
+                ["swami", GAMES.swami.name, "\u26F3"],
+                ["individualputts", GAMES.individualputts.name, "\u{1F3AF}"],
+                ["pontobango", GAMES.pontobango.name, "\u{1F3B2}"],
+                ["ponto", GAMES.ponto.name, "\u{1F91D}"],
+                ["teamstrokes", GAMES.teamstrokes.name, "\u{1F3CC}\u{FE0F}"],
+                ["teamputts", GAMES.teamputts.name, "\u{1F573}\u{FE0F}"],
+                ["beachside", GAMES.beachside.name, "\u2B50"],
+                ["seabluffe", GAMES.seabluffe.name, "\u{1F504}"],
+                ["moonlightwolf", GAMES.moonlightwolf.name, "\u{1F43A}"],
+                ["avoscramble", GAMES.avoscramble.name, "\u{1F500}"],
+                ["tourneybb", GAMES.tourneybb.name, "\u{1F3C6}"],
+                ["tourneygg", GAMES.tourneygg.name, "\u{1F3C5}"],
+              ].map(([key, name, emoji], i) => {
+                const colors = ["#2D6A4F", "#1B4332", "#B08D57", "#457B9D", "#6B4226", "#40916C"];
+                const bg = colors[i % colors.length];
+                return (
+                  <div
+                    key={key}
+                    onClick={() => (GAMES[key].tournamentOnly ? startTournamentCreateFlow(key) : startNewRound(key))}
+                    style={{ position: "relative", background: bg, borderRadius: 12, padding: "16px 6px 12px", textAlign: "center", cursor: "pointer" }}
+                  >
+                    <button
+                      onClick={(e) => { e.stopPropagation(); openRules(key); }}
+                      title="View full rules"
+                      style={{ position: "absolute", top: 4, right: 4, width: 20, height: 20, borderRadius: "50%", background: "rgba(255,255,255,0.25)", border: "none", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+                    >
+                      i
+                    </button>
+                    <div style={{ fontSize: 26, marginBottom: 6 }}>{emoji}</div>
+                    <div style={{ fontSize: 11.5, fontWeight: 700, color: "#fff", lineHeight: 1.3 }}>{name}</div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
           <div className="gsc-card">
