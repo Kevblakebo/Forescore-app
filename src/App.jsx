@@ -4650,7 +4650,7 @@ function computeRoundScoring(round) {
           </div>
 
           <div className="gsc-card">
-            <div className="gsc-label" style={{ marginBottom: 6, fontSize: 17 }}>Join an Existing Round or Tournament</div>
+            <div className="gsc-label" style={{ marginBottom: 6, fontSize: 17 }}>Join an Existing Game</div>
             <div className="gsc-row">
               <input className="gsc-input gsc-mono" id="join-code-home" name="join-code-home" autoComplete="off" placeholder="ROUND OR TOURNAMENT CODE" value={joinCode} onChange={(e) => setJoinCode(e.target.value.toUpperCase())} maxLength={6} />
               <button className="gsc-btn gsc-btn-primary" style={{ flex: "0 0 auto" }} disabled={busy || !joinCode} onClick={() => joinRoundOrTournament(joinCode)}>
@@ -4749,7 +4749,7 @@ function computeRoundScoring(round) {
     return (
       <div className="gsc">
         <style>{STYLE}</style>
-        <Header title={<span style={{ fontSize: 23 }}>Rounds</span>} sub="Join, create, or revisit" />
+        <Header title={<span style={{ fontSize: 23 }}>Rounds</span>} sub="Join, start, or revisit" />
         <div className="gsc-body gsc-body-tabbed">
           {activeRound && !activeRound.tournamentId && !isRoundDone(activeRound) && (
             <div className="gsc-card" style={{ border: "2px solid #B08D57" }}>
@@ -4879,7 +4879,7 @@ function computeRoundScoring(round) {
     return (
       <div className="gsc">
         <style>{STYLE}</style>
-        <Header title={<span style={{ fontSize: 23 }}>Tournaments</span>} sub="Join, create, or revisit" />
+        <Header title={<span style={{ fontSize: 23 }}>Tournaments</span>} sub="Join, start, or revisit" />
         <div className="gsc-body gsc-body-tabbed">
           {lastTournament && (
             <div className="gsc-card" style={{ border: "2px solid #B08D57" }}>
