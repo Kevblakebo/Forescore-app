@@ -6556,9 +6556,12 @@ function computeRoundScoring(round) {
               <div className="gsc-field" style={{ marginTop: 10 }}>
                 <div className="gsc-label">Distance to Green GPS</div>
                 {!session ? (
-                  <div style={{ fontSize: 12, color: "#6b6b63", padding: "8px 10px", background: "#F8F1E4", borderRadius: 8 }}>
-                    {"\u26F3"} Log in to unlock live distance-to-green GPS.
-                  </div>
+                  <button
+                    onClick={() => goToScreen("login")}
+                    style={{ display: "block", width: "100%", textAlign: "left", fontSize: 12, color: "#6b6b63", padding: "8px 10px", background: "#F8F1E4", border: "none", borderRadius: 8, cursor: "pointer" }}
+                  >
+                    {"\u26F3"} Log in to unlock live distance-to-green GPS. <span style={{ textDecoration: "underline", fontWeight: 700 }}>Tap to log in</span>
+                  </button>
                 ) : activeCfg.gpsCourseLabel ? (
                   <div style={{ fontSize: 12, color: "#1B4332", fontWeight: 600, padding: "8px 10px", background: "#EBF0EC", borderRadius: 8 }}>
                     {"\u26F3"} Enabled for {activeCfg.gpsCourseLabel}
@@ -7058,9 +7061,12 @@ function computeRoundScoring(round) {
               <div className="gsc-field" style={{ marginTop: 10 }}>
                 <div className="gsc-label">Distance to Green GPS</div>
                 {!session ? (
-                  <div style={{ fontSize: 12, color: "#6b6b63", padding: "8px 10px", background: "#F8F1E4", borderRadius: 8 }}>
-                    {"\u26F3"} Log in to unlock live distance-to-green GPS.
-                  </div>
+                  <button
+                    onClick={() => goToScreen("login")}
+                    style={{ display: "block", width: "100%", textAlign: "left", fontSize: 12, color: "#6b6b63", padding: "8px 10px", background: "#F8F1E4", border: "none", borderRadius: 8, cursor: "pointer" }}
+                  >
+                    {"\u26F3"} Log in to unlock live distance-to-green GPS. <span style={{ textDecoration: "underline", fontWeight: 700 }}>Tap to log in</span>
+                  </button>
                 ) : cfg.gpsCourseLabel ? (
                   <div style={{ fontSize: 12, color: "#1B4332", fontWeight: 600, padding: "8px 10px", background: "#EBF0EC", borderRadius: 8 }}>
                     {"\u26F3"} Enabled for {cfg.gpsCourseLabel}
@@ -7526,9 +7532,12 @@ function computeRoundScoring(round) {
               <div className="gsc-field" style={{ marginTop: 10 }}>
                 <div className="gsc-label">Distance to Green GPS</div>
                 {!session ? (
-                  <div style={{ fontSize: 12, color: "#6b6b63", padding: "8px 10px", background: "#F8F1E4", borderRadius: 8 }}>
-                    {"\u26F3"} Log in to unlock live distance-to-green GPS.
-                  </div>
+                  <button
+                    onClick={() => goToScreen("login")}
+                    style={{ display: "block", width: "100%", textAlign: "left", fontSize: 12, color: "#6b6b63", padding: "8px 10px", background: "#F8F1E4", border: "none", borderRadius: 8, cursor: "pointer" }}
+                  >
+                    {"\u26F3"} Log in to unlock live distance-to-green GPS. <span style={{ textDecoration: "underline", fontWeight: 700 }}>Tap to log in</span>
+                  </button>
                 ) : tournamentCfg.gpsCourseLabel ? (
                   <div style={{ fontSize: 12, color: "#1B4332", fontWeight: 600, padding: "8px 10px", background: "#EBF0EC", borderRadius: 8 }}>
                     {"\u26F3"} Enabled for {tournamentCfg.gpsCourseLabel} (applies to every foursome)
