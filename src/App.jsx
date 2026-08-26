@@ -111,7 +111,7 @@ const GAMES = {
     hasPutts: true,
     totalScoring: true,
     rankByTeamTotal: true,
-    defaults: { maxOver: 3, maxPutts: 3, mulliganSegment: 1, mulliganChallenge: "", prize: "Losers buy winners a drink at the 19th hole" },
+    defaults: { maxOver: "", maxPutts: "", mulliganSegment: "", mulliganChallenge: "", prize: "" },
     rules: [
       "4-person, 2 vs 2 team, combined strokes competition.",
       "Each player plays their own ball and records their own strokes and putts.",
@@ -141,7 +141,7 @@ const GAMES = {
     hasScore: true,
     hasPutts: true,
     puttsOnlyScoring: true,
-    defaults: { maxOver: 3, maxPutts: 3, mulliganSegment: 1, mulliganChallenge: "", prize: "Losers buy winners a drink at the 19th hole" },
+    defaults: { maxOver: "", maxPutts: "", mulliganSegment: "", mulliganChallenge: "", prize: "" },
     rules: [
       "Team putting game for 4 players (2 vs 2 teams).",
       "Total strokes and putts are kept track of.",
@@ -165,7 +165,7 @@ const GAMES = {
     rotates: true,
     hasScore: true,
     hasPutts: true,
-    defaults: { maxOver: 3, maxPutts: 3, mulliganSegment: 1, mulliganChallenge: "", prize: "Losers buy winners a drink at the 19th hole" },
+    defaults: { maxOver: "", maxPutts: "", mulliganSegment: "", mulliganChallenge: "", prize: "" },
     rules: [
       "Rotating team overall and putting game.",
       {
@@ -200,7 +200,7 @@ const GAMES = {
     hasPutts: true,
     bestBall: true,
     tracksWolf: true,
-    defaults: { maxOver: 3, maxPutts: 3, mulliganSegment: 1, mulliganChallenge: "", prize: "Losers buy winners a drink at the 19th hole" },
+    defaults: { maxOver: "", maxPutts: "", mulliganSegment: "", mulliganChallenge: "", prize: "" },
     rules: [
       {
         text: "Setting Up the Game",
@@ -253,7 +253,7 @@ const GAMES = {
     rotates: false,
     hasScore: true,
     hasPutts: true,
-    defaults: { maxOver: 3, maxPutts: 3, mulliganSegment: 1, mulliganChallenge: "", prize: "Losers buy winners a drink at the 19th hole" },
+    defaults: { maxOver: "", maxPutts: "", mulliganSegment: "", mulliganChallenge: "", prize: "" },
     rules: [
       "Two 2-person team strokes and putting competition (same game as Round Robin, except no team rotation).",
       {
@@ -282,7 +282,7 @@ const GAMES = {
     hasScore: true,
     hasPutts: true,
     tracksVegas: true,
-    defaults: { maxOver: 3, maxPutts: 3, mulliganSegment: 1, mulliganChallenge: "", prize: "" },
+    defaults: { maxOver: "", maxPutts: "", mulliganSegment: "", mulliganChallenge: "", prize: "" },
     rules: [
       "Two 2-person teams, same partners all 18 holes.",
       {
@@ -318,7 +318,7 @@ const GAMES = {
     hasScore: true,
     hasPutts: true,
     bestBall: true,
-    defaults: { maxOver: 3, maxPutts: 3, mulliganSegment: 1, mulliganChallenge: "", prize: "Losers buy winners a drink at the 19th hole" },
+    defaults: { maxOver: "", maxPutts: "", mulliganSegment: "", mulliganChallenge: "", prize: "" },
     rules: [
       {
         text: "Two 2-person team Best-Ball Strokes and Best-Ball Putts Skins competition (same as Team Skins, except using best-ball scores from the 2-person team):",
@@ -357,7 +357,7 @@ const GAMES = {
     bestBall: true,
     singleTeam: true,
     tournamentOnly: true,
-    defaults: { maxOver: 3, maxPutts: 3, mulliganSegment: 1, mulliganChallenge: "", prize: "Losers buy winners a drink at the 19th hole" },
+    defaults: { maxOver: "", maxPutts: "", mulliganSegment: "", mulliganChallenge: "", prize: "" },
     rules: [
       "4-person team best-ball strokes and best-ball putts competition - the whole foursome plays as one team, not split into 2-person sub-teams.",
       "Each player plays their own ball and records their own strokes and putts.",
@@ -389,7 +389,7 @@ const GAMES = {
     bestBall: false,
     singleTeam: true,
     tournamentOnly: true,
-    defaults: { maxOver: 3, maxPutts: 3, mulliganSegment: 1, mulliganChallenge: "", prize: "Losers buy winners a drink at the 19th hole" },
+    defaults: { maxOver: "", maxPutts: "", mulliganSegment: "", mulliganChallenge: "", prize: "" },
     rules: [
       "4-person team combined strokes and combined putts competition - the whole foursome plays as one team, not split into 2-person sub-teams.",
       "Each player plays their own ball and records their own strokes and putts.",
@@ -423,7 +423,7 @@ const GAMES = {
     oneTeamScore: true,
     tournamentOnly: true,
     tracksDrives: true,
-    defaults: { maxOver: 3, maxPutts: 3, mulliganSegment: 1, mulliganChallenge: "", minDrives: 3, prize: "Losers buy winners a drink at the 19th hole" },
+    defaults: { maxOver: "", maxPutts: "", mulliganSegment: "", mulliganChallenge: "", minDrives: 3, prize: "" },
     rules: [
       "4-person team strokes competition - the whole foursome plays as one team",
       {
@@ -482,7 +482,7 @@ const GAMES = {
     rotates: false,
     hasScore: true,
     hasPutts: true,
-    defaults: { maxOver: 3, maxPutts: 3, mulliganSegment: 1, mulliganChallenge: "", prize: "Losers buy winners a drink at the 19th hole" },
+    defaults: { maxOver: "", maxPutts: "", mulliganSegment: "", mulliganChallenge: "", prize: "" },
     rules: [
       "Individual strokes and putting skins game for up to 4 players. Points for low strokes AND low putts each hole. Most points wins.",
       {
@@ -515,7 +515,7 @@ const GAMES = {
     hasPutts: true,
     totalScoring: true,
     rankByPutts: true,
-    defaults: { maxOver: 3, maxPutts: 3, mulliganSegment: 1, mulliganChallenge: "", prize: "Losers buy winners a drink at the 19th hole" },
+    defaults: { maxOver: "", maxPutts: "", mulliganSegment: "", mulliganChallenge: "", prize: "" },
     rules: [
       "Individual putting game for up to 4 players.",
       "Total strokes and putts are kept track of.",
@@ -539,7 +539,7 @@ const GAMES = {
     hasScore: true,
     hasPutts: true,
     tracksPontoBangoBongo: true,
-    defaults: { maxOver: 3, maxPutts: 3, mulliganSegment: 1, mulliganChallenge: "", prize: "Losers buy winners a drink at the 19th hole" },
+    defaults: { maxOver: "", maxPutts: "", mulliganSegment: "", mulliganChallenge: "", prize: "" },
     rules: [
       "Individual strokes and putting game for up to 4 players.",
       "Total strokes and putts are still kept track of (similar to Individual Strokes).",
@@ -572,7 +572,7 @@ const GAMES = {
     hasScore: true,
     hasPutts: true,
     tracksStableford: true,
-    defaults: { maxOver: 3, maxPutts: 3, mulliganSegment: 1, mulliganChallenge: "", prize: "Losers buy winners a drink at the 19th hole", netScoring: true },
+    defaults: { maxOver: "", maxPutts: "", mulliganSegment: "", mulliganChallenge: "", prize: "", netScoring: true },
     rules: [
       "Individual points game for up to 4 players.",
       {
