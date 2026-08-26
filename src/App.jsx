@@ -274,6 +274,42 @@ const GAMES = {
       "Great for similar handicap groups.",
     ],
   },
+  vegas: {
+    name: "Vegas",
+    tag: "Fixed teams points - 4 players",
+    desc: "Two 2-person teams, same partners all 18 holes. Partners' scores combine into a two-digit number instead of adding together - lower number wins the hole, and a birdie or better flips your own team's digits.",
+    rotates: false,
+    hasScore: true,
+    hasPutts: true,
+    tracksVegas: true,
+    defaults: { maxOver: 3, maxPutts: 3, mulliganSegment: 1, mulliganChallenge: "", prize: "" },
+    rules: [
+      "Two 2-person teams, same partners all 18 holes.",
+      {
+        text: "Forming the number: combine both partners' strokes into a two-digit number, lower digit first.",
+        sub: ["Player 1 scores a 4 and Player 2 scores a 5 \u2192 your team's number is 45, not 9."],
+      },
+      {
+        text: "Winning points: the team with the lower two-digit number wins the hole, earning points equal to the numerical difference.",
+        sub: ["46 vs 45 \u2192 the 45 team wins 1 point."],
+      },
+      {
+        text: "Birdies flip the order: if either partner on a team makes a birdie or better, that team's own digits flip - the higher score goes first instead of the lower one, for that hole.",
+        sub: ["A birdie (3) and a 6 would normally be 36 - with the flip, it becomes 63 instead."],
+      },
+      "Putts are tracked but don't count toward the standings.",
+      "No carry-overs on ties.",
+      "Prize: to be agreed on prior to round.",
+      "Strokes max: to be agreed on prior to round.",
+      "Putts max: to be agreed on prior to round.",
+      "Mulligans: to be agreed on prior to round.",
+      "Handicaps not used in game scoring.",
+      "Play OB shots as a lateral drop (1 out, 1 in).",
+      "Must putt all the way into the hole.",
+      "Flagstick can stay in.",
+      "Putts start once on the putting green.",
+    ],
+  },
   beachside: {
     name: "Team Best Ball",
     tag: "Best-ball teams - 4 players",
@@ -526,6 +562,42 @@ const GAMES = {
       "Flagstick can stay in.",
       "Putts start once on the putting green.",
       "Handicaps not used in game scoring, but are visible.",
+    ],
+  },
+  stableford: {
+    name: "Stableford",
+    tag: "Individual points game - up to 4 players",
+    desc: "Points awarded each hole based on your net score relative to par - a blow-up hole only ever costs you zero points, not a huge number. Highest total points wins.",
+    rotates: false,
+    hasScore: true,
+    hasPutts: true,
+    tracksStableford: true,
+    defaults: { maxOver: 3, maxPutts: 3, mulliganSegment: 1, mulliganChallenge: "", prize: "Losers buy winners a drink at the 19th hole", netScoring: true },
+    rules: [
+      "Individual points game for up to 4 players.",
+      {
+        text: "Points are awarded each hole based on net score relative to par:",
+        sub: [
+          "Albatross (3 under par) or better: 5 points",
+          "Eagle (2 under par): 4 points",
+          "Birdie (1 under par): 3 points",
+          "Par (even): 2 points",
+          "Bogey (1 over par): 1 point",
+          "Double bogey or worse (2+ over par): 0 points",
+        ],
+      },
+      "Handicaps are used in this format by default - points are based on net score per hole, not gross. A net 3 on a par 4 is a birdie, worth 3 points.",
+      "Highest total points at the end of the round wins.",
+      "Putts are tracked but don't count toward the standings.",
+      "Handicaps: to be agreed on prior to round.",
+      "Prize: to be agreed on prior to round.",
+      "Strokes max: to be agreed on prior to round.",
+      "Putts max: to be agreed on prior to round.",
+      "Mulligans: to be agreed on prior to round.",
+      "Play OB shots as a lateral drop (1 out, 1 in) (to be agreed on).",
+      "Must putt all the way into the hole.",
+      "Flagstick can stay in.",
+      "Putts start once on the putting green.",
     ],
   },
 };
@@ -3018,7 +3090,7 @@ export default function GolfScorecard() {
       } else {
         setGameKey(key);
         setCfg(withProfileVenmo({ ...GAMES[key].defaults }));
-        const count = key === "swami" || key === "dstreet" || key === "pontobango" || key === "individualputts" ? Math.max(1, Math.min(4, Number(nextAnswers.playerCount) || 4)) : 4;
+        const count = key === "swami" || key === "dstreet" || key === "pontobango" || key === "individualputts" || key === "stableford" ? Math.max(1, Math.min(4, Number(nextAnswers.playerCount) || 4)) : 4;
         setPlayers((p) => {
           const base = [...p];
           while (base.length < count) base.push({ name: "", hcp: "", avatar: "" });
@@ -3227,7 +3299,7 @@ export default function GolfScorecard() {
       avatar: p.avatar || "",
       ...(i === 0 && session ? { user_id: session.user.id } : p.user_id ? { user_id: p.user_id } : {}),
     }));
-    const isIndividual = gameKey === "dstreet" || gameKey === "swami" || gameKey === "pontobango" || gameKey === "individualputts";
+    const isIndividual = gameKey === "dstreet" || gameKey === "swami" || gameKey === "pontobango" || gameKey === "individualputts" || gameKey === "stableford";
     if (isIndividual) {
       const needsTwo = gameKey === "pontobango" || gameKey === "individualputts";
       const minPlayers = needsTwo ? 2 : 1;
@@ -3248,7 +3320,7 @@ export default function GolfScorecard() {
     }
     const code = genCode();
     const teams =
-      gameKey === "ponto" || gameKey === "beachside" || gameKey === "teamputts" || gameKey === "teamstrokes"
+      gameKey === "ponto" || gameKey === "vegas" || gameKey === "beachside" || gameKey === "teamputts" || gameKey === "teamstrokes"
         ? pontoPairing
         : isIndividual
         ? cleanPlayers.map((_, i) => [i]) // individual - each player is their own "team" of one, however many were entered
@@ -4308,10 +4380,37 @@ function computeRoundScoring(round) {
   const nPlayers = round.players.length;
   const playerPoints = Array(nPlayers).fill(0);
   const playerTotalScore = Array(nPlayers).fill(0);
+  const playerTotalNetScore = Array(nPlayers).fill(0);
   const playerTotalPutts = Array(nPlayers).fill(0);
   const playerParPlayed = Array(nPlayers).fill(0);
   const teamPointsByTeamIdx = null; // was only used by the now-removed Ponto Putt-Off game
   const holeResults = [];
+
+  // Per-hole handicapping ("net scoring") - computed once for the whole
+  // round, since each player's total allocation never changes hole to
+  // hole, only which specific holes it applies to (via stroke index).
+  // Standard "game handicap" method: each player's strokes = their own
+  // handicap minus the lowest handicap in the group, so the lowest
+  // handicap player always plays scratch (0 strokes off) against the
+  // field, and every other player's strokes are relative to them.
+  const netScoringOn = !!round.cfg.netScoring;
+  const playerHcps = round.players.map((p) => (p.hcp !== "" && p.hcp != null && !isNaN(Number(p.hcp)) ? Number(p.hcp) : null));
+  const validHcps = playerHcps.filter((h) => h != null);
+  const lowestHcp = validHcps.length > 0 ? Math.min(...validHcps) : 0;
+  const allocatedStrokes = playerHcps.map((h) => (h != null ? Math.round(h - lowestHcp) : 0));
+  // Strokes off for a given player on a given hole. Standard handling for
+  // allocations above 18 (rare, but possible with a wide handicap
+  // spread): everyone gets floor(allocated/18) strokes on every hole,
+  // plus 1 more on the (allocated mod 18) hardest holes by stroke index.
+  function strokesOffForHole(playerIdx, holeIdx) {
+    if (!netScoringOn) return 0;
+    const allocated = allocatedStrokes[playerIdx] || 0;
+    if (allocated <= 0) return 0;
+    const si = round.strokeIndex[holeIdx] ?? 99;
+    const base = Math.floor(allocated / 18);
+    const extra = allocated % 18;
+    return base + (si <= extra ? 1 : 0);
+  }
 
   for (let h = 0; h < 18; h++) {
     const parH = round.par[h] ?? 4;
@@ -4320,6 +4419,15 @@ function computeRoundScoring(round) {
 
     const capStroke = (v) => (v == null || v === "" ? null : Math.min(Number(v), parH + (round.cfg.maxOver ?? 99)));
     const capPutt = (v) => (v == null || v === "" ? null : Math.min(Number(v), round.cfg.maxPutts ?? 99));
+    // Net version used everywhere scoring/points/standings are actually
+    // decided - applies the mercy-rule cap to the gross score first (so
+    // "max over par" always means gross, regardless of handicap), then
+    // subtracts that player's handicap strokes for this specific hole.
+    // Behaves identically to capStroke when net scoring is off.
+    const capStrokeNet = (v, playerIdx) => {
+      const capped = capStroke(v);
+      return capped == null ? null : capped - strokesOffForHole(playerIdx, h);
+    };
 
     // accumulate individual totals
     for (let p = 0; p < nPlayers; p++) {
@@ -4329,6 +4437,7 @@ function computeRoundScoring(round) {
         const cs = capStroke(e.strokes);
         if (cs != null) {
           playerTotalScore[p] += cs;
+          playerTotalNetScore[p] += capStrokeNet(e.strokes, p);
           playerParPlayed[p] += parH;
         }
       }
@@ -4346,7 +4455,7 @@ function computeRoundScoring(round) {
     const aggregate = (arr) => (g.bestBall ? Math.min(...arr) : arr.reduce((a, b) => a + b, 0));
 
     const teamRes = teamsThisHole.map((team) => {
-      const strokes = team.map((p) => capStroke(hs[p] && hs[p].strokes));
+      const strokes = team.map((p) => capStrokeNet(hs[p] && hs[p].strokes, p));
       const putts = team.map((p) => capPutt(hs[p] && hs[p].putts));
       const strokeOk = strokes.every((v) => v != null);
       const puttOk = putts.every((v) => v != null);
@@ -4418,11 +4527,56 @@ function computeRoundScoring(round) {
           awardLowest(puttSums).forEach((v, i) => (ptsAwarded[i].putt = v));
         }
       }
+    } else if (g.tracksVegas) {
+      // Each team's two strokes combine into a two-digit number - lower
+      // digit first normally, but flipped (higher digit first) if either
+      // partner on that team made a birdie or better this hole. The
+      // birdie check uses raw strokes (never affected by the maxOver
+      // cap, since a birdie is always under par regardless), while the
+      // number itself uses capped strokes for consistency with every
+      // other game's "agreed max" mercy rule. Lower combined number wins
+      // the hole, earning points equal to the numeric difference - a tie
+      // is a full push, matching "no carry-overs on ties."
+      const teamNumbers = teamsThisHole.map((team) => {
+        const strokes = team.map((p) => capStrokeNet(hs[p] && hs[p].strokes, p));
+        if (strokes.some((v) => v == null)) return null;
+        const madeBirdie = team.some((p) => {
+          const raw = hs[p] && hs[p].strokes;
+          return raw != null && raw !== "" && Number(raw) <= parH - 1;
+        });
+        const sorted = [...strokes].sort((a, b) => a - b);
+        const [lo, hi] = sorted;
+        return madeBirdie ? hi * 10 + lo : lo * 10 + hi;
+      });
+      if (teamNumbers.every((v) => v != null) && teamNumbers[0] !== teamNumbers[1]) {
+        const diff = Math.abs(teamNumbers[0] - teamNumbers[1]);
+        const winnerIdx = teamNumbers[0] < teamNumbers[1] ? 0 : 1;
+        ptsAwarded[winnerIdx].score = diff;
+      }
+    } else if (g.tracksStableford) {
+      // Each player earns points independently based on their own net
+      // score relative to par - unlike every other points-based game
+      // here, this isn't a comparison against anyone else's score, so it
+      // doesn't use awardLowest at all. teamsThisHole is always a set of
+      // single-player "teams" for an individual game like this one.
+      const stablefordPoints = (relToPar) => {
+        if (relToPar <= -3) return 5; // albatross or better
+        if (relToPar === -2) return 4; // eagle
+        if (relToPar === -1) return 3; // birdie
+        if (relToPar === 0) return 2; // par
+        if (relToPar === 1) return 1; // bogey
+        return 0; // double bogey or worse
+      };
+      teamsThisHole.forEach((team, ti) => {
+        const p = team[0];
+        const net = capStrokeNet(hs[p] && hs[p].strokes, p);
+        if (net != null) ptsAwarded[ti].score = stablefordPoints(net - parH);
+      });
     } else if (g.hasScore && !g.totalScoring && !g.puttsOnlyScoring) {
       const sums = teamRes.map((t) => t.scoreSum);
       awardLowest(sums).forEach((v, i) => (ptsAwarded[i].score = v));
     }
-    if (!g.tracksPontoBangoBongo && !g.tracksWolf && g.hasPutts && !g.totalScoring) {
+    if (!g.tracksPontoBangoBongo && !g.tracksWolf && !g.tracksVegas && !g.tracksStableford && g.hasPutts && !g.totalScoring) {
       const sums = teamRes.map((t) => t.puttSum);
       awardLowest(sums).forEach((v, i) => (ptsAwarded[i].putt = v));
     }
@@ -4449,7 +4603,7 @@ function computeRoundScoring(round) {
     }
   }
 
-  return { playerPoints, playerTotalScore, playerTotalPutts, playerParPlayed, teamPointsByTeamIdx, holeResults, mulligansUsed };
+  return { playerPoints, playerTotalScore, playerTotalNetScore, playerTotalPutts, playerParPlayed, teamPointsByTeamIdx, holeResults, mulligansUsed, netScoringOn, allocatedStrokes, strokesOffForHole };
 }
 
   const computed = useMemo(() => computeRoundScoring(round), [round]);
@@ -4486,17 +4640,23 @@ function computeRoundScoring(round) {
     const isTotalScoring = GAMES[r.game] && GAMES[r.game].totalScoring;
     const rankByPutts = GAMES[r.game] && GAMES[r.game].rankByPutts;
     const rankByTeamTotal = GAMES[r.game] && GAMES[r.game].rankByTeamTotal;
+    const netOn = !!c.netScoringOn;
 
     // For team-total games, both teammates need to show and be ranked by
     // their COMBINED total, not their own individual total - otherwise two
     // players on the same team could end up on opposite ends of the
     // standings despite being on the winning (or losing) team together.
     let teamScoreOf = null;
+    let teamNetScoreOf = null;
     let teamPuttsOf = null;
     if (rankByTeamTotal && r.teams) {
       teamScoreOf = r.players.map((_, i) => {
         const team = r.teams.find((t) => t.includes(i));
         return team ? team.reduce((sum, p) => sum + c.playerTotalScore[p], 0) : c.playerTotalScore[i];
+      });
+      teamNetScoreOf = r.players.map((_, i) => {
+        const team = r.teams.find((t) => t.includes(i));
+        return team ? team.reduce((sum, p) => sum + c.playerTotalNetScore[p], 0) : c.playerTotalNetScore[i];
       });
       teamPuttsOf = r.players.map((_, i) => {
         const team = r.teams.find((t) => t.includes(i));
@@ -4510,8 +4670,10 @@ function computeRoundScoring(round) {
         idx: i,
         points: c.playerPoints[i],
         score: rankByTeamTotal ? teamScoreOf[i] : c.playerTotalScore[i],
+        netScore: rankByTeamTotal ? teamNetScoreOf[i] : c.playerTotalNetScore[i],
         putts: rankByTeamTotal ? teamPuttsOf[i] : c.playerTotalPutts[i],
         individualScore: c.playerTotalScore[i],
+        individualNetScore: c.playerTotalNetScore[i],
         individualPutts: c.playerTotalPutts[i],
         relPar: c.playerTotalScore[i] - c.playerParPlayed[i],
       }))
@@ -4521,7 +4683,12 @@ function computeRoundScoring(round) {
           return a.score - b.score; // total strokes breaks a tie
         }
         if (isTotalScoring) {
-          if (a.score !== b.score) return a.score - b.score; // lowest strokes wins
+          // Net scoring changes what "lowest" means for these games - a
+          // net comparison is the whole point of turning it on, so this
+          // is the one place ranking itself (not just display) shifts.
+          const aVal = netOn ? a.netScore : a.score;
+          const bVal = netOn ? b.netScore : b.score;
+          if (aVal !== bVal) return aVal - bVal; // lowest strokes wins
           return a.putts - b.putts; // total putts breaks a tie
         }
         return b.points - a.points;
@@ -4755,12 +4922,14 @@ function computeRoundScoring(round) {
                 ["swami", GAMES.swami.name, "\u26F3"],
                 ["individualputts", GAMES.individualputts.name, "\u{1F3AF}"],
                 ["pontobango", GAMES.pontobango.name, "\u{1F3B2}"],
+                ["stableford", GAMES.stableford.name, "\u{1F4C8}"],
                 ["ponto", GAMES.ponto.name, "\u{1F91D}"],
                 ["teamstrokes", GAMES.teamstrokes.name, "\u{1F3CC}\u{FE0F}"],
                 ["teamputts", GAMES.teamputts.name, "\u{1F573}\u{FE0F}"],
                 ["beachside", GAMES.beachside.name, "\u2B50"],
                 ["seabluffe", GAMES.seabluffe.name, "\u{1F504}"],
                 ["moonlightwolf", GAMES.moonlightwolf.name, "\u{1F43A}"],
+                ["vegas", GAMES.vegas.name, "\u{1F3B0}"],
                 ["avoscramble", GAMES.avoscramble.name, "\u{1F500}"],
                 ["tourneybb", GAMES.tourneybb.name, "\u{1F3C6}"],
                 ["tourneygg", GAMES.tourneygg.name, "\u{1F3C5}"],
@@ -4877,7 +5046,7 @@ function computeRoundScoring(round) {
 
             <div className="gsc-label" style={{ marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Individual Game Formats</div>
             <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>Up to 4 Players</div>
-            {["dstreet", "swami", "individualputts", "pontobango"]
+            {["dstreet", "swami", "individualputts", "pontobango", "stableford"]
               .map((key) => [key, GAMES[key]])
               .map(([key, g]) => (
                 <div key={key} className="gsc-card gsc-game-card" style={{ marginBottom: 10 }} onClick={() => startNewRound(key)}>
@@ -4899,7 +5068,7 @@ function computeRoundScoring(round) {
 
             <div className="gsc-label" style={{ marginTop: 14, marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Team Game Formats</div>
             <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>2 vs 2</div>
-            {["ponto", "teamstrokes", "teamputts", "beachside", "seabluffe", "moonlightwolf"]
+            {["ponto", "teamstrokes", "teamputts", "beachside", "seabluffe", "moonlightwolf", "vegas"]
               .map((key) => [key, GAMES[key]])
               .map(([key, g]) => (
                 <div key={key} className="gsc-card gsc-game-card" style={{ marginBottom: 10 }} onClick={() => startNewRound(key)}>
@@ -5652,16 +5821,6 @@ function computeRoundScoring(round) {
             <a href="https://www.ghin.com" target="_blank" rel="noreferrer" className="gsc-link" style={{ marginTop: 8, fontSize: 12, display: "inline-block" }}>
               Open GHIN.com {"\u2197"}
             </a>
-          </div>
-
-          <div className="gsc-card" style={{ cursor: "pointer" }} onClick={() => goToScreen("feedback")}>
-            <div className="gsc-label" style={{ marginBottom: 6 }}>Give Feedback</div>
-            <div style={{ fontSize: 13, color: "#4b4b45" }}>
-              Two minutes, ten questions - tell us what's working and what isn't.
-            </div>
-            <button className="gsc-link" style={{ marginTop: 8, fontSize: 12 }} onClick={() => goToScreen("feedback")}>
-              Start feedback survey
-            </button>
           </div>
         </div>
         <BottomNav />
@@ -6463,6 +6622,9 @@ function computeRoundScoring(round) {
               <OptionButton onClick={() => wizardGoNext("teamScoring", { teamScoring: "teamputts", resolvedGameKey: "teamputts", isTournament: false })}>
                 Team Putts - point per hole for lowest number of combined team putts
               </OptionButton>
+              <OptionButton onClick={() => wizardGoNext("teamScoring", { teamScoring: "vegas", resolvedGameKey: "vegas", isTournament: false })}>
+                Team Skins - Vegas scoring format (see rules detail)
+              </OptionButton>
             </div>
           )}
 
@@ -6481,6 +6643,9 @@ function computeRoundScoring(round) {
               </OptionButton>
               <OptionButton onClick={() => wizardGoNext("individualScoring", { individualScoring: "pontobango", resolvedGameKey: "pontobango", isTournament: false })}>
                 Points awarded for First on, closest to pin, & longest putt
+              </OptionButton>
+              <OptionButton onClick={() => wizardGoNext("individualScoring", { individualScoring: "stableford", resolvedGameKey: "stableford", isTournament: false })}>
+                Points awarded on each individual hole based on your score relative to par
               </OptionButton>
               {Number(wizardAnswers.playerCount) === 4 && (
                 <OptionButton onClick={() => wizardGoNext("individualScoring", { individualScoring: "wolf", resolvedGameKey: "moonlightwolf", isTournament: false })}>
@@ -6751,6 +6916,28 @@ function computeRoundScoring(round) {
                   If set, anyone can award a player an extra mulligan on the scoring screen once they've done this.
                 </div>
               </div>
+              <div className="gsc-field" style={{ marginTop: 10 }}>
+                <div className="gsc-label">Use per-hole handicapping (net scoring)?</div>
+                <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 6 }}>
+                  Strokes are given to higher-handicap players on the hardest holes, and net scores are used for scoring, points, and standings.
+                </div>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button
+                    className="gsc-btn"
+                    style={{ flex: 1, background: !activeCfg.netScoring ? "#1B4332" : "transparent", color: !activeCfg.netScoring ? "#F3EFE0" : "#1B4332", border: "1.5px solid #1B4332" }}
+                    onClick={() => setActiveCfg({ ...activeCfg, netScoring: false })}
+                  >
+                    No
+                  </button>
+                  <button
+                    className="gsc-btn"
+                    style={{ flex: 1, background: activeCfg.netScoring ? "#1B4332" : "transparent", color: activeCfg.netScoring ? "#F3EFE0" : "#1B4332", border: "1.5px solid #1B4332" }}
+                    onClick={() => setActiveCfg({ ...activeCfg, netScoring: true })}
+                  >
+                    Yes
+                  </button>
+                </div>
+              </div>
               {g.tracksDrives && (
                 <div className="gsc-field" style={{ marginTop: 10 }}>
                   <div className="gsc-label">Minimum drives per player</div>
@@ -6938,7 +7125,7 @@ function computeRoundScoring(round) {
 
   if (screen === "setup") {
     const g = GAMES[gameKey];
-    const isTeamGame = gameKey === "seabluffe" || gameKey === "ponto" || gameKey === "beachside" || gameKey === "teamputts" || gameKey === "teamstrokes";
+    const isTeamGame = gameKey === "seabluffe" || gameKey === "ponto" || gameKey === "vegas" || gameKey === "beachside" || gameKey === "teamputts" || gameKey === "teamstrokes";
     return (
       <div className="gsc">
         <style>{STYLE}</style>
@@ -7257,6 +7444,30 @@ function computeRoundScoring(round) {
                 </div>
               </div>
             )}
+            {g.rotates !== undefined && g.hasScore && (
+              <div className="gsc-field">
+                <div className="gsc-label">Use per-hole handicapping (net scoring)?</div>
+                <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 6 }}>
+                  Strokes are given to higher-handicap players on the hardest holes, and net scores are used for scoring, points, and standings.
+                </div>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button
+                    className="gsc-btn"
+                    style={{ flex: 1, background: !cfg.netScoring ? "#1B4332" : "transparent", color: !cfg.netScoring ? "#F3EFE0" : "#1B4332", border: "1.5px solid #1B4332" }}
+                    onClick={() => setCfg({ ...cfg, netScoring: false })}
+                  >
+                    No
+                  </button>
+                  <button
+                    className="gsc-btn"
+                    style={{ flex: 1, background: cfg.netScoring ? "#1B4332" : "transparent", color: cfg.netScoring ? "#F3EFE0" : "#1B4332", border: "1.5px solid #1B4332" }}
+                    onClick={() => setCfg({ ...cfg, netScoring: true })}
+                  >
+                    Yes
+                  </button>
+                </div>
+              </div>
+            )}
             <div className="gsc-field">
               <div className="gsc-label">Prize / stakes</div>
               <input className="gsc-input" value={cfg.prize} onChange={(e) => setCfg({ ...cfg, prize: e.target.value })} />
@@ -7270,7 +7481,7 @@ function computeRoundScoring(round) {
 
           <div className="gsc-card">
             <div className="gsc-label" style={{ marginBottom: 10 }}>Players</div>
-            {(gameKey === "swami" || gameKey === "dstreet" || gameKey === "pontobango" || gameKey === "individualputts") && (
+            {(gameKey === "swami" || gameKey === "dstreet" || gameKey === "pontobango" || gameKey === "individualputts" || gameKey === "stableford") && (
               <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 10 }}>
                 This format supports {gameKey === "pontobango" || gameKey === "individualputts" ? "2-4" : "1-4"} players - add or remove players below to match who's actually playing.
               </div>
@@ -7309,7 +7520,7 @@ function computeRoundScoring(round) {
                   </button>
                   <input className="gsc-input" placeholder={`Player ${LETTERS[i]} name`} value={p.name} onChange={(e) => updatePlayer(i, "name", e.target.value)} />
                   <input className="gsc-input" style={{ flex: "0 0 70px" }} placeholder="HCP" value={p.hcp} onChange={(e) => updatePlayer(i, "hcp", e.target.value)} />
-                  {(gameKey === "swami" || gameKey === "dstreet" || gameKey === "pontobango" || gameKey === "individualputts") && players.length > (gameKey === "pontobango" || gameKey === "individualputts" ? 2 : 1) && (
+                  {(gameKey === "swami" || gameKey === "dstreet" || gameKey === "pontobango" || gameKey === "individualputts" || gameKey === "stableford") && players.length > (gameKey === "pontobango" || gameKey === "individualputts" || gameKey === "stableford" ? 2 : 1) && (
                     <button
                       className="gsc-btn gsc-btn-outline"
                       style={{ flex: "0 0 auto", color: "#C1440E", borderColor: "#C1440E", padding: "9px 12px" }}
@@ -7398,7 +7609,7 @@ function computeRoundScoring(round) {
                 )}
               </div>
             ))}
-            {(gameKey === "swami" || gameKey === "dstreet" || gameKey === "pontobango" || gameKey === "individualputts") && players.length < 4 && (
+            {(gameKey === "swami" || gameKey === "dstreet" || gameKey === "pontobango" || gameKey === "individualputts" || gameKey === "stableford") && players.length < 4 && (
               <button className="gsc-btn gsc-btn-outline" style={{ width: "100%", marginTop: 4 }} onClick={addPlayerSlot}>
                 + Add another player
               </button>
@@ -7408,7 +7619,7 @@ function computeRoundScoring(round) {
                 Rotation: Holes 1-6 {LETTERS[0]}+{LETTERS[1]} vs {LETTERS[2]}+{LETTERS[3]} - Holes 7-12 {LETTERS[0]}+{LETTERS[2]} vs {LETTERS[1]}+{LETTERS[3]} - Holes 13-18 {LETTERS[0]}+{LETTERS[3]} vs {LETTERS[1]}+{LETTERS[2]}
               </div>
             )}
-            {(gameKey === "ponto" || gameKey === "beachside" || gameKey === "teamputts" || gameKey === "teamstrokes") && (
+            {(gameKey === "ponto" || gameKey === "vegas" || gameKey === "beachside" || gameKey === "teamputts" || gameKey === "teamstrokes") && (
               <div style={{ marginTop: 10 }}>
                 <div className="gsc-label">Teams</div>
                 <div className="gsc-row">
@@ -7725,6 +7936,30 @@ function computeRoundScoring(round) {
                 />
                 <div style={{ fontSize: 11, color: "#8a8a80", marginTop: 4 }}>
                   If set, anyone can award a player an extra mulligan on the scoring screen once they've done this.
+                </div>
+              </div>
+            )}
+            {tg.hasScore && (
+              <div className="gsc-field">
+                <div className="gsc-label">Use per-hole handicapping (net scoring)?</div>
+                <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 6 }}>
+                  Strokes are given to higher-handicap players on the hardest holes, and net scores are used for scoring, points, and standings.
+                </div>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button
+                    className="gsc-btn"
+                    style={{ flex: 1, background: !tournamentCfg.netScoring ? "#1B4332" : "transparent", color: !tournamentCfg.netScoring ? "#F3EFE0" : "#1B4332", border: "1.5px solid #1B4332" }}
+                    onClick={() => setTournamentCfg({ ...tournamentCfg, netScoring: false })}
+                  >
+                    No
+                  </button>
+                  <button
+                    className="gsc-btn"
+                    style={{ flex: 1, background: tournamentCfg.netScoring ? "#1B4332" : "transparent", color: tournamentCfg.netScoring ? "#F3EFE0" : "#1B4332", border: "1.5px solid #1B4332" }}
+                    onClick={() => setTournamentCfg({ ...tournamentCfg, netScoring: true })}
+                  >
+                    Yes
+                  </button>
                 </div>
               </div>
             )}
@@ -8071,7 +8306,7 @@ function computeRoundScoring(round) {
     const ranks = playerRank(r, computedArg);
     const g = GAMES[r.game];
     let winners = [];
-    const isTwoVsTwoGame = r.game === "seabluffe" || r.game === "ponto" || r.game === "beachside" || r.game === "teamputts" || r.game === "teamstrokes";
+    const isTwoVsTwoGame = r.game === "seabluffe" || r.game === "ponto" || r.game === "vegas" || r.game === "beachside" || r.game === "teamputts" || r.game === "teamstrokes";
     if (!g.singleTeam && ranks.length > 0) {
       if (isTwoVsTwoGame) {
         winners = ranks.slice(0, Math.min(2, ranks.length));
@@ -8130,10 +8365,10 @@ function computeRoundScoring(round) {
                 </div>
                 <div style={{ fontSize: 13, color: "#6b6b63", marginTop: 4 }}>
                   {g.rankByPutts
-                    ? `${winners[0].putts} putts (${winners[0].score} strokes)`
+                    ? `${winners[0].putts} putts (${winners[0].score} strokes${round.cfg.netScoring ? `, net ${winners[0].netScore}` : ""})`
                     : g.totalScoring
-                    ? `${winners[0].score} strokes (${winners[0].putts} putts)`
-                    : `${winners[0].points} pts (${winners[0].score}str/${winners[0].putts}putt/${formatRelPar(winners[0].relPar)})`}
+                    ? `${winners[0].score} strokes${round.cfg.netScoring ? ` (net ${winners[0].netScore})` : ""} (${winners[0].putts} putts)`
+                    : `${winners[0].points} pts (${winners[0].score}str${round.cfg.netScoring ? `/net ${winners[0].netScore}` : ""}/${winners[0].putts}putt/${formatRelPar(winners[0].relPar)})`}
                 </div>
               </div>
             )
@@ -8758,6 +8993,11 @@ function computeRoundScoring(round) {
                           <div className="gsc-stepper-val">{e.strokes === "" || e.strokes == null ? "-" : e.strokes}</div>
                           <button onClick={() => updateHoleEntry(i, "strokes", (Number(e.strokes) || 0) + 1)}>+</button>
                         </div>
+                        {round.cfg.netScoring && e.strokes !== "" && e.strokes != null && (
+                          <div style={{ fontSize: 11, color: "#1B4332", fontWeight: 700, textAlign: "center", marginTop: 3 }}>
+                            Net {Number(e.strokes) - computed.strokesOffForHole(i, holeIdx)}
+                          </div>
+                        )}
                       </div>
                     )}
                     {g.hasPutts && (
@@ -9018,15 +9258,21 @@ function computeRoundScoring(round) {
                   {!g.singleTeam && !g.totalScoring && <>{p.points} pts </>}
                   {g.rankByTeamTotal ? (
                     <span style={{ fontWeight: 700, fontSize: 17, whiteSpace: "nowrap" }}>
-                      {p.score}str{" "}
+                      {p.score}str{round.cfg.netScoring && <> (net {p.netScore})</>}{" "}
                       <span style={{ fontWeight: 700, color: "#6b6b63" }}>({p.individualScore}str/{p.individualPutts}putt/{formatRelPar(p.relPar)})</span>
                     </span>
                   ) : g.rankByPutts ? (
-                    <span style={{ fontWeight: 700, fontSize: 17, whiteSpace: "nowrap" }}>{p.putts}putt/{p.score}str/{formatRelPar(p.relPar)}</span>
+                    <span style={{ fontWeight: 700, fontSize: 17, whiteSpace: "nowrap" }}>
+                      {p.putts}putt/{p.score}str{round.cfg.netScoring && <> (net {p.netScore})</>}/{formatRelPar(p.relPar)}
+                    </span>
                   ) : g.totalScoring ? (
-                    <span style={{ fontWeight: 700, fontSize: 17, whiteSpace: "nowrap" }}>{p.score}str/{p.putts}putt/{formatRelPar(p.relPar)}</span>
+                    <span style={{ fontWeight: 700, fontSize: 17, whiteSpace: "nowrap" }}>
+                      {p.score}str{round.cfg.netScoring && <> (net {p.netScore})</>}/{p.putts}putt/{formatRelPar(p.relPar)}
+                    </span>
                   ) : (
-                    <span style={{ fontWeight: 700, color: "#6b6b63", whiteSpace: "nowrap" }}>({p.score}str/{p.putts}putt/{formatRelPar(p.relPar)})</span>
+                    <span style={{ fontWeight: 700, color: "#6b6b63", whiteSpace: "nowrap" }}>
+                      ({p.score}str{round.cfg.netScoring && <> / net {p.netScore}</>}/{p.putts}putt/{formatRelPar(p.relPar)})
+                    </span>
                   )}
                 </div>
               </div>
