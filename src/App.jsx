@@ -9206,6 +9206,19 @@ function computeRoundScoring(round) {
             </div>
           )}
 
+          <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 4 }}>
+            <button
+              className="gsc-btn gsc-btn-primary"
+              disabled={holeIdx === 17}
+              onClick={() => {
+                setHoleIdx((h) => h + 1);
+                window.scrollTo(0, 0);
+              }}
+            >
+              Next Hole {"\u2192"}
+            </button>
+          </div>
+
           <div className="gsc-card">
             <div className="gsc-label" style={{ marginBottom: 8 }}>Notes</div>
             <textarea
