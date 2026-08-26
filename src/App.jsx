@@ -5007,10 +5007,10 @@ function computeRoundScoring(round) {
           )}
 
           <div className="gsc-card">
-            <div className="gsc-label">Join an existing round</div>
+            <div className="gsc-label">Join an Existing Game</div>
             <div className="gsc-row" style={{ marginTop: 6 }}>
-              <input className="gsc-input gsc-mono" id="round-join-code" name="round-join-code" autoComplete="off" placeholder="ROUND CODE" value={joinCode} onChange={(e) => setJoinCode(e.target.value.toUpperCase())} maxLength={6} />
-              <button className="gsc-btn gsc-btn-primary" style={{ flex: "0 0 auto" }} disabled={busy || !joinCode} onClick={() => loadRound(joinCode)}>
+              <input className="gsc-input gsc-mono" id="round-join-code" name="round-join-code" autoComplete="off" placeholder="ROUND OR TOURNAMENT CODE" value={joinCode} onChange={(e) => setJoinCode(e.target.value.toUpperCase())} maxLength={6} />
+              <button className="gsc-btn gsc-btn-primary" style={{ flex: "0 0 auto" }} disabled={busy || !joinCode} onClick={() => joinRoundOrTournament(joinCode)}>
                 Join
               </button>
             </div>
@@ -5142,23 +5142,23 @@ function computeRoundScoring(round) {
           )}
 
           <div className="gsc-card">
-            <div className="gsc-label" style={{ marginBottom: 6 }}>Join an existing tournament</div>
+            <div className="gsc-label" style={{ marginBottom: 6 }}>Join an Existing Game</div>
             <div className="gsc-row">
               <input
                 className="gsc-input gsc-mono"
                 id="tournament-join-code"
                 name="tournament-join-code"
                 autoComplete="off"
-                placeholder="TOURNAMENT CODE"
-                value={tournamentJoinCode}
-                onChange={(e) => setTournamentJoinCode(e.target.value.toUpperCase())}
+                placeholder="ROUND OR TOURNAMENT CODE"
+                value={joinCode}
+                onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
                 maxLength={6}
               />
-              <button className="gsc-btn gsc-btn-primary" style={{ flex: "0 0 auto" }} disabled={tournamentBusy || !tournamentJoinCode} onClick={() => joinTournament(tournamentJoinCode)}>
+              <button className="gsc-btn gsc-btn-primary" style={{ flex: "0 0 auto" }} disabled={busy || !joinCode} onClick={() => joinRoundOrTournament(joinCode)}>
                 Join
               </button>
             </div>
-            {tournamentErr && <div style={{ color: "#C1440E", fontSize: 13, marginTop: 8 }}>{tournamentErr}</div>}
+            {err && <div style={{ color: "#C1440E", fontSize: 13, marginTop: 8 }}>{err}</div>}
           </div>
 
           <div className="gsc-card gsc-winner-card" style={{ cursor: "pointer" }} onClick={startWizardForTournament}>
