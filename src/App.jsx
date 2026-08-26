@@ -4839,9 +4839,9 @@ function computeRoundScoring(round) {
             We all love playing games on the course, but who wants to keep track of the scores and rules? RipScore does it for you. No paper scorecards, no redoing the math, no arguing about rules, just easy golf games, live shared scores, and a clear answer to who owes who at the 19th hole!
             <br />
             <br />
-            To start a new round or tournament:
+            To join an existing game or start a new game:
             <br />
-            1) Select your game format below
+            1) Enter your existing game code or start a new game below
             <br />
             2) Set up your game detail and share your code
             <br />
