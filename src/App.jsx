@@ -4668,11 +4668,9 @@ function computeRoundScoring(round) {
             <br />
             1) Select your game format below
             <br />
-            2) Set up your round detail
+            2) Set up your game detail and share your code
             <br />
-            3) Share your round code with your group
-            <br />
-            4) Enter the strokes for your group as you play
+            3) Enter the strokes for your group as you play
             <br />
             <br />
             You're all set, next hole... the 19th!
