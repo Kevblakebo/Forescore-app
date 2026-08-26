@@ -6688,7 +6688,7 @@ function computeRoundScoring(round) {
           {wizardStepId === "field_name" && (
             <div className="gsc-card">
               <div className="gsc-label" style={{ marginBottom: 10, fontSize: 16 }}>
-                What do you want to name your {isTournament ? "tournament" : "round"}?
+                What do you want to name your {isTournament ? "tournament" : "round"}? (Optional)
               </div>
               <input
                 className="gsc-input"
@@ -6905,7 +6905,7 @@ function computeRoundScoring(round) {
                 <input className="gsc-input" type="number" min="0" placeholder="0" value={activeCfg.mulliganSegment} onChange={(e) => setActiveCfg({ ...activeCfg, mulliganSegment: cleanNumericText(e.target.value) })} />
               </div>
               <div className="gsc-field" style={{ marginTop: 10 }}>
-                <div className="gsc-label">Earn a bonus mulligan (optional)</div>
+                <div className="gsc-label">Earn a bonus mulligan</div>
                 <input
                   className="gsc-input"
                   placeholder="e.g. Give to charity"
@@ -7377,7 +7377,7 @@ function computeRoundScoring(round) {
 
           {!activeTournament && (
           <div className="gsc-card">
-            <div className="gsc-label" style={{ marginBottom: 10 }}>Game variables</div>
+            <div className="gsc-label" style={{ marginBottom: 10 }}>Game variables (Optional)</div>
             {g.hasScore && (
               <div className="gsc-field">
                 <div className="gsc-label">Max score over par per hole</div>
@@ -7432,7 +7432,7 @@ function computeRoundScoring(round) {
             )}
             {g.rotates !== undefined && g.hasScore && (
               <div className="gsc-field">
-                <div className="gsc-label">Earn a bonus mulligan (optional)</div>
+                <div className="gsc-label">Earn a bonus mulligan</div>
                 <input
                   className="gsc-input"
                   placeholder="e.g. Give to charity"
@@ -7927,7 +7927,7 @@ function computeRoundScoring(round) {
             )}
             {tg.hasScore && (
               <div className="gsc-field">
-                <div className="gsc-label">Earn a bonus mulligan (optional)</div>
+                <div className="gsc-label">Earn a bonus mulligan</div>
                 <input
                   className="gsc-input"
                   placeholder="e.g. Give to charity"
