@@ -8872,7 +8872,7 @@ function computeRoundScoring(round) {
                     <div className="gsc-player-name">Team Strokes</div>
                     <div style={{ display: "flex", gap: 22, marginTop: 8, flexWrap: "wrap" }}>
                       <div>
-                        <div style={{ fontSize: 11, color: "#6b6b63", marginBottom: 3, textAlign: "center" }}>STROKES</div>
+                        <div style={{ fontSize: 11, color: "#6b6b63", marginBottom: 3, textAlign: "center" }}>TOTAL STROKES</div>
                         <div className="gsc-stepper">
                           <button
                             disabled={teamEntry.strokes === "" || teamEntry.strokes == null}
@@ -9011,7 +9011,7 @@ function computeRoundScoring(round) {
                   <div style={{ display: "flex", gap: 22, marginTop: 8, flexWrap: "wrap" }}>
                     {g.hasScore && (
                       <div>
-                        <div style={{ fontSize: 11, color: "#6b6b63", marginBottom: 3, textAlign: "center" }}>STROKES</div>
+                        <div style={{ fontSize: 11, color: "#6b6b63", marginBottom: 3, textAlign: "center" }}>TOTAL STROKES</div>
                         <div className="gsc-stepper">
                           <button
                             disabled={e.strokes === "" || e.strokes == null}
