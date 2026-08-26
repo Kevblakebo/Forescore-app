@@ -1305,6 +1305,7 @@ export default function GolfScorecard() {
   const [viewingRoundFromStats, setViewingRoundFromStats] = useState(false);
   const [rulesOpenFor, setRulesOpenFor] = useState(null);
   const [quickInfoFor, setQuickInfoFor] = useState(null);
+  const [mulliganAwardedFlash, setMulliganAwardedFlash] = useState(null);
 
   // ---- Tournament (multi-foursome) state ----
   const [activeTournament, setActiveTournament] = useState(null); // tournament object once created/joined, drives "foursome mode" in setup
@@ -4127,6 +4128,14 @@ export default function GolfScorecard() {
       saveRound(next);
       return next;
     });
+    // Brief, temporary confirmation on the button itself - the persistent
+    // count next to each player's name is the reliable source of truth,
+    // but this gives immediate, satisfying feedback right at the moment
+    // of tapping, so it's clear the tap actually registered.
+    setMulliganAwardedFlash(playerIdx);
+    setTimeout(() => {
+      setMulliganAwardedFlash((cur) => (cur === playerIdx ? null : cur));
+    }, 1500);
   }
 
   // Saves the free-form note for the current hole - called on blur, not on
@@ -8463,11 +8472,31 @@ function computeRoundScoring(round) {
                 {round.cfg.mulliganChallenge}
               </div>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                {round.players.map((p, i) => (
-                  <button key={i} onClick={() => awardBonusMulligan(i)} className="gsc-btn gsc-btn-outline" style={{ fontSize: 12, padding: "6px 12px" }}>
-                    +1 for {p.name}
-                  </button>
-                ))}
+                {round.players.map((p, i) => {
+                  const seg = Math.floor(holeIdx / mulliganWindow(round.game));
+                  const earnedSoFar = round.bonusMulligans && round.bonusMulligans[i] ? round.bonusMulligans[i][seg] || 0 : 0;
+                  const justAwarded = mulliganAwardedFlash === i;
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => awardBonusMulligan(i)}
+                      className="gsc-btn"
+                      style={{
+                        fontSize: 12,
+                        padding: "6px 12px",
+                        background: justAwarded ? "#1B4332" : "transparent",
+                        color: justAwarded ? "#F3EFE0" : "#1B4332",
+                        border: "1.5px solid #1B4332",
+                        transition: "background 0.2s, color 0.2s",
+                      }}
+                    >
+                      {justAwarded ? `\u2713 Added for ${p.name}` : `+1 for ${p.name}`}
+                      {earnedSoFar > 0 && !justAwarded && (
+                        <span style={{ marginLeft: 6, fontSize: 11, opacity: 0.75 }}>({earnedSoFar} earned)</span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
