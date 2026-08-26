@@ -8993,11 +8993,33 @@ function computeRoundScoring(round) {
                           <div className="gsc-stepper-val">{e.strokes === "" || e.strokes == null ? "-" : e.strokes}</div>
                           <button onClick={() => updateHoleEntry(i, "strokes", (Number(e.strokes) || 0) + 1)}>+</button>
                         </div>
-                        {round.cfg.netScoring && e.strokes !== "" && e.strokes != null && (
-                          <div style={{ fontSize: 11, color: "#1B4332", fontWeight: 700, textAlign: "center", marginTop: 3 }}>
-                            Net {Number(e.strokes) - computed.strokesOffForHole(i, holeIdx)}
-                          </div>
-                        )}
+                        {round.cfg.netScoring && e.strokes !== "" && e.strokes != null && (() => {
+                          const strokesOff = computed.strokesOffForHole(i, holeIdx);
+                          const net = Number(e.strokes) - strokesOff;
+                          return strokesOff > 0 ? (
+                            <div style={{ textAlign: "center", marginTop: 4 }}>
+                              <span
+                                style={{
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: 3,
+                                  fontSize: 14,
+                                  fontWeight: 800,
+                                  color: "#fff",
+                                  background: "#C1440E",
+                                  padding: "2px 9px",
+                                  borderRadius: 20,
+                                }}
+                              >
+                                {"\u2605"} Net {net}
+                              </span>
+                            </div>
+                          ) : (
+                            <div style={{ fontSize: 14, fontWeight: 700, color: "#1B4332", textAlign: "center", marginTop: 4 }}>
+                              Net {net}
+                            </div>
+                          );
+                        })()}
                       </div>
                     )}
                     {g.hasPutts && (
