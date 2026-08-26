@@ -4882,20 +4882,6 @@ function computeRoundScoring(round) {
             </div>
           )}
 
-          <div className="gsc-card gsc-winner-card" style={{ cursor: "pointer" }} onClick={startWizard}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <div>
-                <div style={{ fontWeight: 700, fontSize: 16 }}>{"\u{1F9D9}"} Not sure which game to pick?</div>
-                <div style={{ fontSize: 13, color: "#4b4b45", marginTop: 3 }}>
-                  Answer a few quick questions and we'll pick the right format and set everything up for you.
-                </div>
-              </div>
-            </div>
-            <button className="gsc-btn gsc-btn-gold" style={{ width: "100%", marginTop: 10 }} onClick={startWizard}>
-              Start the Game Wizard
-            </button>
-          </div>
-
           <div className="gsc-card">
             <div className="gsc-label" style={{ marginBottom: 6, fontSize: 17 }}>Join an Existing Game</div>
             <div className="gsc-row">
@@ -4963,6 +4949,20 @@ function computeRoundScoring(round) {
                 );
               })}
             </div>
+          </div>
+
+          <div className="gsc-card gsc-winner-card" style={{ cursor: "pointer" }} onClick={startWizard}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: 16 }}>{"\u{1F9D9}"} Not sure which game to pick?</div>
+                <div style={{ fontSize: 13, color: "#4b4b45", marginTop: 3 }}>
+                  Answer a few quick questions and we'll pick the right format and set everything up for you.
+                </div>
+              </div>
+            </div>
+            <button className="gsc-btn gsc-btn-gold" style={{ width: "100%", marginTop: 10 }} onClick={startWizard}>
+              Start the Game Wizard
+            </button>
           </div>
 
           <div className="gsc-card gsc-game-card" onClick={() => goToScreen("groupsTab")}>
@@ -5432,42 +5432,42 @@ function computeRoundScoring(round) {
                     )}
                   </div>
 
-                  {stats.recent.length > 0 && (
-                    <div style={{ marginTop: 16 }}>
-                      <div style={{ fontSize: 11, color: "#8a8a80", textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 700, marginBottom: 8 }}>Recent Rounds & Tournaments</div>
-                      {deleteHistoryErr && <div style={{ color: "#C1440E", fontSize: 12, marginBottom: 8 }}>{deleteHistoryErr}</div>}
-                      {stats.recent.map((r, i) => (
-                        <div
-                          key={i}
-                          onClick={() => (r.tournamentId ? openTournamentBoard(r.tournamentId) : viewRoundFromProfile(r.code))}
-                          style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "7px 0", borderBottom: i === stats.recent.length - 1 ? "none" : "1px solid #eee6cf", cursor: "pointer" }}
-                        >
-                          <div style={{ fontSize: 13, color: "#1B4332", fontWeight: 600 }}>
-                            {r.name}
-                            {r.tournamentId && <span style={{ fontSize: 10, color: "#B08D57", marginLeft: 6, fontWeight: 700 }}>TOURNAMENT</span>}
-                            {!r.complete && <span style={{ fontSize: 10, color: "#8a8a80", marginLeft: 6, fontWeight: 400 }}>(in progress)</span>}
-                          </div>
-                          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                            <div style={{ fontSize: 12, color: "#6b6b63" }}>{r.date}</div>
-                            <button
-                              onClick={(e) => { e.stopPropagation(); setDeleteHistoryErr(""); setDeleteHistoryConfirm({ code: r.code, name: r.name }); }}
-                              style={{ background: "none", border: "none", padding: 4, color: "#C1440E", fontSize: 14, cursor: "pointer", lineHeight: 1 }}
-                              title="Remove from your history"
-                            >
-                              {"\u{1F5D1}"}
-                            </button>
-                            <span style={{ color: "#8FA998", fontSize: 14 }}>{"\u203A"}</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
                   <button className="gsc-link" style={{ marginTop: 12, fontSize: 12 }} onClick={loadStats}>
                     Refresh stats
                   </button>
                 </>
               )}
+            </div>
+          )}
+
+          {session && stats && stats.recent && stats.recent.length > 0 && (
+            <div className="gsc-card">
+              <div className="gsc-label" style={{ marginBottom: 10 }}>Finished Games</div>
+              {deleteHistoryErr && <div style={{ color: "#C1440E", fontSize: 12, marginBottom: 8 }}>{deleteHistoryErr}</div>}
+              {stats.recent.map((r, i) => (
+                <div
+                  key={i}
+                  onClick={() => (r.tournamentId ? openTournamentBoard(r.tournamentId) : viewRoundFromProfile(r.code))}
+                  style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "7px 0", borderBottom: i === stats.recent.length - 1 ? "none" : "1px solid #eee6cf", cursor: "pointer" }}
+                >
+                  <div style={{ fontSize: 13, color: "#1B4332", fontWeight: 600 }}>
+                    {r.name}
+                    {r.tournamentId && <span style={{ fontSize: 10, color: "#B08D57", marginLeft: 6, fontWeight: 700 }}>TOURNAMENT</span>}
+                    {!r.complete && <span style={{ fontSize: 10, color: "#8a8a80", marginLeft: 6, fontWeight: 400 }}>(in progress)</span>}
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <div style={{ fontSize: 12, color: "#6b6b63" }}>{r.date}</div>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setDeleteHistoryErr(""); setDeleteHistoryConfirm({ code: r.code, name: r.name }); }}
+                      style={{ background: "none", border: "none", padding: 4, color: "#C1440E", fontSize: 14, cursor: "pointer", lineHeight: 1 }}
+                      title="Remove from your history"
+                    >
+                      {"\u{1F5D1}"}
+                    </button>
+                    <span style={{ color: "#8FA998", fontSize: 14 }}>{"\u203A"}</span>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
 
