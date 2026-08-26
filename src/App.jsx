@@ -7161,7 +7161,7 @@ function computeRoundScoring(round) {
             </div>
           )}
           <div className="gsc-card">
-            <div className="gsc-label">{activeTournament ? "Foursome name" : "Round name"}</div>
+            <div className="gsc-label">{activeTournament ? "Foursome name (Optional)" : "Round name (Optional)"}</div>
             <input
               className="gsc-input"
               placeholder={activeTournament ? "e.g. Foursome 1" : g.name + " at ..."}
@@ -7483,7 +7483,7 @@ function computeRoundScoring(round) {
           )}
 
           <div className="gsc-card">
-            <div className="gsc-label" style={{ marginBottom: 10 }}>Players</div>
+            <div className="gsc-label" style={{ marginBottom: 10 }}>Players Names and Handicaps (Optional)</div>
             {(gameKey === "swami" || gameKey === "dstreet" || gameKey === "pontobango" || gameKey === "individualputts" || gameKey === "stableford") && (
               <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 10 }}>
                 This format supports {gameKey === "pontobango" || gameKey === "individualputts" ? "2-4" : "1-4"} players - add or remove players below to match who's actually playing.
@@ -8037,7 +8037,7 @@ function computeRoundScoring(round) {
             <div key={fi} className="gsc-card">
               <div className="gsc-label">Foursome name</div>
               <input className="gsc-input" style={{ marginBottom: 12 }} value={f.name} onChange={(e) => updateFoursomeDraftName(fi, e.target.value)} />
-              <div className="gsc-label" style={{ marginBottom: 6 }}>Players</div>
+              <div className="gsc-label" style={{ marginBottom: 6 }}>Players Names and Handicaps (Optional)</div>
               <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 10 }}>
                 Tap the circle next to a player's name to pick a fun avatar (optional).
               </div>
