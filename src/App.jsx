@@ -4841,7 +4841,7 @@ function computeRoundScoring(round) {
             <br />
             To join an existing game or start a new game:
             <br />
-            1) Enter your game code, or start a new game below
+            1) Enter your game code or start a new game below
             <br />
             2) Set up your game detail and share your code
             <br />
@@ -6806,10 +6806,17 @@ function computeRoundScoring(round) {
               {courseSearchErr && <div style={{ color: "#C1440E", fontSize: 12, marginTop: 8 }}>{courseSearchErr}</div>}
               {courseSearchResults.length > 0 && !courseTeeOptions && (
                 <div style={{ marginTop: 10 }}>
+                  <div className="gsc-label">Select your course</div>
+                  <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 8 }}>
+                    Tap a course below, then pick your tee on the next step to load par and yardage.
+                  </div>
                   {courseSearchResults.slice(0, 8).map((c) => (
-                    <div key={c.courseID} className="gsc-card gsc-game-card" style={{ marginBottom: 8, padding: 10 }} onClick={() => selectCourseResult(c)}>
-                      <div style={{ fontWeight: 700, fontSize: 14 }}>{c.courseName && c.courseName !== c.clubName ? `${c.clubName} - ${c.courseName}` : c.clubName}</div>
-                      {(c.city || c.state) && <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 2 }}>{c.city}{c.city && c.state ? ", " : ""}{c.state}</div>}
+                    <div key={c.courseID} className="gsc-card gsc-game-card" style={{ marginBottom: 8, padding: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }} onClick={() => selectCourseResult(c)}>
+                      <div>
+                        <div style={{ fontWeight: 700, fontSize: 14 }}>{c.courseName && c.courseName !== c.clubName ? `${c.clubName} - ${c.courseName}` : c.clubName}</div>
+                        {(c.city || c.state) && <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 2 }}>{c.city}{c.city && c.state ? ", " : ""}{c.state}</div>}
+                      </div>
+                      <span style={{ color: "#8FA998", fontSize: 18, marginLeft: 8 }}>{"\u203A"}</span>
                     </div>
                   ))}
                   {courseDetailBusy && <div style={{ fontSize: 12, color: "#6b6b63" }}>Loading course details...</div>}
@@ -6819,11 +6826,14 @@ function computeRoundScoring(round) {
                 <div style={{ marginTop: 10 }}>
                   <div className="gsc-label">Pick a tee ({courseTeeOptions.courseLabel})</div>
                   {courseTeeOptions.tees.map((tee, i) => (
-                    <div key={i} className="gsc-card gsc-game-card" style={{ marginBottom: 8, padding: 10 }} onClick={() => applyCourseTee(tee, isTournament)}>
-                      <div style={{ fontWeight: 700, fontSize: 14 }}>{tee.teeName}</div>
-                      <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 2 }}>
-                        Par {(courseTeeOptions.parsMen || []).slice(0, courseTeeOptions.numHoles || 18).reduce((a, b) => a + (b || 0), 0)} - {courseTeeOptions.numHoles} holes{Array.from({ length: courseTeeOptions.numHoles || 18 }, (_, h) => tee[`length${h + 1}`]).some((v) => v != null) ? ` - ${Array.from({ length: courseTeeOptions.numHoles || 18 }, (_, h) => tee[`length${h + 1}`] || 0).reduce((a, b) => a + b, 0)} yds` : ""}
+                    <div key={i} className="gsc-card gsc-game-card" style={{ marginBottom: 8, padding: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }} onClick={() => applyCourseTee(tee, isTournament)}>
+                      <div>
+                        <div style={{ fontWeight: 700, fontSize: 14 }}>{tee.teeName}</div>
+                        <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 2 }}>
+                          Par {(courseTeeOptions.parsMen || []).slice(0, courseTeeOptions.numHoles || 18).reduce((a, b) => a + (b || 0), 0)} - {courseTeeOptions.numHoles} holes{Array.from({ length: courseTeeOptions.numHoles || 18 }, (_, h) => tee[`length${h + 1}`]).some((v) => v != null) ? ` - ${Array.from({ length: courseTeeOptions.numHoles || 18 }, (_, h) => tee[`length${h + 1}`] || 0).reduce((a, b) => a + b, 0)} yds` : ""}
+                        </div>
                       </div>
+                      <span style={{ color: "#8FA998", fontSize: 18, marginLeft: 8 }}>{"\u203A"}</span>
                     </div>
                   ))}
                   <button className="gsc-link" style={{ marginTop: 4, fontSize: 12 }} onClick={() => setCourseTeeOptions(null)}>Back to search results</button>
@@ -7267,15 +7277,22 @@ function computeRoundScoring(round) {
 
                 {courseSearchResults.length > 0 && !courseTeeOptions && (
                   <div style={{ marginTop: 10 }}>
+                    <div className="gsc-label">Select your course</div>
+                    <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 8 }}>
+                      Tap a course below, then pick your tee on the next step to load par and yardage.
+                    </div>
                     {courseSearchResults.slice(0, 8).map((c) => (
                       <div
                         key={c.courseID}
                         className="gsc-card gsc-game-card"
-                        style={{ marginBottom: 8, padding: 10 }}
+                        style={{ marginBottom: 8, padding: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}
                         onClick={() => selectCourseResult(c)}
                       >
-                        <div style={{ fontWeight: 700, fontSize: 14 }}>{c.courseName && c.courseName !== c.clubName ? `${c.clubName} - ${c.courseName}` : c.clubName}</div>
-                        {(c.city || c.state) && <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 2 }}>{c.city}{c.city && c.state ? ", " : ""}{c.state}</div>}
+                        <div>
+                          <div style={{ fontWeight: 700, fontSize: 14 }}>{c.courseName && c.courseName !== c.clubName ? `${c.clubName} - ${c.courseName}` : c.clubName}</div>
+                          {(c.city || c.state) && <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 2 }}>{c.city}{c.city && c.state ? ", " : ""}{c.state}</div>}
+                        </div>
+                        <span style={{ color: "#8FA998", fontSize: 18, marginLeft: 8 }}>{"\u203A"}</span>
                       </div>
                     ))}
                     {courseDetailBusy && <div style={{ fontSize: 12, color: "#6b6b63" }}>Loading course details...</div>}
@@ -7292,13 +7309,16 @@ function computeRoundScoring(round) {
                       <div
                         key={i}
                         className="gsc-card gsc-game-card"
-                        style={{ marginBottom: 8, padding: 10 }}
+                        style={{ marginBottom: 8, padding: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}
                         onClick={() => applyCourseTee(tee)}
                       >
-                        <div style={{ fontWeight: 700, fontSize: 14 }}>{tee.teeName}</div>
-                        <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 2 }}>
-                          Par {(courseTeeOptions.parsMen || []).slice(0, courseTeeOptions.numHoles || 18).reduce((a, b) => a + (b || 0), 0)} - {courseTeeOptions.numHoles} holes{Array.from({ length: courseTeeOptions.numHoles || 18 }, (_, h) => tee[`length${h + 1}`]).some((v) => v != null) ? ` - ${Array.from({ length: courseTeeOptions.numHoles || 18 }, (_, h) => tee[`length${h + 1}`] || 0).reduce((a, b) => a + b, 0)} yds` : ""}
+                        <div>
+                          <div style={{ fontWeight: 700, fontSize: 14 }}>{tee.teeName}</div>
+                          <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 2 }}>
+                            Par {(courseTeeOptions.parsMen || []).slice(0, courseTeeOptions.numHoles || 18).reduce((a, b) => a + (b || 0), 0)} - {courseTeeOptions.numHoles} holes{Array.from({ length: courseTeeOptions.numHoles || 18 }, (_, h) => tee[`length${h + 1}`]).some((v) => v != null) ? ` - ${Array.from({ length: courseTeeOptions.numHoles || 18 }, (_, h) => tee[`length${h + 1}`] || 0).reduce((a, b) => a + b, 0)} yds` : ""}
+                          </div>
                         </div>
+                        <span style={{ color: "#8FA998", fontSize: 18, marginLeft: 8 }}>{"\u203A"}</span>
                       </div>
                     ))}
                     <button className="gsc-link" style={{ marginTop: 4, fontSize: 12 }} onClick={() => setCourseTeeOptions(null)}>
@@ -7767,15 +7787,22 @@ function computeRoundScoring(round) {
 
               {courseSearchResults.length > 0 && !courseTeeOptions && (
                 <div style={{ marginTop: 10 }}>
+                  <div className="gsc-label">Select your course</div>
+                  <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 8 }}>
+                    Tap a course below, then pick your tee on the next step to load par and yardage.
+                  </div>
                   {courseSearchResults.slice(0, 8).map((c) => (
                     <div
                       key={c.courseID}
                       className="gsc-card gsc-game-card"
-                      style={{ marginBottom: 8, padding: 10 }}
+                      style={{ marginBottom: 8, padding: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}
                       onClick={() => selectCourseResult(c)}
                     >
-                      <div style={{ fontWeight: 700, fontSize: 14 }}>{c.courseName && c.courseName !== c.clubName ? `${c.clubName} - ${c.courseName}` : c.clubName}</div>
-                      {(c.city || c.state) && <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 2 }}>{c.city}{c.city && c.state ? ", " : ""}{c.state}</div>}
+                      <div>
+                        <div style={{ fontWeight: 700, fontSize: 14 }}>{c.courseName && c.courseName !== c.clubName ? `${c.clubName} - ${c.courseName}` : c.clubName}</div>
+                        {(c.city || c.state) && <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 2 }}>{c.city}{c.city && c.state ? ", " : ""}{c.state}</div>}
+                      </div>
+                      <span style={{ color: "#8FA998", fontSize: 18, marginLeft: 8 }}>{"\u203A"}</span>
                     </div>
                   ))}
                   {courseDetailBusy && <div style={{ fontSize: 12, color: "#6b6b63" }}>Loading course details...</div>}
@@ -7792,13 +7819,16 @@ function computeRoundScoring(round) {
                     <div
                       key={i}
                       className="gsc-card gsc-game-card"
-                      style={{ marginBottom: 8, padding: 10 }}
+                      style={{ marginBottom: 8, padding: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}
                       onClick={() => applyCourseTee(tee, true)}
                     >
-                      <div style={{ fontWeight: 700, fontSize: 14 }}>{tee.teeName}</div>
-                      <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 2 }}>
-                        Par {(courseTeeOptions.parsMen || []).slice(0, courseTeeOptions.numHoles || 18).reduce((a, b) => a + (b || 0), 0)} - {courseTeeOptions.numHoles} holes{Array.from({ length: courseTeeOptions.numHoles || 18 }, (_, h) => tee[`length${h + 1}`]).some((v) => v != null) ? ` - ${Array.from({ length: courseTeeOptions.numHoles || 18 }, (_, h) => tee[`length${h + 1}`] || 0).reduce((a, b) => a + b, 0)} yds` : ""}
+                      <div>
+                        <div style={{ fontWeight: 700, fontSize: 14 }}>{tee.teeName}</div>
+                        <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 2 }}>
+                          Par {(courseTeeOptions.parsMen || []).slice(0, courseTeeOptions.numHoles || 18).reduce((a, b) => a + (b || 0), 0)} - {courseTeeOptions.numHoles} holes{Array.from({ length: courseTeeOptions.numHoles || 18 }, (_, h) => tee[`length${h + 1}`]).some((v) => v != null) ? ` - ${Array.from({ length: courseTeeOptions.numHoles || 18 }, (_, h) => tee[`length${h + 1}`] || 0).reduce((a, b) => a + b, 0)} yds` : ""}
+                        </div>
                       </div>
+                      <span style={{ color: "#8FA998", fontSize: 18, marginLeft: 8 }}>{"\u203A"}</span>
                     </div>
                   ))}
                   <button className="gsc-link" style={{ marginTop: 4, fontSize: 12 }} onClick={() => setCourseTeeOptions(null)}>
