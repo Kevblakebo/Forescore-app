@@ -4841,7 +4841,7 @@ function computeRoundScoring(round) {
             <br />
             To join an existing game or start a new game:
             <br />
-            1) Enter your existing game code or start a new game below
+            1) Enter your game code, or start a new game below
             <br />
             2) Set up your game detail and share your code
             <br />
