@@ -5145,7 +5145,7 @@ function computeRoundScoring(round) {
                 ? `Welcome ${profile.name}, what game do you want to play today?`
                 : "What game do you want to play today?"
             ) : (
-              "We all love playing games on the course, but who wants to keep track of the scores and rules? RipScore does it for you. No paper scorecards, no redoing the math, no arguing about rules, just easy golf games, live shared scores, and a clear answer to who owes who at the 19th hole!"
+              "Built for the group you play with every week. Set up your crew once, then pick from 15 golf games and fill everyone in with one tap - no retyping names every round. RipScore handles the scoring, GPS distance-to-green, and a leaderboard just between your group, so all that's left is golf: no paper scorecards, no redoing the math, no arguing about rules, and a clear answer to who owes who at the 19th hole!"
             )}
             <br />
             <br />
