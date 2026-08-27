@@ -4836,7 +4836,7 @@ function computeRoundScoring(round) {
             )}
             <br />
             <br />
-            To join an existing game or start a new game:
+            To join an existing round or start a new round:
             <br />
             1) Enter your game code or start a new game below
             <br />
@@ -4880,7 +4880,7 @@ function computeRoundScoring(round) {
           )}
 
           <div className="gsc-card">
-            <div className="gsc-label" style={{ marginBottom: 6, fontSize: 17 }}>Join an Existing Game</div>
+            <div className="gsc-label" style={{ marginBottom: 6, fontSize: 17 }}>Join an Existing Round</div>
             <div className="gsc-row">
               <input className="gsc-input gsc-mono" id="join-code-home" name="join-code-home" autoComplete="off" placeholder="ENTER GAME CODE HERE" value={joinCode} onChange={(e) => setJoinCode(e.target.value.toUpperCase())} maxLength={6} />
               <button className="gsc-btn gsc-btn-primary" style={{ flex: "0 0 auto" }} disabled={busy || !joinCode} onClick={() => joinRoundOrTournament(joinCode)}>
@@ -4905,7 +4905,7 @@ function computeRoundScoring(round) {
           </div>
 
           <div className="gsc-card">
-            <div className="gsc-label" style={{ marginBottom: 2, fontSize: 17 }}>Start a New Game</div>
+            <div className="gsc-label" style={{ marginBottom: 2, fontSize: 17 }}>Start a New Round</div>
             <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 10 }}>Quick Pick Game List</div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
               {[
@@ -5042,7 +5042,7 @@ function computeRoundScoring(round) {
           )}
 
           <div className="gsc-card">
-            <div className="gsc-label">Join an Existing Game</div>
+            <div className="gsc-label">Join an Existing Round</div>
             <div className="gsc-row" style={{ marginTop: 6 }}>
               <input className="gsc-input gsc-mono" id="round-join-code" name="round-join-code" autoComplete="off" placeholder="ENTER GAME CODE HERE" value={joinCode} onChange={(e) => setJoinCode(e.target.value.toUpperCase())} maxLength={6} />
               <button className="gsc-btn gsc-btn-primary" style={{ flex: "0 0 auto" }} disabled={busy || !joinCode} onClick={() => joinRoundOrTournament(joinCode)}>
