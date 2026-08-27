@@ -3646,8 +3646,8 @@ export default function GolfScorecard() {
     const cleanStrokeIndex = strokeIndex.map((s) => (s === "" || s == null || isNaN(Number(s)) ? null : Number(s)));
     const cleanCfg = {
       ...cfg,
-      maxOver: cfg.maxOver === "" || cfg.maxOver == null || isNaN(Number(cfg.maxOver)) ? 3 : Number(cfg.maxOver),
-      maxPutts: cfg.maxPutts === "" || cfg.maxPutts == null || isNaN(Number(cfg.maxPutts)) ? 3 : Number(cfg.maxPutts),
+      maxOver: cfg.maxOver === "" || cfg.maxOver == null || isNaN(Number(cfg.maxOver)) ? null : Number(cfg.maxOver),
+      maxPutts: cfg.maxPutts === "" || cfg.maxPutts == null || isNaN(Number(cfg.maxPutts)) ? null : Number(cfg.maxPutts),
       mulliganSegment: cfg.mulliganSegment === "" || cfg.mulliganSegment == null || isNaN(Number(cfg.mulliganSegment)) ? 0 : Number(cfg.mulliganSegment),
     };
 
@@ -3851,8 +3851,8 @@ export default function GolfScorecard() {
     const cleanStrokeIndex = tournamentStrokeIndex.map((s) => (s === "" || s == null || isNaN(Number(s)) ? null : Number(s)));
     const cleanCfg = {
       ...tournamentCfg,
-      maxOver: tournamentCfg.maxOver === "" || tournamentCfg.maxOver == null || isNaN(Number(tournamentCfg.maxOver)) ? 3 : Number(tournamentCfg.maxOver),
-      maxPutts: tournamentCfg.maxPutts === "" || tournamentCfg.maxPutts == null || isNaN(Number(tournamentCfg.maxPutts)) ? 3 : Number(tournamentCfg.maxPutts),
+      maxOver: tournamentCfg.maxOver === "" || tournamentCfg.maxOver == null || isNaN(Number(tournamentCfg.maxOver)) ? null : Number(tournamentCfg.maxOver),
+      maxPutts: tournamentCfg.maxPutts === "" || tournamentCfg.maxPutts == null || isNaN(Number(tournamentCfg.maxPutts)) ? null : Number(tournamentCfg.maxPutts),
       mulliganSegment:
         tournamentCfg.mulliganSegment === "" || tournamentCfg.mulliganSegment == null || isNaN(Number(tournamentCfg.mulliganSegment)) ? 0 : Number(tournamentCfg.mulliganSegment),
       minDrives: tournamentCfg.minDrives === "" || tournamentCfg.minDrives == null || isNaN(Number(tournamentCfg.minDrives)) ? 3 : Number(tournamentCfg.minDrives),
@@ -7560,7 +7560,13 @@ function computeRoundScoring(round) {
               <div className="gsc-label" style={{ marginBottom: 6 }}>Tournament settings (locked)</div>
               <div style={{ fontSize: 13, color: "#4b4b45", lineHeight: 1.5 }}>
                 {activeTournament.course && <>Course: {activeTournament.course}<br /></>}
-                Max over par: {activeTournament.cfg.maxOver}{GAMES[activeTournament.game].hasPutts ? ` - Max putts: ${activeTournament.cfg.maxPutts}` : ""} - Mulligans: {activeTournament.cfg.mulliganSegment}{activeTournament.game === "seabluffe" ? ` per ${mulliganWindow(activeTournament.game)} holes` : " per player"}
+                {[
+                  activeTournament.cfg.maxOver != null ? `Max over par: ${activeTournament.cfg.maxOver}` : null,
+                  GAMES[activeTournament.game].hasPutts && activeTournament.cfg.maxPutts != null ? `Max putts: ${activeTournament.cfg.maxPutts}` : null,
+                  `Mulligans: ${activeTournament.cfg.mulliganSegment}${activeTournament.game === "seabluffe" ? ` per ${mulliganWindow(activeTournament.game)} holes` : " per player"}`,
+                ]
+                  .filter(Boolean)
+                  .join(" - ")}
                 <br />
                 Prize: {activeTournament.cfg.prize}
                 <br />
@@ -7820,7 +7826,7 @@ function computeRoundScoring(round) {
                     setCfg({ ...cfg, maxOver: raw === "" ? "" : Number(raw) });
                   }}
                   onBlur={(e) => {
-                    if (e.target.value === "") setCfg((c) => ({ ...c, maxOver: 3 }));
+                    if (e.target.value === "") setCfg((c) => ({ ...c, maxOver: "" }));
                   }}
                 />
               </div>
@@ -7837,7 +7843,7 @@ function computeRoundScoring(round) {
                   setCfg({ ...cfg, maxPutts: raw === "" ? "" : Number(raw) });
                 }}
                 onBlur={(e) => {
-                  if (e.target.value === "") setCfg((c) => ({ ...c, maxPutts: 3 }));
+                  if (e.target.value === "") setCfg((c) => ({ ...c, maxPutts: "" }));
                 }}
               />
             </div>
@@ -8329,7 +8335,7 @@ function computeRoundScoring(round) {
                     setTournamentCfg({ ...tournamentCfg, maxOver: raw === "" ? "" : Number(raw) });
                   }}
                   onBlur={(e) => {
-                    if (e.target.value === "") setTournamentCfg((c) => ({ ...c, maxOver: 3 }));
+                    if (e.target.value === "") setTournamentCfg((c) => ({ ...c, maxOver: "" }));
                   }}
                 />
               </div>
@@ -8347,7 +8353,7 @@ function computeRoundScoring(round) {
                     setTournamentCfg({ ...tournamentCfg, maxPutts: raw === "" ? "" : Number(raw) });
                   }}
                   onBlur={(e) => {
-                    if (e.target.value === "") setTournamentCfg((c) => ({ ...c, maxPutts: 3 }));
+                    if (e.target.value === "") setTournamentCfg((c) => ({ ...c, maxPutts: "" }));
                   }}
                 />
               </div>
@@ -9211,7 +9217,7 @@ function computeRoundScoring(round) {
               <button className="gsc-btn gsc-btn-outline" disabled={holeIdx === 0} onClick={() => setHoleIdx((h) => h - 1)}>Prev</button>
               <div style={{ textAlign: "center" }}>
                 <div className="gsc-hole-big">Hole {holeIdx + 1}</div>
-                <div className="gsc-par-badge">Par {parH} - max {parH + round.cfg.maxOver}</div>
+                <div className="gsc-par-badge">Par {parH}{round.cfg.maxOver != null ? ` - max ${parH + round.cfg.maxOver}` : ""}</div>
                 {(() => {
                   const yd = (round.yardage || [])[holeIdx];
                   const si = (round.strokeIndex || [])[holeIdx];
@@ -9629,7 +9635,7 @@ function computeRoundScoring(round) {
                   window.scrollTo(0, 0);
                 }}
               >
-                Next
+                Next Hole {"\u2192"}
               </button>
             </div>
           </div>
