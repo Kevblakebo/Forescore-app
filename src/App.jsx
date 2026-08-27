@@ -1575,14 +1575,14 @@ export default function GolfScorecard() {
     }
   }
 
-  // Confirms the 6-digit code the person typed in, right here in the app
+  // Confirms the code the person typed in, right here in the app
   // - unlike the old link-based flow, this never involves leaving the
   // current tab/app instance at all, since there's no external link for
   // iOS (or any platform) to hand off to a different browser context.
   async function verifySignupOtp() {
     setOtpErr("");
     if (!otpCode.trim()) {
-      setOtpErr("Enter the 6-digit code from your email.");
+      setOtpErr("Enter the code from your email.");
       return;
     }
     if (!supabase) {
@@ -6836,7 +6836,7 @@ function computeRoundScoring(round) {
         <div className="gsc-body">
           <div className="gsc-card">
             <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 14, lineHeight: 1.5 }}>
-              We sent a 6-digit code to <b>{authEmail}</b>. Enter it below to confirm your account and finish setting up your profile.
+              We sent a confirmation code to <b>{authEmail}</b>. Enter it below to confirm your account and finish setting up your profile.
             </div>
             <div className="gsc-field">
               <div className="gsc-label">Confirmation Code</div>
@@ -6844,8 +6844,8 @@ function computeRoundScoring(round) {
                 className="gsc-input gsc-mono"
                 inputMode="numeric"
                 autoComplete="one-time-code"
-                placeholder="123456"
-                maxLength={6}
+                placeholder="Enter code"
+                maxLength={10}
                 value={otpCode}
                 onChange={(e) => { setOtpErr(""); setOtpCode(e.target.value.replace(/[^0-9]/g, "")); }}
                 onKeyDown={(e) => e.key === "Enter" && verifySignupOtp()}
