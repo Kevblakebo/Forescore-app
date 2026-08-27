@@ -6874,12 +6874,6 @@ function computeRoundScoring(round) {
         <style>{STYLE}</style>
         <Header title="You're In!" sub="Just a couple quick details" />
         <div className="gsc-body">
-          <div style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "10px 12px", background: "#EBF0EC", borderRadius: 10, marginBottom: 14 }}>
-            <span style={{ fontSize: 18 }}>{"\u2705"}</span>
-            <div style={{ fontSize: 13, color: "#1B4332", fontWeight: 600, lineHeight: 1.5 }}>
-              Your account is confirmed and you're signed in here. If you still have another RipScore tab or window open from before, go ahead and close it now - this is the one to continue in.
-            </div>
-          </div>
           <div className="gsc-card">
             <div className="gsc-label" style={{ marginBottom: 4 }}>Set up your profile</div>
             <div style={{ fontSize: 13, color: "#6b6b63", marginBottom: 14 }}>
