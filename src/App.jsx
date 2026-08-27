@@ -1560,8 +1560,11 @@ export default function GolfScorecard() {
       setAuthErr("An account with this email already exists. Please log in instead.");
       goToScreen("login");
     } else {
-      // Email confirmation is on - they'll need to click a link before they can log in.
-      setAuthNotice("Almost there - check your email to confirm your account, then log in.");
+      // Email confirmation is on - clicking the link signs them in
+      // automatically, in whatever tab/window that link opens - it
+      // doesn't require a separate manual login step afterward, so the
+      // messaging here needs to set that expectation clearly upfront.
+      setAuthNotice("Almost there - check your email and click the confirmation link. It'll open a new tab and finish setting up your account there - once you see that, you can close this tab.");
       goToScreen("login");
     }
   }
@@ -6785,6 +6788,12 @@ function computeRoundScoring(round) {
         <style>{STYLE}</style>
         <Header title="You're In!" sub="Just a couple quick details" />
         <div className="gsc-body">
+          <div style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "10px 12px", background: "#EBF0EC", borderRadius: 10, marginBottom: 14 }}>
+            <span style={{ fontSize: 18 }}>{"\u2705"}</span>
+            <div style={{ fontSize: 13, color: "#1B4332", fontWeight: 600, lineHeight: 1.5 }}>
+              Your account is confirmed and you're signed in here. If you still have another RipScore tab or window open from before, go ahead and close it now - this is the one to continue in.
+            </div>
+          </div>
           <div className="gsc-card">
             <div className="gsc-label" style={{ marginBottom: 4 }}>Set up your profile</div>
             <div style={{ fontSize: 13, color: "#6b6b63", marginBottom: 14 }}>
