@@ -4838,9 +4838,9 @@ function computeRoundScoring(round) {
             <br />
             To join an existing round or start a new round:
             <br />
-            1) Enter your game code or start a new game below
+            1) Enter your game code or start a new round below
             <br />
-            2) Set up your game detail and share your code
+            2) Set up your round detail and share your code
             <br />
             3) Enter the strokes for your group as you play
             <br />
@@ -4906,7 +4906,7 @@ function computeRoundScoring(round) {
 
           <div className="gsc-card">
             <div className="gsc-label" style={{ marginBottom: 2, fontSize: 17 }}>Start a New Round</div>
-            <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 10 }}>Quick Pick Game List</div>
+            <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 10 }}>Quick Pick Game Format List</div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
               {[
                 ["dstreet", GAMES.dstreet.name, "\u{1F4B0}"],
@@ -4951,7 +4951,7 @@ function computeRoundScoring(round) {
           <div className="gsc-card gsc-winner-card" style={{ cursor: "pointer" }} onClick={startWizard}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <div>
-                <div style={{ fontWeight: 700, fontSize: 16 }}>{"\u{1F9D9}"} Not sure which game to pick?</div>
+                <div style={{ fontWeight: 700, fontSize: 16 }}>{"\u{1F9D9}"} Not sure which format to pick?</div>
                 <div style={{ fontSize: 13, color: "#4b4b45", marginTop: 3 }}>
                   Answer a few quick questions and we'll pick the right format and set everything up for you.
                 </div>
@@ -5042,7 +5042,7 @@ function computeRoundScoring(round) {
           )}
 
           <div className="gsc-card">
-            <div className="gsc-label">Join an Existing Round</div>
+            <div className="gsc-label" style={{ marginBottom: 6, fontSize: 17 }}>Join an Existing Round</div>
             <div className="gsc-row" style={{ marginTop: 6 }}>
               <input className="gsc-input gsc-mono" id="round-join-code" name="round-join-code" autoComplete="off" placeholder="ENTER GAME CODE HERE" value={joinCode} onChange={(e) => setJoinCode(e.target.value.toUpperCase())} maxLength={6} />
               <button className="gsc-btn gsc-btn-primary" style={{ flex: "0 0 auto" }} disabled={busy || !joinCode} onClick={() => joinRoundOrTournament(joinCode)}>
