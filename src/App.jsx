@@ -3327,7 +3327,7 @@ export default function GolfScorecard() {
     if (!activeTournament) {
       const parIncomplete = par.some((p) => p === "" || p == null || isNaN(Number(p)) || Number(p) <= 0);
       if (parIncomplete) {
-        setErr("Enter par for every hole above, or load a saved course, before creating the round.");
+        setErr("Search for and select your course above, then pick your tees to load par. Can't find your course? Load a saved course or enter par for each hole manually before creating the round.");
         return;
       }
     }
@@ -3476,7 +3476,7 @@ export default function GolfScorecard() {
     }
     const parIncomplete = tournamentPar.some((p) => p === "" || p == null || isNaN(Number(p)) || Number(p) <= 0);
     if (parIncomplete) {
-      setTournamentErr("Enter par for every hole above before continuing.");
+      setTournamentErr("Search for and select your course above, then pick your tees to load par. Can't find your course? Load a saved course or enter par for each hole manually before continuing.");
       return;
     }
     const count = tournamentFoursomeCount === "" || tournamentFoursomeCount == null || isNaN(Number(tournamentFoursomeCount)) ? 2 : Math.max(1, Number(tournamentFoursomeCount));
@@ -7365,7 +7365,7 @@ function computeRoundScoring(round) {
                     </div>
                     <div className="gsc-label" style={{ marginBottom: 6 }}>Par per hole</div>
                     <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 8 }}>
-                      Enter par for every hole, or load a saved course above - you won't be able to create the round until all 18 are filled in.
+                      If you couldn't find your course above, load a saved course or enter par for every hole here - you won't be able to create the round until all 18 are filled in.
                     </div>
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 6 }}>
                       {par.map((v, i) => (
