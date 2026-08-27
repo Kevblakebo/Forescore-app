@@ -1214,6 +1214,10 @@ export default function GolfScorecard() {
   const [showNewPasswordConfirm, setShowNewPasswordConfirm] = useState(false);
   const [authPasswordConfirm, setAuthPasswordConfirm] = useState("");
   const [authNotice, setAuthNotice] = useState(""); // e.g. "check your email to confirm"
+  const [otpCode, setOtpCode] = useState("");
+  const [otpBusy, setOtpBusy] = useState(false);
+  const [otpErr, setOtpErr] = useState("");
+  const [otpResendNotice, setOtpResendNotice] = useState("");
   const [resetSent, setResetSent] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [newPasswordConfirm, setNewPasswordConfirm] = useState("");
@@ -1535,11 +1539,11 @@ export default function GolfScorecard() {
     }
     setAuthPassword("");
     setAuthPasswordConfirm("");
-    // Email confirmation means leaving the app entirely to check an inbox
-    // - by the time they click that link, this could be a fresh page
-    // load with none of today's in-memory navigation history left, so
-    // where they started needs to survive that round trip in storage,
-    // not just in memory.
+    // Signup now involves a few screens in sequence (code entry, then
+    // profile setup) - rather than relying on in-memory navigation
+    // history to correctly unwind back through all of them, this saves
+    // where the person actually started so the very end of onboarding
+    // can return them there directly.
     const cameFrom = screenHistoryRef.current.length > 0 ? screenHistoryRef.current[screenHistoryRef.current.length - 1] : "home";
     try {
       window.localStorage.setItem("ripscore_post_signup_return", cameFrom);
@@ -1560,13 +1564,54 @@ export default function GolfScorecard() {
       setAuthErr("An account with this email already exists. Please log in instead.");
       goToScreen("login");
     } else {
-      // Email confirmation is on - clicking the link signs them in
-      // automatically, in whatever tab/window that link opens - it
-      // doesn't require a separate manual login step afterward, so the
-      // messaging here needs to set that expectation clearly upfront.
-      setAuthNotice("Almost there - check your email and click the confirmation link. It'll open a new tab and finish setting up your account there - once you see that, you can close this tab.");
-      goToScreen("login");
+      // Email confirmation is on - route to the code-entry screen. This
+      // stays entirely within the current tab/app instance, since a
+      // typed code (unlike a tapped link) never leaves it in the first
+      // place.
+      setOtpErr("");
+      setOtpCode("");
+      setOtpResendNotice("");
+      goToScreen("verifyEmailCode");
     }
+  }
+
+  // Confirms the 6-digit code the person typed in, right here in the app
+  // - unlike the old link-based flow, this never involves leaving the
+  // current tab/app instance at all, since there's no external link for
+  // iOS (or any platform) to hand off to a different browser context.
+  async function verifySignupOtp() {
+    setOtpErr("");
+    if (!otpCode.trim()) {
+      setOtpErr("Enter the 6-digit code from your email.");
+      return;
+    }
+    if (!supabase) {
+      setOtpErr("Account login isn't configured yet on this deployment.");
+      return;
+    }
+    setOtpBusy(true);
+    const { error } = await supabase.auth.verifyOtp({ email: authEmail.trim(), token: otpCode.trim(), type: "email" });
+    setOtpBusy(false);
+    if (error) {
+      setOtpErr(error.message);
+      return;
+    }
+    setOtpCode("");
+    goToScreen("completeProfile");
+  }
+
+  async function resendSignupOtp() {
+    setOtpErr("");
+    setOtpResendNotice("");
+    if (!supabase) return;
+    setOtpBusy(true);
+    const { error } = await supabase.auth.resend({ type: "signup", email: authEmail.trim() });
+    setOtpBusy(false);
+    if (error) {
+      setOtpErr(error.message);
+      return;
+    }
+    setOtpResendNotice("A new code is on its way.");
   }
 
   async function signIn() {
@@ -6777,6 +6822,46 @@ function computeRoundScoring(round) {
             <button className="gsc-link" style={{ fontSize: 13 }} onClick={() => { setAuthErr(""); goToScreen("login"); }}>
               Log in
             </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (screen === "verifyEmailCode") {
+    return (
+      <div className="gsc">
+        <style>{STYLE}</style>
+        <Header title="Check Your Email" sub="Enter the code to confirm your account" onBack={() => goBack("register")} />
+        <div className="gsc-body">
+          <div className="gsc-card">
+            <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 14, lineHeight: 1.5 }}>
+              We sent a 6-digit code to <b>{authEmail}</b>. Enter it below to confirm your account and finish setting up your profile.
+            </div>
+            <div className="gsc-field">
+              <div className="gsc-label">Confirmation Code</div>
+              <input
+                className="gsc-input gsc-mono"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                placeholder="123456"
+                maxLength={6}
+                value={otpCode}
+                onChange={(e) => { setOtpErr(""); setOtpCode(e.target.value.replace(/[^0-9]/g, "")); }}
+                onKeyDown={(e) => e.key === "Enter" && verifySignupOtp()}
+              />
+            </div>
+            {otpErr && <div style={{ color: "#C1440E", fontSize: 13, marginTop: 12 }}>{otpErr}</div>}
+            {otpResendNotice && <div style={{ color: "#1B4332", fontSize: 13, marginTop: 12 }}>{otpResendNotice}</div>}
+            <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 16 }} disabled={otpBusy} onClick={verifySignupOtp}>
+              {otpBusy ? "Confirming..." : "Confirm & Continue"}
+            </button>
+            <div style={{ textAlign: "center", fontSize: 13, color: "#6b6b63", marginTop: 14 }}>
+              Didn't get a code?{" "}
+              <button className="gsc-link" style={{ fontSize: 13 }} disabled={otpBusy} onClick={resendSignupOtp}>
+                Resend it
+              </button>
+            </div>
           </div>
         </div>
       </div>
