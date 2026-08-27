@@ -4836,7 +4836,11 @@ function computeRoundScoring(round) {
                 {profile && profile.name ? `Welcome ${profile.name.split(" ")[0]}` : "Welcome"}
               </button>
             )}
-            We all love playing games on the course, but who wants to keep track of the scores and rules? RipScore does it for you. No paper scorecards, no redoing the math, no arguing about rules, just easy golf games, live shared scores, and a clear answer to who owes who at the 19th hole!
+            {session ? (
+              "What game do you want to play today?"
+            ) : (
+              "We all love playing games on the course, but who wants to keep track of the scores and rules? RipScore does it for you. No paper scorecards, no redoing the math, no arguing about rules, just easy golf games, live shared scores, and a clear answer to who owes who at the 19th hole!"
+            )}
             <br />
             <br />
             To join an existing game or start a new game:
@@ -5603,10 +5607,10 @@ function computeRoundScoring(round) {
 
               {selectedGroupId ? (
                 <>
-                  <button className="gsc-link" style={{ fontSize: 12, marginBottom: 10 }} onClick={() => setSelectedGroupId(null)}>
+                  <button className="gsc-link" style={{ fontSize: 14, marginBottom: 10 }} onClick={() => setSelectedGroupId(null)}>
                     {"\u2039"} Back to my groups
                   </button>
-                  <div style={{ fontWeight: 700, fontSize: 15, color: "#1B4332", marginBottom: 6, display: "flex", alignItems: "center", gap: 8 }}>
+                  <div style={{ fontWeight: 700, fontSize: 17, color: "#1B4332", marginBottom: 6, display: "flex", alignItems: "center", gap: 8 }}>
                     {(() => {
                       const g = myGroups.find((g) => g.id === selectedGroupId);
                       const canEdit = g && session && g.createdBy === session.user.id;
@@ -5615,18 +5619,18 @@ function computeRoundScoring(round) {
                           {canEdit ? (
                             <button
                               onClick={() => setEditGroupAvatarPickerOpen((v) => !v)}
-                              style={{ width: 30, height: 30, borderRadius: "50%", border: "1.5px solid #d8d2bd", background: "#fff", fontSize: 15, cursor: "pointer", position: "relative", flexShrink: 0 }}
+                              style={{ width: 30, height: 30, borderRadius: "50%", border: "1.5px solid #d8d2bd", background: "#fff", fontSize: 17, cursor: "pointer", position: "relative", flexShrink: 0 }}
                               title="Change this group's avatar"
                             >
                               {(g && g.avatar) || "\u{1F465}"}
                               {g && !g.avatar && (
-                                <span style={{ position: "absolute", bottom: -2, right: -2, width: 12, height: 12, borderRadius: "50%", background: "#C1440E", color: "#fff", fontSize: 8, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", border: "1.5px solid #F3EFE0" }}>
+                                <span style={{ position: "absolute", bottom: -2, right: -2, width: 12, height: 12, borderRadius: "50%", background: "#C1440E", color: "#fff", fontSize: 10, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", border: "1.5px solid #F3EFE0" }}>
                                   +
                                 </span>
                               )}
                             </button>
                           ) : (
-                            g && g.avatar && <span style={{ fontSize: 18 }}>{g.avatar}</span>
+                            g && g.avatar && <span style={{ fontSize: 20 }}>{g.avatar}</span>
                           )}
                           {(g && g.name) || "Group"} Leaderboard
                         </>
@@ -5646,7 +5650,7 @@ function computeRoundScoring(round) {
                               updateGroupAvatar(g.id, g.avatar === emoji ? "" : emoji);
                               setEditGroupAvatarPickerOpen(false);
                             }}
-                            style={{ width: 32, height: 32, borderRadius: "50%", border: g.avatar === emoji ? "2px solid #C1440E" : "1.5px solid #d8d2bd", background: "#fff", fontSize: 16, cursor: "pointer" }}
+                            style={{ width: 32, height: 32, borderRadius: "50%", border: g.avatar === emoji ? "2px solid #C1440E" : "1.5px solid #d8d2bd", background: "#fff", fontSize: 18, cursor: "pointer" }}
                           >
                             {emoji}
                           </button>
@@ -5662,7 +5666,7 @@ function computeRoundScoring(round) {
                       return (
                         <button
                           className="gsc-link"
-                          style={{ fontSize: 12, color: "#8a8a80", marginBottom: 12 }}
+                          style={{ fontSize: 14, color: "#8a8a80", marginBottom: 12 }}
                           onClick={() => setDeleteGroupConfirming(true)}
                         >
                           Delete group
@@ -5671,13 +5675,13 @@ function computeRoundScoring(round) {
                     }
                     return (
                       <div style={{ marginBottom: 12, padding: 12, background: "#FBEAE5", border: "1px solid #C1440E", borderRadius: 10 }}>
-                        <div style={{ fontSize: 12, fontWeight: 700, color: "#C1440E", marginBottom: 6 }}>
+                        <div style={{ fontSize: 14, fontWeight: 700, color: "#C1440E", marginBottom: 6 }}>
                           Delete "{g.name}"?
                         </div>
-                        <div style={{ fontSize: 12, color: "#4b4b45", marginBottom: 10 }}>
+                        <div style={{ fontSize: 14, color: "#4b4b45", marginBottom: 10 }}>
                           This removes the group and its leaderboard for everyone in it. This cannot be undone.
                         </div>
-                        {groupsErr && <div style={{ color: "#C1440E", fontSize: 12, marginBottom: 10 }}>{groupsErr}</div>}
+                        {groupsErr && <div style={{ color: "#C1440E", fontSize: 14, marginBottom: 10 }}>{groupsErr}</div>}
                         <div className="gsc-row">
                           <button
                             className="gsc-btn"
@@ -5694,7 +5698,7 @@ function computeRoundScoring(round) {
                       </div>
                     );
                   })()}
-                  <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 10 }}>
+                  <div style={{ fontSize: 14, color: "#6b6b63", marginBottom: 10 }}>
                     Group code: <span className="gsc-mono" style={{ fontWeight: 700, color: "#1B4332" }}>{selectedGroupId}</span> - share this with anyone you want to invite.
                   </div>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
@@ -5703,7 +5707,7 @@ function computeRoundScoring(round) {
                         key={key}
                         onClick={() => setGroupCategory(key)}
                         style={{
-                          fontSize: 11,
+                          fontSize: 13,
                           fontWeight: 700,
                           padding: "5px 10px",
                           borderRadius: 20,
@@ -5718,9 +5722,9 @@ function computeRoundScoring(round) {
                     ))}
                   </div>
                   {groupMembersLoading ? (
-                    <div style={{ fontSize: 13, color: "#6b6b63" }}>Loading this group...</div>
+                    <div style={{ fontSize: 15, color: "#6b6b63" }}>Loading this group...</div>
                   ) : groupMembersErr ? (
-                    <div style={{ color: "#C1440E", fontSize: 13 }}>{groupMembersErr}</div>
+                    <div style={{ color: "#C1440E", fontSize: 15 }}>{groupMembersErr}</div>
                   ) : (
                     (() => {
                       const cat = LEADERBOARD_CATEGORIES[groupCategory];
@@ -5730,7 +5734,7 @@ function computeRoundScoring(round) {
                         .sort((a, b) => (cat.lowerIsBetter ? a.value - b.value : b.value - a.value));
 
                       if (ranked.length === 0) {
-                        return <div style={{ fontSize: 13, color: "#6b6b63" }}>Nobody in this group has stats for this category yet.</div>;
+                        return <div style={{ fontSize: 15, color: "#6b6b63" }}>Nobody in this group has stats for this category yet.</div>;
                       }
 
                       return ranked.map((x, i) => {
@@ -5750,11 +5754,11 @@ function computeRoundScoring(round) {
                               paddingRight: isMe ? 8 : 0,
                             }}
                           >
-                            <div style={{ fontSize: 13, fontWeight: isMe ? 700 : 600, color: "#1B4332" }}>
+                            <div style={{ fontSize: 15, fontWeight: isMe ? 700 : 600, color: "#1B4332" }}>
                               {i + 1}. {x.row.avatar ? `${x.row.avatar} ` : ""}{x.row.display_name}
-                              {isMe && <span style={{ fontSize: 10, color: "#B08D57", marginLeft: 6, fontWeight: 700 }}>YOU</span>}
+                              {isMe && <span style={{ fontSize: 11, color: "#B08D57", marginLeft: 6, fontWeight: 700 }}>YOU</span>}
                             </div>
-                            <div style={{ fontSize: 13, fontWeight: 700, color: "#4b4b45" }}>{cat.format(x.value)}</div>
+                            <div style={{ fontSize: 15, fontWeight: 700, color: "#4b4b45" }}>{cat.format(x.value)}</div>
                           </div>
                         );
                       });
@@ -5764,10 +5768,10 @@ function computeRoundScoring(round) {
               ) : (
                 <>
                   {groupsLoading ? (
-                    <div style={{ fontSize: 13, color: "#6b6b63", marginBottom: 12 }}>Loading your groups...</div>
+                    <div style={{ fontSize: 15, color: "#6b6b63", marginBottom: 12 }}>Loading your groups...</div>
                   ) : myGroups.length > 0 ? (
                     <div style={{ marginBottom: 14 }}>
-                      <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 8 }}>
+                      <div style={{ fontSize: 14, color: "#6b6b63", marginBottom: 8 }}>
                         Select a group to see its leaderboard.
                       </div>
                       {myGroups.map((grp) => (
@@ -5776,31 +5780,31 @@ function computeRoundScoring(round) {
                           onClick={() => loadGroupLeaderboard(grp.id)}
                           style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #eee6cf", cursor: "pointer" }}
                         >
-                          <div style={{ fontSize: 13, fontWeight: 600, color: "#1B4332", display: "flex", alignItems: "center", gap: 8 }}>
-                            {grp.avatar && <span style={{ fontSize: 16 }}>{grp.avatar}</span>}
+                          <div style={{ fontSize: 15, fontWeight: 600, color: "#1B4332", display: "flex", alignItems: "center", gap: 8 }}>
+                            {grp.avatar && <span style={{ fontSize: 18 }}>{grp.avatar}</span>}
                             {grp.name}
                           </div>
-                          <span style={{ color: "#8FA998", fontSize: 14 }}>{"\u203A"}</span>
+                          <span style={{ color: "#8FA998", fontSize: 16 }}>{"\u203A"}</span>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <div style={{ fontSize: 13, color: "#6b6b63", marginBottom: 14 }}>
+                    <div style={{ fontSize: 15, color: "#6b6b63", marginBottom: 14 }}>
                       You're not in any groups yet. Create one or join one with a code below.
                     </div>
                   )}
 
-                  {groupsErr && <div style={{ color: "#C1440E", fontSize: 12, marginBottom: 10 }}>{groupsErr}</div>}
+                  {groupsErr && <div style={{ color: "#C1440E", fontSize: 14, marginBottom: 10 }}>{groupsErr}</div>}
 
-                  <div style={{ fontSize: 11, color: "#8a8a80", textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 700, marginBottom: 6 }}>Create a Group</div>
+                  <div style={{ fontSize: 13, color: "#8a8a80", textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 700, marginBottom: 6 }}>Create a Group</div>
                   <div className="gsc-row" style={{ marginBottom: 8, alignItems: "center" }}>
                     <button
                       onClick={() => setCreateGroupAvatarPickerOpen((v) => !v)}
-                      style={{ width: 40, height: 40, borderRadius: "50%", border: "1.5px solid #d8d2bd", background: "#fff", fontSize: 18, cursor: "pointer", flex: "0 0 auto", position: "relative" }}
+                      style={{ width: 40, height: 40, borderRadius: "50%", border: "1.5px solid #d8d2bd", background: "#fff", fontSize: 20, cursor: "pointer", flex: "0 0 auto", position: "relative" }}
                     >
                       {createGroupAvatar || "\u{1F465}"}
                       {!createGroupAvatar && (
-                        <span style={{ position: "absolute", bottom: -2, right: -2, width: 14, height: 14, borderRadius: "50%", background: "#C1440E", color: "#fff", fontSize: 10, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", border: "1.5px solid #F3EFE0" }}>
+                        <span style={{ position: "absolute", bottom: -2, right: -2, width: 14, height: 14, borderRadius: "50%", background: "#C1440E", color: "#fff", fontSize: 11, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", border: "1.5px solid #F3EFE0" }}>
                           +
                         </span>
                       )}
@@ -5819,7 +5823,7 @@ function computeRoundScoring(round) {
                             setCreateGroupAvatar(createGroupAvatar === emoji ? "" : emoji);
                             setCreateGroupAvatarPickerOpen(false);
                           }}
-                          style={{ width: 32, height: 32, borderRadius: "50%", border: createGroupAvatar === emoji ? "2px solid #C1440E" : "1.5px solid #d8d2bd", background: "#fff", fontSize: 16, cursor: "pointer" }}
+                          style={{ width: 32, height: 32, borderRadius: "50%", border: createGroupAvatar === emoji ? "2px solid #C1440E" : "1.5px solid #d8d2bd", background: "#fff", fontSize: 18, cursor: "pointer" }}
                         >
                           {emoji}
                         </button>
@@ -5828,14 +5832,14 @@ function computeRoundScoring(round) {
                   )}
                   <div style={{ marginBottom: 14 }} />
 
-                  <div style={{ fontSize: 11, color: "#8a8a80", textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 700, marginBottom: 6 }}>Join a Group</div>
+                  <div style={{ fontSize: 13, color: "#8a8a80", textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 700, marginBottom: 6 }}>Join a Group</div>
                   <div className="gsc-row">
                     <input className="gsc-input gsc-mono" placeholder="GROUP CODE" value={joinGroupCode} onChange={(e) => setJoinGroupCode(e.target.value.toUpperCase())} />
                     <button className="gsc-btn gsc-btn-outline" style={{ flex: "0 0 auto" }} disabled={joinGroupBusy || !joinGroupCode.trim()} onClick={joinGroup}>
                       {joinGroupBusy ? "Joining..." : "Join"}
                     </button>
                   </div>
-                  {joinGroupErr && <div style={{ color: "#C1440E", fontSize: 12, marginTop: 8 }}>{joinGroupErr}</div>}
+                  {joinGroupErr && <div style={{ color: "#C1440E", fontSize: 14, marginTop: 8 }}>{joinGroupErr}</div>}
                 </>
               )}
             </div>
