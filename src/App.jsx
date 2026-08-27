@@ -129,7 +129,7 @@ const GAMES = {
       "Flagstick can stay in.",
       "Putts start once on the putting green.",
       "No carry-overs on ties.",
-      "Handicaps not used in game scoring.",
+      "Handicaps (net score per hole) optional in game scoring settings.",
       "Great for mixed handicaps.",
     ],
   },
@@ -155,7 +155,7 @@ const GAMES = {
       "Must putt all the way into the hole.",
       "Flagstick can stay in.",
       "Putts start once on the putting green.",
-      "Handicaps not used in game scoring, but are visible.",
+      "Handicaps (net score per hole) optional in game scoring settings.",
     ],
   },
   seabluffe: {
@@ -187,7 +187,7 @@ const GAMES = {
       "Flagstick can stay in.",
       "Putts start once on the putting green.",
       "No carry-overs on ties.",
-      "Handicaps not used in game scoring.",
+      "Handicaps (net score per hole) optional in game scoring settings.",
       "Great for mixed handicap groups.",
     ],
   },
@@ -270,7 +270,7 @@ const GAMES = {
       "Flagstick can stay in.",
       "Putts start once on the putting green.",
       "No carry-overs on ties.",
-      "Handicaps not used in game scoring.",
+      "Handicaps (net score per hole) optional in game scoring settings.",
       "Great for similar handicap groups.",
     ],
   },
@@ -303,7 +303,7 @@ const GAMES = {
       "Strokes max: to be agreed on prior to round.",
       "Putts max: to be agreed on prior to round.",
       "Mulligans: to be agreed on prior to round.",
-      "Handicaps not used in game scoring.",
+      "Handicaps (net score per hole) optional in game scoring settings.",
       "Play OB shots as a lateral drop (1 out, 1 in).",
       "Must putt all the way into the hole.",
       "Flagstick can stay in.",
@@ -343,7 +343,7 @@ const GAMES = {
       "Flagstick can stay in.",
       "Putts start once on the putting green.",
       "No carry-overs on ties.",
-      "Handicaps not used in game scoring.",
+      "Handicaps (net score per hole) optional in game scoring settings.",
       "Great for mixed handicap teams.",
     ],
   },
@@ -375,7 +375,7 @@ const GAMES = {
       "Flagstick can stay in.",
       "Putts start once on the putting green.",
       "No carry-overs on ties.",
-      "Handicaps not used in game scoring.",
+      "Handicaps (net score per hole) optional in game scoring settings.",
       "Great for foursome-vs-foursome tournament play.",
     ],
   },
@@ -407,7 +407,7 @@ const GAMES = {
       "Flagstick can stay in.",
       "Putts start once on the putting green.",
       "No carry-overs on ties.",
-      "Handicaps not used in game scoring.",
+      "Handicaps (net score per hole) optional in game scoring settings.",
       "Great for foursome-vs-foursome tournament play.",
     ],
   },
@@ -472,7 +472,7 @@ const GAMES = {
       "Must putt all the way into the hole.",
       "Flagstick can stay in.",
       "Putts start once on the putting green.",
-      "Handicaps not used in game scoring, but are visible.",
+      "Handicaps (net score per hole) optional in game scoring settings.",
     ],
   },
   dstreet: {
@@ -502,7 +502,7 @@ const GAMES = {
       "Flagstick can stay in.",
       "Putts start once on the putting green.",
       "No carry-overs on ties.",
-      "Handicaps not used in game scoring.",
+      "Handicaps (net score per hole) optional in game scoring settings.",
       "Great for similar handicap foursomes.",
     ],
   },
@@ -528,7 +528,7 @@ const GAMES = {
       "Must putt all the way into the hole.",
       "Flagstick can stay in.",
       "Putts start once on the putting green.",
-      "Handicaps not used in game scoring, but are visible.",
+      "Handicaps (net score per hole) optional in game scoring settings.",
     ],
   },
   pontobango: {
@@ -561,7 +561,7 @@ const GAMES = {
       "Must putt all the way into the hole.",
       "Flagstick can stay in.",
       "Putts start once on the putting green.",
-      "Handicaps not used in game scoring, but are visible.",
+      "Handicaps (net score per hole) optional in game scoring settings.",
     ],
   },
   stableford: {
@@ -1253,6 +1253,8 @@ export default function GolfScorecard() {
   const [deleteGroupConfirming, setDeleteGroupConfirming] = useState(false);
   const [leaveGroupConfirming, setLeaveGroupConfirming] = useState(false);
   const [leaveGroupBusy, setLeaveGroupBusy] = useState(false);
+  const [removeMemberConfirming, setRemoveMemberConfirming] = useState(null); // user_id currently confirming removal, or null
+  const [removeMemberBusy, setRemoveMemberBusy] = useState(false);
   const [deleteGroupBusy, setDeleteGroupBusy] = useState(false);
   const [createGroupBusy, setCreateGroupBusy] = useState(false);
   const [joinGroupCode, setJoinGroupCode] = useState("");
@@ -2027,6 +2029,24 @@ export default function GolfScorecard() {
     setSelectedGroupId(null);
   }
 
+  // Removes a specific member from a group - only ever reachable by the
+  // group's creator, since that's the same "group creator can remove any
+  // member" policy already relied on by deleteGroup's full cleanup, just
+  // scoped here to a single person instead of everyone at once.
+  async function removeMember(groupId, userId) {
+    if (!session || !supabase) return;
+    setGroupsErr("");
+    setRemoveMemberBusy(true);
+    const { error } = await supabase.from("group_members").delete().eq("group_id", groupId).eq("user_id", userId);
+    setRemoveMemberBusy(false);
+    if (error) {
+      setGroupsErr(`Couldn't remove this member (${error.message}).`);
+      return;
+    }
+    setGroupMembersStats((prev) => prev.filter((r) => r.user_id !== userId));
+    setRemoveMemberConfirming(null);
+  }
+
   // Creates a group from whoever was actually account-linked in a
   // just-finished round, adding them all as members directly rather than
   // requiring each person to separately join via the group's code - relies
@@ -2481,6 +2501,7 @@ export default function GolfScorecard() {
     setEditGroupAvatarPickerOpen(false);
     setDeleteGroupConfirming(false);
     setLeaveGroupConfirming(false);
+    setRemoveMemberConfirming(null);
   }, [selectedGroupId]);
 
   useEffect(() => {
@@ -5991,8 +6012,33 @@ function computeRoundScoring(round) {
                         return <div style={{ fontSize: 15, color: "#6b6b63" }}>Nobody in this group has stats for this category yet.</div>;
                       }
 
+                      const g = myGroups.find((g) => g.id === selectedGroupId);
+                      const canEdit = g && session && g.createdBy === session.user.id;
+
                       return ranked.map((x, i) => {
                         const isMe = session && x.row.user_id === session.user.id;
+                        if (canEdit && !isMe && removeMemberConfirming === x.row.user_id) {
+                          return (
+                            <div key={x.row.user_id} style={{ padding: "8px 0", borderBottom: i === ranked.length - 1 ? "none" : "1px solid #eee6cf" }}>
+                              <div style={{ fontSize: 14, color: "#4b4b45", marginBottom: 8 }}>
+                                Remove {x.row.display_name} from this group?
+                              </div>
+                              <div className="gsc-row">
+                                <button
+                                  className="gsc-btn"
+                                  style={{ background: "#C1440E", color: "#fff" }}
+                                  disabled={removeMemberBusy}
+                                  onClick={() => removeMember(selectedGroupId, x.row.user_id)}
+                                >
+                                  {removeMemberBusy ? "Removing..." : "Yes, remove"}
+                                </button>
+                                <button className="gsc-btn gsc-btn-outline" style={{ flex: "0 0 auto" }} onClick={() => setRemoveMemberConfirming(null)}>
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        }
                         return (
                           <div
                             key={x.row.user_id}
@@ -6012,7 +6058,18 @@ function computeRoundScoring(round) {
                               {i + 1}. {x.row.avatar ? `${x.row.avatar} ` : ""}{x.row.display_name}
                               {isMe && <span style={{ fontSize: 11, color: "#B08D57", marginLeft: 6, fontWeight: 700 }}>YOU</span>}
                             </div>
-                            <div style={{ fontSize: 15, fontWeight: 700, color: "#4b4b45" }}>{cat.format(x.value)}</div>
+                            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                              <div style={{ fontSize: 15, fontWeight: 700, color: "#4b4b45" }}>{cat.format(x.value)}</div>
+                              {canEdit && !isMe && (
+                                <button
+                                  onClick={() => setRemoveMemberConfirming(x.row.user_id)}
+                                  title="Remove from group"
+                                  style={{ background: "none", border: "none", padding: 4, color: "#C1440E", fontSize: 14, cursor: "pointer", lineHeight: 1 }}
+                                >
+                                  {"\u2715"}
+                                </button>
+                              )}
+                            </div>
                           </div>
                         );
                       });
