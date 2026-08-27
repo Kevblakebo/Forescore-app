@@ -1698,7 +1698,7 @@ export default function GolfScorecard() {
     // explicit overrides here (rather than relying on the profile state
     // above having already settled) guarantees this always uses this
     // save's real values, not a stale read.
-    await loadStats({ optIn: profileForm.leaderboard_opt_in, name: profileForm.name, avatar: profileForm.avatar });
+    await loadStats({ optIn: profileForm.leaderboard_opt_in, name: profileForm.name, avatar: profileForm.avatar, handicap: profileForm.handicap });
     loadLeaderboard();
     // The Groups page caches its own group list and, separately, whichever
     // group's leaderboard is currently open - neither of those refreshes
@@ -1862,6 +1862,7 @@ export default function GolfScorecard() {
           user_id: session.user.id,
           display_name: displayName,
           avatar: (overrides && overrides.avatar !== undefined ? overrides.avatar : profile && profile.avatar) || "",
+          handicap: (overrides && overrides.handicap !== undefined ? overrides.handicap : profile && profile.handicap) || "",
           opted_in: !!isOptedIn,
           rounds_played: roundsPlayed,
           wins,
@@ -3331,9 +3332,9 @@ export default function GolfScorecard() {
     const userIds = [...new Set(members.map((m) => m.user_id))];
     if (userIds.length === 0) return [];
     const { data: stats } = await withJwtRetry(() =>
-      supabase.from("leaderboard_stats").select("user_id, display_name, avatar").in("user_id", userIds)
+      supabase.from("leaderboard_stats").select("user_id, display_name, avatar, handicap").in("user_id", userIds)
     );
-    return (stats || []).map((s) => ({ user_id: s.user_id, name: s.display_name || "Golfer", avatar: s.avatar || "" }));
+    return (stats || []).map((s) => ({ user_id: s.user_id, name: s.display_name || "Golfer", avatar: s.avatar || "", handicap: s.handicap || "" }));
   }
 
   async function loadGroupmates() {
@@ -3369,14 +3370,14 @@ export default function GolfScorecard() {
       return;
     }
     const { data: stats, error: statsErr } = await withJwtRetry(() =>
-      supabase.from("leaderboard_stats").select("user_id, display_name, avatar").in("user_id", memberUserIds)
+      supabase.from("leaderboard_stats").select("user_id, display_name, avatar, handicap").in("user_id", memberUserIds)
     );
     if (statsErr) {
       setGroupmatesErr(`Couldn't load group members (${statsErr.message}).`);
       setGroupmates([]);
       return;
     }
-    setGroupmates((stats || []).map((s) => ({ user_id: s.user_id, name: s.display_name || "Golfer", avatar: s.avatar || "" })));
+    setGroupmates((stats || []).map((s) => ({ user_id: s.user_id, name: s.display_name || "Golfer", avatar: s.avatar || "", handicap: s.handicap || "" })));
   }
 
   // Fills a slot with a groupmate's name, avatar, and account link all at
@@ -3389,7 +3390,7 @@ export default function GolfScorecard() {
   function selectGroupmateForSlot(i, mate) {
     setPlayers((p) => {
       const next = [...p];
-      next[i] = { ...next[i], name: mate.name, avatar: mate.avatar, user_id: mate.user_id };
+      next[i] = { ...next[i], name: mate.name, avatar: mate.avatar, user_id: mate.user_id, hcp: mate.handicap || "" };
       return next;
     });
     setGroupmatePickerFor(null);
@@ -3426,6 +3427,13 @@ export default function GolfScorecard() {
     setGroupFillGroupId(groupId);
     setGroupFillLoading(true);
     setGroupFillErr("");
+    if (groupFillFor === "playersAndMeta") {
+      const grp = myGroups.find((g) => g.id === groupId);
+      if (grp) {
+        setRoundName(grp.name || "");
+        setCfg((c) => ({ ...c, roundAvatar: grp.avatar || "" }));
+      }
+    }
     const members = await loadOneGroupMembers(groupId);
     setGroupFillLoading(false);
     if (members.length === 0) {
@@ -3460,8 +3468,8 @@ export default function GolfScorecard() {
   // A tournament foursome always needs exactly 4, so that mode pads any
   // remainder with blank slots instead.
   function applyGroupMembersToPlayers(members) {
-    const filled = members.slice(0, 4).map((m) => ({ name: m.name, avatar: m.avatar, user_id: m.user_id, hcp: "" }));
-    if (groupFillFor === "players") {
+    const filled = members.slice(0, 4).map((m) => ({ name: m.name, avatar: m.avatar, user_id: m.user_id, hcp: m.handicap || "" }));
+    if (groupFillFor === "players" || groupFillFor === "playersAndMeta") {
       if (filled.length > 0) setPlayers(filled);
     } else if (typeof groupFillFor === "number") {
       const fi = groupFillFor;
@@ -3544,7 +3552,7 @@ export default function GolfScorecard() {
       ...cfg,
       maxOver: cfg.maxOver === "" || cfg.maxOver == null || isNaN(Number(cfg.maxOver)) ? 3 : Number(cfg.maxOver),
       maxPutts: cfg.maxPutts === "" || cfg.maxPutts == null || isNaN(Number(cfg.maxPutts)) ? 3 : Number(cfg.maxPutts),
-      mulliganSegment: cfg.mulliganSegment === "" || cfg.mulliganSegment == null || isNaN(Number(cfg.mulliganSegment)) ? 1 : Number(cfg.mulliganSegment),
+      mulliganSegment: cfg.mulliganSegment === "" || cfg.mulliganSegment == null || isNaN(Number(cfg.mulliganSegment)) ? 0 : Number(cfg.mulliganSegment),
     };
 
     // In tournament mode, always use the tournament's own locked settings
@@ -3750,7 +3758,7 @@ export default function GolfScorecard() {
       maxOver: tournamentCfg.maxOver === "" || tournamentCfg.maxOver == null || isNaN(Number(tournamentCfg.maxOver)) ? 3 : Number(tournamentCfg.maxOver),
       maxPutts: tournamentCfg.maxPutts === "" || tournamentCfg.maxPutts == null || isNaN(Number(tournamentCfg.maxPutts)) ? 3 : Number(tournamentCfg.maxPutts),
       mulliganSegment:
-        tournamentCfg.mulliganSegment === "" || tournamentCfg.mulliganSegment == null || isNaN(Number(tournamentCfg.mulliganSegment)) ? 1 : Number(tournamentCfg.mulliganSegment),
+        tournamentCfg.mulliganSegment === "" || tournamentCfg.mulliganSegment == null || isNaN(Number(tournamentCfg.mulliganSegment)) ? 0 : Number(tournamentCfg.mulliganSegment),
       minDrives: tournamentCfg.minDrives === "" || tournamentCfg.minDrives == null || isNaN(Number(tournamentCfg.minDrives)) ? 3 : Number(tournamentCfg.minDrives),
     };
 
@@ -6897,6 +6905,11 @@ function computeRoundScoring(round) {
               <div className="gsc-label" style={{ marginBottom: 10, fontSize: 16 }}>
                 What do you want to name your {isTournament ? "tournament" : "round"}? (Optional)
               </div>
+              {!isTournament && session && (
+                <button className="gsc-link" style={{ fontSize: 13, fontWeight: 700, marginBottom: 8, display: "inline-block" }} onClick={() => openGroupFillPicker("playersAndMeta")}>
+                  {"\u{1F465}"} Select a group to fill in name, avatar & players
+                </button>
+              )}
               <input
                 className="gsc-input"
                 placeholder={isTournament ? "e.g. Club Championship" : `${g ? g.name : ""} at ...`}
@@ -6904,7 +6917,7 @@ function computeRoundScoring(round) {
                 onChange={(e) => (isTournament ? setTournamentName(e.target.value) : setRoundName(e.target.value))}
               />
               <div className="gsc-field" style={{ marginTop: 12 }}>
-                <div className="gsc-label">Round Avatar (optional)</div>
+                <div className="gsc-label">Group Avatar (optional)</div>
                 <button
                   onClick={() => setRoundAvatarPickerOpen((v) => !v)}
                   style={{ width: 44, height: 44, borderRadius: "50%", border: "1.5px solid #d8d2bd", background: "#fff", fontSize: 20, cursor: "pointer", position: "relative" }}
@@ -7381,7 +7394,12 @@ function computeRoundScoring(round) {
             </div>
           )}
           <div className="gsc-card">
-            <div className="gsc-label">{activeTournament ? "Foursome name (Optional)" : "Round name (Optional)"}</div>
+            <div className="gsc-label">{activeTournament ? "Foursome name (Optional)" : "Group name (Optional)"}</div>
+            {!activeTournament && session && (
+              <button className="gsc-link" style={{ fontSize: 13, fontWeight: 700, marginBottom: 8, display: "inline-block" }} onClick={() => openGroupFillPicker("playersAndMeta")}>
+                {"\u{1F465}"} Select a group to fill in name, avatar & players
+              </button>
+            )}
             <input
               className="gsc-input"
               placeholder={activeTournament ? "e.g. Foursome 1" : g.name + " at ..."}
@@ -7390,7 +7408,7 @@ function computeRoundScoring(round) {
             />
             {!activeTournament && (
               <div className="gsc-field" style={{ marginTop: 12 }}>
-                <div className="gsc-label">Round Avatar (optional)</div>
+                <div className="gsc-label">Group Avatar (optional)</div>
                 <button
                   onClick={() => setRoundAvatarPickerOpen((v) => !v)}
                   style={{ width: 44, height: 44, borderRadius: "50%", border: "1.5px solid #d8d2bd", background: "#fff", fontSize: 20, cursor: "pointer", position: "relative" }}
@@ -7658,7 +7676,7 @@ function computeRoundScoring(round) {
                     setCfg({ ...cfg, mulliganSegment: raw === "" ? "" : Number(raw) });
                   }}
                   onBlur={(e) => {
-                    if (e.target.value === "") setCfg((c) => ({ ...c, mulliganSegment: 1 }));
+                    if (e.target.value === "") setCfg((c) => ({ ...c, mulliganSegment: 0 }));
                   }}
                 />
               </div>
@@ -8169,7 +8187,7 @@ function computeRoundScoring(round) {
                     setTournamentCfg({ ...tournamentCfg, mulliganSegment: raw === "" ? "" : Number(raw) });
                   }}
                   onBlur={(e) => {
-                    if (e.target.value === "") setTournamentCfg((c) => ({ ...c, mulliganSegment: 1 }));
+                    if (e.target.value === "") setTournamentCfg((c) => ({ ...c, mulliganSegment: 0 }));
                   }}
                 />
               </div>
