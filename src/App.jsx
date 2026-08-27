@@ -5914,86 +5914,12 @@ function computeRoundScoring(round) {
                   })()}
                   {(() => {
                     const g = myGroups.find((g) => g.id === selectedGroupId);
-                    const canEdit = g && session && g.createdBy === session.user.id;
-                    if (!canEdit) return null;
-                    if (!deleteGroupConfirming) {
-                      return (
-                        <button
-                          className="gsc-link"
-                          style={{ fontSize: 14, color: "#8a8a80", marginBottom: 12 }}
-                          onClick={() => setDeleteGroupConfirming(true)}
-                        >
-                          Delete group
-                        </button>
-                      );
-                    }
                     return (
-                      <div style={{ marginBottom: 12, padding: 12, background: "#FBEAE5", border: "1px solid #C1440E", borderRadius: 10 }}>
-                        <div style={{ fontSize: 14, fontWeight: 700, color: "#C1440E", marginBottom: 6 }}>
-                          Delete "{g.name}"?
-                        </div>
-                        <div style={{ fontSize: 14, color: "#4b4b45", marginBottom: 10 }}>
-                          This removes the group and its leaderboard for everyone in it. This cannot be undone.
-                        </div>
-                        {groupsErr && <div style={{ color: "#C1440E", fontSize: 14, marginBottom: 10 }}>{groupsErr}</div>}
-                        <div className="gsc-row">
-                          <button
-                            className="gsc-btn"
-                            style={{ background: "#C1440E", color: "#fff" }}
-                            disabled={deleteGroupBusy}
-                            onClick={() => deleteGroup(g.id)}
-                          >
-                            {deleteGroupBusy ? "Deleting..." : "Yes, delete this group"}
-                          </button>
-                          <button className="gsc-btn gsc-btn-outline" style={{ flex: "0 0 auto" }} onClick={() => setDeleteGroupConfirming(false)}>
-                            Cancel
-                          </button>
-                        </div>
+                      <div style={{ fontSize: 14, color: "#6b6b63", marginBottom: 10 }}>
+                        Group code: <span className="gsc-mono" style={{ fontWeight: 700, color: "#1B4332" }}>{selectedGroupId}</span> - share this with anyone you want to invite.
                       </div>
                     );
                   })()}
-                  {(() => {
-                    const g = myGroups.find((g) => g.id === selectedGroupId);
-                    if (!g) return null;
-                    if (!leaveGroupConfirming) {
-                      return (
-                        <button
-                          className="gsc-link"
-                          style={{ fontSize: 14, color: "#8a8a80", marginBottom: 12 }}
-                          onClick={() => setLeaveGroupConfirming(true)}
-                        >
-                          Leave group
-                        </button>
-                      );
-                    }
-                    return (
-                      <div style={{ marginBottom: 12, padding: 12, background: "#FBEAE5", border: "1px solid #C1440E", borderRadius: 10 }}>
-                        <div style={{ fontSize: 14, fontWeight: 700, color: "#C1440E", marginBottom: 6 }}>
-                          Leave "{g.name}"?
-                        </div>
-                        <div style={{ fontSize: 14, color: "#4b4b45", marginBottom: 10 }}>
-                          You'll no longer see this group's leaderboard, and you'll need the group code to rejoin later. Everyone else in the group is unaffected.
-                        </div>
-                        {groupsErr && <div style={{ color: "#C1440E", fontSize: 14, marginBottom: 10 }}>{groupsErr}</div>}
-                        <div className="gsc-row">
-                          <button
-                            className="gsc-btn"
-                            style={{ background: "#C1440E", color: "#fff" }}
-                            disabled={leaveGroupBusy}
-                            onClick={() => leaveGroup(g.id)}
-                          >
-                            {leaveGroupBusy ? "Leaving..." : "Yes, leave this group"}
-                          </button>
-                          <button className="gsc-btn gsc-btn-outline" style={{ flex: "0 0 auto" }} onClick={() => setLeaveGroupConfirming(false)}>
-                            Cancel
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })()}
-                  <div style={{ fontSize: 14, color: "#6b6b63", marginBottom: 10 }}>
-                    Group code: <span className="gsc-mono" style={{ fontWeight: 700, color: "#1B4332" }}>{selectedGroupId}</span> - share this with anyone you want to invite.
-                  </div>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
                     {Object.entries(LEADERBOARD_CATEGORIES).map(([key, cat]) => (
                       <button
@@ -6057,6 +5983,81 @@ function computeRoundScoring(round) {
                       });
                     })()
                   )}
+
+                  {!leaveGroupConfirming && !deleteGroupConfirming && (
+                    <div style={{ display: "flex", justifyContent: "space-between", marginTop: 16 }}>
+                      <button className="gsc-link" style={{ fontSize: 14, color: "#8a8a80" }} onClick={() => setLeaveGroupConfirming(true)}>
+                        Leave group
+                      </button>
+                      {(() => {
+                        const g = myGroups.find((g) => g.id === selectedGroupId);
+                        const canEdit = g && session && g.createdBy === session.user.id;
+                        if (!canEdit) return null;
+                        return (
+                          <button className="gsc-link" style={{ fontSize: 14, color: "#8a8a80" }} onClick={() => setDeleteGroupConfirming(true)}>
+                            Delete group
+                          </button>
+                        );
+                      })()}
+                    </div>
+                  )}
+                  {leaveGroupConfirming && (() => {
+                    const g = myGroups.find((g) => g.id === selectedGroupId);
+                    if (!g) return null;
+                    return (
+                      <div style={{ marginTop: 16, padding: 12, background: "#FBEAE5", border: "1px solid #C1440E", borderRadius: 10 }}>
+                        <div style={{ fontSize: 14, fontWeight: 700, color: "#C1440E", marginBottom: 6 }}>
+                          Leave "{g.name}"?
+                        </div>
+                        <div style={{ fontSize: 14, color: "#4b4b45", marginBottom: 10 }}>
+                          You'll no longer see this group's leaderboard, and you'll need the group code to rejoin later. Everyone else in the group is unaffected.
+                        </div>
+                        {groupsErr && <div style={{ color: "#C1440E", fontSize: 14, marginBottom: 10 }}>{groupsErr}</div>}
+                        <div className="gsc-row">
+                          <button
+                            className="gsc-btn"
+                            style={{ background: "#C1440E", color: "#fff" }}
+                            disabled={leaveGroupBusy}
+                            onClick={() => leaveGroup(g.id)}
+                          >
+                            {leaveGroupBusy ? "Leaving..." : "Yes, leave this group"}
+                          </button>
+                          <button className="gsc-btn gsc-btn-outline" style={{ flex: "0 0 auto" }} onClick={() => setLeaveGroupConfirming(false)}>
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                  {deleteGroupConfirming && (() => {
+                    const g = myGroups.find((g) => g.id === selectedGroupId);
+                    const canEdit = g && session && g.createdBy === session.user.id;
+                    if (!canEdit) return null;
+                    return (
+                      <div style={{ marginTop: 16, padding: 12, background: "#FBEAE5", border: "1px solid #C1440E", borderRadius: 10 }}>
+                        <div style={{ fontSize: 14, fontWeight: 700, color: "#C1440E", marginBottom: 6 }}>
+                          Delete "{g.name}"?
+                        </div>
+                        <div style={{ fontSize: 14, color: "#4b4b45", marginBottom: 10 }}>
+                          This removes the group and its leaderboard for everyone in it. This cannot be undone.
+                        </div>
+                        {groupsErr && <div style={{ color: "#C1440E", fontSize: 14, marginBottom: 10 }}>{groupsErr}</div>}
+                        <div className="gsc-row">
+                          <button
+                            className="gsc-btn"
+                            style={{ background: "#C1440E", color: "#fff" }}
+                            disabled={deleteGroupBusy}
+                            onClick={() => deleteGroup(g.id)}
+                          >
+                            {deleteGroupBusy ? "Deleting..." : "Yes, delete this group"}
+                          </button>
+                          <button className="gsc-btn gsc-btn-outline" style={{ flex: "0 0 auto" }} onClick={() => setDeleteGroupConfirming(false)}>
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </>
               ) : (
                 <>
