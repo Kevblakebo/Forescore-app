@@ -6965,7 +6965,7 @@ function computeRoundScoring(round) {
 
           {wizardStepId === "field_course" && (
             <div className="gsc-card">
-              <div className="gsc-label" style={{ marginBottom: 10, fontSize: 16 }}>What course are you playing?</div>
+              <div className="gsc-label" style={{ marginBottom: 10, fontSize: 16 }}>What course are you playing? (Required)</div>
               {g.hasScore && (
                 <div className="gsc-field" style={{ marginBottom: 14 }}>
                   <div className="gsc-label">Distance to Green GPS</div>
@@ -7488,7 +7488,7 @@ function computeRoundScoring(round) {
                   </div>
                 ) : (
                   <>
-                <div className="gsc-label">Search for your course</div>
+                <div className="gsc-label">Search for your course (Required)</div>
                 <div className="gsc-row">
                   <input
                     className="gsc-input"
@@ -8004,7 +8004,7 @@ function computeRoundScoring(round) {
                 </div>
               ) : (
                 <>
-              <div className="gsc-label">Search for your course</div>
+              <div className="gsc-label">Search for your course (Required)</div>
               <div className="gsc-row">
                 <input
                   className="gsc-input"
