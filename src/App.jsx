@@ -5359,13 +5359,15 @@ function computeRoundScoring(round) {
             {["dstreet", "swami", "individualputts", "pontobango", "stableford"]
               .map((key) => [key, GAMES[key]])
               .map(([key, g]) => (
-                <div key={key} className="gsc-card gsc-game-card" style={{ marginBottom: 10, position: "relative" }} onClick={() => startNewRound(key)}>
-                  {GAME_TILE_STYLE[key] && (
-                    <div style={{ position: "absolute", bottom: 8, right: 8, width: 30, height: 30, borderRadius: 8, background: GAME_TILE_STYLE[key].color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>
-                      {GAME_TILE_STYLE[key].emoji}
-                    </div>
-                  )}
-                  <div className="gsc-game-title">{g.name}</div>
+                <div key={key} className="gsc-card gsc-game-card" style={{ marginBottom: 10 }} onClick={() => startNewRound(key)}>
+                  <div className="gsc-game-title" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    {GAME_TILE_STYLE[key] && (
+                      <span style={{ width: 26, height: 26, borderRadius: 7, background: GAME_TILE_STYLE[key].color, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 14, flexShrink: 0 }}>
+                        {GAME_TILE_STYLE[key].emoji}
+                      </span>
+                    )}
+                    {g.name}
+                  </div>
                   <div className="gsc-tag">{g.tag}</div>
                   <div className="gsc-no-select" style={{ fontSize: 13, marginTop: 8, color: "#4b4b45" }}>{g.desc}</div>
                   <button
@@ -5386,13 +5388,15 @@ function computeRoundScoring(round) {
             {["ponto", "teamstrokes", "teamputts", "beachside", "seabluffe", "moonlightwolf", "vegas"]
               .map((key) => [key, GAMES[key]])
               .map(([key, g]) => (
-                <div key={key} className="gsc-card gsc-game-card" style={{ marginBottom: 10, position: "relative" }} onClick={() => startNewRound(key)}>
-                  {GAME_TILE_STYLE[key] && (
-                    <div style={{ position: "absolute", bottom: 8, right: 8, width: 30, height: 30, borderRadius: 8, background: GAME_TILE_STYLE[key].color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>
-                      {GAME_TILE_STYLE[key].emoji}
-                    </div>
-                  )}
-                  <div className="gsc-game-title">{g.name}</div>
+                <div key={key} className="gsc-card gsc-game-card" style={{ marginBottom: 10 }} onClick={() => startNewRound(key)}>
+                  <div className="gsc-game-title" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    {GAME_TILE_STYLE[key] && (
+                      <span style={{ width: 26, height: 26, borderRadius: 7, background: GAME_TILE_STYLE[key].color, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 14, flexShrink: 0 }}>
+                        {GAME_TILE_STYLE[key].emoji}
+                      </span>
+                    )}
+                    {g.name}
+                  </div>
                   <div className="gsc-tag">{g.tag}</div>
                   <div className="gsc-no-select" style={{ fontSize: 13, marginTop: 8, color: "#4b4b45" }}>{g.desc}</div>
                   <button
@@ -5416,13 +5420,15 @@ function computeRoundScoring(round) {
             {TOURNAMENT_GAME_KEYS.map((key) => {
               const g = GAMES[key];
               return (
-                <div key={key} className="gsc-card gsc-game-card" style={{ marginBottom: 10, position: "relative" }} onClick={() => startTournamentCreateFlow(key)}>
-                  {GAME_TILE_STYLE[key] && (
-                    <div style={{ position: "absolute", bottom: 8, right: 8, width: 30, height: 30, borderRadius: 8, background: GAME_TILE_STYLE[key].color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>
-                      {GAME_TILE_STYLE[key].emoji}
-                    </div>
-                  )}
-                  <div className="gsc-game-title">{g.name}</div>
+                <div key={key} className="gsc-card gsc-game-card" style={{ marginBottom: 10 }} onClick={() => startTournamentCreateFlow(key)}>
+                  <div className="gsc-game-title" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    {GAME_TILE_STYLE[key] && (
+                      <span style={{ width: 26, height: 26, borderRadius: 7, background: GAME_TILE_STYLE[key].color, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 14, flexShrink: 0 }}>
+                        {GAME_TILE_STYLE[key].emoji}
+                      </span>
+                    )}
+                    {g.name}
+                  </div>
                   <div className="gsc-tag">{g.tag}</div>
                   <div className="gsc-no-select" style={{ fontSize: 13, marginTop: 8, color: "#4b4b45" }}>{g.desc}</div>
                   <button
@@ -5576,7 +5582,7 @@ function computeRoundScoring(round) {
                       style={{ marginTop: 2, width: 18, height: 18, flexShrink: 0 }}
                     />
                     <div>
-                      <div style={{ fontWeight: 700, fontSize: 13 }}>Show me on the leaderboard</div>
+                      <div style={{ fontWeight: 700, fontSize: 13 }}>Show me on the public leaderboard</div>
                       <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 2 }}>
                         Your name and stats become visible to other RipScore users. Turn this off anytime to disappear from it again.
                       </div>
@@ -5760,7 +5766,7 @@ function computeRoundScoring(round) {
 
           {session && (
             <div className="gsc-card">
-              <div className="gsc-label" style={{ marginBottom: 10 }}>Leaderboard</div>
+              <div className="gsc-label" style={{ marginBottom: 10 }}>Public Leaderboard</div>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
                 {Object.entries(LEADERBOARD_CATEGORIES).map(([key, cat]) => (
                   <button
