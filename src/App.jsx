@@ -3334,7 +3334,20 @@ export default function GolfScorecard() {
     const { data: stats } = await withJwtRetry(() =>
       supabase.from("leaderboard_stats").select("user_id, display_name, avatar, handicap").in("user_id", userIds)
     );
-    return (stats || []).map((s) => ({ user_id: s.user_id, name: s.display_name || "Golfer", avatar: s.avatar || "", handicap: s.handicap || "" }));
+    const result = (stats || []).map((s) => ({ user_id: s.user_id, name: s.display_name || "Golfer", avatar: s.avatar || "", handicap: s.handicap || "" }));
+    // leaderboard_stats is a cached copy of your own name/avatar/handicap,
+    // only refreshed when you've actually visited Profile or saved it -
+    // if that's never happened (or happened before a name was set), this
+    // can lag behind, or the row might not even exist yet. For yourself
+    // specifically, use your actual live profile data instead of
+    // trusting that cache, and add yourself in if you're not there yet.
+    if (session && profile && userIds.includes(session.user.id)) {
+      const me = { user_id: session.user.id, name: profile.name || "Golfer", avatar: profile.avatar || "", handicap: profile.handicap || "" };
+      const myIdx = result.findIndex((r) => r.user_id === session.user.id);
+      if (myIdx >= 0) result[myIdx] = me;
+      else result.push(me);
+    }
+    return result;
   }
 
   async function loadGroupmates() {
@@ -3377,7 +3390,17 @@ export default function GolfScorecard() {
       setGroupmates([]);
       return;
     }
-    setGroupmates((stats || []).map((s) => ({ user_id: s.user_id, name: s.display_name || "Golfer", avatar: s.avatar || "", handicap: s.handicap || "" })));
+    const result = (stats || []).map((s) => ({ user_id: s.user_id, name: s.display_name || "Golfer", avatar: s.avatar || "", handicap: s.handicap || "" }));
+    // Same reasoning as loadOneGroupMembers - leaderboard_stats is a
+    // cached copy of your own info that may be stale or not exist yet,
+    // so use your live profile data for yourself specifically.
+    if (profile) {
+      const me = { user_id: session.user.id, name: profile.name || "Golfer", avatar: profile.avatar || "", handicap: profile.handicap || "" };
+      const myIdx = result.findIndex((r) => r.user_id === session.user.id);
+      if (myIdx >= 0) result[myIdx] = me;
+      else result.push(me);
+    }
+    setGroupmates(result);
   }
 
   // Fills a slot with a groupmate's name, avatar, and account link all at
