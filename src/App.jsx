@@ -6733,7 +6733,7 @@ function computeRoundScoring(round) {
             <div className="gsc-field" style={{ marginTop: 10 }}>
               <div className="gsc-label">Password</div>
               <div style={{ position: "relative" }}>
-                <input className="gsc-input" type={showAuthPassword ? "text" : "password"} style={{ paddingRight: 40 }} value={authPassword} onChange={(e) => setAuthPassword(e.target.value)} />
+                <input className="gsc-input" type={showAuthPassword ? "text" : "password"} autoComplete="new-password" style={{ paddingRight: 40 }} value={authPassword} onChange={(e) => setAuthPassword(e.target.value)} />
                 <button
                   type="button"
                   onClick={() => setShowAuthPassword((v) => !v)}
@@ -6751,6 +6751,7 @@ function computeRoundScoring(round) {
                 <input
                   className="gsc-input"
                   type={showAuthPasswordConfirm ? "text" : "password"}
+                  autoComplete="new-password"
                   style={{ paddingRight: 40 }}
                   value={authPasswordConfirm}
                   onChange={(e) => setAuthPasswordConfirm(e.target.value)}
