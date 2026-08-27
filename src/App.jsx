@@ -602,6 +602,31 @@ const GAMES = {
   },
 };
 
+// Single source of truth for each game's small visual identity (emoji +
+// color) - used by the homepage's Quick Pick tiles and, identically, by
+// the small stamp on each full game card on the Games page, so a game
+// always looks the same at a glance no matter where it's shown. Order
+// and colors here match the original homepage tile list exactly, so
+// this is a refactor of already-existing colors, not a new palette.
+const GAME_TILE_STYLE = (() => {
+  const order = [
+    "dstreet", "swami", "individualputts", "pontobango", "stableford",
+    "ponto", "teamstrokes", "teamputts", "beachside", "seabluffe", "moonlightwolf", "vegas",
+    "avoscramble", "tourneybb", "tourneygg",
+  ];
+  const emoji = {
+    dstreet: "\u{1F4B0}", swami: "\u26F3", individualputts: "\u{1F3AF}", pontobango: "\u{1F3B2}", stableford: "\u{1F4C8}",
+    ponto: "\u{1F91D}", teamstrokes: "\u{1F3CC}\u{FE0F}", teamputts: "\u{1F573}\u{FE0F}", beachside: "\u2B50", seabluffe: "\u{1F504}", moonlightwolf: "\u{1F43A}", vegas: "\u{1F3B0}",
+    avoscramble: "\u{1F500}", tourneybb: "\u{1F3C6}", tourneygg: "\u{1F3C5}",
+  };
+  const colors = ["#2D6A4F", "#1B4332", "#B08D57", "#457B9D", "#6B4226", "#40916C"];
+  const map = {};
+  order.forEach((key, i) => {
+    map[key] = { emoji: emoji[key], color: colors[i % colors.length] };
+  });
+  return map;
+})();
+
 // Reference-only library of other popular golf games/formats - informational,
 // not trackable in this app. Grouped the same way the user organized them.
 const GAME_LIBRARY = [
@@ -4921,30 +4946,13 @@ function computeRoundScoring(round) {
             <div className="gsc-label" style={{ marginBottom: 2, fontSize: 17 }}>Start a New Round</div>
             <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 10 }}>Quick Pick Game Format List</div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
-              {[
-                ["dstreet", GAMES.dstreet.name, "\u{1F4B0}"],
-                ["swami", GAMES.swami.name, "\u26F3"],
-                ["individualputts", GAMES.individualputts.name, "\u{1F3AF}"],
-                ["pontobango", GAMES.pontobango.name, "\u{1F3B2}"],
-                ["stableford", GAMES.stableford.name, "\u{1F4C8}"],
-                ["ponto", GAMES.ponto.name, "\u{1F91D}"],
-                ["teamstrokes", GAMES.teamstrokes.name, "\u{1F3CC}\u{FE0F}"],
-                ["teamputts", GAMES.teamputts.name, "\u{1F573}\u{FE0F}"],
-                ["beachside", GAMES.beachside.name, "\u2B50"],
-                ["seabluffe", GAMES.seabluffe.name, "\u{1F504}"],
-                ["moonlightwolf", GAMES.moonlightwolf.name, "\u{1F43A}"],
-                ["vegas", GAMES.vegas.name, "\u{1F3B0}"],
-                ["avoscramble", GAMES.avoscramble.name, "\u{1F500}"],
-                ["tourneybb", GAMES.tourneybb.name, "\u{1F3C6}"],
-                ["tourneygg", GAMES.tourneygg.name, "\u{1F3C5}"],
-              ].map(([key, name, emoji], i) => {
-                const colors = ["#2D6A4F", "#1B4332", "#B08D57", "#457B9D", "#6B4226", "#40916C"];
-                const bg = colors[i % colors.length];
+              {Object.keys(GAME_TILE_STYLE).map((key) => {
+                const { emoji, color } = GAME_TILE_STYLE[key];
                 return (
                   <div
                     key={key}
                     onClick={() => (GAMES[key].tournamentOnly ? startTournamentCreateFlow(key) : startNewRound(key))}
-                    style={{ position: "relative", background: bg, borderRadius: 12, padding: "16px 6px 12px", textAlign: "center", cursor: "pointer", minHeight: 108, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}
+                    style={{ position: "relative", background: color, borderRadius: 12, padding: "16px 6px 12px", textAlign: "center", cursor: "pointer", minHeight: 108, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}
                   >
                     <button
                       onClick={(e) => { e.stopPropagation(); setQuickInfoFor(key); }}
@@ -4954,7 +4962,7 @@ function computeRoundScoring(round) {
                       i
                     </button>
                     <div style={{ fontSize: 26, marginBottom: 6 }}>{emoji}</div>
-                    <div style={{ fontSize: 11.5, fontWeight: 700, color: "#fff", lineHeight: 1.3 }}>{name}</div>
+                    <div style={{ fontSize: 11.5, fontWeight: 700, color: "#fff", lineHeight: 1.3 }}>{GAMES[key].name}</div>
                   </div>
                 );
               })}
@@ -5097,7 +5105,12 @@ function computeRoundScoring(round) {
             {["dstreet", "swami", "individualputts", "pontobango", "stableford"]
               .map((key) => [key, GAMES[key]])
               .map(([key, g]) => (
-                <div key={key} className="gsc-card gsc-game-card" style={{ marginBottom: 10 }} onClick={() => startNewRound(key)}>
+                <div key={key} className="gsc-card gsc-game-card" style={{ marginBottom: 10, position: "relative" }} onClick={() => startNewRound(key)}>
+                  {GAME_TILE_STYLE[key] && (
+                    <div style={{ position: "absolute", bottom: 8, right: 8, width: 30, height: 30, borderRadius: 8, background: GAME_TILE_STYLE[key].color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>
+                      {GAME_TILE_STYLE[key].emoji}
+                    </div>
+                  )}
                   <div className="gsc-game-title">{g.name}</div>
                   <div className="gsc-tag">{g.tag}</div>
                   <div className="gsc-no-select" style={{ fontSize: 13, marginTop: 8, color: "#4b4b45" }}>{g.desc}</div>
@@ -5119,7 +5132,12 @@ function computeRoundScoring(round) {
             {["ponto", "teamstrokes", "teamputts", "beachside", "seabluffe", "moonlightwolf", "vegas"]
               .map((key) => [key, GAMES[key]])
               .map(([key, g]) => (
-                <div key={key} className="gsc-card gsc-game-card" style={{ marginBottom: 10 }} onClick={() => startNewRound(key)}>
+                <div key={key} className="gsc-card gsc-game-card" style={{ marginBottom: 10, position: "relative" }} onClick={() => startNewRound(key)}>
+                  {GAME_TILE_STYLE[key] && (
+                    <div style={{ position: "absolute", bottom: 8, right: 8, width: 30, height: 30, borderRadius: 8, background: GAME_TILE_STYLE[key].color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>
+                      {GAME_TILE_STYLE[key].emoji}
+                    </div>
+                  )}
                   <div className="gsc-game-title">{g.name}</div>
                   <div className="gsc-tag">{g.tag}</div>
                   <div className="gsc-no-select" style={{ fontSize: 13, marginTop: 8, color: "#4b4b45" }}>{g.desc}</div>
@@ -5144,7 +5162,12 @@ function computeRoundScoring(round) {
             {TOURNAMENT_GAME_KEYS.map((key) => {
               const g = GAMES[key];
               return (
-                <div key={key} className="gsc-card gsc-game-card" style={{ marginBottom: 10 }} onClick={() => startTournamentCreateFlow(key)}>
+                <div key={key} className="gsc-card gsc-game-card" style={{ marginBottom: 10, position: "relative" }} onClick={() => startTournamentCreateFlow(key)}>
+                  {GAME_TILE_STYLE[key] && (
+                    <div style={{ position: "absolute", bottom: 8, right: 8, width: 30, height: 30, borderRadius: 8, background: GAME_TILE_STYLE[key].color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>
+                      {GAME_TILE_STYLE[key].emoji}
+                    </div>
+                  )}
                   <div className="gsc-game-title">{g.name}</div>
                   <div className="gsc-tag">{g.tag}</div>
                   <div className="gsc-no-select" style={{ fontSize: 13, marginTop: 8, color: "#4b4b45" }}>{g.desc}</div>
