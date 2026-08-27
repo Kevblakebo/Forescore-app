@@ -6347,16 +6347,49 @@ function computeRoundScoring(round) {
           <div className="gsc-card gsc-no-select">
             <div style={{ fontSize: 13, color: "#4b4b45", lineHeight: 1.6 }}>
               <p style={{ margin: "0 0 14px" }}>
-                The RipScore golf game scorecard app manages and shares the detail of various golf game formats you can play with your group live on the course so you don't have to: game type, rules, players, teams, scoring, max scores, course pars, handicaps, mulligans, dates, and prizes. You no longer have to do it in your head or on a paper scorecard.
+                Built for the group you play with every week.
               </p>
               <p style={{ margin: "0 0 14px" }}>
-                Before you tee off, you can quickly set the details that matter for your group. Just pick a game and enter the details before the round. Then each player enters their own scores during play (or one person can enter for everyone), and everyone can see where things stand as you go. When the round wraps up, points are calculated and saved automatically.
+                RipScore is the golf app for your regular game - the same crew, the same Saturday tee time, without the scorecard math or the "wait, what were we betting on again?" RipScore keeps score, tracks who's up, and settles the debate before you're off the 18th green.
               </p>
+
+              <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>{"\u{1F465}"} Set Up Your Group Once</p>
               <p style={{ margin: "0 0 14px" }}>
-                Playing with more than one foursome? Tournaments let every foursome play the same game under the same settings, so their scores are directly comparable. Everyone still keeps their own scorecard, but a shared leaderboard shows how all the foursomes stack up against each other as the round goes on.
+                Save your regular playing partners as a group. Next time you play, fill in everyone's name, avatar, and handicap with one tap - no retyping names round after round.
               </p>
+
+              <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>{"\u26F3"} 15 Game Formats, for Every Kind of Day</p>
+              <p style={{ margin: "0 0 14px" }}>
+                Skins, Wolf, Vegas, Stableford, Bingo Bango Bongo, Best Ball, Round Robin, and more - for individuals, teams, and full multi-foursome tournaments. Pick a format, and RipScore keeps score, tracks mulligans, and shows exactly who's winning, hole by hole.
+              </p>
+
+              <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>{"\u{1F517}"} No App Required for Your Group</p>
+              <p style={{ margin: "0 0 14px" }}>
+                Start a round and share a simple code. Anyone can join instantly from a browser - no download, no account required to play. Everyone sees the same live scorecard update in real time.
+              </p>
+
+              <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>{"\u{1F4CD}"} Live Distance to the Green</p>
+              <p style={{ margin: "0 0 14px" }}>
+                Log in to unlock GPS distance-to-green for front, center, and back of every hole, pulled from real course data.
+              </p>
+
+              <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>{"\u{1F3CC}\u{FE0F}"} Optional Handicapping, Done Right</p>
+              <p style={{ margin: "0 0 14px" }}>
+                Turn on net scoring and RipScore calculates each player's strokes per hole automatically, based on real handicaps - fair games for mixed-skill groups, without anyone doing math.
+              </p>
+
+              <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>{"\u{1F4CA}"} A Leaderboard Just for Your Group</p>
+              <p style={{ margin: "0 0 14px" }}>
+                Every group gets its own shared leaderboard - separate from the general public rankings - so you can see who's actually been winning all season, not just today.
+              </p>
+
+              <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>{"\u{1F4B5}"} Settle Up Without the Argument</p>
+              <p style={{ margin: "0 0 14px" }}>
+                RipScore calculates who owes who automatically, and can pull in Venmo handles so you can actually settle up before you leave the parking lot.
+              </p>
+
               <p style={{ margin: 0 }}>
-                No more arguing about the rules, redoing the math, or waiting to find out who owes who at the 19th hole, it's all tracked right here.
+                Whether it's a casual Saturday game or a full club tournament, RipScore keeps the math out of your golf - so all that's left is golf.
               </p>
             </div>
           </div>
