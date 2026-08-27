@@ -1343,7 +1343,7 @@ export default function GolfScorecard() {
   }, [screen, session && session.user && session.user.id]);
 
   useEffect(() => {
-    if (screen === "profileTab" && session && session.user) {
+    if (screen === "groupsTab" && session && session.user) {
       loadMyGroups();
     }
   }, [screen, session && session.user && session.user.id]);
