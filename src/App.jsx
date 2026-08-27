@@ -1543,8 +1543,19 @@ export default function GolfScorecard() {
     // profile setup) - rather than relying on in-memory navigation
     // history to correctly unwind back through all of them, this saves
     // where the person actually started so the very end of onboarding
-    // can return them there directly.
-    const cameFrom = screenHistoryRef.current.length > 0 ? screenHistoryRef.current[screenHistoryRef.current.length - 1] : "home";
+    // can return them there directly. The history's most recent entry
+    // isn't always that starting point though - someone may have passed
+    // through Login first before tapping over to Create Account - so
+    // this walks backward past any other auth-related screens to find
+    // the actual screen they started from.
+    const authScreens = ["login", "register", "resetPassword", "verifyEmailCode", "completeProfile"];
+    let cameFrom = "home";
+    for (let i = screenHistoryRef.current.length - 1; i >= 0; i--) {
+      if (!authScreens.includes(screenHistoryRef.current[i])) {
+        cameFrom = screenHistoryRef.current[i];
+        break;
+      }
+    }
     try {
       window.localStorage.setItem("ripscore_post_signup_return", cameFrom);
     } catch (e) {}
@@ -1785,16 +1796,13 @@ export default function GolfScorecard() {
     let dest = "home";
     try {
       const stored = window.localStorage.getItem("ripscore_post_signup_return");
-      // Only ever return to a top-level screen that renders fine on its
-      // own, with no dependency on in-progress state (a selected game,
-      // players typed in, an active round, etc.) - that kind of state
-      // lives only in memory, and an email confirmation round trip may
-      // have meant a full page reload that already wiped it clean.
-      // Sending someone back to a mid-setup screen after that would just
-      // show it broken and empty, not actually continue where they left
-      // off.
-      const safeDestinations = ["home", "roundsTab", "groupsTab", "profileTab", "libraryTab"];
-      if (stored && safeDestinations.includes(stored)) dest = stored;
+      // With the code-based confirmation flow, signup never leaves or
+      // reloads the app - it's all one continuous instance from start to
+      // finish - so any in-progress state (a selected game, players
+      // already typed in, etc.) stays fully intact the whole time. That
+      // means it's safe to return to any screen they actually started
+      // from, not just top-level ones.
+      if (stored) dest = stored;
       window.localStorage.removeItem("ripscore_post_signup_return");
     } catch (e) {}
     goToScreen(dest);
