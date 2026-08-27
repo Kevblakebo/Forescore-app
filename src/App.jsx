@@ -1180,6 +1180,16 @@ export default function GolfScorecard() {
   const [groupmatePickerFor, setGroupmatePickerFor] = useState(null); // player index currently showing the "pick from group" list, or null
   const [groupmates, setGroupmates] = useState(null); // null = not loaded yet, [] = loaded but empty
   const [groupmatesErr, setGroupmatesErr] = useState("");
+  // "Fill players from a group" flow - groupFillFor tracks which context
+  // opened it: "players" for the shared Wizard/regular-setup state, or a
+  // tournament foursome's index (a number) for the multi-foursome draft
+  // screen, since that uses a different underlying data shape entirely.
+  const [groupFillFor, setGroupFillFor] = useState(null);
+  const [groupFillGroupId, setGroupFillGroupId] = useState(null);
+  const [groupFillMembers, setGroupFillMembers] = useState(null); // null = not loaded yet for the currently chosen group
+  const [groupFillLoading, setGroupFillLoading] = useState(false);
+  const [groupFillErr, setGroupFillErr] = useState("");
+  const [groupFillChosenIds, setGroupFillChosenIds] = useState([]); // which members are checked, only shown/used when a group has more than the available slots
   const [postRoundGroupName, setPostRoundGroupName] = useState("");
   const [postRoundGroupBusy, setPostRoundGroupBusy] = useState(false);
   const [postRoundGroupErr, setPostRoundGroupErr] = useState("");
@@ -2206,6 +2216,69 @@ export default function GolfScorecard() {
       </div>
     );
   }
+
+  function GroupFillModal() {
+    if (groupFillFor === null) return null;
+    return (
+      <div className="gsc-modal-backdrop" onClick={closeGroupFillPicker}>
+        <div className="gsc-modal" onClick={(e) => e.stopPropagation()}>
+          {!groupFillMembers ? (
+            <>
+              <div className="gsc-modal-title">Fill players from a group</div>
+              {groupsLoading || groupFillLoading ? (
+                <div style={{ fontSize: 14, color: "#6b6b63", marginBottom: 16 }}>Loading...</div>
+              ) : myGroups.length === 0 ? (
+                <div style={{ fontSize: 14, color: "#6b6b63", marginBottom: 16 }}>You're not in any groups yet.</div>
+              ) : (
+                <div style={{ marginBottom: 16 }}>
+                  {myGroups.map((g) => (
+                    <button
+                      key={g.id}
+                      className="gsc-card gsc-game-card"
+                      style={{ width: "100%", textAlign: "left", marginBottom: 8, display: "flex", alignItems: "center", gap: 10 }}
+                      onClick={() => selectGroupForFill(g.id)}
+                    >
+                      {g.avatar && <span style={{ fontSize: 20 }}>{g.avatar}</span>}
+                      <span style={{ fontWeight: 700 }}>{g.name}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {groupFillErr && <div style={{ color: "#C1440E", fontSize: 13, marginBottom: 12 }}>{groupFillErr}</div>}
+              <button className="gsc-btn gsc-btn-outline" style={{ width: "100%" }} onClick={closeGroupFillPicker}>
+                Cancel
+              </button>
+            </>
+          ) : (
+            <>
+              <div className="gsc-modal-title">Who's playing today?</div>
+              <div style={{ fontSize: 13, color: "#6b6b63", marginBottom: 12 }}>
+                This group has more than 4 members - pick up to 4 who are actually playing.
+              </div>
+              {groupFillMembers.map((m) => {
+                const checked = groupFillChosenIds.includes(m.user_id);
+                return (
+                  <label key={m.user_id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: "1px solid #eee6cf", cursor: "pointer" }}>
+                    <input type="checkbox" checked={checked} onChange={() => toggleGroupFillChosen(m.user_id)} disabled={!checked && groupFillChosenIds.length >= 4} />
+                    {m.avatar && <span style={{ fontSize: 18 }}>{m.avatar}</span>}
+                    <span style={{ fontWeight: 600 }}>{m.name}</span>
+                  </label>
+                );
+              })}
+              <div style={{ fontSize: 12, color: "#8a8a80", margin: "10px 0" }}>{groupFillChosenIds.length} of 4 selected</div>
+              <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginBottom: 8 }} disabled={groupFillChosenIds.length === 0} onClick={confirmGroupFillSelection}>
+                Fill in selected players
+              </button>
+              <button className="gsc-btn gsc-btn-outline" style={{ width: "100%" }} onClick={closeGroupFillPicker}>
+                Cancel
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
+
 
   function QuickInfoModal() {
     if (!quickInfoFor) return null;
@@ -3245,6 +3318,24 @@ export default function GolfScorecard() {
   // those groups, deduplicated - both steps rely on RLS policies that
   // already exist for the group leaderboard feature, so no new database
   // access rules are needed here.
+  // Loads one specific group's full member list - distinct from
+  // loadGroupmates, which flattens every group the user belongs to into
+  // one combined list with no way to tell which group a person came
+  // from. This is used when someone wants to fill in an entire round's
+  // players from a single, specific group at once.
+  async function loadOneGroupMembers(groupId) {
+    const { data: members, error } = await withJwtRetry(() =>
+      supabase.from("group_members").select("user_id").eq("group_id", groupId)
+    );
+    if (error || !members) return [];
+    const userIds = [...new Set(members.map((m) => m.user_id))];
+    if (userIds.length === 0) return [];
+    const { data: stats } = await withJwtRetry(() =>
+      supabase.from("leaderboard_stats").select("user_id, display_name, avatar").in("user_id", userIds)
+    );
+    return (stats || []).map((s) => ({ user_id: s.user_id, name: s.display_name || "Golfer", avatar: s.avatar || "" }));
+  }
+
   async function loadGroupmates() {
     if (!session || !supabase) return;
     setGroupmatesErr("");
@@ -3302,6 +3393,86 @@ export default function GolfScorecard() {
       return next;
     });
     setGroupmatePickerFor(null);
+  }
+
+  // Opens the "fill players from a group" flow. forCtx is either the
+  // string "players" (the shared Wizard/regular-setup state) or a
+  // tournament foursome's index (a number), so the eventual apply step
+  // knows which data shape to write into. Always reloads the group list
+  // fresh rather than trusting whatever's cached, since this is a
+  // low-frequency action where correctness matters more than saving one
+  // network call.
+  function openGroupFillPicker(forCtx) {
+    setGroupFillFor(forCtx);
+    setGroupFillGroupId(null);
+    setGroupFillMembers(null);
+    setGroupFillChosenIds([]);
+    setGroupFillErr("");
+    loadMyGroups();
+  }
+  function closeGroupFillPicker() {
+    setGroupFillFor(null);
+    setGroupFillGroupId(null);
+    setGroupFillMembers(null);
+    setGroupFillChosenIds([]);
+    setGroupFillErr("");
+  }
+
+  // Loads the tapped group's members. If there are 4 or fewer, everyone
+  // in the group is clearly "who's playing" and gets filled in right
+  // away. With more than 4, there's no way to know who's actually
+  // playing today, so this shows a checklist instead of guessing.
+  async function selectGroupForFill(groupId) {
+    setGroupFillGroupId(groupId);
+    setGroupFillLoading(true);
+    setGroupFillErr("");
+    const members = await loadOneGroupMembers(groupId);
+    setGroupFillLoading(false);
+    if (members.length === 0) {
+      setGroupFillErr("This group doesn't have any members yet.");
+      return;
+    }
+    if (members.length <= 4) {
+      applyGroupMembersToPlayers(members);
+    } else {
+      setGroupFillMembers(members);
+      setGroupFillChosenIds([]);
+    }
+  }
+
+  function toggleGroupFillChosen(userId) {
+    setGroupFillChosenIds((prev) => {
+      if (prev.includes(userId)) return prev.filter((id) => id !== userId);
+      if (prev.length >= 4) return prev; // never more than a full foursome
+      return [...prev, userId];
+    });
+  }
+
+  function confirmGroupFillSelection() {
+    const chosen = (groupFillMembers || []).filter((m) => groupFillChosenIds.includes(m.user_id));
+    applyGroupMembersToPlayers(chosen);
+  }
+
+  // Actually writes the chosen members into whichever data shape this
+  // picker was opened for. Individual game formats allow a variable
+  // player count, so "players" mode sets the slot count to match exactly
+  // how many were picked, rather than leaving stale extra slots around.
+  // A tournament foursome always needs exactly 4, so that mode pads any
+  // remainder with blank slots instead.
+  function applyGroupMembersToPlayers(members) {
+    const filled = members.slice(0, 4).map((m) => ({ name: m.name, avatar: m.avatar, user_id: m.user_id, hcp: "" }));
+    if (groupFillFor === "players") {
+      if (filled.length > 0) setPlayers(filled);
+    } else if (typeof groupFillFor === "number") {
+      const fi = groupFillFor;
+      const fullFour = Array.from({ length: 4 }, (_, i) => filled[i] || { name: "", avatar: "", hcp: "" });
+      setTournamentFoursomesDraft((prev) => {
+        const next = [...prev];
+        if (next[fi]) next[fi] = { ...next[fi], players: fullFour };
+        return next;
+      });
+    }
+    closeGroupFillPicker();
   }
 
   // Only used by individual game formats (Individual Strokes, Individual Skins) -
@@ -7054,6 +7225,11 @@ function computeRoundScoring(round) {
           {wizardStepId === "field_players" && (
             <div className="gsc-card">
               <div className="gsc-label" style={{ marginBottom: 10, fontSize: 16 }}>Who's playing? Add names and handicaps (optional)</div>
+              {session && (
+                <button className="gsc-link" style={{ fontSize: 13, fontWeight: 700, marginBottom: 10, display: "inline-block" }} onClick={() => openGroupFillPicker("players")}>
+                  {"\u{1F465}"} Fill players from a group
+                </button>
+              )}
               <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 10, fontWeight: 700 }}>
                 Tap the circle next to a player's name to pick a fun avatar (optional).
               </div>
@@ -7165,6 +7341,7 @@ function computeRoundScoring(round) {
           )}
         </div>
         {RulesModal()}
+        {GroupFillModal()}
       </div>
     );
   }
@@ -7537,6 +7714,11 @@ function computeRoundScoring(round) {
 
           <div className="gsc-card">
             <div className="gsc-label" style={{ marginBottom: 10 }}>Players Names and Handicaps (Optional)</div>
+            {session && (
+              <button className="gsc-link" style={{ fontSize: 13, fontWeight: 700, marginBottom: 10, display: "inline-block" }} onClick={() => openGroupFillPicker("players")}>
+                {"\u{1F465}"} Fill players from a group
+              </button>
+            )}
             {(gameKey === "swami" || gameKey === "dstreet" || gameKey === "pontobango" || gameKey === "individualputts" || gameKey === "stableford") && (
               <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 10 }}>
                 This format supports {gameKey === "pontobango" || gameKey === "individualputts" ? "2-4" : "1-4"} players - add or remove players below to match who's actually playing.
@@ -7709,6 +7891,7 @@ function computeRoundScoring(round) {
           </button>
         </div>
         {RulesModal()}
+        {GroupFillModal()}
       </div>
     );
   }
@@ -8101,6 +8284,11 @@ function computeRoundScoring(round) {
               <div className="gsc-label">Foursome name</div>
               <input className="gsc-input" style={{ marginBottom: 12 }} value={f.name} onChange={(e) => updateFoursomeDraftName(fi, e.target.value)} />
               <div className="gsc-label" style={{ marginBottom: 6 }}>Players Names and Handicaps (Optional)</div>
+              {session && (
+                <button className="gsc-link" style={{ fontSize: 13, fontWeight: 700, marginBottom: 10, display: "inline-block" }} onClick={() => openGroupFillPicker(fi)}>
+                  {"\u{1F465}"} Fill players from a group
+                </button>
+              )}
               <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 10 }}>
                 Tap the circle next to a player's name to pick a fun avatar (optional).
               </div>
@@ -8235,6 +8423,7 @@ function computeRoundScoring(round) {
             {tournamentBusy ? "Creating..." : `Create tournament with ${tournamentFoursomesDraft.length} foursome${tournamentFoursomesDraft.length === 1 ? "" : "s"}`}
           </button>
         </div>
+        {GroupFillModal()}
       </div>
     );
   }
