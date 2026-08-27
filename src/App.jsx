@@ -1665,6 +1665,12 @@ export default function GolfScorecard() {
     // save's real values, not a stale read.
     await loadStats({ optIn: profileForm.leaderboard_opt_in, name: profileForm.name, avatar: profileForm.avatar });
     loadLeaderboard();
+    // The Groups page caches its own group list and, separately, whichever
+    // group's leaderboard is currently open - neither of those refreshes
+    // just because loadStats/loadLeaderboard above ran, so a name or
+    // avatar change wouldn't show up there until this runs too.
+    loadMyGroups();
+    if (selectedGroupId) loadGroupLeaderboard(selectedGroupId);
   }
 
   // Pulls together everything recorded in user_rounds since Phase 4 into
