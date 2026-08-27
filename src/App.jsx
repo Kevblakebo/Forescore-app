@@ -2131,7 +2131,36 @@ export default function GolfScorecard() {
       setGroupMembersErr(`Couldn't load this group's stats (${statsErr.message}).`);
       return;
     }
-    setGroupMembersStats(stats || []);
+    const result = stats || [];
+    // Same reasoning as the group-fill functions - leaderboard_stats is a
+    // cached copy of your own display_name/avatar/handicap, only
+    // refreshed when you've actually visited Profile or saved it. If
+    // that's never happened, this row can be stale or missing entirely,
+    // so for yourself specifically, use your live profile data instead.
+    if (session && profile && userIds.includes(session.user.id)) {
+      const myIdx = result.findIndex((r) => r.user_id === session.user.id);
+      const nameAvatarHcp = { display_name: profile.name || "Golfer", avatar: profile.avatar || "", handicap: profile.handicap || "" };
+      if (myIdx >= 0) {
+        result[myIdx] = { ...result[myIdx], ...nameAvatarHcp };
+      } else {
+        result.push({
+          user_id: session.user.id,
+          ...nameAvatarHcp,
+          opted_in: false,
+          rounds_played: 0,
+          wins: 0,
+          strokes_sum: 0,
+          strokes_rounds: 0,
+          putts_sum: 0,
+          putts_rounds: 0,
+          birdies: 0,
+          pars: 0,
+          eagles: 0,
+          holes_in_one: 0,
+        });
+      }
+    }
+    setGroupMembersStats(result);
   }
 
   const [deleteHistoryConfirm, setDeleteHistoryConfirm] = useState(null); // {code, name} while confirming
