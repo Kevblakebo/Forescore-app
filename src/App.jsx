@@ -1352,7 +1352,7 @@ export default function GolfScorecard() {
         // created_at alone would have.
         const confirmedAt = newSession.user && newSession.user.email_confirmed_at ? new Date(newSession.user.email_confirmed_at).getTime() : null;
         if (confirmedAt && Date.now() - confirmedAt < 2 * 60 * 1000) {
-          goToScreen("profileTab");
+          goToScreen("completeProfile");
         }
       }
     });
@@ -1535,9 +1535,20 @@ export default function GolfScorecard() {
     }
     setAuthPassword("");
     setAuthPasswordConfirm("");
+    // Email confirmation means leaving the app entirely to check an inbox
+    // - by the time they click that link, this could be a fresh page
+    // load with none of today's in-memory navigation history left, so
+    // where they started needs to survive that round trip in storage,
+    // not just in memory.
+    const cameFrom = screenHistoryRef.current.length > 0 ? screenHistoryRef.current[screenHistoryRef.current.length - 1] : "home";
+    try {
+      window.localStorage.setItem("ripscore_post_signup_return", cameFrom);
+    } catch (e) {}
     if (data.session) {
-      // Email confirmation is off - already logged in.
-      goToScreen("profileTab");
+      // Email confirmation is off - already logged in, so go straight to
+      // filling in a profile rather than through the confirmation-link
+      // path below.
+      goToScreen("completeProfile");
     } else if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
       // Supabase deliberately returns what looks like a success response
       // here (no error, no session) when the email is already registered
@@ -1710,6 +1721,35 @@ export default function GolfScorecard() {
     // avatar change wouldn't show up there until this runs too.
     loadMyGroups();
     if (selectedGroupId) loadGroupLeaderboard(selectedGroupId);
+  }
+
+  // Runs on the "complete your profile" onboarding step right after
+  // signup - saves via the same saveProfile used everywhere else, then
+  // sends the person back to wherever they actually started signing up
+  // from, reading that from storage since it may have survived an entire
+  // email-confirmation round trip through a fresh page load.
+  async function finishOnboarding() {
+    if (!profileForm.name.trim()) {
+      setProfileErr("Enter a user name to continue.");
+      return;
+    }
+    await saveProfile();
+    let dest = "home";
+    try {
+      const stored = window.localStorage.getItem("ripscore_post_signup_return");
+      // Only ever return to a top-level screen that renders fine on its
+      // own, with no dependency on in-progress state (a selected game,
+      // players typed in, an active round, etc.) - that kind of state
+      // lives only in memory, and an email confirmation round trip may
+      // have meant a full page reload that already wiped it clean.
+      // Sending someone back to a mid-setup screen after that would just
+      // show it broken and empty, not actually continue where they left
+      // off.
+      const safeDestinations = ["home", "roundsTab", "groupsTab", "profileTab", "libraryTab"];
+      if (stored && safeDestinations.includes(stored)) dest = stored;
+      window.localStorage.removeItem("ripscore_post_signup_return");
+    } catch (e) {}
+    goToScreen(dest);
   }
 
   // Pulls together everything recorded in user_rounds since Phase 4 into
@@ -6732,6 +6772,75 @@ function computeRoundScoring(round) {
             Already have an account?{" "}
             <button className="gsc-link" style={{ fontSize: 13 }} onClick={() => { setAuthErr(""); goToScreen("login"); }}>
               Log in
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (screen === "completeProfile") {
+    return (
+      <div className="gsc">
+        <style>{STYLE}</style>
+        <Header title="You're In!" sub="Just a couple quick details" />
+        <div className="gsc-body">
+          <div className="gsc-card">
+            <div className="gsc-label" style={{ marginBottom: 4 }}>Set up your profile</div>
+            <div style={{ fontSize: 13, color: "#6b6b63", marginBottom: 14 }}>
+              A user name is all that's required - everything else is optional and can be changed any time from your Profile page.
+            </div>
+
+            <div className="gsc-field">
+              <div className="gsc-label">Avatar (optional)</div>
+              <button
+                onClick={() => setProfileAvatarPickerOpen((v) => !v)}
+                style={{ width: 44, height: 44, borderRadius: "50%", border: "1.5px solid #d8d2bd", background: "#fff", fontSize: 20, cursor: "pointer", position: "relative" }}
+              >
+                {profileForm.avatar || "\u{1F464}"}
+                {!profileForm.avatar && (
+                  <span style={{ position: "absolute", bottom: -2, right: -2, width: 16, height: 16, borderRadius: "50%", background: "#C1440E", color: "#fff", fontSize: 11, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", border: "1.5px solid #F3EFE0" }}>
+                    +
+                  </span>
+                )}
+              </button>
+              {profileAvatarPickerOpen && (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8, padding: "10px 0 0" }}>
+                  {AVATAR_OPTIONS.map((emoji) => (
+                    <button
+                      key={emoji}
+                      onClick={() => {
+                        setProfileForm({ ...profileForm, avatar: profileForm.avatar === emoji ? "" : emoji });
+                        setProfileAvatarPickerOpen(false);
+                      }}
+                      style={{ width: 36, height: 36, borderRadius: "50%", border: profileForm.avatar === emoji ? "2px solid #C1440E" : "1.5px solid #d8d2bd", background: "#fff", fontSize: 18, cursor: "pointer" }}
+                    >
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="gsc-field" style={{ marginTop: 10 }}>
+              <div className="gsc-label">User Name (Handle) (Required)</div>
+              <input className="gsc-input" value={profileForm.name} onChange={(e) => { setProfileErr(""); setProfileForm({ ...profileForm, name: e.target.value }); }} />
+            </div>
+            <div className="gsc-field" style={{ marginTop: 10 }}>
+              <div className="gsc-label">Handicap (optional)</div>
+              <input className="gsc-input" value={profileForm.handicap} onChange={(e) => setProfileForm({ ...profileForm, handicap: e.target.value })} />
+            </div>
+            <div className="gsc-field" style={{ marginTop: 10 }}>
+              <div className="gsc-label">Venmo (optional)</div>
+              <input className="gsc-input" placeholder="@your-venmo" value={profileForm.venmo} onChange={(e) => setProfileForm({ ...profileForm, venmo: e.target.value })} />
+            </div>
+            <div className="gsc-field" style={{ marginTop: 10 }}>
+              <div className="gsc-label">Home Course (optional)</div>
+              <input className="gsc-input" value={profileForm.home_course} onChange={(e) => setProfileForm({ ...profileForm, home_course: e.target.value })} />
+            </div>
+
+            {profileErr && <div style={{ color: "#C1440E", fontSize: 13, marginTop: 12 }}>{profileErr}</div>}
+            <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 16 }} disabled={profileSaving} onClick={finishOnboarding}>
+              {profileSaving ? "Saving..." : "Save & Continue"}
             </button>
           </div>
         </div>
