@@ -1721,8 +1721,15 @@ export default function GolfScorecard() {
     let eagles = 0, birdies = 0, pars = 0, holesInOne = 0;
     const recent = [];
 
-    for (const ur of myRoundsIndex) {
-      const res = await storageGet(`golfround:${ur.round_code}`, true);
+    // Fetch every round's data in parallel rather than one at a time -
+    // network round-trips are what actually make this slow, not the
+    // math below, so this is the one change that meaningfully speeds up
+    // stats loading, especially for anyone with a longer round history.
+    const roundResults = await Promise.all(
+      myRoundsIndex.map((ur) => storageGet(`golfround:${ur.round_code}`, true).then((res) => ({ ur, res })))
+    );
+
+    for (const { ur, res } of roundResults) {
       if (!res.ok || !res.value) continue; // round may have since been deleted - skip it, don't fail the whole list
       let r;
       try {
