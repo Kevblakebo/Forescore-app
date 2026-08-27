@@ -1365,7 +1365,16 @@ export default function GolfScorecard() {
           setNeedsOnboardingAfterLogin(true);
           setAuthEmail(email);
           setAuthNotice("Your email is confirmed! Log in below with your password to finish setting up your account.");
-          supabase.auth.signOut().then(() => goToScreen("login"));
+          // Calling an async auth method (signOut) directly inside this
+          // same onAuthStateChange callback is a known Supabase deadlock
+          // - the callback is still part of the auth client's own
+          // internal processing at this point, so calling back into it
+          // reentrantly can hang forever rather than actually resolving.
+          // Deferring with setTimeout lets this callback fully return
+          // first, avoiding that.
+          setTimeout(() => {
+            supabase.auth.signOut().then(() => goToScreen("login"));
+          }, 0);
         }
       }
     });
