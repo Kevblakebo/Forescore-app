@@ -9758,7 +9758,7 @@ function computeRoundScoring(round) {
           <div style={{ fontSize: 12, color: "#8a8a80", textAlign: "center", marginTop: 16 }}>
             Share code <b className="gsc-mono">{round.id}</b> with your group so everyone can enter or view scores.
           </div>
-          <button className="gsc-btn gsc-btn-outline" style={{ width: "100%", marginTop: 14 }} disabled={busy} onClick={() => setConfirmFinishOpen(true)}>
+          <button className="gsc-btn" style={{ width: "100%", marginTop: 14, background: "#C1440E", color: "#fff" }} disabled={busy} onClick={() => setConfirmFinishOpen(true)}>
             {busy ? "Saving..." : "Finish & exit this round"}
           </button>
           {archiveErr && <div style={{ color: "#C1440E", fontSize: 12, textAlign: "center", marginTop: 8 }}>{archiveErr}</div>}
