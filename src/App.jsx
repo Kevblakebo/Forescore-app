@@ -1214,7 +1214,6 @@ export default function GolfScorecard() {
   const [showNewPasswordConfirm, setShowNewPasswordConfirm] = useState(false);
   const [authPasswordConfirm, setAuthPasswordConfirm] = useState("");
   const [authNotice, setAuthNotice] = useState(""); // e.g. "check your email to confirm"
-  const [needsOnboardingAfterLogin, setNeedsOnboardingAfterLogin] = useState(false);
   const [resetSent, setResetSent] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [newPasswordConfirm, setNewPasswordConfirm] = useState("");
@@ -1353,28 +1352,7 @@ export default function GolfScorecard() {
         // created_at alone would have.
         const confirmedAt = newSession.user && newSession.user.email_confirmed_at ? new Date(newSession.user.email_confirmed_at).getTime() : null;
         if (confirmedAt && Date.now() - confirmedAt < 2 * 60 * 1000) {
-          // Supabase's confirmation link always signs someone in
-          // automatically the moment it's clicked - there's no supported
-          // way to make it "confirm only." Rather than dropping the
-          // person straight into onboarding off that automatic session,
-          // sign them back out immediately and show a normal Login
-          // screen instead, so logging in is an explicit, familiar step
-          // they take themselves. needsOnboardingAfterLogin remembers to
-          // send them to onboarding once they do.
-          const email = newSession.user.email || "";
-          setNeedsOnboardingAfterLogin(true);
-          setAuthEmail(email);
-          setAuthNotice("Your email is confirmed! Log in below with your password to finish setting up your account.");
-          // Calling an async auth method (signOut) directly inside this
-          // same onAuthStateChange callback is a known Supabase deadlock
-          // - the callback is still part of the auth client's own
-          // internal processing at this point, so calling back into it
-          // reentrantly can hang forever rather than actually resolving.
-          // Deferring with setTimeout lets this callback fully return
-          // first, avoiding that.
-          setTimeout(() => {
-            supabase.auth.signOut().then(() => goToScreen("login"));
-          }, 0);
+          goToScreen("completeProfile");
         }
       }
     });
@@ -1586,7 +1564,7 @@ export default function GolfScorecard() {
       // automatically, in whatever tab/window that link opens - it
       // doesn't require a separate manual login step afterward, so the
       // messaging here needs to set that expectation clearly upfront.
-      setAuthNotice("Almost there - check your email and click the confirmation link. It'll open a new tab where you'll log in with your password to finish setting up your account - once you see that, you can close this tab.");
+      setAuthNotice("Almost there - check your email and click the confirmation link. It'll open a new tab and finish setting up your account there - once you see that, you can close this tab.");
       goToScreen("login");
     }
   }
@@ -1610,12 +1588,7 @@ export default function GolfScorecard() {
       return;
     }
     setAuthPassword("");
-    if (needsOnboardingAfterLogin) {
-      setNeedsOnboardingAfterLogin(false);
-      goToScreen("completeProfile");
-    } else {
-      goBack("profileTab");
-    }
+    goBack("profileTab");
   }
 
   async function sendPasswordReset() {
