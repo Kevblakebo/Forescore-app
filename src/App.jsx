@@ -2380,6 +2380,7 @@ export default function GolfScorecard() {
     }
     setDeleteHistoryConfirm(null);
     loadStats(); // refresh so the list and every stat reflect the removal
+    setGroupRounds((prev) => prev.filter((r) => r.code !== deleteHistoryConfirm.code));
   }
 
   // Builds a fresh set of 4 empty player slots - if someone's logged in
@@ -6063,7 +6064,7 @@ function computeRoundScoring(round) {
             <div className="gsc-modal" onClick={(e) => e.stopPropagation()}>
               <div className="gsc-modal-title">Remove from your history?</div>
               <div className="gsc-modal-body">
-                This only removes "{deleteHistoryConfirm.name}" from your own Recent Rounds list - the round itself isn't deleted, and anyone with its code (including you) can still open it.
+                This only removes "{deleteHistoryConfirm.name}" from your own round history - the round itself isn't deleted, and anyone with its code (including you) can still open it.
               </div>
               <div className="gsc-modal-row">
                 <button className="gsc-btn gsc-btn-outline" disabled={deleteHistoryBusy} onClick={() => setDeleteHistoryConfirm(null)}>No, keep it</button>
@@ -6266,30 +6267,43 @@ function computeRoundScoring(round) {
 
                   {groupRoundsLoading && <div style={{ fontSize: 13, color: "#6b6b63", marginTop: 16 }}>Loading rounds played together...</div>}
                   {groupRoundsErr && <div style={{ color: "#A42E2D", fontSize: 13, marginTop: 16 }}>{groupRoundsErr}</div>}
-                  {!groupRoundsLoading && groupRounds.length > 0 && (
-                    <div style={{ marginTop: 16 }}>
-                      <div className="gsc-label" style={{ marginBottom: 10 }}>Rounds Played Together</div>
-                      {groupRounds.map((r, i) => (
-                        <div
-                          key={r.code}
-                          onClick={() => (r.tournamentId ? openTournamentBoard(r.tournamentId) : viewRoundFromProfile(r.code))}
-                          style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "7px 0", borderBottom: i === groupRounds.length - 1 ? "none" : "1px solid #eee6cf", cursor: "pointer" }}
-                        >
-                          <div style={{ fontSize: 13, color: "#1B4332", fontWeight: 600 }}>
-                            {r.name}
-                            {r.tournamentId && <span style={{ fontSize: 10, color: "#B08D57", marginLeft: 6, fontWeight: 700 }}>TOURNAMENT</span>}
-                            {r.holesPlayed < 18 && (
-                              <span style={{ fontSize: 10, color: "#8a8a80", marginLeft: 6, fontWeight: 400 }}>({r.holesPlayed} holes)</span>
-                            )}
+                  {!groupRoundsLoading && groupRounds.length > 0 && (() => {
+                    const g = myGroups.find((g) => g.id === selectedGroupId);
+                    const canEdit = g && session && g.createdBy === session.user.id;
+                    return (
+                      <div style={{ marginTop: 16 }}>
+                        <div className="gsc-label" style={{ marginBottom: 10 }}>Rounds Played Together</div>
+                        {groupRounds.map((r, i) => (
+                          <div
+                            key={r.code}
+                            onClick={() => (r.tournamentId ? openTournamentBoard(r.tournamentId) : viewRoundFromProfile(r.code))}
+                            style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "7px 0", borderBottom: i === groupRounds.length - 1 ? "none" : "1px solid #eee6cf", cursor: "pointer" }}
+                          >
+                            <div style={{ fontSize: 13, color: "#1B4332", fontWeight: 600 }}>
+                              {r.name}
+                              {r.tournamentId && <span style={{ fontSize: 10, color: "#B08D57", marginLeft: 6, fontWeight: 700 }}>TOURNAMENT</span>}
+                              {r.holesPlayed < 18 && (
+                                <span style={{ fontSize: 10, color: "#8a8a80", marginLeft: 6, fontWeight: 400 }}>({r.holesPlayed} holes)</span>
+                              )}
+                            </div>
+                            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                              <div style={{ fontSize: 12, color: "#6b6b63" }}>{r.date}</div>
+                              {canEdit && (
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); setDeleteHistoryErr(""); setDeleteHistoryConfirm({ code: r.code, name: r.name }); }}
+                                  style={{ background: "none", border: "none", padding: 4, color: "#A42E2D", fontSize: 14, cursor: "pointer", lineHeight: 1 }}
+                                  title="Remove from your history"
+                                >
+                                  {"\u{1F5D1}"}
+                                </button>
+                              )}
+                              <span style={{ color: "#8FA998", fontSize: 14 }}>{"\u203A"}</span>
+                            </div>
                           </div>
-                          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                            <div style={{ fontSize: 12, color: "#6b6b63" }}>{r.date}</div>
-                            <span style={{ color: "#8FA998", fontSize: 14 }}>{"\u203A"}</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                        ))}
+                      </div>
+                    );
+                  })()}
 
                   {!leaveGroupConfirming && !deleteGroupConfirming && (
                     <div style={{ display: "flex", justifyContent: "space-between", marginTop: 16 }}>
