@@ -1861,6 +1861,7 @@ export default function GolfScorecard() {
     let wins = 0;
     let eagles = 0, birdies = 0, pars = 0, holesInOne = 0;
     const recent = [];
+    const finishedTournamentIds = new Set();
 
     // Fetch every round's data in parallel rather than one at a time -
     // network round-trips are what actually make this slow, not the
@@ -1882,6 +1883,8 @@ export default function GolfScorecard() {
 
       const myIdx = r.players.findIndex((p) => p.user_id === session.user.id);
       if (myIdx === -1) continue;
+
+      if (r.tournamentId && r.finished) finishedTournamentIds.add(r.tournamentId);
 
       let holesPlayed = 0;
       let myStrokesTotal = 0;
@@ -1946,6 +1949,28 @@ export default function GolfScorecard() {
       holesInOne,
       recent: recent.slice(0, 5),
     });
+
+    // A separate, lightweight follow-up rather than blocking the main
+    // stats above on it - each finished tournament's own name/game/date
+    // lives in its own record (not on the individual round data just
+    // processed), so this needs its own small fetch.
+    if (finishedTournamentIds.size === 0) {
+      setFinishedTournaments([]);
+    } else {
+      const tournamentResults = await Promise.all(
+        [...finishedTournamentIds].map((tid) => storageGet(`${TOURNAMENT_PREFIX}${tid}`, true).then((res) => ({ tid, res })))
+      );
+      const finished = [];
+      for (const { tid, res } of tournamentResults) {
+        if (!res.ok || !res.value) continue;
+        try {
+          const t = JSON.parse(res.value);
+          finished.push({ id: tid, name: t.name, game: t.game, date: t.date, foursomeCount: (t.foursomes || []).length });
+        } catch (e) {}
+      }
+      finished.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+      setFinishedTournaments(finished);
+    }
 
     // Keep the leaderboard's copy of this user's totals fresh - always,
     // regardless of global opt-in status. Group membership is its own,
@@ -4719,7 +4744,8 @@ export default function GolfScorecard() {
 
   useEffect(() => {
     if (screen === "tournamentFinishCelebration" || screen === "tournamentCreatedCelebration") playFireworksSound();
-  }, [screen]);
+    if (screen === "gameWizard" && wizardStepId === "finish") playFireworksSound();
+  }, [screen, wizardStepId]);
 
   useEffect(() => {
     setScoringAvatarPickerFor(null);
@@ -5880,6 +5906,30 @@ function computeRoundScoring(round) {
                     >
                       {"\u{1F5D1}"}
                     </button>
+                    <span style={{ color: "#8FA998", fontSize: 14 }}>{"\u203A"}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {session && finishedTournaments && finishedTournaments.length > 0 && (
+            <div className="gsc-card">
+              <div className="gsc-label" style={{ marginBottom: 10 }}>Finished Tournaments</div>
+              {finishedTournaments.map((t, i) => (
+                <div
+                  key={t.id}
+                  onClick={() => openTournamentBoard(t.id)}
+                  style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "7px 0", borderBottom: i === finishedTournaments.length - 1 ? "none" : "1px solid #eee6cf", cursor: "pointer" }}
+                >
+                  <div style={{ fontSize: 13, color: "#1B4332", fontWeight: 600 }}>
+                    {t.name}
+                    <span style={{ fontSize: 10, color: "#8a8a80", marginLeft: 6, fontWeight: 400 }}>
+                      ({t.foursomeCount} foursome{t.foursomeCount === 1 ? "" : "s"})
+                    </span>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <div style={{ fontSize: 12, color: "#6b6b63" }}>{t.date}</div>
                     <span style={{ color: "#8FA998", fontSize: 14 }}>{"\u203A"}</span>
                   </div>
                 </div>
@@ -7774,16 +7824,17 @@ function computeRoundScoring(round) {
           )}
 
           {wizardStepId === "finish" && (
-            <div className="gsc-card gsc-winner-card" style={{ textAlign: "center", padding: "32px 20px" }}>
-              <div style={{ fontSize: 32, marginBottom: 8 }}>{"\u{1F389}"}</div>
-              <div style={{ fontWeight: 700, fontSize: 19, marginBottom: 8 }}>You're all set!</div>
-              <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 16 }}>
+            <div className="gsc-card gsc-winner-card" style={{ textAlign: "center", padding: "32px 20px", position: "relative", overflow: "hidden" }}>
+              <Fireworks />
+              <div style={{ position: "relative", fontSize: 32, marginBottom: 8 }}>{"\u{1F389}"}</div>
+              <div style={{ position: "relative", fontWeight: 700, fontSize: 19, marginBottom: 8 }}>You're all set!</div>
+              <div style={{ position: "relative", fontSize: 13, color: "#4b4b45", marginBottom: 16 }}>
                 Time to head to the first hole.
               </div>
-              {err && <div style={{ color: "#A42E2D", fontSize: 13, marginBottom: 12 }}>{err}</div>}
+              {err && <div style={{ position: "relative", color: "#A42E2D", fontSize: 13, marginBottom: 12 }}>{err}</div>}
               <button
                 className="gsc-btn gsc-btn-primary"
-                style={{ width: "100%" }}
+                style={{ width: "100%", position: "relative" }}
                 disabled={busy}
                 onClick={finishSetup}
               >
@@ -9057,7 +9108,7 @@ function computeRoundScoring(round) {
           )}
           {finishTournamentErr && <div style={{ color: "#A42E2D", fontSize: 12, textAlign: "center", marginTop: 8 }}>{finishTournamentErr}</div>}
           <div style={{ fontSize: 11, color: "#8a8a80", textAlign: "center", marginTop: 6 }}>
-            This moves it to "Finished tournaments" on the Tournaments tab - it won't be deleted, and every foursome's data stays exactly as it is.
+            This marks the tournament as finished - it won't be deleted, and every foursome's data stays exactly as it is.
           </div>
         </div>
         {EditFoursomeModal()}
@@ -9325,8 +9376,8 @@ function computeRoundScoring(round) {
             </div>
           )}
 
-          <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 4 }} onClick={() => { setTournamentFinishSnapshot(null); goToScreen("roundsTab"); }}>
-            Continue to Tournaments
+          <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 4 }} onClick={() => { setTournamentFinishSnapshot(null); goToScreen("home"); }}>
+            Continue to Home
           </button>
         </div>
       </div>
