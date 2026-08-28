@@ -6009,7 +6009,7 @@ function computeRoundScoring(round) {
           )}
           {session && (
             <div className="gsc-card">
-              <div className="gsc-label" style={{ marginBottom: 10 }}>My Groups</div>
+              <div className="gsc-label" style={{ marginBottom: 10, fontSize: 20 }}>My Groups</div>
 
               {selectedGroupId ? (
                 <>
@@ -7579,14 +7579,14 @@ function computeRoundScoring(round) {
                 <div style={{ display: "flex", gap: 8 }}>
                   <button
                     className="gsc-btn"
-                    style={{ flex: 1, background: !activeCfg.netScoring ? "#1B4332" : "transparent", color: !activeCfg.netScoring ? "#F3EFE0" : "#1B4332", border: "1.5px solid #1B4332" }}
+                    style={{ flex: 1, background: !activeCfg.netScoring ? "#3A7352" : "transparent", color: !activeCfg.netScoring ? "#F3EFE0" : "#3A7352", border: "1.5px solid #3A7352" }}
                     onClick={() => setActiveCfg({ ...activeCfg, netScoring: false })}
                   >
                     No
                   </button>
                   <button
                     className="gsc-btn"
-                    style={{ flex: 1, background: activeCfg.netScoring ? "#1B4332" : "transparent", color: activeCfg.netScoring ? "#F3EFE0" : "#1B4332", border: "1.5px solid #1B4332" }}
+                    style={{ flex: 1, background: activeCfg.netScoring ? "#3A7352" : "transparent", color: activeCfg.netScoring ? "#F3EFE0" : "#3A7352", border: "1.5px solid #3A7352" }}
                     onClick={() => setActiveCfg({ ...activeCfg, netScoring: true })}
                   >
                     Yes
@@ -8151,14 +8151,14 @@ function computeRoundScoring(round) {
                 <div style={{ display: "flex", gap: 8 }}>
                   <button
                     className="gsc-btn"
-                    style={{ flex: 1, background: !cfg.netScoring ? "#1B4332" : "transparent", color: !cfg.netScoring ? "#F3EFE0" : "#1B4332", border: "1.5px solid #1B4332" }}
+                    style={{ flex: 1, background: !cfg.netScoring ? "#3A7352" : "transparent", color: !cfg.netScoring ? "#F3EFE0" : "#3A7352", border: "1.5px solid #3A7352" }}
                     onClick={() => setCfg({ ...cfg, netScoring: false })}
                   >
                     No
                   </button>
                   <button
                     className="gsc-btn"
-                    style={{ flex: 1, background: cfg.netScoring ? "#1B4332" : "transparent", color: cfg.netScoring ? "#F3EFE0" : "#1B4332", border: "1.5px solid #1B4332" }}
+                    style={{ flex: 1, background: cfg.netScoring ? "#3A7352" : "transparent", color: cfg.netScoring ? "#F3EFE0" : "#3A7352", border: "1.5px solid #3A7352" }}
                     onClick={() => setCfg({ ...cfg, netScoring: true })}
                   >
                     Yes
@@ -8670,14 +8670,14 @@ function computeRoundScoring(round) {
                 <div style={{ display: "flex", gap: 8 }}>
                   <button
                     className="gsc-btn"
-                    style={{ flex: 1, background: !tournamentCfg.netScoring ? "#1B4332" : "transparent", color: !tournamentCfg.netScoring ? "#F3EFE0" : "#1B4332", border: "1.5px solid #1B4332" }}
+                    style={{ flex: 1, background: !tournamentCfg.netScoring ? "#3A7352" : "transparent", color: !tournamentCfg.netScoring ? "#F3EFE0" : "#3A7352", border: "1.5px solid #3A7352" }}
                     onClick={() => setTournamentCfg({ ...tournamentCfg, netScoring: false })}
                   >
                     No
                   </button>
                   <button
                     className="gsc-btn"
-                    style={{ flex: 1, background: tournamentCfg.netScoring ? "#1B4332" : "transparent", color: tournamentCfg.netScoring ? "#F3EFE0" : "#1B4332", border: "1.5px solid #1B4332" }}
+                    style={{ flex: 1, background: tournamentCfg.netScoring ? "#3A7352" : "transparent", color: tournamentCfg.netScoring ? "#F3EFE0" : "#3A7352", border: "1.5px solid #3A7352" }}
                     onClick={() => setTournamentCfg({ ...tournamentCfg, netScoring: true })}
                   >
                     Yes
