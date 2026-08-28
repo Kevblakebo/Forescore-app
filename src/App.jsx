@@ -7586,14 +7586,14 @@ function computeRoundScoring(round) {
                 <div style={{ display: "flex", gap: 8 }}>
                   <button
                     className="gsc-btn"
-                    style={{ flex: 1, background: !activeCfg.netScoring ? "#3A7352" : "transparent", color: !activeCfg.netScoring ? "#F3EFE0" : "#3A7352", border: "1.5px solid #3A7352" }}
+                    style={{ flex: 1, background: !activeCfg.netScoring ? "#A42E2D" : "transparent", color: !activeCfg.netScoring ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
                     onClick={() => setActiveCfg({ ...activeCfg, netScoring: false })}
                   >
                     No
                   </button>
                   <button
                     className="gsc-btn"
-                    style={{ flex: 1, background: activeCfg.netScoring ? "#3A7352" : "transparent", color: activeCfg.netScoring ? "#F3EFE0" : "#3A7352", border: "1.5px solid #3A7352" }}
+                    style={{ flex: 1, background: activeCfg.netScoring ? "#A42E2D" : "transparent", color: activeCfg.netScoring ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
                     onClick={() => setActiveCfg({ ...activeCfg, netScoring: true })}
                   >
                     Yes
@@ -8159,14 +8159,14 @@ function computeRoundScoring(round) {
                 <div style={{ display: "flex", gap: 8 }}>
                   <button
                     className="gsc-btn"
-                    style={{ flex: 1, background: !cfg.netScoring ? "#3A7352" : "transparent", color: !cfg.netScoring ? "#F3EFE0" : "#3A7352", border: "1.5px solid #3A7352" }}
+                    style={{ flex: 1, background: !cfg.netScoring ? "#A42E2D" : "transparent", color: !cfg.netScoring ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
                     onClick={() => setCfg({ ...cfg, netScoring: false })}
                   >
                     No
                   </button>
                   <button
                     className="gsc-btn"
-                    style={{ flex: 1, background: cfg.netScoring ? "#3A7352" : "transparent", color: cfg.netScoring ? "#F3EFE0" : "#3A7352", border: "1.5px solid #3A7352" }}
+                    style={{ flex: 1, background: cfg.netScoring ? "#A42E2D" : "transparent", color: cfg.netScoring ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
                     onClick={() => setCfg({ ...cfg, netScoring: true })}
                   >
                     Yes
@@ -8678,14 +8678,14 @@ function computeRoundScoring(round) {
                 <div style={{ display: "flex", gap: 8 }}>
                   <button
                     className="gsc-btn"
-                    style={{ flex: 1, background: !tournamentCfg.netScoring ? "#3A7352" : "transparent", color: !tournamentCfg.netScoring ? "#F3EFE0" : "#3A7352", border: "1.5px solid #3A7352" }}
+                    style={{ flex: 1, background: !tournamentCfg.netScoring ? "#A42E2D" : "transparent", color: !tournamentCfg.netScoring ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
                     onClick={() => setTournamentCfg({ ...tournamentCfg, netScoring: false })}
                   >
                     No
                   </button>
                   <button
                     className="gsc-btn"
-                    style={{ flex: 1, background: tournamentCfg.netScoring ? "#3A7352" : "transparent", color: tournamentCfg.netScoring ? "#F3EFE0" : "#3A7352", border: "1.5px solid #3A7352" }}
+                    style={{ flex: 1, background: tournamentCfg.netScoring ? "#A42E2D" : "transparent", color: tournamentCfg.netScoring ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
                     onClick={() => setTournamentCfg({ ...tournamentCfg, netScoring: true })}
                   >
                     Yes
