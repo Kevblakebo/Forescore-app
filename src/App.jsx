@@ -3679,7 +3679,13 @@ export default function GolfScorecard() {
   // A tournament foursome always needs exactly 4, so that mode pads any
   // remainder with blank slots instead.
   function applyGroupMembersToPlayers(members) {
-    const filled = members.slice(0, 4).map((m) => ({ name: m.name, avatar: m.avatar, user_id: m.user_id, hcp: m.handicap || "" }));
+    // Whatever order the group's members came back in, put whoever is
+    // actually setting up this round first - they're the one filling
+    // this in, so their own name landing anywhere but Player A (or
+    // getting bumped there by however the group happened to be ordered)
+    // is confusing, not just cosmetic.
+    const ordered = session ? [...members].sort((a, b) => (a.user_id === session.user.id ? -1 : b.user_id === session.user.id ? 1 : 0)) : members;
+    const filled = ordered.slice(0, 4).map((m) => ({ name: m.name, avatar: m.avatar, user_id: m.user_id, hcp: m.handicap || "" }));
     if (groupFillFor === "players" || groupFillFor === "playersAndMeta") {
       if (filled.length > 0) setPlayers(filled);
     } else if (typeof groupFillFor === "number") {
