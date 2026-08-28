@@ -7327,6 +7327,14 @@ function computeRoundScoring(round) {
                   {"\u{1F465}"} Select a group to fill in name, avatar & players
                 </button>
               )}
+              {!isTournament && !session && (
+                <button
+                  onClick={() => goToScreen("login")}
+                  style={{ display: "block", width: "100%", textAlign: "left", fontSize: 12, color: "#6b6b63", padding: "8px 10px", background: "#F8F1E4", border: "none", borderRadius: 8, cursor: "pointer", marginBottom: 10 }}
+                >
+                  {"\u{1F465}"} Log in to unlock one-tap group name, avatar & player adding. <span style={{ textDecoration: "underline", fontWeight: 700 }}>Tap to log in</span>
+                </button>
+              )}
               <input
                 className="gsc-input"
                 placeholder={isTournament ? "e.g. Club Championship" : `${g ? g.name : ""} at ...`}
@@ -7660,6 +7668,14 @@ function computeRoundScoring(round) {
                   {"\u{1F465}"} Fill players from a group
                 </button>
               )}
+              {!session && (
+                <button
+                  onClick={() => goToScreen("login")}
+                  style={{ display: "block", width: "100%", textAlign: "left", fontSize: 12, color: "#6b6b63", padding: "8px 10px", background: "#F8F1E4", border: "none", borderRadius: 8, cursor: "pointer", marginBottom: 10 }}
+                >
+                  {"\u{1F465}"} Log in to unlock one-tap group and player adding. <span style={{ textDecoration: "underline", fontWeight: 700 }}>Tap to log in</span>
+                </button>
+              )}
               <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 10, fontWeight: 700 }}>
                 Tap the circle next to a player's name to pick a fun avatar (optional).
               </div>
@@ -7821,6 +7837,14 @@ function computeRoundScoring(round) {
             {!activeTournament && session && (
               <button className="gsc-link" style={{ fontSize: 13, fontWeight: 700, marginBottom: 8, display: "inline-block" }} onClick={() => openGroupFillPicker("playersAndMeta")}>
                 {"\u{1F465}"} Select a group to fill in name, avatar & players
+              </button>
+            )}
+            {!activeTournament && !session && (
+              <button
+                onClick={() => goToScreen("login")}
+                style={{ display: "block", width: "100%", textAlign: "left", fontSize: 12, color: "#6b6b63", padding: "8px 10px", background: "#F8F1E4", border: "none", borderRadius: 8, cursor: "pointer", marginBottom: 10 }}
+              >
+                {"\u{1F465}"} Log in to unlock one-tap group name, avatar & player adding. <span style={{ textDecoration: "underline", fontWeight: 700 }}>Tap to log in</span>
               </button>
             )}
             <input
@@ -8158,6 +8182,14 @@ function computeRoundScoring(round) {
             {session && (
               <button className="gsc-link" style={{ fontSize: 13, fontWeight: 700, marginBottom: 10, display: "inline-block" }} onClick={() => openGroupFillPicker("players")}>
                 {"\u{1F465}"} Fill players from a group
+              </button>
+            )}
+            {!session && (
+              <button
+                onClick={() => goToScreen("login")}
+                style={{ display: "block", width: "100%", textAlign: "left", fontSize: 12, color: "#6b6b63", padding: "8px 10px", background: "#F8F1E4", border: "none", borderRadius: 8, cursor: "pointer", marginBottom: 10 }}
+              >
+                {"\u{1F465}"} Log in to unlock one-tap group and player adding. <span style={{ textDecoration: "underline", fontWeight: 700 }}>Tap to log in</span>
               </button>
             )}
             {(gameKey === "swami" || gameKey === "dstreet" || gameKey === "pontobango" || gameKey === "individualputts" || gameKey === "stableford") && (
