@@ -1919,9 +1919,17 @@ export default function GolfScorecard() {
         // averages and wins - a 4-hole partial round that was never
         // actually finished would otherwise drag the average way down and
         // can't fairly be scored a win or loss anyway.
-        strokesSum += myStrokesTotal;
+        // A finished round short of 18 holes (someone playing just 9, or
+        // stopping at 14) still deserves to count - but its raw total is
+        // naturally lower just because there were fewer holes, not because
+        // the golf was better. Scaling it up to what an 18-hole round
+        // would look like at the same per-hole pace keeps Avg Strokes/Putts
+        // an apples-to-apples comparison instead of silently pulling the
+        // average down every time someone plays a shorter round.
+        const scale = holesPlayed < 18 ? 18 / holesPlayed : 1;
+        strokesSum += myStrokesTotal * scale;
         strokesCount++;
-        puttsSum += myPuttsTotal;
+        puttsSum += myPuttsTotal * scale;
         puttsCount++;
 
         const computedForRound = computeRoundScoring(r);
@@ -1931,7 +1939,7 @@ export default function GolfScorecard() {
         }
       }
 
-      recent.push({ code: ur.round_code, name: r.name, date: r.date, game: r.game, complete: !!r.finished || holesPlayed === 18, tournamentId: ur.tournament_id || null });
+      recent.push({ code: ur.round_code, name: r.name, date: r.date, game: r.game, complete: !!r.finished || holesPlayed === 18, holesPlayed, tournamentId: ur.tournament_id || null });
     }
 
     setStatsLoading(false);
@@ -5871,6 +5879,9 @@ function computeRoundScoring(round) {
                     {r.name}
                     {r.tournamentId && <span style={{ fontSize: 10, color: "#B08D57", marginLeft: 6, fontWeight: 700 }}>TOURNAMENT</span>}
                     {!r.complete && <span style={{ fontSize: 10, color: "#8a8a80", marginLeft: 6, fontWeight: 400 }}>(in progress)</span>}
+                    {r.complete && r.holesPlayed < 18 && (
+                      <span style={{ fontSize: 10, color: "#8a8a80", marginLeft: 6, fontWeight: 400 }}>({r.holesPlayed} holes)</span>
+                    )}
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                     <div style={{ fontSize: 12, color: "#6b6b63" }}>{r.date}</div>
