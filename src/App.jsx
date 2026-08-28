@@ -9051,7 +9051,7 @@ function computeRoundScoring(round) {
             </div>
           )}
           {t && (
-            <button className="gsc-btn gsc-btn-outline" style={{ width: "100%", marginTop: 14 }} disabled={finishTournamentBusy} onClick={() => finishTournament(t)}>
+            <button className="gsc-btn" style={{ width: "100%", marginTop: 14, background: "#A42E2D", color: "#fff" }} disabled={finishTournamentBusy} onClick={() => finishTournament(t)}>
               {finishTournamentBusy ? "Saving..." : "Finish tournament"}
             </button>
           )}
