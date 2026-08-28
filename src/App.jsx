@@ -3650,7 +3650,12 @@ export default function GolfScorecard() {
       applyGroupMembersToPlayers(members);
     } else {
       setGroupFillMembers(members);
-      setGroupFillChosenIds([]);
+      // Default to including whoever is actually setting up this round -
+      // it's easy to check off playing partners here and forget that this
+      // list replaces your own pre-filled slot too, silently leaving you
+      // out of your own round (and therefore out of your own stats).
+      const me = session && members.find((m) => m.user_id === session.user.id);
+      setGroupFillChosenIds(me ? [me.user_id] : []);
     }
   }
 
@@ -5820,7 +5825,7 @@ function computeRoundScoring(round) {
                 <div style={{ fontSize: 13, color: "#6b6b63", lineHeight: 1.5 }}>
                   {statsDateFrom || statsDateTo
                     ? "No completed rounds found in that date range."
-                    : "No completed rounds yet while logged in. Play a full 18-hole round while logged in and it'll show up here."}
+                    : "No completed rounds yet while logged in. Play (and finish) a round while logged in and it'll show up here."}
                 </div>
               ) : (
                 <>
