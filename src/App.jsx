@@ -2336,7 +2336,11 @@ export default function GolfScorecard() {
         if (!r || !r.players) continue;
         const myIdx = r.players.findIndex((p) => p.user_id === session.user.id);
         if (myIdx === -1) continue;
-        const holesPlayed = r.scores ? r.scores.filter((h) => h && h[myIdx] && h[myIdx].strokes != null && h[myIdx].strokes !== "").length : 0;
+        let holesPlayed = 0;
+        for (let h = 0; h < 18; h++) {
+          const entry = r.scores && r.scores[h] ? r.scores[h][myIdx] : null;
+          if (entry && entry.strokes != null && entry.strokes !== "") holesPlayed++;
+        }
         if (holesPlayed === 0 || !(r.finished || holesPlayed === 18)) continue;
         const playedWithGroup = r.players.some((p, i) => i !== myIdx && p.user_id && memberSet.has(p.user_id));
         if (!playedWithGroup) continue;
