@@ -4,7 +4,7 @@ import { supabase } from "./storage-polyfill.js";
 
 /* ---------- design tokens ----------
    Palette: fairway (#1B4332) deep green, paper (#F3EFE0) cream, ink (#2B2B28),
-   flag (#A42E2D) red accent for leaders/alerts, gold (#B08D57) for wins/prizes,
+   flag (#1B4332) red accent for leaders/alerts, gold (#B08D57) for wins/prizes,
    sage (#8FA998) secondary. Display face: native system font (San Francisco
    on iOS, Roboto on Android) throughout, including headings and modals.
    Data face: Courier New (ledger digits, plain zero - no slash/dot).
@@ -22,7 +22,7 @@ const STYLE = `
   .gsc-title { font-size:19px; font-weight:700; letter-spacing:0.3px; line-height:1.2; }
   .gsc-sub { font-size:11px; opacity:0.75; margin-top:2px; letter-spacing:0.5px; text-transform:uppercase; }
   .gsc-btn { border:none; border-radius:8px; padding:9px 14px; font-size:14px; font-weight:600; cursor:pointer; min-height:44px; touch-action:manipulation; }
-  .gsc-btn-primary { background:#A42E2D; color:#F3EFE0; }
+  .gsc-btn-primary { background:#1B4332; color:#F3EFE0; }
   .gsc-btn-ghost { background:rgba(243,239,224,0.12); color:#F3EFE0; }
   .gsc-btn-outline { background:transparent; border:1.5px solid #1B4332; color:#1B4332; }
   .gsc-btn-gold { background:#B08D57; color:#F3EFE0; }
@@ -42,7 +42,7 @@ const STYLE = `
   .gsc-row > * { flex:1; }
   .gsc-hole-strip { display:flex; overflow-x:auto; gap:4px; padding:10px 16px; background:#16382C; -webkit-overflow-scrolling:touch; }
   .gsc-hole-pip { flex:0 0 auto; width:38px; min-height:38px; display:flex; align-items:center; justify-content:center; text-align:center; font-size:12px; color:#F3EFE0; opacity:0.55; padding:4px 0; border-radius:8px; cursor:pointer; font-family: "Courier New", Courier, monospace; touch-action:manipulation; }
-  .gsc-hole-pip.active { opacity:1; background:#A42E2D; font-weight:700; }
+  .gsc-hole-pip.active { opacity:1; background:#1B4332; font-weight:700; }
   .gsc-hole-pip.done { opacity:0.9; border-bottom:2px solid #B08D57; }
   .gsc-hole-nav { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
   .gsc-hole-big { font-size:38px; font-weight:800; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif; color:#1B4332; line-height:1; }
@@ -59,7 +59,7 @@ const STYLE = `
   .gsc-lead { background:#B08D57; color:#fff; }
   .gsc-loss { background:#c7c2a8; color:#5b5b52; }
   .gsc-teamA { border-left:5px solid #1B4332; background:#F0EEE3; }
-  .gsc-teamB { border-left:5px solid #A42E2D; background:#FBEDE5; }
+  .gsc-teamB { border-left:5px solid #1B4332; background:#FBEDE5; }
   .gsc-teamC { border-left:5px solid #B08D57; background:#F8F1E4; }
   .gsc-teamD { border-left:5px solid #4A6C5A; background:#EBF0EC; }
   table.gsc-grid { width:100%; border-collapse:collapse; font-size:11px; font-family: "Courier New", Courier, monospace; }
@@ -2412,7 +2412,7 @@ export default function GolfScorecard() {
                   ))}
                 </div>
               )}
-              {groupFillErr && <div style={{ color: "#A42E2D", fontSize: 13, marginBottom: 12 }}>{groupFillErr}</div>}
+              {groupFillErr && <div style={{ color: "#1B4332", fontSize: 13, marginBottom: 12 }}>{groupFillErr}</div>}
               <button className="gsc-btn gsc-btn-outline" style={{ width: "100%" }} onClick={closeGroupFillPicker}>
                 Cancel
               </button>
@@ -2521,7 +2521,7 @@ export default function GolfScorecard() {
                   )}
                   {groupmatePickerFor === i && (
                     <div style={{ marginTop: 6 }}>
-                      {groupmatesErr && <div style={{ color: "#A42E2D", fontSize: 11 }}>{groupmatesErr}</div>}
+                      {groupmatesErr && <div style={{ color: "#1B4332", fontSize: 11 }}>{groupmatesErr}</div>}
                       {groupmates === null ? (
                         <div style={{ fontSize: 11, color: "#8a8a80" }}>Loading...</div>
                       ) : groupmates.length === 0 ? (
@@ -2544,7 +2544,7 @@ export default function GolfScorecard() {
               )}
             </div>
           ))}
-          {editFoursomeErr && <div style={{ color: "#A42E2D", fontSize: 13, margin: "8px 0" }}>{editFoursomeErr}</div>}
+          {editFoursomeErr && <div style={{ color: "#1B4332", fontSize: 13, margin: "8px 0" }}>{editFoursomeErr}</div>}
           <div className="gsc-modal-row" style={{ marginTop: 12 }}>
             <button className="gsc-btn gsc-btn-outline" onClick={() => setEditFoursomeOpen(false)}>Cancel</button>
             <button className="gsc-btn gsc-btn-primary" disabled={editFoursomeBusy} onClick={saveEditFoursome}>
@@ -5170,7 +5170,7 @@ function computeRoundScoring(round) {
   // (not on a loop) so it doesn't linger or distract from the standings
   // shown right below it.
   function Fireworks() {
-    const colors = ["#A42E2D", "#B08D57", "#8FA998", "#F3EFE0", "#3F6B54"];
+    const colors = ["#1B4332", "#B08D57", "#8FA998", "#F3EFE0", "#3F6B54"];
     const bursts = [
       { left: "18%", top: "22%", delay: 0 },
       { left: "78%", top: "16%", delay: 0.35 },
@@ -5296,7 +5296,7 @@ function computeRoundScoring(round) {
                 Join
               </button>
             </div>
-            {err && <div style={{ color: "#A42E2D", fontSize: 13, marginTop: 8 }}>{err}</div>}
+            {err && <div style={{ color: "#1B4332", fontSize: 13, marginTop: 8 }}>{err}</div>}
             {recentCodes.length > 0 && (
               <div style={{ marginTop: 14 }}>
                 <div className="gsc-label">Recent rounds this session</div>
@@ -5441,7 +5441,7 @@ function computeRoundScoring(round) {
                 Join
               </button>
             </div>
-            {err && <div style={{ color: "#A42E2D", fontSize: 13, marginTop: 8 }}>{err}</div>}
+            {err && <div style={{ color: "#1B4332", fontSize: 13, marginTop: 8 }}>{err}</div>}
             {recentCodes.length > 0 && (
               <div style={{ marginTop: 14 }}>
                 <div className="gsc-label">Recent rounds this session</div>
@@ -5574,10 +5574,10 @@ function computeRoundScoring(round) {
               <div className="gsc-modal-body">
                 "{deleteRoundConfirm.name}" will be permanently deleted from this device. This can't be undone.
               </div>
-              {deleteRoundErr && <div style={{ color: "#A42E2D", fontSize: 13, marginBottom: 12 }}>{deleteRoundErr}</div>}
+              {deleteRoundErr && <div style={{ color: "#1B4332", fontSize: 13, marginBottom: 12 }}>{deleteRoundErr}</div>}
               <div className="gsc-modal-row">
                 <button className="gsc-btn gsc-btn-outline" onClick={cancelDeleteFinishedRound}>Cancel</button>
-                <button className="gsc-btn gsc-btn-primary" style={{ background: "#A42E2D" }} disabled={deleteRoundBusy} onClick={confirmDeleteFinishedRound}>
+                <button className="gsc-btn gsc-btn-primary" style={{ background: "#1B4332" }} disabled={deleteRoundBusy} onClick={confirmDeleteFinishedRound}>
                   {deleteRoundBusy ? "Deleting..." : "Yes, delete"}
                 </button>
               </div>
@@ -5591,10 +5591,10 @@ function computeRoundScoring(round) {
               <div className="gsc-modal-body">
                 "{deleteTournamentConfirm.name}" will be removed from your finished tournaments list on this device. The tournament and every foursome's data stay fully intact - you could still rejoin later with the tournament code.
               </div>
-              {deleteTournamentErr && <div style={{ color: "#A42E2D", fontSize: 13, marginBottom: 12 }}>{deleteTournamentErr}</div>}
+              {deleteTournamentErr && <div style={{ color: "#1B4332", fontSize: 13, marginBottom: 12 }}>{deleteTournamentErr}</div>}
               <div className="gsc-modal-row">
                 <button className="gsc-btn gsc-btn-outline" onClick={cancelDeleteFinishedTournament}>Cancel</button>
-                <button className="gsc-btn gsc-btn-primary" style={{ background: "#A42E2D" }} disabled={deleteTournamentBusy} onClick={confirmDeleteFinishedTournament}>
+                <button className="gsc-btn gsc-btn-primary" style={{ background: "#1B4332" }} disabled={deleteTournamentBusy} onClick={confirmDeleteFinishedTournament}>
                   {deleteTournamentBusy ? "Removing..." : "Yes, remove"}
                 </button>
               </div>
@@ -5648,7 +5648,7 @@ function computeRoundScoring(round) {
                     >
                       {profileForm.avatar || "\u{1F464}"}
                       {!profileForm.avatar && (
-                        <span style={{ position: "absolute", bottom: -2, right: -2, width: 16, height: 16, borderRadius: "50%", background: "#A42E2D", color: "#fff", fontSize: 11, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", border: "1.5px solid #F3EFE0" }}>
+                        <span style={{ position: "absolute", bottom: -2, right: -2, width: 16, height: 16, borderRadius: "50%", background: "#1B4332", color: "#fff", fontSize: 11, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", border: "1.5px solid #F3EFE0" }}>
                           +
                         </span>
                       )}
@@ -5663,7 +5663,7 @@ function computeRoundScoring(round) {
                               setProfileForm({ ...profileForm, avatar: profileForm.avatar === emoji ? "" : emoji });
                               setProfileAvatarPickerOpen(false);
                             }}
-                            style={{ width: 36, height: 36, borderRadius: "50%", border: profileForm.avatar === emoji ? "2px solid #A42E2D" : "1.5px solid #d8d2bd", background: "#fff", fontSize: 18, cursor: "pointer" }}
+                            style={{ width: 36, height: 36, borderRadius: "50%", border: profileForm.avatar === emoji ? "2px solid #1B4332" : "1.5px solid #d8d2bd", background: "#fff", fontSize: 18, cursor: "pointer" }}
                           >
                             {emoji}
                           </button>
@@ -5706,7 +5706,7 @@ function computeRoundScoring(round) {
                     </div>
                   </div>
 
-                  {profileErr && <div style={{ color: "#A42E2D", fontSize: 13, marginTop: 10 }}>{profileErr}</div>}
+                  {profileErr && <div style={{ color: "#1B4332", fontSize: 13, marginTop: 10 }}>{profileErr}</div>}
                   <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 14 }} disabled={profileSaving} onClick={saveProfile}>
                     {profileSaving ? "Saving..." : profileSaved ? "Saved \u2713" : "Save"}
                   </button>
@@ -5714,7 +5714,7 @@ function computeRoundScoring(round) {
               )}
 
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 16 }}>
-                <button className="gsc-link" style={{ fontSize: 12, color: "#A42E2D" }} onClick={signOutUser}>
+                <button className="gsc-link" style={{ fontSize: 12, color: "#1B4332" }} onClick={signOutUser}>
                   Log out
                 </button>
 
@@ -5730,8 +5730,8 @@ function computeRoundScoring(round) {
               </div>
 
               {deleteAccountOpen && (
-                <div style={{ marginTop: 14, padding: 14, background: "#FBEAE5", border: "1px solid #A42E2D", borderRadius: 10 }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: "#A42E2D", marginBottom: 6 }}>
+                <div style={{ marginTop: 14, padding: 14, background: "#FBEAE5", border: "1px solid #1B4332", borderRadius: 10 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: "#1B4332", marginBottom: 6 }}>
                     This permanently deletes your account
                   </div>
                   <div style={{ fontSize: 12, color: "#4b4b45", marginBottom: 10 }}>
@@ -5747,11 +5747,11 @@ function computeRoundScoring(round) {
                     onChange={(e) => setDeleteAccountConfirmText(e.target.value)}
                     placeholder="DELETE"
                   />
-                  {deleteAccountErr && <div style={{ color: "#A42E2D", fontSize: 12, marginBottom: 10 }}>{deleteAccountErr}</div>}
+                  {deleteAccountErr && <div style={{ color: "#1B4332", fontSize: 12, marginBottom: 10 }}>{deleteAccountErr}</div>}
                   <div className="gsc-row">
                     <button
                       className="gsc-btn"
-                      style={{ background: "#A42E2D", color: "#fff" }}
+                      style={{ background: "#1B4332", color: "#fff" }}
                       disabled={deleteAccountBusy || deleteAccountConfirmText.trim().toUpperCase() !== "DELETE"}
                       onClick={deleteMyAccount}
                     >
@@ -5800,7 +5800,7 @@ function computeRoundScoring(round) {
               {statsLoading ? (
                 <div style={{ fontSize: 13, color: "#6b6b63" }}>Loading your stats...</div>
               ) : statsErr ? (
-                <div style={{ color: "#A42E2D", fontSize: 13 }}>{statsErr}</div>
+                <div style={{ color: "#1B4332", fontSize: 13 }}>{statsErr}</div>
               ) : !stats || stats.roundsPlayed === 0 ? (
                 <div style={{ fontSize: 13, color: "#6b6b63", lineHeight: 1.5 }}>
                   {statsDateFrom || statsDateTo
@@ -5853,7 +5853,7 @@ function computeRoundScoring(round) {
           {session && stats && stats.recent && stats.recent.length > 0 && (
             <div className="gsc-card">
               <div className="gsc-label" style={{ marginBottom: 10 }}>Finished Games</div>
-              {deleteHistoryErr && <div style={{ color: "#A42E2D", fontSize: 12, marginBottom: 8 }}>{deleteHistoryErr}</div>}
+              {deleteHistoryErr && <div style={{ color: "#1B4332", fontSize: 12, marginBottom: 8 }}>{deleteHistoryErr}</div>}
               {stats.recent.map((r, i) => (
                 <div
                   key={i}
@@ -5869,7 +5869,7 @@ function computeRoundScoring(round) {
                     <div style={{ fontSize: 12, color: "#6b6b63" }}>{r.date}</div>
                     <button
                       onClick={(e) => { e.stopPropagation(); setDeleteHistoryErr(""); setDeleteHistoryConfirm({ code: r.code, name: r.name }); }}
-                      style={{ background: "none", border: "none", padding: 4, color: "#A42E2D", fontSize: 14, cursor: "pointer", lineHeight: 1 }}
+                      style={{ background: "none", border: "none", padding: 4, color: "#1B4332", fontSize: 14, cursor: "pointer", lineHeight: 1 }}
                       title="Remove from your history"
                     >
                       {"\u{1F5D1}"}
@@ -5908,7 +5908,7 @@ function computeRoundScoring(round) {
               {leaderboardLoading ? (
                 <div style={{ fontSize: 13, color: "#6b6b63" }}>Loading the leaderboard...</div>
               ) : leaderboardErr ? (
-                <div style={{ color: "#A42E2D", fontSize: 13 }}>{leaderboardErr}</div>
+                <div style={{ color: "#1B4332", fontSize: 13 }}>{leaderboardErr}</div>
               ) : (
                 (() => {
                   const cat = LEADERBOARD_CATEGORIES[leaderboardCategory];
@@ -6030,7 +6030,7 @@ function computeRoundScoring(round) {
                             >
                               {(g && g.avatar) || "\u{1F465}"}
                               {g && !g.avatar && (
-                                <span style={{ position: "absolute", bottom: -2, right: -2, width: 12, height: 12, borderRadius: "50%", background: "#A42E2D", color: "#fff", fontSize: 10, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", border: "1.5px solid #F3EFE0" }}>
+                                <span style={{ position: "absolute", bottom: -2, right: -2, width: 12, height: 12, borderRadius: "50%", background: "#1B4332", color: "#fff", fontSize: 10, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", border: "1.5px solid #F3EFE0" }}>
                                   +
                                 </span>
                               )}
@@ -6056,7 +6056,7 @@ function computeRoundScoring(round) {
                               updateGroupAvatar(g.id, g.avatar === emoji ? "" : emoji);
                               setEditGroupAvatarPickerOpen(false);
                             }}
-                            style={{ width: 32, height: 32, borderRadius: "50%", border: g.avatar === emoji ? "2px solid #A42E2D" : "1.5px solid #d8d2bd", background: "#fff", fontSize: 18, cursor: "pointer" }}
+                            style={{ width: 32, height: 32, borderRadius: "50%", border: g.avatar === emoji ? "2px solid #1B4332" : "1.5px solid #d8d2bd", background: "#fff", fontSize: 18, cursor: "pointer" }}
                           >
                             {emoji}
                           </button>
@@ -6095,7 +6095,7 @@ function computeRoundScoring(round) {
                   {groupMembersLoading ? (
                     <div style={{ fontSize: 15, color: "#6b6b63" }}>Loading this group...</div>
                   ) : groupMembersErr ? (
-                    <div style={{ color: "#A42E2D", fontSize: 15 }}>{groupMembersErr}</div>
+                    <div style={{ color: "#1B4332", fontSize: 15 }}>{groupMembersErr}</div>
                   ) : (
                     (() => {
                       const cat = LEADERBOARD_CATEGORIES[groupCategory];
@@ -6122,7 +6122,7 @@ function computeRoundScoring(round) {
                               <div className="gsc-row">
                                 <button
                                   className="gsc-btn"
-                                  style={{ background: "#A42E2D", color: "#fff" }}
+                                  style={{ background: "#1B4332", color: "#fff" }}
                                   disabled={removeMemberBusy}
                                   onClick={() => removeMember(selectedGroupId, x.row.user_id)}
                                 >
@@ -6160,7 +6160,7 @@ function computeRoundScoring(round) {
                                 <button
                                   onClick={() => setRemoveMemberConfirming(x.row.user_id)}
                                   title="Remove from group"
-                                  style={{ background: "none", border: "none", padding: 4, color: "#A42E2D", fontSize: 14, cursor: "pointer", lineHeight: 1 }}
+                                  style={{ background: "none", border: "none", padding: 4, color: "#1B4332", fontSize: 14, cursor: "pointer", lineHeight: 1 }}
                                 >
                                   {"\u2715"}
                                 </button>
@@ -6193,18 +6193,18 @@ function computeRoundScoring(round) {
                     const g = myGroups.find((g) => g.id === selectedGroupId);
                     if (!g) return null;
                     return (
-                      <div style={{ marginTop: 16, padding: 12, background: "#FBEAE5", border: "1px solid #A42E2D", borderRadius: 10 }}>
-                        <div style={{ fontSize: 14, fontWeight: 700, color: "#A42E2D", marginBottom: 6 }}>
+                      <div style={{ marginTop: 16, padding: 12, background: "#FBEAE5", border: "1px solid #1B4332", borderRadius: 10 }}>
+                        <div style={{ fontSize: 14, fontWeight: 700, color: "#1B4332", marginBottom: 6 }}>
                           Leave "{g.name}"?
                         </div>
                         <div style={{ fontSize: 14, color: "#4b4b45", marginBottom: 10 }}>
                           You'll no longer see this group's leaderboard, and you'll need the group code to rejoin later. Everyone else in the group is unaffected.
                         </div>
-                        {groupsErr && <div style={{ color: "#A42E2D", fontSize: 14, marginBottom: 10 }}>{groupsErr}</div>}
+                        {groupsErr && <div style={{ color: "#1B4332", fontSize: 14, marginBottom: 10 }}>{groupsErr}</div>}
                         <div className="gsc-row">
                           <button
                             className="gsc-btn"
-                            style={{ background: "#A42E2D", color: "#fff" }}
+                            style={{ background: "#1B4332", color: "#fff" }}
                             disabled={leaveGroupBusy}
                             onClick={() => leaveGroup(g.id)}
                           >
@@ -6222,18 +6222,18 @@ function computeRoundScoring(round) {
                     const canEdit = g && session && g.createdBy === session.user.id;
                     if (!canEdit) return null;
                     return (
-                      <div style={{ marginTop: 16, padding: 12, background: "#FBEAE5", border: "1px solid #A42E2D", borderRadius: 10 }}>
-                        <div style={{ fontSize: 14, fontWeight: 700, color: "#A42E2D", marginBottom: 6 }}>
+                      <div style={{ marginTop: 16, padding: 12, background: "#FBEAE5", border: "1px solid #1B4332", borderRadius: 10 }}>
+                        <div style={{ fontSize: 14, fontWeight: 700, color: "#1B4332", marginBottom: 6 }}>
                           Delete "{g.name}"?
                         </div>
                         <div style={{ fontSize: 14, color: "#4b4b45", marginBottom: 10 }}>
                           This removes the group and its leaderboard for everyone in it. This cannot be undone.
                         </div>
-                        {groupsErr && <div style={{ color: "#A42E2D", fontSize: 14, marginBottom: 10 }}>{groupsErr}</div>}
+                        {groupsErr && <div style={{ color: "#1B4332", fontSize: 14, marginBottom: 10 }}>{groupsErr}</div>}
                         <div className="gsc-row">
                           <button
                             className="gsc-btn"
-                            style={{ background: "#A42E2D", color: "#fff" }}
+                            style={{ background: "#1B4332", color: "#fff" }}
                             disabled={deleteGroupBusy}
                             onClick={() => deleteGroup(g.id)}
                           >
@@ -6276,7 +6276,7 @@ function computeRoundScoring(round) {
                     </div>
                   )}
 
-                  {groupsErr && <div style={{ color: "#A42E2D", fontSize: 14, marginBottom: 10 }}>{groupsErr}</div>}
+                  {groupsErr && <div style={{ color: "#1B4332", fontSize: 14, marginBottom: 10 }}>{groupsErr}</div>}
 
                   <div style={{ fontSize: 13, color: "#8a8a80", textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 700, marginBottom: 6 }}>Create a Group</div>
                   <div className="gsc-row" style={{ marginBottom: 8, alignItems: "center" }}>
@@ -6286,7 +6286,7 @@ function computeRoundScoring(round) {
                     >
                       {createGroupAvatar || "\u{1F465}"}
                       {!createGroupAvatar && (
-                        <span style={{ position: "absolute", bottom: -2, right: -2, width: 14, height: 14, borderRadius: "50%", background: "#A42E2D", color: "#fff", fontSize: 11, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", border: "1.5px solid #F3EFE0" }}>
+                        <span style={{ position: "absolute", bottom: -2, right: -2, width: 14, height: 14, borderRadius: "50%", background: "#1B4332", color: "#fff", fontSize: 11, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", border: "1.5px solid #F3EFE0" }}>
                           +
                         </span>
                       )}
@@ -6305,7 +6305,7 @@ function computeRoundScoring(round) {
                             setCreateGroupAvatar(createGroupAvatar === emoji ? "" : emoji);
                             setCreateGroupAvatarPickerOpen(false);
                           }}
-                          style={{ width: 32, height: 32, borderRadius: "50%", border: createGroupAvatar === emoji ? "2px solid #A42E2D" : "1.5px solid #d8d2bd", background: "#fff", fontSize: 18, cursor: "pointer" }}
+                          style={{ width: 32, height: 32, borderRadius: "50%", border: createGroupAvatar === emoji ? "2px solid #1B4332" : "1.5px solid #d8d2bd", background: "#fff", fontSize: 18, cursor: "pointer" }}
                         >
                           {emoji}
                         </button>
@@ -6321,7 +6321,7 @@ function computeRoundScoring(round) {
                       {joinGroupBusy ? "Joining..." : "Join"}
                     </button>
                   </div>
-                  {joinGroupErr && <div style={{ color: "#A42E2D", fontSize: 14, marginTop: 8 }}>{joinGroupErr}</div>}
+                  {joinGroupErr && <div style={{ color: "#1B4332", fontSize: 14, marginTop: 8 }}>{joinGroupErr}</div>}
                 </>
               )}
             </div>
@@ -6677,7 +6677,7 @@ function computeRoundScoring(round) {
                 Forgot password?
               </button>
             </div>
-            {authErr && <div style={{ color: "#A42E2D", fontSize: 13, marginTop: 10 }}>{authErr}</div>}
+            {authErr && <div style={{ color: "#1B4332", fontSize: 13, marginTop: 10 }}>{authErr}</div>}
             <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 14 }} disabled={authBusy} onClick={signIn}>
               {authBusy ? "Logging in..." : "Log In"}
             </button>
@@ -6708,7 +6708,7 @@ function computeRoundScoring(round) {
                 <div className="gsc-label">Email</div>
                 <input className="gsc-input" type="email" autoCapitalize="off" autoCorrect="off" value={authEmail} onChange={(e) => setAuthEmail(e.target.value)} onKeyDown={(e) => e.key === "Enter" && sendPasswordReset()} />
               </div>
-              {authErr && <div style={{ color: "#A42E2D", fontSize: 13, marginTop: 10 }}>{authErr}</div>}
+              {authErr && <div style={{ color: "#1B4332", fontSize: 13, marginTop: 10 }}>{authErr}</div>}
               <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 14 }} disabled={authBusy} onClick={sendPasswordReset}>
                 {authBusy ? "Sending..." : "Send Reset Link"}
               </button>
@@ -6762,7 +6762,7 @@ function computeRoundScoring(round) {
                 </button>
               </div>
             </div>
-            {authErr && <div style={{ color: "#A42E2D", fontSize: 13, marginTop: 10 }}>{authErr}</div>}
+            {authErr && <div style={{ color: "#1B4332", fontSize: 13, marginTop: 10 }}>{authErr}</div>}
             <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 14 }} disabled={authBusy} onClick={submitNewPassword}>
               {authBusy ? "Saving..." : "Set New Password"}
             </button>
@@ -6820,7 +6820,7 @@ function computeRoundScoring(round) {
                 </button>
               </div>
             </div>
-            {authErr && <div style={{ color: "#A42E2D", fontSize: 13, marginTop: 10 }}>{authErr}</div>}
+            {authErr && <div style={{ color: "#1B4332", fontSize: 13, marginTop: 10 }}>{authErr}</div>}
             <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 14 }} disabled={authBusy} onClick={signUp}>
               {authBusy ? "Creating account..." : "Create Account"}
             </button>
@@ -6859,7 +6859,7 @@ function computeRoundScoring(round) {
                 onKeyDown={(e) => e.key === "Enter" && verifySignupOtp()}
               />
             </div>
-            {otpErr && <div style={{ color: "#A42E2D", fontSize: 13, marginTop: 12 }}>{otpErr}</div>}
+            {otpErr && <div style={{ color: "#1B4332", fontSize: 13, marginTop: 12 }}>{otpErr}</div>}
             {otpResendNotice && <div style={{ color: "#1B4332", fontSize: 13, marginTop: 12 }}>{otpResendNotice}</div>}
             <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 16 }} disabled={otpBusy} onClick={verifySignupOtp}>
               {otpBusy ? "Confirming..." : "Confirm & Continue"}
@@ -6896,7 +6896,7 @@ function computeRoundScoring(round) {
               >
                 {profileForm.avatar || "\u{1F464}"}
                 {!profileForm.avatar && (
-                  <span style={{ position: "absolute", bottom: -2, right: -2, width: 16, height: 16, borderRadius: "50%", background: "#A42E2D", color: "#fff", fontSize: 11, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", border: "1.5px solid #F3EFE0" }}>
+                  <span style={{ position: "absolute", bottom: -2, right: -2, width: 16, height: 16, borderRadius: "50%", background: "#1B4332", color: "#fff", fontSize: 11, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", border: "1.5px solid #F3EFE0" }}>
                     +
                   </span>
                 )}
@@ -6910,7 +6910,7 @@ function computeRoundScoring(round) {
                         setProfileForm({ ...profileForm, avatar: profileForm.avatar === emoji ? "" : emoji });
                         setProfileAvatarPickerOpen(false);
                       }}
-                      style={{ width: 36, height: 36, borderRadius: "50%", border: profileForm.avatar === emoji ? "2px solid #A42E2D" : "1.5px solid #d8d2bd", background: "#fff", fontSize: 18, cursor: "pointer" }}
+                      style={{ width: 36, height: 36, borderRadius: "50%", border: profileForm.avatar === emoji ? "2px solid #1B4332" : "1.5px solid #d8d2bd", background: "#fff", fontSize: 18, cursor: "pointer" }}
                     >
                       {emoji}
                     </button>
@@ -6935,7 +6935,7 @@ function computeRoundScoring(round) {
               <input className="gsc-input" value={profileForm.home_course} onChange={(e) => setProfileForm({ ...profileForm, home_course: e.target.value })} />
             </div>
 
-            {profileErr && <div style={{ color: "#A42E2D", fontSize: 13, marginTop: 12 }}>{profileErr}</div>}
+            {profileErr && <div style={{ color: "#1B4332", fontSize: 13, marginTop: 12 }}>{profileErr}</div>}
             <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 16 }} disabled={profileSaving} onClick={finishOnboarding}>
               {profileSaving ? "Saving..." : "Save & Continue"}
             </button>
@@ -7153,7 +7153,7 @@ function computeRoundScoring(round) {
             </div>
           </div>
 
-          {feedbackErr && <div style={{ color: "#A42E2D", fontSize: 13, marginBottom: 10 }}>{feedbackErr}</div>}
+          {feedbackErr && <div style={{ color: "#1B4332", fontSize: 13, marginBottom: 10 }}>{feedbackErr}</div>}
           <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", padding: 14, fontSize: 16, marginTop: 4 }} disabled={feedbackBusy} onClick={submitFeedback}>
             {feedbackBusy ? "Sending..." : "Submit Feedback"}
           </button>
@@ -7196,7 +7196,7 @@ function computeRoundScoring(round) {
           }
         />
         <div style={{ height: 6, background: "#e4ded0" }}>
-          <div style={{ height: "100%", width: `${progress}%`, background: "#A42E2D", transition: "width 0.25s ease" }} />
+          <div style={{ height: "100%", width: `${progress}%`, background: "#1B4332", transition: "width 0.25s ease" }} />
         </div>
         <div className="gsc-body">
           {wizardStepId === "playerCount" && (
@@ -7349,7 +7349,7 @@ function computeRoundScoring(round) {
                 >
                   {activeCfg.roundAvatar || "\u{1F3CC}\u{FE0F}"}
                   {!activeCfg.roundAvatar && (
-                    <span style={{ position: "absolute", bottom: -2, right: -2, width: 16, height: 16, borderRadius: "50%", background: "#A42E2D", color: "#fff", fontSize: 11, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", border: "1.5px solid #F3EFE0" }}>
+                    <span style={{ position: "absolute", bottom: -2, right: -2, width: 16, height: 16, borderRadius: "50%", background: "#1B4332", color: "#fff", fontSize: 11, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", border: "1.5px solid #F3EFE0" }}>
                       +
                     </span>
                   )}
@@ -7363,7 +7363,7 @@ function computeRoundScoring(round) {
                           setActiveCfg({ ...activeCfg, roundAvatar: activeCfg.roundAvatar === emoji ? "" : emoji });
                           setRoundAvatarPickerOpen(false);
                         }}
-                        style={{ width: 36, height: 36, borderRadius: "50%", border: activeCfg.roundAvatar === emoji ? "2px solid #A42E2D" : "1.5px solid #d8d2bd", background: "#fff", fontSize: 18, cursor: "pointer" }}
+                        style={{ width: 36, height: 36, borderRadius: "50%", border: activeCfg.roundAvatar === emoji ? "2px solid #1B4332" : "1.5px solid #d8d2bd", background: "#fff", fontSize: 18, cursor: "pointer" }}
                       >
                         {emoji}
                       </button>
@@ -7384,7 +7384,7 @@ function computeRoundScoring(round) {
               >
                 Continue
               </button>
-              {wizardFieldErr && <div style={{ color: "#A42E2D", fontSize: 12, marginTop: 8, textAlign: "center" }}>{wizardFieldErr}</div>}
+              {wizardFieldErr && <div style={{ color: "#1B4332", fontSize: 12, marginTop: 8, textAlign: "center" }}>{wizardFieldErr}</div>}
             </div>
           )}
 
@@ -7445,7 +7445,7 @@ function computeRoundScoring(round) {
                   {courseSearchBusy ? "Searching..." : "Search"}
                 </button>
               </div>
-              {courseSearchErr && <div style={{ color: "#A42E2D", fontSize: 12, marginTop: 8 }}>{courseSearchErr}</div>}
+              {courseSearchErr && <div style={{ color: "#1B4332", fontSize: 12, marginTop: 8 }}>{courseSearchErr}</div>}
               {courseSearchResults.length > 0 && !courseTeeOptions && (
                 <div style={{ marginTop: 10 }}>
                   <div className="gsc-label">Select your course</div>
@@ -7481,7 +7481,7 @@ function computeRoundScoring(round) {
                   <button className="gsc-link" style={{ marginTop: 4, fontSize: 12 }} onClick={() => setCourseTeeOptions(null)}>Back to search results</button>
                 </div>
               )}
-              {courseMsg && <div style={{ fontSize: 12, color: courseMsg.startsWith("Couldn't") ? "#A42E2D" : "#B08D57", marginTop: 8 }}>{courseMsg}</div>}
+              {courseMsg && <div style={{ fontSize: 12, color: courseMsg.startsWith("Couldn't") ? "#1B4332" : "#B08D57", marginTop: 8 }}>{courseMsg}</div>}
 
               <button className="gsc-link" style={{ marginTop: 12, fontSize: 12 }} onClick={() => setShowManualCourse((s) => !s)}>
                 {showManualCourse ? "Hide manual par entry" : "Course not listed? Enter par manually"}
@@ -7500,7 +7500,7 @@ function computeRoundScoring(round) {
                         <input
                           ref={(el) => (parRefsWizard.current[i] = el)}
                           className="gsc-input gsc-mono"
-                          style={{ padding: "6px 2px", textAlign: "center", borderColor: v === "" || v == null ? "#A42E2D" : undefined }}
+                          style={{ padding: "6px 2px", textAlign: "center", borderColor: v === "" || v == null ? "#1B4332" : undefined }}
                           type="number"
                           placeholder="-"
                           value={v}
@@ -7536,7 +7536,7 @@ function computeRoundScoring(round) {
               >
                 Continue
               </button>
-              {wizardFieldErr && <div style={{ color: "#A42E2D", fontSize: 12, marginTop: 8, textAlign: "center" }}>{wizardFieldErr}</div>}
+              {wizardFieldErr && <div style={{ color: "#1B4332", fontSize: 12, marginTop: 8, textAlign: "center" }}>{wizardFieldErr}</div>}
             </div>
           )}
 
@@ -7646,7 +7646,7 @@ function computeRoundScoring(round) {
               >
                 Continue
               </button>
-              {tournamentErr && <div style={{ color: "#A42E2D", fontSize: 12, marginTop: 8 }}>{tournamentErr}</div>}
+              {tournamentErr && <div style={{ color: "#1B4332", fontSize: 12, marginTop: 8 }}>{tournamentErr}</div>}
             </div>
           )}
 
@@ -7688,7 +7688,7 @@ function computeRoundScoring(round) {
                     >
                       {p.avatar || LETTERS[i]}
                       {!p.avatar && (
-                        <span style={{ position: "absolute", bottom: -2, right: -2, width: 16, height: 16, borderRadius: "50%", background: "#A42E2D", color: "#fff", fontSize: 11, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", border: "1.5px solid #F3EFE0" }}>
+                        <span style={{ position: "absolute", bottom: -2, right: -2, width: 16, height: 16, borderRadius: "50%", background: "#1B4332", color: "#fff", fontSize: 11, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", border: "1.5px solid #F3EFE0" }}>
                           +
                         </span>
                       )}
@@ -7702,7 +7702,7 @@ function computeRoundScoring(round) {
                         <button
                           key={emoji}
                           onClick={() => { updatePlayer(i, "avatar", p.avatar === emoji ? "" : emoji); setAvatarPickerFor(null); }}
-                          style={{ width: 36, height: 36, borderRadius: "50%", border: p.avatar === emoji ? "2px solid #A42E2D" : "1.5px solid #d8d2bd", background: "#fff", fontSize: 18, cursor: "pointer" }}
+                          style={{ width: 36, height: 36, borderRadius: "50%", border: p.avatar === emoji ? "2px solid #1B4332" : "1.5px solid #d8d2bd", background: "#fff", fontSize: 18, cursor: "pointer" }}
                         >
                           {emoji}
                         </button>
@@ -7738,7 +7738,7 @@ function computeRoundScoring(round) {
                       )}
                       {groupmatePickerFor === i && (
                         <div style={{ marginTop: 6 }}>
-                          {groupmatesErr && <div style={{ color: "#A42E2D", fontSize: 11 }}>{groupmatesErr}</div>}
+                          {groupmatesErr && <div style={{ color: "#1B4332", fontSize: 11 }}>{groupmatesErr}</div>}
                           {groupmates === null ? (
                             <div style={{ fontSize: 11, color: "#8a8a80" }}>Loading...</div>
                           ) : groupmates.length === 0 ? (
@@ -7774,7 +7774,7 @@ function computeRoundScoring(round) {
               <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 16 }}>
                 Time to head to the first hole.
               </div>
-              {err && <div style={{ color: "#A42E2D", fontSize: 13, marginBottom: 12 }}>{err}</div>}
+              {err && <div style={{ color: "#1B4332", fontSize: 13, marginBottom: 12 }}>{err}</div>}
               <button
                 className="gsc-btn gsc-btn-primary"
                 style={{ width: "100%" }}
@@ -7862,7 +7862,7 @@ function computeRoundScoring(round) {
                 >
                   {cfg.roundAvatar || "\u{1F3CC}\u{FE0F}"}
                   {!cfg.roundAvatar && (
-                    <span style={{ position: "absolute", bottom: -2, right: -2, width: 16, height: 16, borderRadius: "50%", background: "#A42E2D", color: "#fff", fontSize: 11, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", border: "1.5px solid #F3EFE0" }}>
+                    <span style={{ position: "absolute", bottom: -2, right: -2, width: 16, height: 16, borderRadius: "50%", background: "#1B4332", color: "#fff", fontSize: 11, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", border: "1.5px solid #F3EFE0" }}>
                       +
                     </span>
                   )}
@@ -7876,7 +7876,7 @@ function computeRoundScoring(round) {
                           setCfg({ ...cfg, roundAvatar: cfg.roundAvatar === emoji ? "" : emoji });
                           setRoundAvatarPickerOpen(false);
                         }}
-                        style={{ width: 36, height: 36, borderRadius: "50%", border: cfg.roundAvatar === emoji ? "2px solid #A42E2D" : "1.5px solid #d8d2bd", background: "#fff", fontSize: 18, cursor: "pointer" }}
+                        style={{ width: 36, height: 36, borderRadius: "50%", border: cfg.roundAvatar === emoji ? "2px solid #1B4332" : "1.5px solid #d8d2bd", background: "#fff", fontSize: 18, cursor: "pointer" }}
                       >
                         {emoji}
                       </button>
@@ -7948,7 +7948,7 @@ function computeRoundScoring(round) {
                     {courseSearchBusy ? "Searching..." : "Search"}
                   </button>
                 </div>
-                {courseSearchErr && <div style={{ color: "#A42E2D", fontSize: 12, marginTop: 8 }}>{courseSearchErr}</div>}
+                {courseSearchErr && <div style={{ color: "#1B4332", fontSize: 12, marginTop: 8 }}>{courseSearchErr}</div>}
 
                 {courseSearchResults.length > 0 && !courseTeeOptions && (
                   <div style={{ marginTop: 10 }}>
@@ -8002,7 +8002,7 @@ function computeRoundScoring(round) {
                   </div>
                 )}
                 {courseMsg && (
-                  <div style={{ fontSize: 12, color: courseMsg.startsWith("Couldn't") ? "#A42E2D" : "#B08D57", marginTop: 8 }}>
+                  <div style={{ fontSize: 12, color: courseMsg.startsWith("Couldn't") ? "#1B4332" : "#B08D57", marginTop: 8 }}>
                     {courseMsg}
                   </div>
                 )}
@@ -8039,7 +8039,7 @@ function computeRoundScoring(round) {
                           <input
                             ref={(el) => (parRefsSetup.current[i] = el)}
                             className="gsc-input gsc-mono"
-                            style={{ padding: "6px 2px", textAlign: "center", borderColor: v === "" || v == null ? "#A42E2D" : undefined }}
+                            style={{ padding: "6px 2px", textAlign: "center", borderColor: v === "" || v == null ? "#1B4332" : undefined }}
                             type="number"
                             placeholder="-"
                             value={v}
@@ -8224,7 +8224,7 @@ function computeRoundScoring(round) {
                   >
                     {p.avatar || LETTERS[i]}
                     {!p.avatar && (
-                      <span style={{ position: "absolute", bottom: -2, right: -2, width: 16, height: 16, borderRadius: "50%", background: "#A42E2D", color: "#fff", fontSize: 11, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", border: "1.5px solid #F3EFE0" }}>
+                      <span style={{ position: "absolute", bottom: -2, right: -2, width: 16, height: 16, borderRadius: "50%", background: "#1B4332", color: "#fff", fontSize: 11, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", border: "1.5px solid #F3EFE0" }}>
                         +
                       </span>
                     )}
@@ -8234,7 +8234,7 @@ function computeRoundScoring(round) {
                   {(gameKey === "swami" || gameKey === "dstreet" || gameKey === "pontobango" || gameKey === "individualputts" || gameKey === "stableford") && players.length > (gameKey === "pontobango" || gameKey === "individualputts" || gameKey === "stableford" ? 2 : 1) && (
                     <button
                       className="gsc-btn gsc-btn-outline"
-                      style={{ flex: "0 0 auto", color: "#A42E2D", borderColor: "#A42E2D", padding: "9px 12px" }}
+                      style={{ flex: "0 0 auto", color: "#1B4332", borderColor: "#1B4332", padding: "9px 12px" }}
                       onClick={() => removePlayerSlot(i)}
                     >
                       Remove
@@ -8254,7 +8254,7 @@ function computeRoundScoring(round) {
                           width: 36,
                           height: 36,
                           borderRadius: "50%",
-                          border: p.avatar === emoji ? "2px solid #A42E2D" : "1.5px solid #d8d2bd",
+                          border: p.avatar === emoji ? "2px solid #1B4332" : "1.5px solid #d8d2bd",
                           background: "#fff",
                           fontSize: 18,
                           cursor: "pointer",
@@ -8297,7 +8297,7 @@ function computeRoundScoring(round) {
                     )}
                     {groupmatePickerFor === i && (
                       <div style={{ marginTop: 6 }}>
-                        {groupmatesErr && <div style={{ color: "#A42E2D", fontSize: 11 }}>{groupmatesErr}</div>}
+                        {groupmatesErr && <div style={{ color: "#1B4332", fontSize: 11 }}>{groupmatesErr}</div>}
                         {groupmates === null ? (
                           <div style={{ fontSize: 11, color: "#8a8a80" }}>Loading...</div>
                         ) : groupmates.length === 0 ? (
@@ -8351,7 +8351,7 @@ function computeRoundScoring(round) {
             )}
           </div>
 
-          {err && <div style={{ color: "#A42E2D", marginBottom: 10 }}>{err}</div>}
+          {err && <div style={{ color: "#1B4332", marginBottom: 10 }}>{err}</div>}
           {storageBroken && (
             <div style={{ background: "#F8F1E4", color: "#8a6a2f", fontSize: 12, padding: "8px 10px", borderRadius: 8, marginBottom: 10 }}>
               Storage isn't responding right now. Your round will still be created and playable this session -{" "}
@@ -8390,7 +8390,7 @@ function computeRoundScoring(round) {
               >
                 {tournamentCfg.roundAvatar || "\u{1F3CC}\u{FE0F}"}
                 {!tournamentCfg.roundAvatar && (
-                  <span style={{ position: "absolute", bottom: -2, right: -2, width: 16, height: 16, borderRadius: "50%", background: "#A42E2D", color: "#fff", fontSize: 11, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", border: "1.5px solid #F3EFE0" }}>
+                  <span style={{ position: "absolute", bottom: -2, right: -2, width: 16, height: 16, borderRadius: "50%", background: "#1B4332", color: "#fff", fontSize: 11, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", border: "1.5px solid #F3EFE0" }}>
                     +
                   </span>
                 )}
@@ -8404,7 +8404,7 @@ function computeRoundScoring(round) {
                         setTournamentCfg({ ...tournamentCfg, roundAvatar: tournamentCfg.roundAvatar === emoji ? "" : emoji });
                         setTournamentAvatarPickerOpen(false);
                       }}
-                      style={{ width: 36, height: 36, borderRadius: "50%", border: tournamentCfg.roundAvatar === emoji ? "2px solid #A42E2D" : "1.5px solid #d8d2bd", background: "#fff", fontSize: 18, cursor: "pointer" }}
+                      style={{ width: 36, height: 36, borderRadius: "50%", border: tournamentCfg.roundAvatar === emoji ? "2px solid #1B4332" : "1.5px solid #d8d2bd", background: "#fff", fontSize: 18, cursor: "pointer" }}
                     >
                       {emoji}
                     </button>
@@ -8472,7 +8472,7 @@ function computeRoundScoring(round) {
                   {courseSearchBusy ? "Searching..." : "Search"}
                 </button>
               </div>
-              {courseSearchErr && <div style={{ color: "#A42E2D", fontSize: 12, marginTop: 8 }}>{courseSearchErr}</div>}
+              {courseSearchErr && <div style={{ color: "#1B4332", fontSize: 12, marginTop: 8 }}>{courseSearchErr}</div>}
 
               {courseSearchResults.length > 0 && !courseTeeOptions && (
                 <div style={{ marginTop: 10 }}>
@@ -8526,7 +8526,7 @@ function computeRoundScoring(round) {
                 </div>
               )}
               {courseMsg && (
-                <div style={{ fontSize: 12, color: courseMsg.startsWith("Couldn't") ? "#A42E2D" : "#B08D57", marginTop: 8 }}>
+                <div style={{ fontSize: 12, color: courseMsg.startsWith("Couldn't") ? "#1B4332" : "#B08D57", marginTop: 8 }}>
                   {courseMsg}
                 </div>
               )}
@@ -8563,7 +8563,7 @@ function computeRoundScoring(round) {
                         <input
                           ref={(el) => (parRefsTournament.current[i] = el)}
                           className="gsc-input gsc-mono"
-                          style={{ padding: "6px 2px", textAlign: "center", borderColor: v === "" || v == null ? "#A42E2D" : undefined }}
+                          style={{ padding: "6px 2px", textAlign: "center", borderColor: v === "" || v == null ? "#1B4332" : undefined }}
                           type="number"
                           placeholder="-"
                           value={v}
@@ -8733,7 +8733,7 @@ function computeRoundScoring(round) {
             </div>
           </div>
 
-          {tournamentErr && <div style={{ color: "#A42E2D", marginBottom: 10 }}>{tournamentErr}</div>}
+          {tournamentErr && <div style={{ color: "#1B4332", marginBottom: 10 }}>{tournamentErr}</div>}
           <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", padding: 14, fontSize: 16 }} onClick={proceedToFoursomeRoster}>
             Next: add foursomes
           </button>
@@ -8790,7 +8790,7 @@ function computeRoundScoring(round) {
                     >
                       {p.avatar || LETTERS[pi]}
                       {!p.avatar && (
-                        <span style={{ position: "absolute", bottom: -2, right: -2, width: 16, height: 16, borderRadius: "50%", background: "#A42E2D", color: "#fff", fontSize: 11, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", border: "1.5px solid #F3EFE0" }}>
+                        <span style={{ position: "absolute", bottom: -2, right: -2, width: 16, height: 16, borderRadius: "50%", background: "#1B4332", color: "#fff", fontSize: 11, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", border: "1.5px solid #F3EFE0" }}>
                           +
                         </span>
                       )}
@@ -8822,7 +8822,7 @@ function computeRoundScoring(round) {
                             width: 36,
                             height: 36,
                             borderRadius: "50%",
-                            border: p.avatar === emoji ? "2px solid #A42E2D" : "1.5px solid #d8d2bd",
+                            border: p.avatar === emoji ? "2px solid #1B4332" : "1.5px solid #d8d2bd",
                             background: "#fff",
                             fontSize: 18,
                             cursor: "pointer",
@@ -8865,7 +8865,7 @@ function computeRoundScoring(round) {
                       )}
                       {groupmatePickerFor === avatarKey && (
                         <div style={{ marginTop: 6 }}>
-                          {groupmatesErr && <div style={{ color: "#A42E2D", fontSize: 11 }}>{groupmatesErr}</div>}
+                          {groupmatesErr && <div style={{ color: "#1B4332", fontSize: 11 }}>{groupmatesErr}</div>}
                           {groupmates === null ? (
                             <div style={{ fontSize: 11, color: "#8a8a80" }}>Loading...</div>
                           ) : groupmates.length === 0 ? (
@@ -8891,7 +8891,7 @@ function computeRoundScoring(round) {
               })}
             </div>
           ))}
-          {tournamentErr && <div style={{ color: "#A42E2D", marginBottom: 10 }}>{tournamentErr}</div>}
+          {tournamentErr && <div style={{ color: "#1B4332", marginBottom: 10 }}>{tournamentErr}</div>}
           <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", padding: 14, fontSize: 16 }} disabled={tournamentBusy} onClick={finishTournamentCreate}>
             {tournamentBusy ? "Creating..." : `Create tournament with ${tournamentFoursomesDraft.length} foursome${tournamentFoursomesDraft.length === 1 ? "" : "s"}`}
           </button>
@@ -8973,7 +8973,7 @@ function computeRoundScoring(round) {
           <button className="gsc-btn gsc-btn-outline" style={{ width: "100%", marginBottom: 12 }} disabled={boardLoading} onClick={() => t && loadTournamentBoard(t.id)}>
             {boardLoading ? "Refreshing..." : "Refresh leaderboard"}
           </button>
-          {boardErr && <div style={{ color: "#A42E2D", marginBottom: 10 }}>{boardErr}</div>}
+          {boardErr && <div style={{ color: "#1B4332", marginBottom: 10 }}>{boardErr}</div>}
           {board && t && (
             <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 4 }}>
               {GAMES[t.game].oneTeamScore
@@ -9014,7 +9014,7 @@ function computeRoundScoring(round) {
               {finishTournamentBusy ? "Saving..." : "Finish tournament"}
             </button>
           )}
-          {finishTournamentErr && <div style={{ color: "#A42E2D", fontSize: 12, textAlign: "center", marginTop: 8 }}>{finishTournamentErr}</div>}
+          {finishTournamentErr && <div style={{ color: "#1B4332", fontSize: 12, textAlign: "center", marginTop: 8 }}>{finishTournamentErr}</div>}
           <div style={{ fontSize: 11, color: "#8a8a80", textAlign: "center", marginTop: 6 }}>
             This moves it to "Finished tournaments" on the Tournaments tab - it won't be deleted, and every foursome's data stays exactly as it is.
           </div>
@@ -9157,7 +9157,7 @@ function computeRoundScoring(round) {
                     {postRoundGroupBusy ? "Creating..." : "Create"}
                   </button>
                 </div>
-                {postRoundGroupErr && <div style={{ color: "#A42E2D", fontSize: 12, marginTop: 8 }}>{postRoundGroupErr}</div>}
+                {postRoundGroupErr && <div style={{ color: "#1B4332", fontSize: 12, marginTop: 8 }}>{postRoundGroupErr}</div>}
                 <button className="gsc-link" style={{ fontSize: 12, marginTop: 10 }} onClick={() => setPostRoundGroupDismissed(true)}>
                   No thanks
                 </button>
@@ -9421,7 +9421,7 @@ function computeRoundScoring(round) {
                   None of these are me
                 </button>
               </div>
-              {claimSlotErr && <div style={{ color: "#A42E2D", fontSize: 12, marginTop: 8 }}>{claimSlotErr}</div>}
+              {claimSlotErr && <div style={{ color: "#1B4332", fontSize: 12, marginTop: 8 }}>{claimSlotErr}</div>}
             </div>
           </div>
         )}
@@ -9680,7 +9680,7 @@ function computeRoundScoring(round) {
                           fontSize: 10,
                           fontWeight: 800,
                           color: "#fff",
-                          background: "#A42E2D",
+                          background: "#1B4332",
                           padding: "2px 7px",
                           borderRadius: 20,
                           verticalAlign: "middle",
@@ -9696,7 +9696,7 @@ function computeRoundScoring(round) {
                         <button
                           key={emoji}
                           onClick={() => updateRoundPlayerAvatar(i, p.avatar === emoji ? "" : emoji)}
-                          style={{ width: 34, height: 34, borderRadius: "50%", border: p.avatar === emoji ? "2px solid #A42E2D" : "1.5px solid #d8d2bd", background: "#fff", fontSize: 17, cursor: "pointer" }}
+                          style={{ width: 34, height: 34, borderRadius: "50%", border: p.avatar === emoji ? "2px solid #1B4332" : "1.5px solid #d8d2bd", background: "#fff", fontSize: 17, cursor: "pointer" }}
                         >
                           {emoji}
                         </button>
@@ -9734,7 +9734,7 @@ function computeRoundScoring(round) {
                                   fontSize: 14,
                                   fontWeight: 800,
                                   color: "#fff",
-                                  background: "#A42E2D",
+                                  background: "#1B4332",
                                   padding: "2px 9px",
                                   borderRadius: 20,
                                 }}
@@ -9862,7 +9862,7 @@ function computeRoundScoring(round) {
                       style={{
                         padding: "8px 12px",
                         borderRadius: 8,
-                        border: current === "lone" ? "2px solid #A42E2D" : "1.5px solid #d8d2bd",
+                        border: current === "lone" ? "2px solid #1B4332" : "1.5px solid #d8d2bd",
                         background: current === "lone" ? "#FBEFE3" : "#fff",
                         fontWeight: 700,
                         fontSize: 13,
@@ -9970,7 +9970,7 @@ function computeRoundScoring(round) {
                   {boardLoading ? "Refreshing..." : "Refresh leaderboard"}
                 </button>
               </div>
-              {boardErr && <div style={{ color: "#A42E2D", fontSize: 12, marginBottom: 8 }}>{boardErr}</div>}
+              {boardErr && <div style={{ color: "#1B4332", fontSize: 12, marginBottom: 8 }}>{boardErr}</div>}
               {board && board.tournament && board.tournament.id === round.tournamentId ? (
                 board.strokesRanked.length === 0 ? (
                   <div style={{ fontSize: 13, color: "#6b6b63" }}>No foursomes have joined yet.</div>
@@ -10190,10 +10190,10 @@ function computeRoundScoring(round) {
           <div style={{ fontSize: 12, color: "#8a8a80", textAlign: "center", marginTop: 16 }}>
             Share code <b className="gsc-mono">{round.id}</b> with your group so everyone can enter or view scores.
           </div>
-          <button className="gsc-btn" style={{ width: "100%", marginTop: 14, background: "#A42E2D", color: "#fff" }} disabled={busy} onClick={() => setConfirmFinishOpen(true)}>
+          <button className="gsc-btn" style={{ width: "100%", marginTop: 14, background: "#1B4332", color: "#fff" }} disabled={busy} onClick={() => setConfirmFinishOpen(true)}>
             {busy ? "Saving..." : "Finish & exit this round"}
           </button>
-          {archiveErr && <div style={{ color: "#A42E2D", fontSize: 12, textAlign: "center", marginTop: 8 }}>{archiveErr}</div>}
+          {archiveErr && <div style={{ color: "#1B4332", fontSize: 12, textAlign: "center", marginTop: 8 }}>{archiveErr}</div>}
           <div style={{ fontSize: 11, color: "#8a8a80", textAlign: "center", marginTop: 6 }}>
             This saves it to "Finished rounds" on the home screen - it won't be deleted.
           </div>
