@@ -8282,6 +8282,14 @@ function computeRoundScoring(round) {
                 </div>
               </div>
             )}
+            <div className="gsc-field">
+              <div className="gsc-label">Prize / stakes</div>
+              <input className="gsc-input" value={cfg.prize} onChange={(e) => setCfg({ ...cfg, prize: e.target.value })} />
+            </div>
+            <div className="gsc-field">
+              <div className="gsc-label">Venmo handle for settling up (optional)</div>
+              <input className="gsc-input" placeholder="@your-venmo" value={cfg.venmo || ""} onChange={(e) => setCfg({ ...cfg, venmo: e.target.value })} />
+            </div>
             {g.rotates !== undefined && g.hasScore && (
               <div className="gsc-field">
                 <div className="gsc-label">Use per-hole handicapping (net scoring)?</div>
@@ -8306,14 +8314,6 @@ function computeRoundScoring(round) {
                 </div>
               </div>
             )}
-            <div className="gsc-field">
-              <div className="gsc-label">Prize / stakes</div>
-              <input className="gsc-input" value={cfg.prize} onChange={(e) => setCfg({ ...cfg, prize: e.target.value })} />
-            </div>
-            <div className="gsc-field">
-              <div className="gsc-label">Venmo handle for settling up (optional)</div>
-              <input className="gsc-input" placeholder="@your-venmo" value={cfg.venmo || ""} onChange={(e) => setCfg({ ...cfg, venmo: e.target.value })} />
-            </div>
           </div>
           )}
 
