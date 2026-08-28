@@ -8972,24 +8972,48 @@ function computeRoundScoring(round) {
           title={t ? t.name : "Tournament Leaderboard"}
           sub={t ? `${GAMES[t.game].name} - strokes and putts ranked separately` : ""}
           onBack={() => setScreen("home")}
+          backExtra={
+            <button
+              style={{
+                background: "rgba(243,239,224,0.15)",
+                border: "1px solid rgba(243,239,224,0.4)",
+                color: "#F3EFE0",
+                fontSize: 9,
+                fontWeight: 600,
+                padding: "5px 3px",
+                borderRadius: 6,
+                cursor: "pointer",
+                width: 68,
+                textAlign: "center",
+                lineHeight: 1.2,
+                minHeight: 44,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+              disabled={boardLoading}
+              onClick={() => t && loadTournamentBoard(t.id)}
+            >
+              {boardLoading ? "Refreshing..." : "Refresh Scores"}
+            </button>
+          }
+          right={
+            t && (
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6, alignSelf: "flex-start", marginRight: 10 }}>
+                <div className="gsc-code" style={{ width: 84, textAlign: "center" }}>{t.id}</div>
+                <button className="gsc-link" style={{ color: "#F3EFE0", fontSize: 11, textDecoration: "underline" }} onClick={() => openRules(t.game)}>
+                  Rules
+                </button>
+                <button className="gsc-link" style={{ color: "#F3EFE0", fontSize: 11, textDecoration: "underline" }} onClick={() => startTournamentFoursome(t)}>
+                  Add Foursome
+                </button>
+              </div>
+            )
+          }
         />
         <div className="gsc-body">
-          {t && (
-            <div className="gsc-card" style={{ textAlign: "center" }}>
-              <div className="gsc-label" style={{ marginBottom: 6 }}>Tournament code</div>
-              <div className="gsc-code" style={{ background: "#1B4332", color: "#F3EFE0", fontSize: 18, padding: "8px 16px" }}>{t.id}</div>
-              <div style={{ fontSize: 12, color: "#8a8a80", marginTop: 8 }}>Share this so more foursomes can join</div>
-              <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 12 }} onClick={() => startTournamentFoursome(t)}>
-                Add another foursome
-              </button>
-            </div>
-          )}
-          <button className="gsc-btn gsc-btn-outline" style={{ width: "100%", marginBottom: 12 }} disabled={boardLoading} onClick={() => t && loadTournamentBoard(t.id)}>
-            {boardLoading ? "Refreshing..." : "Refresh leaderboard"}
-          </button>
-          {boardErr && <div style={{ color: "#A42E2D", marginBottom: 10 }}>{boardErr}</div>}
           {board && t && (
-            <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 4 }}>
+            <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 12 }}>
               {GAMES[t.game].oneTeamScore
                 ? "Scramble scoring: the whole foursome shares one team stroke total per hole."
                 : GAMES[t.game].bestBall
@@ -8997,11 +9021,14 @@ function computeRoundScoring(round) {
                 : "Combined scoring: each foursome's stroke and putt totals are all 4 players' scores added together."}
             </div>
           )}
-          {board && t && (
-            <button className="gsc-link" style={{ fontSize: 12, marginBottom: 12 }} onClick={() => openRules(t.game)}>
-              View full rules for {GAMES[t.game].name}
-            </button>
+          {t && (
+            <div className="gsc-card" style={{ textAlign: "center" }}>
+              <div className="gsc-label" style={{ marginBottom: 6 }}>Tournament code</div>
+              <div className="gsc-code" style={{ background: "#1B4332", color: "#F3EFE0", fontSize: 18, padding: "8px 16px" }}>{t.id}</div>
+              <div style={{ fontSize: 12, color: "#8a8a80", marginTop: 8 }}>Share this so more foursomes can join</div>
+            </div>
           )}
+          {boardErr && <div style={{ color: "#A42E2D", marginBottom: 10 }}>{boardErr}</div>}
           {board && t && board.strokesRanked.length > 0 && (
             <div className="gsc-card" style={{ background: "#EBF0EC", border: "1px solid #1B4332" }}>
               <div style={{ fontSize: 13, color: "#1B4332", fontWeight: 700 }}>
