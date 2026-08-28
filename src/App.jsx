@@ -9786,6 +9786,7 @@ function computeRoundScoring(round) {
                           <div className="gsc-stepper-val">{e.strokes === "" || e.strokes == null ? "-" : e.strokes}</div>
                           <button onClick={() => updateHoleEntry(i, "strokes", (Number(e.strokes) || 0) + 1)}>+</button>
                         </div>
+                        <div style={{ fontSize: 12, color: "#8a8a80", textAlign: "center", marginTop: 4 }}>Par {parH}</div>
                         {round.cfg.netScoring && e.strokes !== "" && e.strokes != null && (() => {
                           const strokesOff = computed.strokesOffForHole(i, holeIdx);
                           const net = Number(e.strokes) - strokesOff;
