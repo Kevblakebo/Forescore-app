@@ -6009,7 +6009,7 @@ function computeRoundScoring(round) {
           )}
           {session && (
             <div className="gsc-card">
-              <div className="gsc-label" style={{ marginBottom: 10, fontSize: 20 }}>My Groups</div>
+              <div className="gsc-label" style={{ marginBottom: 10, fontSize: 17 }}>My Groups</div>
 
               {selectedGroupId ? (
                 <>
