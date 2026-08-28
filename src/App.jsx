@@ -9703,14 +9703,18 @@ function computeRoundScoring(round) {
                   } else if (gpsStatus === "locating") {
                     content = "Finding your location...";
                   } else if (gpsStatus === "denied") {
-                    content = "Location access denied - enable it to see distance";
+                    content = "Location access denied - enable it, then tap to retry";
                   } else if (gpsStatus === "unsupported") {
                     content = "Distance to green isn't supported on this device";
                   } else if (gpsStatus === "error") {
-                    content = "Couldn't get your location";
+                    content = "Couldn't get your location - tap to retry";
                   }
+                  const retryable = gpsStatus === "denied" || gpsStatus === "error";
                   return (
-                    <div style={{ display: "inline-flex", alignItems: "center", gap: 5, marginTop: 6, background: "#EBF0EC", color: "#1B4332", fontWeight: 700, fontSize: 13, padding: "5px 12px", borderRadius: 20 }}>
+                    <div
+                      onClick={retryable ? () => startGPSWatch() : undefined}
+                      style={{ display: "inline-flex", alignItems: "center", gap: 5, marginTop: 6, background: "#EBF0EC", color: "#1B4332", fontWeight: 700, fontSize: 13, padding: "5px 12px", borderRadius: 20, cursor: retryable ? "pointer" : "default" }}
+                    >
                       {"\u26F3"} {content}
                     </div>
                   );
