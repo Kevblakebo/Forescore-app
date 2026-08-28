@@ -5315,7 +5315,7 @@ function computeRoundScoring(round) {
 
           <div className="gsc-card">
             <div className="gsc-label" style={{ marginBottom: 2, fontSize: 17 }}>Start a New Round</div>
-            <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 10 }}>Quick Pick Game Format List</div>
+            <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 10 }}>Quick Pick Game List</div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
               {Object.keys(GAME_TILE_STYLE).map((key) => {
                 const { emoji, color } = GAME_TILE_STYLE[key];
