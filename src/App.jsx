@@ -8768,6 +8768,14 @@ function computeRoundScoring(round) {
                   {"\u{1F465}"} Fill players from a group
                 </button>
               )}
+              {!session && (
+                <button
+                  onClick={() => goToScreen("login")}
+                  style={{ display: "block", width: "100%", textAlign: "left", fontSize: 12, color: "#6b6b63", padding: "8px 10px", background: "#F8F1E4", border: "none", borderRadius: 8, cursor: "pointer", marginBottom: 10 }}
+                >
+                  {"\u{1F465}"} Log in to unlock one-tap group and player adding. <span style={{ textDecoration: "underline", fontWeight: 700 }}>Tap to log in</span>
+                </button>
+              )}
               <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 10 }}>
                 Tap the circle next to a player's name to pick a fun avatar (optional).
               </div>
