@@ -2430,6 +2430,26 @@ export default function GolfScorecard() {
     setRulesOpenFor(null);
   }
 
+  function DeleteHistoryConfirmModal() {
+    if (!deleteHistoryConfirm) return null;
+    return (
+      <div className="gsc-modal-backdrop" onClick={() => !deleteHistoryBusy && setDeleteHistoryConfirm(null)}>
+        <div className="gsc-modal" onClick={(e) => e.stopPropagation()}>
+          <div className="gsc-modal-title">Remove from your history?</div>
+          <div className="gsc-modal-body">
+            This only removes "{deleteHistoryConfirm.name}" from your own round history - the round itself isn't deleted, and anyone with its code (including you) can still open it.
+          </div>
+          <div className="gsc-modal-row">
+            <button className="gsc-btn gsc-btn-outline" disabled={deleteHistoryBusy} onClick={() => setDeleteHistoryConfirm(null)}>No, keep it</button>
+            <button className="gsc-btn gsc-btn-primary" disabled={deleteHistoryBusy} onClick={confirmDeleteFromHistory}>
+              {deleteHistoryBusy ? "Removing..." : "Yes, remove"}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   function RulesModal() {
     if (!rulesOpenFor) return null;
     const rg = GAMES[rulesOpenFor];
@@ -6059,22 +6079,7 @@ function computeRoundScoring(round) {
           </div>
         </div>
         <BottomNav />
-        {deleteHistoryConfirm && (
-          <div className="gsc-modal-backdrop" onClick={() => !deleteHistoryBusy && setDeleteHistoryConfirm(null)}>
-            <div className="gsc-modal" onClick={(e) => e.stopPropagation()}>
-              <div className="gsc-modal-title">Remove from your history?</div>
-              <div className="gsc-modal-body">
-                This only removes "{deleteHistoryConfirm.name}" from your own round history - the round itself isn't deleted, and anyone with its code (including you) can still open it.
-              </div>
-              <div className="gsc-modal-row">
-                <button className="gsc-btn gsc-btn-outline" disabled={deleteHistoryBusy} onClick={() => setDeleteHistoryConfirm(null)}>No, keep it</button>
-                <button className="gsc-btn gsc-btn-primary" disabled={deleteHistoryBusy} onClick={confirmDeleteFromHistory}>
-                  {deleteHistoryBusy ? "Removing..." : "Yes, remove"}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        {DeleteHistoryConfirmModal()}
       </div>
     );
   }
@@ -6461,6 +6466,7 @@ function computeRoundScoring(round) {
           )}
         </div>
         {RulesModal()}
+        {DeleteHistoryConfirmModal()}
         <BottomNav />
       </div>
     );
