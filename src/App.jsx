@@ -619,7 +619,7 @@ const GAME_TILE_STYLE = (() => {
     ponto: "\u{1F91D}", teamstrokes: "\u{1F3CC}\u{FE0F}", teamputts: "\u{1F573}\u{FE0F}", beachside: "\u2B50", seabluffe: "\u{1F504}", moonlightwolf: "\u{1F43A}", vegas: "\u{1F3B0}",
     avoscramble: "\u{1F500}", tourneybb: "\u{1F3C6}", tourneygg: "\u{1F3C5}",
   };
-  const colors = ["#2D6A4F", "#1B4332", "#B08D57", "#457B9D", "#6B4226", "#40916C"];
+  const colors = ["#1B4332", "#3A7352", "#B08D57", "#2A5B42", "#8A6A2F", "#719A82"];
   const map = {};
   order.forEach((key, i) => {
     map[key] = { emoji: emoji[key], color: colors[i % colors.length] };
