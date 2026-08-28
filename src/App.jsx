@@ -1861,7 +1861,6 @@ export default function GolfScorecard() {
     let wins = 0;
     let eagles = 0, birdies = 0, pars = 0, holesInOne = 0;
     const recent = [];
-    const finishedTournamentIds = new Set();
 
     // Fetch every round's data in parallel rather than one at a time -
     // network round-trips are what actually make this slow, not the
@@ -1883,8 +1882,6 @@ export default function GolfScorecard() {
 
       const myIdx = r.players.findIndex((p) => p.user_id === session.user.id);
       if (myIdx === -1) continue;
-
-      if (r.tournamentId && r.finished) finishedTournamentIds.add(r.tournamentId);
 
       let holesPlayed = 0;
       let myStrokesTotal = 0;
@@ -1949,28 +1946,6 @@ export default function GolfScorecard() {
       holesInOne,
       recent: recent.slice(0, 5),
     });
-
-    // A separate, lightweight follow-up rather than blocking the main
-    // stats above on it - each finished tournament's own name/game/date
-    // lives in its own record (not on the individual round data just
-    // processed), so this needs its own small fetch.
-    if (finishedTournamentIds.size === 0) {
-      setFinishedTournaments([]);
-    } else {
-      const tournamentResults = await Promise.all(
-        [...finishedTournamentIds].map((tid) => storageGet(`${TOURNAMENT_PREFIX}${tid}`, true).then((res) => ({ tid, res })))
-      );
-      const finished = [];
-      for (const { tid, res } of tournamentResults) {
-        if (!res.ok || !res.value) continue;
-        try {
-          const t = JSON.parse(res.value);
-          finished.push({ id: tid, name: t.name, game: t.game, date: t.date, foursomeCount: (t.foursomes || []).length });
-        } catch (e) {}
-      }
-      finished.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
-      setFinishedTournaments(finished);
-    }
 
     // Keep the leaderboard's copy of this user's totals fresh - always,
     // regardless of global opt-in status. Group membership is its own,
@@ -2319,21 +2294,15 @@ export default function GolfScorecard() {
   // tournament data, same "never destroy the real thing" principle used
   // by Discard elsewhere in the app. Anyone with the code (including this
   // same user) can still open it - it just stops showing up here.
-  // deleteHistoryConfirm.type distinguishes a single round ({type:
-  // "round", code, name}) from an entire tournament ({type: "tournament",
-  // id, name}) - a tournament may be represented by more than one of this
-  // user's own user_rounds entries (rare, but possible if they were
-  // somehow linked to more than one foursome), so that path deletes by
-  // tournament_id rather than a single round_code to catch all of them.
   async function confirmDeleteFromHistory() {
     if (!deleteHistoryConfirm || !session || !supabase) return;
     setDeleteHistoryBusy(true);
     setDeleteHistoryErr("");
-    const query = supabase.from("user_rounds").delete().eq("user_id", session.user.id);
-    const { error } =
-      deleteHistoryConfirm.type === "tournament"
-        ? await query.eq("tournament_id", deleteHistoryConfirm.id)
-        : await query.eq("round_code", deleteHistoryConfirm.code);
+    const { error } = await supabase
+      .from("user_rounds")
+      .delete()
+      .eq("user_id", session.user.id)
+      .eq("round_code", deleteHistoryConfirm.code);
     setDeleteHistoryBusy(false);
     if (error) {
       setDeleteHistoryErr(`Couldn't remove this (${error.message}).`);
@@ -5919,38 +5888,6 @@ function computeRoundScoring(round) {
             </div>
           )}
 
-          {session && finishedTournaments && finishedTournaments.length > 0 && (
-            <div className="gsc-card">
-              <div className="gsc-label" style={{ marginBottom: 10 }}>Finished Tournaments</div>
-              {deleteHistoryErr && <div style={{ color: "#A42E2D", fontSize: 12, marginBottom: 8 }}>{deleteHistoryErr}</div>}
-              {finishedTournaments.map((t, i) => (
-                <div
-                  key={t.id}
-                  onClick={() => openTournamentBoard(t.id)}
-                  style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "7px 0", borderBottom: i === finishedTournaments.length - 1 ? "none" : "1px solid #eee6cf", cursor: "pointer" }}
-                >
-                  <div style={{ fontSize: 13, color: "#1B4332", fontWeight: 600 }}>
-                    {t.name}
-                    <span style={{ fontSize: 10, color: "#8a8a80", marginLeft: 6, fontWeight: 400 }}>
-                      ({t.foursomeCount} foursome{t.foursomeCount === 1 ? "" : "s"})
-                    </span>
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <div style={{ fontSize: 12, color: "#6b6b63" }}>{t.date}</div>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setDeleteHistoryErr(""); setDeleteHistoryConfirm({ type: "tournament", id: t.id, name: t.name }); }}
-                      style={{ background: "none", border: "none", padding: 4, color: "#A42E2D", fontSize: 14, cursor: "pointer", lineHeight: 1 }}
-                      title="Remove from your history"
-                    >
-                      {"\u{1F5D1}"}
-                    </button>
-                    <span style={{ color: "#8FA998", fontSize: 14 }}>{"\u203A"}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
           {session && (
             <div className="gsc-card">
               <div className="gsc-label" style={{ marginBottom: 10 }}>Public Leaderboard</div>
@@ -6041,9 +5978,7 @@ function computeRoundScoring(round) {
             <div className="gsc-modal" onClick={(e) => e.stopPropagation()}>
               <div className="gsc-modal-title">Remove from your history?</div>
               <div className="gsc-modal-body">
-                {deleteHistoryConfirm.type === "tournament"
-                  ? `This only removes "${deleteHistoryConfirm.name}" from your own Finished Tournaments list - the tournament itself isn't deleted, and anyone with its code (including you) can still open it.`
-                  : `This only removes "${deleteHistoryConfirm.name}" from your own Recent Rounds list - the round itself isn't deleted, and anyone with its code (including you) can still open it.`}
+                This only removes "{deleteHistoryConfirm.name}" from your own Recent Rounds list - the round itself isn't deleted, and anyone with its code (including you) can still open it.
               </div>
               <div className="gsc-modal-row">
                 <button className="gsc-btn gsc-btn-outline" disabled={deleteHistoryBusy} onClick={() => setDeleteHistoryConfirm(null)}>No, keep it</button>
