@@ -1413,6 +1413,12 @@ export default function GolfScorecard() {
   // active round
   const [round, setRound] = useState(null); // full round object once loaded/created
   const [holeIdx, setHoleIdx] = useState(0);
+  const holeStripRef = useRef(null);
+  useEffect(() => {
+    if (!holeStripRef.current) return;
+    const activePip = holeStripRef.current.querySelector(".gsc-hole-pip.active");
+    if (activePip) activePip.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+  }, [holeIdx]);
   const [holeNoteDraft, setHoleNoteDraft] = useState("");
   const [showGrid, setShowGrid] = useState(false);
   const [confirmLeaveOpen, setConfirmLeaveOpen] = useState(false);
@@ -9475,7 +9481,7 @@ function computeRoundScoring(round) {
         <div style={{ background: "#EBF0EC", fontSize: 11, padding: "5px 16px", textAlign: "center", color: "#4A6C5A" }}>
           {storageBroken ? "Keep playing - this tab has your scores." : "Saved automatically - close and reopen this app any time to pick back up here."}
         </div>
-        <div className="gsc-hole-strip">
+        <div className="gsc-hole-strip" ref={holeStripRef}>
           {Array.from({ length: 18 }).map((_, i) => (
             <div key={i} className={`gsc-hole-pip ${i === holeIdx ? "active" : ""} ${computed.holeResults[i].complete ? "done" : ""}`} onClick={() => setHoleIdx(i)}>
               {i + 1}
