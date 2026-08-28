@@ -2307,44 +2307,48 @@ export default function GolfScorecard() {
     if (!session || !supabase) return;
     setGroupRoundsLoading(true);
     setGroupRoundsErr("");
-    const { data: myRoundsIndexRaw, error } = await withJwtRetry(() =>
-      supabase.from("user_rounds").select("*").eq("user_id", session.user.id).order("created_at", { ascending: false })
-    );
-    if (error) {
-      setGroupRoundsLoading(false);
-      setGroupRoundsErr(`Couldn't load rounds played with this group (${error.message}).`);
-      return;
-    }
-    const myRoundsIndex = myRoundsIndexRaw || [];
-    if (myRoundsIndex.length === 0 || memberUserIds.length === 0) {
-      setGroupRoundsLoading(false);
-      setGroupRounds([]);
-      return;
-    }
-    const roundResults = await Promise.all(
-      myRoundsIndex.map((ur) => storageGet(`golfround:${ur.round_code}`, true).then((res) => ({ ur, res })))
-    );
-    const memberSet = new Set(memberUserIds);
-    const shared = [];
-    for (const { ur, res } of roundResults) {
-      if (!res.ok || !res.value) continue;
-      let r;
-      try {
-        r = JSON.parse(res.value);
-      } catch (e) {
-        continue;
+    try {
+      const { data: myRoundsIndexRaw, error } = await withJwtRetry(() =>
+        supabase.from("user_rounds").select("*").eq("user_id", session.user.id).order("created_at", { ascending: false })
+      );
+      if (error) {
+        setGroupRoundsErr(`Couldn't load rounds played with this group (${error.message}).`);
+        return;
       }
-      if (!r || !r.players) continue;
-      const myIdx = r.players.findIndex((p) => p.user_id === session.user.id);
-      if (myIdx === -1) continue;
-      const holesPlayed = r.scores ? r.scores.filter((h) => h && h[myIdx] && h[myIdx].strokes != null && h[myIdx].strokes !== "").length : 0;
-      if (holesPlayed === 0 || !(r.finished || holesPlayed === 18)) continue;
-      const playedWithGroup = r.players.some((p, i) => i !== myIdx && p.user_id && memberSet.has(p.user_id));
-      if (!playedWithGroup) continue;
-      shared.push({ code: ur.round_code, name: r.name, date: r.date, game: r.game, holesPlayed, tournamentId: ur.tournament_id || null });
+      const myRoundsIndex = myRoundsIndexRaw || [];
+      if (myRoundsIndex.length === 0 || memberUserIds.length === 0) {
+        setGroupRounds([]);
+        return;
+      }
+      const roundResults = await Promise.all(
+        myRoundsIndex.map((ur) => storageGet(`golfround:${ur.round_code}`, true).then((res) => ({ ur, res })))
+      );
+      const memberSet = new Set(memberUserIds);
+      const shared = [];
+      for (const { ur, res } of roundResults) {
+        if (!res.ok || !res.value) continue;
+        let r;
+        try {
+          r = JSON.parse(res.value);
+        } catch (e) {
+          continue;
+        }
+        if (!r || !r.players) continue;
+        const myIdx = r.players.findIndex((p) => p.user_id === session.user.id);
+        if (myIdx === -1) continue;
+        const holesPlayed = r.scores ? r.scores.filter((h) => h && h[myIdx] && h[myIdx].strokes != null && h[myIdx].strokes !== "").length : 0;
+        if (holesPlayed === 0 || !(r.finished || holesPlayed === 18)) continue;
+        const playedWithGroup = r.players.some((p, i) => i !== myIdx && p.user_id && memberSet.has(p.user_id));
+        if (!playedWithGroup) continue;
+        shared.push({ code: ur.round_code, name: r.name, date: r.date, game: r.game, holesPlayed, tournamentId: ur.tournament_id || null });
+      }
+      setGroupRounds(shared);
+    } catch (e) {
+      console.error("loadGroupSharedRounds failed:", e);
+      setGroupRoundsErr(`Couldn't load rounds played with this group (${(e && e.message) || "unknown error"}).`);
+    } finally {
+      setGroupRoundsLoading(false);
     }
-    setGroupRoundsLoading(false);
-    setGroupRounds(shared);
   }
 
   const [deleteHistoryConfirm, setDeleteHistoryConfirm] = useState(null); // {code, name} while confirming
