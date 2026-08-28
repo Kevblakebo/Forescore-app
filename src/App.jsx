@@ -1268,6 +1268,9 @@ export default function GolfScorecard() {
   const [groupMembersStats, setGroupMembersStats] = useState([]);
   const [groupMembersLoading, setGroupMembersLoading] = useState(false);
   const [groupMembersErr, setGroupMembersErr] = useState("");
+  const [groupRounds, setGroupRounds] = useState([]);
+  const [groupRoundsLoading, setGroupRoundsLoading] = useState(false);
+  const [groupRoundsErr, setGroupRoundsErr] = useState("");
   const [groupCategory, setGroupCategory] = useState("wins");
 
   // ---- Live GPS for distance-to-green ----
@@ -2250,6 +2253,7 @@ export default function GolfScorecard() {
       return;
     }
     const userIds = (members || []).map((m) => m.user_id);
+    loadGroupSharedRounds(groupId, userIds);
     if (userIds.length === 0) {
       setGroupMembersLoading(false);
       setGroupMembersStats([]);
@@ -2291,6 +2295,56 @@ export default function GolfScorecard() {
       }
     }
     setGroupMembersStats(result);
+  }
+
+  // Finds this user's own finished rounds (full 18 holes or a shorter,
+  // deliberately-finished round - same "counts either way" rule as
+  // Profile's stats) where at least one other player was a member of this
+  // specific group at the time this is viewed. Uses the exact same
+  // user_rounds + parallel-fetch approach as Profile's stats, since it's
+  // already the proven way to reliably find "rounds that belong to me."
+  async function loadGroupSharedRounds(groupId, memberUserIds) {
+    if (!session || !supabase) return;
+    setGroupRoundsLoading(true);
+    setGroupRoundsErr("");
+    const { data: myRoundsIndexRaw, error } = await withJwtRetry(() =>
+      supabase.from("user_rounds").select("*").eq("user_id", session.user.id).order("created_at", { ascending: false })
+    );
+    if (error) {
+      setGroupRoundsLoading(false);
+      setGroupRoundsErr(`Couldn't load rounds played with this group (${error.message}).`);
+      return;
+    }
+    const myRoundsIndex = myRoundsIndexRaw || [];
+    if (myRoundsIndex.length === 0 || memberUserIds.length === 0) {
+      setGroupRoundsLoading(false);
+      setGroupRounds([]);
+      return;
+    }
+    const roundResults = await Promise.all(
+      myRoundsIndex.map((ur) => storageGet(`golfround:${ur.round_code}`, true).then((res) => ({ ur, res })))
+    );
+    const memberSet = new Set(memberUserIds);
+    const shared = [];
+    for (const { ur, res } of roundResults) {
+      if (!res.ok || !res.value) continue;
+      let r;
+      try {
+        r = JSON.parse(res.value);
+      } catch (e) {
+        continue;
+      }
+      if (!r || !r.players) continue;
+      const myIdx = r.players.findIndex((p) => p.user_id === session.user.id);
+      if (myIdx === -1) continue;
+      const holesPlayed = r.scores ? r.scores.filter((h) => h && h[myIdx] && h[myIdx].strokes != null && h[myIdx].strokes !== "").length : 0;
+      if (holesPlayed === 0 || !(r.finished || holesPlayed === 18)) continue;
+      const playedWithGroup = r.players.some((p, i) => i !== myIdx && p.user_id && memberSet.has(p.user_id));
+      if (!playedWithGroup) continue;
+      shared.push({ code: ur.round_code, name: r.name, date: r.date, game: r.game, holesPlayed, tournamentId: ur.tournament_id || null });
+    }
+    setGroupRoundsLoading(false);
+    setGroupRounds(shared);
   }
 
   const [deleteHistoryConfirm, setDeleteHistoryConfirm] = useState(null); // {code, name} while confirming
@@ -2612,6 +2666,7 @@ export default function GolfScorecard() {
     setDeleteGroupConfirming(false);
     setLeaveGroupConfirming(false);
     setRemoveMemberConfirming(null);
+    setGroupRounds([]);
   }, [selectedGroupId]);
 
   useEffect(() => {
@@ -6199,6 +6254,33 @@ function computeRoundScoring(round) {
                         );
                       });
                     })()
+                  )}
+
+                  {groupRoundsLoading && <div style={{ fontSize: 13, color: "#6b6b63", marginTop: 16 }}>Loading rounds played together...</div>}
+                  {groupRoundsErr && <div style={{ color: "#A42E2D", fontSize: 13, marginTop: 16 }}>{groupRoundsErr}</div>}
+                  {!groupRoundsLoading && groupRounds.length > 0 && (
+                    <div style={{ marginTop: 16 }}>
+                      <div className="gsc-label" style={{ marginBottom: 10 }}>Rounds Played Together</div>
+                      {groupRounds.map((r, i) => (
+                        <div
+                          key={r.code}
+                          onClick={() => (r.tournamentId ? openTournamentBoard(r.tournamentId) : viewRoundFromProfile(r.code))}
+                          style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "7px 0", borderBottom: i === groupRounds.length - 1 ? "none" : "1px solid #eee6cf", cursor: "pointer" }}
+                        >
+                          <div style={{ fontSize: 13, color: "#1B4332", fontWeight: 600 }}>
+                            {r.name}
+                            {r.tournamentId && <span style={{ fontSize: 10, color: "#B08D57", marginLeft: 6, fontWeight: 700 }}>TOURNAMENT</span>}
+                            {r.holesPlayed < 18 && (
+                              <span style={{ fontSize: 10, color: "#8a8a80", marginLeft: 6, fontWeight: 400 }}>({r.holesPlayed} holes)</span>
+                            )}
+                          </div>
+                          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                            <div style={{ fontSize: 12, color: "#6b6b63" }}>{r.date}</div>
+                            <span style={{ color: "#8FA998", fontSize: 14 }}>{"\u203A"}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   )}
 
                   {!leaveGroupConfirming && !deleteGroupConfirming && (
