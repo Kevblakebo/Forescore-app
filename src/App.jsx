@@ -3183,10 +3183,47 @@ export default function GolfScorecard() {
   useEffect(() => {
     (async () => {
       const res = await storageGet(ACTIVE_KEY, false);
+      let resumed = null;
       if (res.ok && res.value) {
         try {
-          setActiveRound(JSON.parse(res.value));
+          resumed = JSON.parse(res.value);
         } catch (e) {}
+      }
+      if (resumed && resumed.id) {
+        // Count filled-in strokes entries as a simple stand-in for "more
+        // complete" - scores only ever get added during normal play, not
+        // removed, so whichever version has more is the newer one. This
+        // is what actually recovers scores entered while offline that
+        // never made it to the shared round data before the app closed -
+        // without this check, reopening the app would just silently load
+        // the older, network-saved version and the local-only entries
+        // would be gone for good.
+        try {
+          const backupRaw = window.localStorage.getItem(`gsc-local-backup:${resumed.id}`);
+          if (backupRaw) {
+            const backup = JSON.parse(backupRaw);
+            const countFilled = (rd) => {
+              let n = 0;
+              for (let h = 0; h < 18; h++) {
+                const hs = rd.scores && rd.scores[h];
+                if (!hs) continue;
+                for (const k of Object.keys(hs)) {
+                  if (hs[k] && hs[k].strokes != null && hs[k].strokes !== "") n++;
+                }
+              }
+              return n;
+            };
+            if (backup && backup.id === resumed.id && countFilled(backup) > countFilled(resumed)) {
+              resumed = backup;
+              // Re-attempt syncing this recovered version back to the
+              // shared round data right away, now that the app is open
+              // again - if still offline, this just fails harmlessly and
+              // the local backup keeps covering it.
+              saveRound(backup);
+            }
+          }
+        } catch (e) {}
+        setActiveRound(resumed);
       }
       setResumeChecked(true);
       const fres = await storageGet(FINISHED_INDEX_KEY, false);
@@ -4982,6 +5019,21 @@ export default function GolfScorecard() {
   }
 
   const saveRound = useCallback(async (r) => {
+    // Written synchronously, immediately, before anything network-
+    // dependent below - this is the one part of saving that's genuinely
+    // guaranteed to work with zero connectivity, since it's raw
+    // browser localStorage, not a network call to anything. Its whole
+    // purpose is surviving the app being force-closed or crashing while
+    // offline with scores that were never actually reached the shared
+    // round data - without this, those scores only ever existed in
+    // memory and would be gone for good the moment the tab closed.
+    try {
+      window.localStorage.setItem(`gsc-local-backup:${r.id}`, JSON.stringify(r));
+    } catch (e) {
+      // Storage full or blocked (e.g. private browsing) - not fatal,
+      // the round can still save normally below, it just loses this
+      // extra safety net for this one save.
+    }
     if (failCountRef.current >= 1) {
       // Already confirmed storage isn't responding - don't hammer it on
       // every tap. Wait for a manual retry instead.
@@ -5000,6 +5052,15 @@ export default function GolfScorecard() {
     const results = await Promise.all(writes);
     const sharedRes = results[0];
     const personalRes = results[1] || { ok: true };
+    if (sharedRes.ok) {
+      // The shared round data is the source of truth once it's actually
+      // synced - the local backup was only ever standing in for it, so
+      // there's no reason to keep it around and let these accumulate
+      // forever across every round anyone's ever played.
+      try {
+        window.localStorage.removeItem(`gsc-local-backup:${r.id}`);
+      } catch (e) {}
+    }
     if (!sharedRes.ok && !personalRes.ok) {
       failCountRef.current += 1;
       setStorageBroken(true);
@@ -5025,6 +5086,19 @@ export default function GolfScorecard() {
     setStorageWarning("");
     if (round) saveRound(round);
   }
+
+  // Same retry, but triggered automatically the moment the browser
+  // reports connectivity is back, rather than leaving it up to someone
+  // noticing the warning banner and tapping retry themselves - most
+  // people playing through a dead-zone hole or two won't be looking at
+  // their phone screen at the exact moment signal returns.
+  useEffect(() => {
+    function handleOnline() {
+      if (failCountRef.current >= 1) retrySync();
+    }
+    window.addEventListener("online", handleOnline);
+    return () => window.removeEventListener("online", handleOnline);
+  }, [round]);
 
   const [accolade, setAccolade] = useState(null); // {emoji, text, big, player, key}
   const [inPlayFireworks, setInPlayFireworks] = useState(false);
@@ -10189,7 +10263,7 @@ function computeRoundScoring(round) {
           )
         )}
         <div style={{ background: "#EBF0EC", fontSize: 11, padding: "5px 16px", textAlign: "center", color: "#4A6C5A" }}>
-          {storageBroken ? "Keep playing - this tab has your scores." : "Saved automatically - close and reopen this app any time to pick back up here."}
+          {storageBroken ? "Keep playing - your scores are saved on this device and will sync automatically once connection returns." : "Saved automatically - close and reopen this app any time to pick back up here."}
         </div>
         <div className="gsc-hole-strip" ref={holeStripRef}>
           {Array.from({ length: 18 }).map((_, i) => (
