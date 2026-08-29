@@ -10015,15 +10015,25 @@ function computeRoundScoring(round) {
                         </div>
                       </div>
                     )}
-                    {mulLeft !== null && (
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, flexWrap: "nowrap" }}>
-                        <div style={{ fontSize: 11, color: "#6b6b63", whiteSpace: "nowrap" }}>MULLIGAN ({Math.max(0, mulLeft)} left)</div>
-                        <label className="gsc-mull" style={{ margin: 0, whiteSpace: "nowrap" }}>
-                          <input type="checkbox" checked={!!e.mulligan} disabled={!e.mulligan && mulLeft <= 0} onChange={(ev) => updateHoleEntry(i, "mulligan", ev.target.checked)} />
-                          used
-                        </label>
-                      </div>
-                    )}
+                    {mulLeft !== null && (() => {
+                      const noLimitSet = (round.cfg.mulliganSegment || 0) === 0;
+                      return (
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, flexWrap: "nowrap" }}>
+                          <div style={{ fontSize: 11, color: "#6b6b63", whiteSpace: "nowrap" }}>
+                            {noLimitSet ? "MULLIGAN" : `MULLIGAN (${Math.max(0, mulLeft)} left)`}
+                          </div>
+                          <label className="gsc-mull" style={{ margin: 0, whiteSpace: "nowrap" }}>
+                            <input
+                              type="checkbox"
+                              checked={!!e.mulligan}
+                              disabled={!noLimitSet && !e.mulligan && mulLeft <= 0}
+                              onChange={(ev) => updateHoleEntry(i, "mulligan", ev.target.checked)}
+                            />
+                            used
+                          </label>
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
               );
