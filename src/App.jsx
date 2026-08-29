@@ -5365,7 +5365,10 @@ function computeRoundScoring(round) {
           </div>
           {!session && (
             <div style={{ fontSize: 12, color: "#8a8a80", margin: "-8px 0 16px" }}>
-              No account needed to play - create one anytime to save your stats and groups.
+              No account needed to play, create one anytime to access premium features including GPS, course info, stats, groups, leaderboards, and prior saved rounds.
+              <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 10 }} onClick={() => { setAuthErr(""); goToScreen("login"); }}>
+                Log In or Create Account
+              </button>
             </div>
           )}
           {activeRound && !activeRound.tournamentId && !isRoundDone(activeRound) && (
@@ -5451,18 +5454,6 @@ function computeRoundScoring(round) {
               })}
             </div>
           </div>
-
-          {!session && (
-            <div className="gsc-card gsc-winner-card">
-              <div style={{ fontWeight: 700, fontSize: 16 }}>{"\u{1F513}"} Unlock more with an account</div>
-              <div style={{ fontSize: 13, color: "#4b4b45", marginTop: 3 }}>
-                Create or log in to your account now to access premium features including GPS, course info, stats, groups, leaderboards, and prior saved rounds!
-              </div>
-              <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 10 }} onClick={() => { setAuthErr(""); goToScreen("login"); }}>
-                Log In or Create Account
-              </button>
-            </div>
-          )}
 
           <div className="gsc-card gsc-winner-card" style={{ cursor: "pointer" }} onClick={startWizard}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
