@@ -5369,7 +5369,7 @@ function computeRoundScoring(round) {
                 ? `Welcome ${profile.name}, what game do you want to play today?`
                 : "What game do you want to play today?"
             ) : (
-              "Built for every group you play with. Set up your crew once, then pick from 15 golf games and fill everyone in with one tap each time you play. RipScore handles the scoring, GPS distance-to-green, and a leaderboard just between your group, so all that's left is golf: no paper scorecards, no redoing the math, no arguing about rules, and a clear answer to who owes who at the 19th hole!"
+              "Built for every group you play golf with. Set up your crew once, then pick from 15 golf games and fill everyone in with one tap each time you play. RipScore handles the scoring, GPS distance-to-green, and a leaderboard just between your group, so all that's left is golf: no paper scorecards, no redoing the math, no arguing about rules, and a clear answer to who owes who at the 19th hole!"
             )}
             <br />
             <br />
@@ -6608,7 +6608,7 @@ function computeRoundScoring(round) {
           <div className="gsc-card gsc-no-select">
             <div style={{ fontSize: 13, color: "#4b4b45", lineHeight: 1.6 }}>
               <p style={{ margin: "0 0 14px" }}>
-                Built for every group you play with.
+                Built for every group you play golf with.
               </p>
               <p style={{ margin: "0 0 14px" }}>
                 RipScore is the golf app for your regular game - the same crew, the same Saturday tee time, without the scorecard math or the "wait, what were we betting on again?" RipScore keeps score, tracks who's up, and settles the debate before you're off the 18th green.
