@@ -1416,11 +1416,13 @@ export default function GolfScorecard() {
   // active round
   const [round, setRound] = useState(null); // full round object once loaded/created
   const [holeIdx, setHoleIdx] = useState(0);
+  const [clearHoleConfirming, setClearHoleConfirming] = useState(false);
   const holeStripRef = useRef(null);
   useEffect(() => {
     if (!holeStripRef.current) return;
     const activePip = holeStripRef.current.querySelector(".gsc-hole-pip.active");
     if (activePip) activePip.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+    setClearHoleConfirming(false);
   }, [holeIdx]);
   const [holeNoteDraft, setHoleNoteDraft] = useState("");
   const [showGrid, setShowGrid] = useState(false);
@@ -4653,6 +4655,22 @@ export default function GolfScorecard() {
       saveRound(next);
       return next;
     });
+  }
+
+  // Wipes every player's strokes, putts, and mulligans for the
+  // currently-viewed hole in one action - for when scores were
+  // mistakenly entered on the wrong hole entirely (thinking it was hole
+  // 3 when it was actually hole 2), rather than needing to decrement
+  // each stepper back down to empty one at a time, for every player.
+  function clearHoleScores() {
+    lastLocalEditRef.current = Date.now();
+    setRound((r) => {
+      const next = { ...r, scores: { ...r.scores } };
+      next.scores[holeIdx] = {};
+      saveRound(next);
+      return next;
+    });
+    setClearHoleConfirming(false);
   }
 
   // Used by "one team score" games (like Scramble Tournament) where there's
@@ -9743,6 +9761,30 @@ function computeRoundScoring(round) {
                   <div style={{ fontSize: 12, color: "#B08D57", fontWeight: 700, marginTop: 4 }}>
                     {round.players[teamsThisHole[0][0]].name}+{round.players[teamsThisHole[0][1]].name} vs {round.players[teamsThisHole[1][0]].name}+{round.players[teamsThisHole[1][1]].name}
                   </div>
+                )}
+                {Object.keys(hs).some((k) => hs[k] && hs[k].strokes !== "" && hs[k].strokes != null) && (
+                  clearHoleConfirming ? (
+                    <div style={{ marginTop: 6, padding: "8px 10px", background: "#FBEAE5", border: "1px solid #A42E2D", borderRadius: 8, maxWidth: 240 }}>
+                      <div style={{ fontSize: 12, color: "#A42E2D", fontWeight: 700, marginBottom: 6 }}>
+                        Clear everyone's scores for hole {holeIdx + 1}?
+                      </div>
+                      <div style={{ display: "flex", gap: 6 }}>
+                        <button className="gsc-btn" style={{ background: "#A42E2D", color: "#fff", flex: 1, padding: "6px 8px", fontSize: 12 }} onClick={clearHoleScores}>
+                          Yes, clear
+                        </button>
+                        <button className="gsc-btn gsc-btn-outline" style={{ flex: 1, padding: "6px 8px", fontSize: 12 }} onClick={() => setClearHoleConfirming(false)}>
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setClearHoleConfirming(true)}
+                      style={{ background: "none", border: "none", padding: 0, marginTop: 6, color: "#A42E2D", fontSize: 11, textDecoration: "underline", cursor: "pointer" }}
+                    >
+                      Entered the wrong hole? Clear this hole
+                    </button>
+                  )
                 )}
               </div>
               <button className="gsc-btn gsc-btn-outline" disabled={holeIdx === 17} onClick={() => setHoleIdx((h) => h + 1)}>Next</button>
