@@ -3771,7 +3771,15 @@ export default function GolfScorecard() {
     const ordered = session ? [...members].sort((a, b) => (a.user_id === session.user.id ? -1 : b.user_id === session.user.id ? 1 : 0)) : members;
     const filled = ordered.slice(0, 4).map((m) => ({ name: m.name, avatar: m.avatar, user_id: m.user_id, hcp: m.handicap || "" }));
     if (groupFillFor === "players" || groupFillFor === "playersAndMeta") {
-      if (filled.length > 0) setPlayers(filled);
+      if (filled.length > 0) {
+        // A group with fewer than 4 members shouldn't shrink the player
+        // list down to match it - someone playing with 2 regulars from a
+        // group plus 2 guests needs those extra slots to still exist and
+        // be fillable, not disappear along with the ability to add to
+        // them.
+        const padded = Array.from({ length: 4 }, (_, i) => filled[i] || { name: "", avatar: "", hcp: "" });
+        setPlayers(padded);
+      }
     } else if (typeof groupFillFor === "number") {
       const fi = groupFillFor;
       const fullFour = Array.from({ length: 4 }, (_, i) => filled[i] || { name: "", avatar: "", hcp: "" });
@@ -9474,7 +9482,19 @@ function computeRoundScoring(round) {
     const mulSeg = Math.floor(holeIdx / mulliganWindow(round.game));
     const teamsThisHole = computeTeamsForHole(round, holeIdx, hs);
     const hr = computed.holeResults[holeIdx];
-    const ranks = playerRank();
+    // Standings should reflect where things stood at the hole currently
+    // being viewed, not the round's overall total - so navigating back to
+    // an earlier hole shows what the standings actually were at that
+    // point, not the final (or current) result. Built by clearing out any
+    // holes after the one being viewed and re-running the same scoring
+    // logic on that truncated copy, rather than duplicating that logic.
+    const ranks = (() => {
+      const truncatedScores = { ...round.scores };
+      for (let h = holeIdx + 1; h < 18; h++) truncatedScores[h] = {};
+      const truncatedRound = { ...round, scores: truncatedScores };
+      const truncatedComputed = computeRoundScoring(truncatedRound);
+      return playerRank(truncatedRound, truncatedComputed);
+    })();
     const foursomeTotals = g.singleTeam ? computeTournamentFoursomeTotals(round) : null;
 
 
