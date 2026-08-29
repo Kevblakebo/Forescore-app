@@ -1403,6 +1403,18 @@ export default function GolfScorecard() {
     }
   }, [screen, session && session.user && session.user.id]);
 
+  useEffect(() => {
+    if (screen === "home" && session && session.user) {
+      // Same reasoning as the Groups tab refresh above, but here for the
+      // single most-visited screen in the app - simply opening the app
+      // at all should be enough to catch someone up, without them ever
+      // needing to know that a stats refresh is even a thing, let alone
+      // which specific page triggers it.
+      loadStats();
+      loadMyGroups();
+    }
+  }, [screen, session && session.user && session.user.id]);
+
   // browser's own scroll-anchoring feature actively tries to preserve
   // scroll position when content above the viewport resizes (exactly
   // what happens switching between a 2-button question and an 18-hole
