@@ -2282,12 +2282,39 @@ export default function GolfScorecard() {
       return;
     }
     const { data: stats, error: statsErr } = await withJwtRetry(() => supabase.from("leaderboard_stats").select("*").in("user_id", userIds));
-    setGroupMembersLoading(false);
     if (statsErr) {
+      setGroupMembersLoading(false);
       setGroupMembersErr(`Couldn't load this group's stats (${statsErr.message}).`);
       return;
     }
-    const result = stats || [];
+    // Name/avatar/handicap still come from the global leaderboard_stats
+    // cache (this new table doesn't duplicate that) - but the actual
+    // numbers (rounds played, wins, strokes, etc.) come from
+    // group_member_stats instead, so this group's leaderboard reflects
+    // only rounds actually played with this group, not someone's
+    // all-time totals from every group and stranger they've ever played
+    // with.
+    const { data: groupStats, error: groupStatsErr } = await withJwtRetry(() =>
+      supabase.from("group_member_stats").select("*").eq("group_id", groupId).in("user_id", userIds)
+    );
+    setGroupMembersLoading(false);
+    if (groupStatsErr) {
+      setGroupMembersErr(`Couldn't load this group's stats (${groupStatsErr.message}).`);
+      return;
+    }
+    const groupStatsByUser = new Map((groupStats || []).map((gs) => [gs.user_id, gs]));
+    const zeroStats = { rounds_played: 0, wins: 0, strokes_sum: 0, strokes_rounds: 0, putts_sum: 0, putts_rounds: 0, birdies: 0, pars: 0, eagles: 0, holes_in_one: 0 };
+    const result = (stats || []).map((s) => ({ ...s, ...zeroStats, ...(groupStatsByUser.get(s.user_id) || {}) }));
+    // Someone who's a group member but has never once visited this
+    // specific group's page yet (and so has no leaderboard_stats row
+    // matched above either) still needs to appear on the leaderboard -
+    // just showing zeros until their own device computes their real
+    // group-specific numbers.
+    for (const uid of userIds) {
+      if (!result.some((r) => r.user_id === uid)) {
+        result.push({ user_id: uid, display_name: "Golfer", avatar: "", handicap: "", opted_in: false, ...zeroStats, ...(groupStatsByUser.get(uid) || {}) });
+      }
+    }
     // Same reasoning as the group-fill functions - leaderboard_stats is a
     // cached copy of your own display_name/avatar/handicap, only
     // refreshed when you've actually visited Profile or saved it. If
@@ -2295,25 +2322,8 @@ export default function GolfScorecard() {
     // so for yourself specifically, use your live profile data instead.
     if (session && profile && userIds.includes(session.user.id)) {
       const myIdx = result.findIndex((r) => r.user_id === session.user.id);
-      const nameAvatarHcp = { display_name: profile.name || "Golfer", avatar: profile.avatar || "", handicap: profile.handicap || "" };
       if (myIdx >= 0) {
-        result[myIdx] = { ...result[myIdx], ...nameAvatarHcp };
-      } else {
-        result.push({
-          user_id: session.user.id,
-          ...nameAvatarHcp,
-          opted_in: false,
-          rounds_played: 0,
-          wins: 0,
-          strokes_sum: 0,
-          strokes_rounds: 0,
-          putts_sum: 0,
-          putts_rounds: 0,
-          birdies: 0,
-          pars: 0,
-          eagles: 0,
-          holes_in_one: 0,
-        });
+        result[myIdx] = { ...result[myIdx], display_name: profile.name || "Golfer", avatar: profile.avatar || "", handicap: profile.handicap || "" };
       }
     }
     setGroupMembersStats(result);
@@ -2340,6 +2350,15 @@ export default function GolfScorecard() {
       const myRoundsIndex = myRoundsIndexRaw || [];
       if (myRoundsIndex.length === 0 || memberUserIds.length === 0) {
         setGroupRounds([]);
+        await supabase
+          .from("group_member_stats")
+          .upsert(
+            { group_id: groupId, user_id: session.user.id, rounds_played: 0, wins: 0, strokes_sum: 0, strokes_rounds: 0, putts_sum: 0, putts_rounds: 0, birdies: 0, pars: 0, eagles: 0, holes_in_one: 0, updated_at: new Date().toISOString() },
+            { onConflict: "group_id,user_id" }
+          )
+          .then(({ error: gmsError }) => {
+            if (gmsError) console.warn("Couldn't update group stats:", gmsError.message);
+          });
         return;
       }
       const roundResults = await Promise.all(
@@ -2347,6 +2366,14 @@ export default function GolfScorecard() {
       );
       const memberSet = new Set(memberUserIds);
       const shared = [];
+      // Same accumulators, and the exact same per-round computation, as
+      // the global stats calculation - the only difference here is which
+      // rounds get counted at all: only ones actually played with this
+      // specific group, so a person in several groups gets genuinely
+      // different, group-scoped numbers in each one, not the same
+      // all-time totals repeated everywhere.
+      let groupRoundsPlayed = 0, groupWins = 0, groupBirdies = 0, groupPars = 0, groupEagles = 0, groupHolesInOne = 0;
+      let groupStrokesSum = 0, groupStrokesCount = 0, groupPuttsSum = 0, groupPuttsCount = 0;
       for (const { ur, res } of roundResults) {
         if (!res.ok || !res.value) continue;
         let r;
@@ -2355,20 +2382,73 @@ export default function GolfScorecard() {
         } catch (e) {
           continue;
         }
-        if (!r || !r.players) continue;
+        if (!r || !r.players || !GAMES[r.game]) continue;
         const myIdx = r.players.findIndex((p) => p.user_id === session.user.id);
         if (myIdx === -1) continue;
-        let holesPlayed = 0;
-        for (let h = 0; h < 18; h++) {
-          const entry = r.scores && r.scores[h] ? r.scores[h][myIdx] : null;
-          if (entry && entry.strokes != null && entry.strokes !== "") holesPlayed++;
-        }
-        if (holesPlayed === 0 || !(r.finished || holesPlayed === 18)) continue;
         const playedWithGroup = r.players.some((p, i) => i !== myIdx && p.user_id && memberSet.has(p.user_id));
         if (!playedWithGroup) continue;
+
+        let holesPlayed = 0, myStrokesTotal = 0, myPuttsTotal = 0;
+        for (let h = 0; h < 18; h++) {
+          const entry = r.scores && r.scores[h] ? r.scores[h][myIdx] : null;
+          const parH = r.par ? r.par[h] : null;
+          if (entry && entry.strokes != null && entry.strokes !== "") {
+            holesPlayed++;
+            const strokesVal = Number(entry.strokes);
+            myStrokesTotal += strokesVal;
+            if (strokesVal === 1) {
+              groupHolesInOne++;
+            } else if (parH != null) {
+              const diff = strokesVal - parH;
+              if (diff <= -2) groupEagles++;
+              else if (diff === -1) groupBirdies++;
+              else if (diff === 0) groupPars++;
+            }
+          }
+          if (entry && entry.putts != null && entry.putts !== "") myPuttsTotal += Number(entry.putts);
+        }
+        if (holesPlayed === 0) continue;
+        if (!(r.finished || holesPlayed === 18)) continue;
+
+        groupRoundsPlayed++;
+        const scale = holesPlayed < 18 ? 18 / holesPlayed : 1;
+        groupStrokesSum += myStrokesTotal * scale;
+        groupStrokesCount++;
+        groupPuttsSum += myPuttsTotal * scale;
+        groupPuttsCount++;
+        const computedForRound = computeRoundScoring(r);
+        if (computedForRound) {
+          const winners = determineWinners(r, computedForRound);
+          if (winners.some((w) => w.idx === myIdx)) groupWins++;
+        }
+
         shared.push({ code: ur.round_code, name: r.name, date: r.date, game: r.game, holesPlayed, tournamentId: ur.tournament_id || null });
       }
       setGroupRounds(shared);
+
+      await supabase
+        .from("group_member_stats")
+        .upsert(
+          {
+            group_id: groupId,
+            user_id: session.user.id,
+            rounds_played: groupRoundsPlayed,
+            wins: groupWins,
+            strokes_sum: groupStrokesSum,
+            strokes_rounds: groupStrokesCount,
+            putts_sum: groupPuttsSum,
+            putts_rounds: groupPuttsCount,
+            birdies: groupBirdies,
+            pars: groupPars,
+            eagles: groupEagles,
+            holes_in_one: groupHolesInOne,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "group_id,user_id" }
+        )
+        .then(({ error: gmsError }) => {
+          if (gmsError) console.warn("Couldn't update group stats:", gmsError.message);
+        });
     } catch (e) {
       console.error("loadGroupSharedRounds failed:", e);
       setGroupRoundsErr(`Couldn't load rounds played with this group (${(e && e.message) || "unknown error"}).`);
