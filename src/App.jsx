@@ -10016,9 +10016,9 @@ function computeRoundScoring(round) {
                       </div>
                     )}
                     {mulLeft !== null && (
-                      <div>
-                        <div style={{ fontSize: 11, color: "#6b6b63", marginBottom: 3 }}>MULLIGAN ({Math.max(0, mulLeft)} left)</div>
-                        <label className="gsc-mull">
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, flexWrap: "nowrap" }}>
+                        <div style={{ fontSize: 11, color: "#6b6b63", whiteSpace: "nowrap" }}>MULLIGAN ({Math.max(0, mulLeft)} left)</div>
+                        <label className="gsc-mull" style={{ margin: 0, whiteSpace: "nowrap" }}>
                           <input type="checkbox" checked={!!e.mulligan} disabled={!e.mulligan && mulLeft <= 0} onChange={(ev) => updateHoleEntry(i, "mulligan", ev.target.checked)} />
                           used
                         </label>
