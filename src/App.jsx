@@ -1392,6 +1392,14 @@ export default function GolfScorecard() {
   useEffect(() => {
     if (screen === "groupsTab" && session && session.user) {
       loadMyGroups();
+      // Also refresh this user's own cached leaderboard entry here, not
+      // just on Profile - someone checking a group's leaderboard right
+      // after playing shouldn't need to know that a completely different
+      // page is what actually refreshes their numbers. This can only
+      // ever update this person's own row, using their own session - it
+      // can't (and shouldn't) reach into anyone else's stats just
+      // because they're viewing a shared group page.
+      loadStats();
     }
   }, [screen, session && session.user && session.user.id]);
 
