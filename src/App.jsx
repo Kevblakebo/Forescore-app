@@ -1412,6 +1412,7 @@ export default function GolfScorecard() {
       // which specific page triggers it.
       loadStats();
       loadMyGroups();
+      refreshAllMyGroupStats();
     }
   }, [screen, session && session.user && session.user.id]);
 
@@ -2454,6 +2455,125 @@ export default function GolfScorecard() {
       setGroupRoundsErr(`Couldn't load rounds played with this group (${(e && e.message) || "unknown error"}).`);
     } finally {
       setGroupRoundsLoading(false);
+    }
+  }
+
+  // Refreshes this user's own group-scoped stats for EVERY group they
+  // belong to at once, rather than requiring a visit to each group's
+  // page individually - meant to be triggered from a high-traffic screen
+  // like the homepage, so someone catches up across all their groups
+  // just by opening the app. Fetches round data once and reuses it for
+  // every group's calculation, rather than repeating the same fetch
+  // once per group.
+  async function refreshAllMyGroupStats() {
+    if (!session || !supabase) return;
+    try {
+      const { data: myMemberships, error: memErr } = await withJwtRetry(() =>
+        supabase.from("group_members").select("group_id").eq("user_id", session.user.id)
+      );
+      if (memErr || !myMemberships || myMemberships.length === 0) return;
+      const myGroupIds = myMemberships.map((m) => m.group_id);
+
+      const { data: allMemberships, error: allMemErr } = await withJwtRetry(() =>
+        supabase.from("group_members").select("group_id, user_id").in("group_id", myGroupIds)
+      );
+      if (allMemErr) return;
+      const membersByGroup = {};
+      for (const m of allMemberships || []) {
+        if (!membersByGroup[m.group_id]) membersByGroup[m.group_id] = [];
+        membersByGroup[m.group_id].push(m.user_id);
+      }
+
+      const { data: myRoundsIndexRaw, error: roundsErr } = await withJwtRetry(() =>
+        supabase.from("user_rounds").select("*").eq("user_id", session.user.id)
+      );
+      if (roundsErr) return;
+      const myRoundsIndex = myRoundsIndexRaw || [];
+      if (myRoundsIndex.length === 0) return;
+
+      const roundResults = await Promise.all(
+        myRoundsIndex.map((ur) => storageGet(`golfround:${ur.round_code}`, true).then((res) => ({ ur, res })))
+      );
+      const parsedRounds = [];
+      for (const { res } of roundResults) {
+        if (!res.ok || !res.value) continue;
+        try {
+          const r = JSON.parse(res.value);
+          if (r && r.players && GAMES[r.game]) parsedRounds.push(r);
+        } catch (e) {}
+      }
+      if (parsedRounds.length === 0) return;
+
+      for (const groupId of myGroupIds) {
+        const memberSet = new Set(membersByGroup[groupId] || []);
+        let groupRoundsPlayed = 0, groupWins = 0, groupBirdies = 0, groupPars = 0, groupEagles = 0, groupHolesInOne = 0;
+        let groupStrokesSum = 0, groupStrokesCount = 0, groupPuttsSum = 0, groupPuttsCount = 0;
+        for (const r of parsedRounds) {
+          const myIdx = r.players.findIndex((p) => p.user_id === session.user.id);
+          if (myIdx === -1) continue;
+          const playedWithGroup = r.players.some((p, i) => i !== myIdx && p.user_id && memberSet.has(p.user_id));
+          if (!playedWithGroup) continue;
+
+          let holesPlayed = 0, myStrokesTotal = 0, myPuttsTotal = 0;
+          for (let h = 0; h < 18; h++) {
+            const entry = r.scores && r.scores[h] ? r.scores[h][myIdx] : null;
+            const parH = r.par ? r.par[h] : null;
+            if (entry && entry.strokes != null && entry.strokes !== "") {
+              holesPlayed++;
+              const strokesVal = Number(entry.strokes);
+              myStrokesTotal += strokesVal;
+              if (strokesVal === 1) {
+                groupHolesInOne++;
+              } else if (parH != null) {
+                const diff = strokesVal - parH;
+                if (diff <= -2) groupEagles++;
+                else if (diff === -1) groupBirdies++;
+                else if (diff === 0) groupPars++;
+              }
+            }
+            if (entry && entry.putts != null && entry.putts !== "") myPuttsTotal += Number(entry.putts);
+          }
+          if (holesPlayed === 0 || !(r.finished || holesPlayed === 18)) continue;
+
+          groupRoundsPlayed++;
+          const scale = holesPlayed < 18 ? 18 / holesPlayed : 1;
+          groupStrokesSum += myStrokesTotal * scale;
+          groupStrokesCount++;
+          groupPuttsSum += myPuttsTotal * scale;
+          groupPuttsCount++;
+          const computedForRound = computeRoundScoring(r);
+          if (computedForRound) {
+            const winners = determineWinners(r, computedForRound);
+            if (winners.some((w) => w.idx === myIdx)) groupWins++;
+          }
+        }
+
+        supabase
+          .from("group_member_stats")
+          .upsert(
+            {
+              group_id: groupId,
+              user_id: session.user.id,
+              rounds_played: groupRoundsPlayed,
+              wins: groupWins,
+              strokes_sum: groupStrokesSum,
+              strokes_rounds: groupStrokesCount,
+              putts_sum: groupPuttsSum,
+              putts_rounds: groupPuttsCount,
+              birdies: groupBirdies,
+              pars: groupPars,
+              eagles: groupEagles,
+              holes_in_one: groupHolesInOne,
+              updated_at: new Date().toISOString(),
+            },
+            { onConflict: "group_id,user_id" }
+          )
+          .then(({ error: gmsError }) => {
+            if (gmsError) console.warn(`Couldn't update stats for group ${groupId}:`, gmsError.message);
+          });
+      }
+    } catch (e) {
+      console.error("refreshAllMyGroupStats failed:", e);
     }
   }
 
