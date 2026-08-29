@@ -1236,6 +1236,11 @@ export default function GolfScorecard() {
 
   // ---- Stats (Phase 5) ----
   const [stats, setStats] = useState(null);
+  const [headToHeadList, setHeadToHeadList] = useState([]);
+  const [headToHeadLoading, setHeadToHeadLoading] = useState(false);
+  const [headToHeadModal, setHeadToHeadModal] = useState(null); // { opponentId, opponentName, opponentAvatar } while open
+  const [headToHeadModalData, setHeadToHeadModalData] = useState(null);
+  const [headToHeadModalLoading, setHeadToHeadModalLoading] = useState(false);
   const [statsLoading, setStatsLoading] = useState(false);
   const [statsErr, setStatsErr] = useState("");
   const [statsDateFrom, setStatsDateFrom] = useState("");
@@ -1390,6 +1395,12 @@ export default function GolfScorecard() {
   }, [screen, session && session.user && session.user.id]);
 
   useEffect(() => {
+    if (screen === "profileTab" && session && session.user) {
+      loadHeadToHeadList();
+    }
+  }, [screen, session && session.user && session.user.id]);
+
+  useEffect(() => {
     if (screen === "groupsTab" && session && session.user) {
       loadMyGroups();
       // Also refresh this user's own cached leaderboard entry here, not
@@ -1412,7 +1423,7 @@ export default function GolfScorecard() {
       // which specific page triggers it.
       loadStats();
       loadMyGroups();
-      refreshAllMyGroupStats();
+      refreshAllMyStats();
     }
   }, [screen, session && session.user && session.user.id]);
 
@@ -2418,12 +2429,14 @@ export default function GolfScorecard() {
         groupPuttsSum += myPuttsTotal * scale;
         groupPuttsCount++;
         const computedForRound = computeRoundScoring(r);
+        let wonThisRound = null;
         if (computedForRound) {
           const winners = determineWinners(r, computedForRound);
-          if (winners.some((w) => w.idx === myIdx)) groupWins++;
+          wonThisRound = winners.some((w) => w.idx === myIdx);
+          if (wonThisRound) groupWins++;
         }
 
-        shared.push({ code: ur.round_code, name: r.name, date: r.date, game: r.game, holesPlayed, tournamentId: ur.tournament_id || null });
+        shared.push({ code: ur.round_code, name: r.name, date: r.date, game: r.game, holesPlayed, tournamentId: ur.tournament_id || null, won: wonThisRound });
       }
       setGroupRounds(shared);
 
@@ -2459,29 +2472,32 @@ export default function GolfScorecard() {
   }
 
   // Refreshes this user's own group-scoped stats for EVERY group they
-  // belong to at once, rather than requiring a visit to each group's
-  // page individually - meant to be triggered from a high-traffic screen
-  // like the homepage, so someone catches up across all their groups
-  // just by opening the app. Fetches round data once and reuses it for
-  // every group's calculation, rather than repeating the same fetch
-  // once per group.
-  async function refreshAllMyGroupStats() {
+  // belong to, AND their head-to-head record against every opponent
+  // they've ever played a linked round with - all in one pass, meant to
+  // be triggered from a high-traffic screen like the homepage, so
+  // someone catches up everywhere just by opening the app. Fetches
+  // round data once and reuses it for every group's and every
+  // opponent's calculation, rather than repeating the same fetch
+  // separately for each one.
+  async function refreshAllMyStats() {
     if (!session || !supabase) return;
     try {
       const { data: myMemberships, error: memErr } = await withJwtRetry(() =>
         supabase.from("group_members").select("group_id").eq("user_id", session.user.id)
       );
-      if (memErr || !myMemberships || myMemberships.length === 0) return;
-      const myGroupIds = myMemberships.map((m) => m.group_id);
+      const myGroupIds = memErr || !myMemberships ? [] : myMemberships.map((m) => m.group_id);
 
-      const { data: allMemberships, error: allMemErr } = await withJwtRetry(() =>
-        supabase.from("group_members").select("group_id, user_id").in("group_id", myGroupIds)
-      );
-      if (allMemErr) return;
-      const membersByGroup = {};
-      for (const m of allMemberships || []) {
-        if (!membersByGroup[m.group_id]) membersByGroup[m.group_id] = [];
-        membersByGroup[m.group_id].push(m.user_id);
+      let membersByGroup = {};
+      if (myGroupIds.length > 0) {
+        const { data: allMemberships, error: allMemErr } = await withJwtRetry(() =>
+          supabase.from("group_members").select("group_id, user_id").in("group_id", myGroupIds)
+        );
+        if (!allMemErr) {
+          for (const m of allMemberships || []) {
+            if (!membersByGroup[m.group_id]) membersByGroup[m.group_id] = [];
+            membersByGroup[m.group_id].push(m.user_id);
+          }
+        }
       }
 
       const { data: myRoundsIndexRaw, error: roundsErr } = await withJwtRetry(() =>
@@ -2495,11 +2511,11 @@ export default function GolfScorecard() {
         myRoundsIndex.map((ur) => storageGet(`golfround:${ur.round_code}`, true).then((res) => ({ ur, res })))
       );
       const parsedRounds = [];
-      for (const { res } of roundResults) {
+      for (const { ur, res } of roundResults) {
         if (!res.ok || !res.value) continue;
         try {
           const r = JSON.parse(res.value);
-          if (r && r.players && GAMES[r.game]) parsedRounds.push(r);
+          if (r && r.players && GAMES[r.game]) parsedRounds.push({ r, code: ur.round_code });
         } catch (e) {}
       }
       if (parsedRounds.length === 0) return;
@@ -2508,7 +2524,7 @@ export default function GolfScorecard() {
         const memberSet = new Set(membersByGroup[groupId] || []);
         let groupRoundsPlayed = 0, groupWins = 0, groupBirdies = 0, groupPars = 0, groupEagles = 0, groupHolesInOne = 0;
         let groupStrokesSum = 0, groupStrokesCount = 0, groupPuttsSum = 0, groupPuttsCount = 0;
-        for (const r of parsedRounds) {
+        for (const { r } of parsedRounds) {
           const myIdx = r.players.findIndex((p) => p.user_id === session.user.id);
           if (myIdx === -1) continue;
           const playedWithGroup = r.players.some((p, i) => i !== myIdx && p.user_id && memberSet.has(p.user_id));
@@ -2572,8 +2588,173 @@ export default function GolfScorecard() {
             if (gmsError) console.warn(`Couldn't update stats for group ${groupId}:`, gmsError.message);
           });
       }
+
+      // Head-to-head: for every OTHER linked player across all of my
+      // rounds (regardless of group), build up a per-opponent history of
+      // shared, finished rounds - comparing raw total strokes each round
+      // (lower wins) since that's the one thing every game format has in
+      // common, unlike each format's own particular win condition.
+      const byOpponent = {};
+      for (const { r, code } of parsedRounds) {
+        const myIdx = r.players.findIndex((p) => p.user_id === session.user.id);
+        if (myIdx === -1) continue;
+
+        let holesPlayed = 0, myStrokesTotal = 0;
+        for (let h = 0; h < 18; h++) {
+          const entry = r.scores && r.scores[h] ? r.scores[h][myIdx] : null;
+          if (entry && entry.strokes != null && entry.strokes !== "") {
+            holesPlayed++;
+            myStrokesTotal += Number(entry.strokes);
+          }
+        }
+        if (holesPlayed === 0 || !(r.finished || holesPlayed === 18)) continue;
+
+        for (let oppIdx = 0; oppIdx < r.players.length; oppIdx++) {
+          if (oppIdx === myIdx) continue;
+          const opp = r.players[oppIdx];
+          if (!opp.user_id) continue;
+
+          let oppHolesPlayed = 0, oppStrokesTotal = 0;
+          for (let h = 0; h < 18; h++) {
+            const entry = r.scores && r.scores[h] ? r.scores[h][oppIdx] : null;
+            if (entry && entry.strokes != null && entry.strokes !== "") {
+              oppHolesPlayed++;
+              oppStrokesTotal += Number(entry.strokes);
+            }
+          }
+          // Both sides need a full, comparable round for this matchup to
+          // count - one player finishing early wouldn't be a fair
+          // stroke-count comparison against someone who played all 18.
+          if (oppHolesPlayed !== holesPlayed) continue;
+
+          if (!byOpponent[opp.user_id]) byOpponent[opp.user_id] = [];
+          byOpponent[opp.user_id].push({ myStrokesTotal, oppStrokesTotal, date: r.date || "", code });
+        }
+      }
+
+      for (const opponentId of Object.keys(byOpponent)) {
+        const matchups = byOpponent[opponentId].slice().sort((a, b) => (a.date || "").localeCompare(b.date || ""));
+        let wins = 0, losses = 0, ties = 0, myStrokesSum = 0, oppStrokesSum = 0;
+        let bestRoundStrokes = null, bestRoundDate = null, bestRoundCode = null;
+        for (const m of matchups) {
+          myStrokesSum += m.myStrokesTotal;
+          oppStrokesSum += m.oppStrokesTotal;
+          if (m.myStrokesTotal < m.oppStrokesTotal) wins++;
+          else if (m.myStrokesTotal > m.oppStrokesTotal) losses++;
+          else ties++;
+          if (bestRoundStrokes === null || m.myStrokesTotal < bestRoundStrokes) {
+            bestRoundStrokes = m.myStrokesTotal;
+            bestRoundDate = m.date;
+            bestRoundCode = m.code;
+          }
+        }
+        // Streak: walk backward from the most recent matchup, counting
+        // consecutive wins or losses until the pattern breaks (a tie
+        // always breaks it, rather than counting toward either side).
+        let streak = 0;
+        for (let i = matchups.length - 1; i >= 0; i--) {
+          const m = matchups[i];
+          const outcome = m.myStrokesTotal < m.oppStrokesTotal ? 1 : m.myStrokesTotal > m.oppStrokesTotal ? -1 : 0;
+          if (outcome === 0) break;
+          if (streak === 0) streak = outcome;
+          else if (Math.sign(streak) === outcome) streak += outcome;
+          else break;
+        }
+
+        supabase
+          .from("head_to_head_stats")
+          .upsert(
+            {
+              user_id: session.user.id,
+              opponent_id: opponentId,
+              rounds_played: matchups.length,
+              wins,
+              losses,
+              ties,
+              my_strokes_sum: myStrokesSum,
+              opp_strokes_sum: oppStrokesSum,
+              best_round_strokes: bestRoundStrokes,
+              best_round_date: bestRoundDate,
+              best_round_code: bestRoundCode,
+              current_streak: streak,
+              updated_at: new Date().toISOString(),
+            },
+            { onConflict: "user_id,opponent_id" }
+          )
+          .then(({ error: hthError }) => {
+            if (hthError) console.warn(`Couldn't update head-to-head vs ${opponentId}:`, hthError.message);
+          });
+      }
     } catch (e) {
-      console.error("refreshAllMyGroupStats failed:", e);
+      console.error("refreshAllMyStats failed:", e);
+    }
+  }
+
+  // Loads this user's own head-to-head records for display on Profile -
+  // queries only their own direction (user_id = them), since that's
+  // guaranteed complete and freshly computed for anyone who's opened the
+  // homepage at least once since playing, without needing to reconcile
+  // two different directions' perspectives for this simple list.
+  async function loadHeadToHeadList() {
+    if (!session || !supabase) return;
+    setHeadToHeadLoading(true);
+    const { data, error } = await withJwtRetry(() => supabase.from("head_to_head_stats").select("*").eq("user_id", session.user.id));
+    if (error || !data || data.length === 0) {
+      setHeadToHeadLoading(false);
+      setHeadToHeadList([]);
+      return;
+    }
+    const opponentIds = data.map((d) => d.opponent_id);
+    const { data: names } = await withJwtRetry(() => supabase.from("leaderboard_stats").select("user_id, display_name, avatar").in("user_id", opponentIds));
+    const nameById = new Map((names || []).map((n) => [n.user_id, n]));
+    const result = data
+      .map((d) => ({
+        ...d,
+        opponentName: (nameById.get(d.opponent_id) || {}).display_name || "Golfer",
+        opponentAvatar: (nameById.get(d.opponent_id) || {}).avatar || "",
+      }))
+      .sort((a, b) => b.rounds_played - a.rounds_played);
+    setHeadToHeadLoading(false);
+    setHeadToHeadList(result);
+  }
+
+  // Opens the head-to-head detail view for a specific opponent - checks
+  // both directions, since either person's own device may have computed
+  // and saved it first. Prefers this user's own computed direction if
+  // it exists (their own freshest perspective); otherwise falls back to
+  // the opponent's direction and flips the numbers to describe this
+  // user's side instead.
+  async function openHeadToHead(opponentId, opponentName, opponentAvatar) {
+    setHeadToHeadModal({ opponentId, opponentName, opponentAvatar });
+    setHeadToHeadModalData(null);
+    setHeadToHeadModalLoading(true);
+    if (!session || !supabase) {
+      setHeadToHeadModalLoading(false);
+      return;
+    }
+    const { data, error } = await withJwtRetry(() =>
+      supabase.from("head_to_head_stats").select("*").or(`and(user_id.eq.${session.user.id},opponent_id.eq.${opponentId}),and(user_id.eq.${opponentId},opponent_id.eq.${session.user.id})`)
+    );
+    setHeadToHeadModalLoading(false);
+    if (error || !data || data.length === 0) {
+      setHeadToHeadModalData({ rounds_played: 0 });
+      return;
+    }
+    const mine = data.find((d) => d.user_id === session.user.id);
+    if (mine) {
+      setHeadToHeadModalData(mine);
+    } else {
+      const theirs = data[0];
+      setHeadToHeadModalData({
+        rounds_played: theirs.rounds_played,
+        wins: theirs.losses,
+        losses: theirs.wins,
+        ties: theirs.ties,
+        my_strokes_sum: theirs.opp_strokes_sum,
+        opp_strokes_sum: theirs.my_strokes_sum,
+        best_round_strokes: null, // only meaningful from the side that computed it - not flippable
+        current_streak: -theirs.current_streak,
+      });
     }
   }
 
@@ -2650,6 +2831,60 @@ export default function GolfScorecard() {
   }
   function closeRules() {
     setRulesOpenFor(null);
+  }
+
+  function HeadToHeadModal() {
+    if (!headToHeadModal) return null;
+    const h = headToHeadModalData;
+    const avgDiff = h && h.rounds_played > 0 ? (h.opp_strokes_sum - h.my_strokes_sum) / h.rounds_played : 0;
+    return (
+      <div className="gsc-modal-backdrop" onClick={() => setHeadToHeadModal(null)}>
+        <div className="gsc-modal" onClick={(e) => e.stopPropagation()}>
+          <div className="gsc-modal-title">
+            You vs {headToHeadModal.opponentAvatar ? `${headToHeadModal.opponentAvatar} ` : ""}{headToHeadModal.opponentName}
+          </div>
+          {headToHeadModalLoading ? (
+            <div style={{ fontSize: 14, color: "#6b6b63", padding: "12px 0" }}>Loading...</div>
+          ) : !h || h.rounds_played === 0 ? (
+            <div style={{ fontSize: 14, color: "#6b6b63", padding: "12px 0" }}>
+              No head-to-head record yet - this builds up once you've both played a finished round together.
+            </div>
+          ) : (
+            <div style={{ padding: "8px 0" }}>
+              <div style={{ textAlign: "center", marginBottom: 12 }}>
+                <div style={{ fontSize: 32, fontWeight: 800, color: h.wins >= h.losses ? "#1B4332" : "#A42E2D" }}>
+                  {h.wins}-{h.losses}{h.ties > 0 ? `-${h.ties}` : ""}
+                </div>
+                <div style={{ fontSize: 12, color: "#8a8a80" }}>
+                  {h.rounds_played} round{h.rounds_played === 1 ? "" : "s"} played together
+                </div>
+              </div>
+              <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 6 }}>
+                {avgDiff > 0
+                  ? `You average ${avgDiff.toFixed(1)} strokes better than them.`
+                  : avgDiff < 0
+                  ? `They average ${Math.abs(avgDiff).toFixed(1)} strokes better than you.`
+                  : "You're dead even on average strokes."}
+              </div>
+              {Math.abs(h.current_streak) >= 2 && (
+                <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 6 }}>
+                  {"\u{1F525}"} You've {h.current_streak > 0 ? "won" : "lost"} the last {Math.abs(h.current_streak)} in a row.
+                </div>
+              )}
+              {h.best_round_strokes != null && (
+                <div style={{ fontSize: 13, color: "#4b4b45" }}>
+                  Your best round against them: {h.best_round_strokes} strokes
+                  {h.best_round_date ? ` on ${h.best_round_date}` : ""}.
+                </div>
+              )}
+            </div>
+          )}
+          <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 8 }} onClick={() => setHeadToHeadModal(null)}>
+            Close
+          </button>
+        </div>
+      </div>
+    );
   }
 
   function DeleteHistoryConfirmModal() {
@@ -6231,6 +6466,41 @@ function computeRoundScoring(round) {
               ))}
             </div>
           )}
+          {session && headToHeadList.length > 0 && (
+            <div className="gsc-card">
+              <div className="gsc-label" style={{ marginBottom: 10 }}>Head-to-Head Records</div>
+              {headToHeadList.map((h, i) => {
+                const avgDiff = h.rounds_played > 0 ? (h.opp_strokes_sum - h.my_strokes_sum) / h.rounds_played : 0;
+                return (
+                  <div
+                    key={h.opponent_id}
+                    style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: i === headToHeadList.length - 1 ? "none" : "1px solid #eee6cf" }}
+                  >
+                    <div>
+                      <div style={{ fontSize: 13, color: "#1B4332", fontWeight: 600 }}>
+                        {h.opponentAvatar} {h.opponentName}
+                      </div>
+                      <div style={{ fontSize: 11, color: "#8a8a80", marginTop: 2 }}>
+                        {h.rounds_played} round{h.rounds_played === 1 ? "" : "s"} played
+                        {Math.abs(h.current_streak) >= 2 && (
+                          <span> - {"\u{1F525}"} {Math.abs(h.current_streak)} {h.current_streak > 0 ? "wins" : "losses"} in a row</span>
+                        )}
+                      </div>
+                    </div>
+                    <div style={{ textAlign: "right" }}>
+                      <div style={{ fontSize: 15, fontWeight: 800, color: h.wins >= h.losses ? "#1B4332" : "#A42E2D" }}>
+                        {h.wins}-{h.losses}{h.ties > 0 ? `-${h.ties}` : ""}
+                      </div>
+                      <div style={{ fontSize: 11, color: "#8a8a80" }}>
+                        {avgDiff > 0 ? `+${avgDiff.toFixed(1)} avg` : avgDiff < 0 ? `${avgDiff.toFixed(1)} avg` : "even avg"}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
 
           {session && (
             <div className="gsc-card">
@@ -6474,6 +6744,7 @@ function computeRoundScoring(round) {
                         return (
                           <div
                             key={x.row.user_id}
+                            onClick={() => !isMe && openHeadToHead(x.row.user_id, x.row.display_name, x.row.avatar)}
                             style={{
                               display: "flex",
                               justifyContent: "space-between",
@@ -6484,6 +6755,7 @@ function computeRoundScoring(round) {
                               borderRadius: isMe ? 6 : 0,
                               paddingLeft: isMe ? 8 : 0,
                               paddingRight: isMe ? 8 : 0,
+                              cursor: isMe ? "default" : "pointer",
                             }}
                           >
                             <div style={{ fontSize: 15, fontWeight: isMe ? 700 : 600, color: "#1B4332" }}>
@@ -6494,7 +6766,7 @@ function computeRoundScoring(round) {
                               <div style={{ fontSize: 15, fontWeight: 700, color: "#4b4b45" }}>{cat.format(x.value)}</div>
                               {canEdit && !isMe && (
                                 <button
-                                  onClick={() => setRemoveMemberConfirming(x.row.user_id)}
+                                  onClick={(e) => { e.stopPropagation(); setRemoveMemberConfirming(x.row.user_id); }}
                                   title="Remove from group"
                                   style={{ background: "none", border: "none", padding: 4, color: "#A42E2D", fontSize: 14, cursor: "pointer", lineHeight: 1 }}
                                 >
@@ -6528,6 +6800,8 @@ function computeRoundScoring(round) {
                               {r.holesPlayed < 18 && (
                                 <span style={{ fontSize: 10, color: "#8a8a80", marginLeft: 6, fontWeight: 400 }}>({r.holesPlayed} holes)</span>
                               )}
+                              {r.won === true && <span style={{ fontSize: 10, color: "#1B4332", marginLeft: 6, fontWeight: 700 }}>{"\u2713"} WON</span>}
+                              {r.won === false && <span style={{ fontSize: 10, color: "#8a8a80", marginLeft: 6, fontWeight: 400 }}>LOST</span>}
                             </div>
                             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                               <div style={{ fontSize: 12, color: "#6b6b63" }}>{r.date}</div>
@@ -6705,6 +6979,7 @@ function computeRoundScoring(round) {
         </div>
         {RulesModal()}
         {DeleteHistoryConfirmModal()}
+        {HeadToHeadModal()}
         <BottomNav />
       </div>
     );
