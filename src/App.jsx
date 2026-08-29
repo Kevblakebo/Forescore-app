@@ -10017,6 +10017,7 @@ function computeRoundScoring(round) {
                     )}
                     {mulLeft !== null && (() => {
                       const noLimitSet = (round.cfg.mulliganSegment || 0) === 0;
+                      const usedSoFar = computed.mulligansUsed[i][mulSeg];
                       return (
                         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, flexWrap: "nowrap" }}>
                           <div style={{ fontSize: 11, color: "#6b6b63", whiteSpace: "nowrap" }}>
@@ -10029,7 +10030,7 @@ function computeRoundScoring(round) {
                               disabled={!noLimitSet && !e.mulligan && mulLeft <= 0}
                               onChange={(ev) => updateHoleEntry(i, "mulligan", ev.target.checked)}
                             />
-                            used
+                            used ({usedSoFar})
                           </label>
                         </div>
                       );
