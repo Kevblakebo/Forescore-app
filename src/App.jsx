@@ -1416,13 +1416,11 @@ export default function GolfScorecard() {
   // active round
   const [round, setRound] = useState(null); // full round object once loaded/created
   const [holeIdx, setHoleIdx] = useState(0);
-  const [clearHoleConfirming, setClearHoleConfirming] = useState(false);
   const holeStripRef = useRef(null);
   useEffect(() => {
     if (!holeStripRef.current) return;
     const activePip = holeStripRef.current.querySelector(".gsc-hole-pip.active");
     if (activePip) activePip.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
-    setClearHoleConfirming(false);
   }, [holeIdx]);
   const [holeNoteDraft, setHoleNoteDraft] = useState("");
   const [showGrid, setShowGrid] = useState(false);
@@ -4657,22 +4655,6 @@ export default function GolfScorecard() {
     });
   }
 
-  // Wipes every player's strokes, putts, and mulligans for the
-  // currently-viewed hole in one action - for when scores were
-  // mistakenly entered on the wrong hole entirely (thinking it was hole
-  // 3 when it was actually hole 2), rather than needing to decrement
-  // each stepper back down to empty one at a time, for every player.
-  function clearHoleScores() {
-    lastLocalEditRef.current = Date.now();
-    setRound((r) => {
-      const next = { ...r, scores: { ...r.scores } };
-      next.scores[holeIdx] = {};
-      saveRound(next);
-      return next;
-    });
-    setClearHoleConfirming(false);
-  }
-
   // Used by "one team score" games (like Scramble Tournament) where there's
   // only a single shared number per hole, not 4 individual player entries.
   // Writes the same value to all 4 players' slots in one atomic update, so
@@ -5360,17 +5342,6 @@ function computeRoundScoring(round) {
           sub=""
         />
         <div className="gsc-body gsc-body-tabbed">
-          {!session && (
-            <div className="gsc-card gsc-winner-card">
-              <div style={{ fontWeight: 700, fontSize: 16 }}>{"\u{1F513}"} Unlock more with an account</div>
-              <div style={{ fontSize: 13, color: "#4b4b45", marginTop: 3 }}>
-                Create or log in to your account now to access premium features including GPS, course info, stats, groups, leaderboards, and prior saved rounds!
-              </div>
-              <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 10 }} onClick={() => { setAuthErr(""); goToScreen("login"); }}>
-                Log In or Create Account
-              </button>
-            </div>
-          )}
           <div style={{ fontSize: 13, color: "#4b4b45", lineHeight: 1.55, margin: "0 0 16px" }}>
             {session ? (
               profile && profile.name
@@ -5392,6 +5363,11 @@ function computeRoundScoring(round) {
             <br />
             You're all set, next hole... the 19th!
           </div>
+          {!session && (
+            <div style={{ fontSize: 12, color: "#8a8a80", margin: "-8px 0 16px" }}>
+              No account needed to play - create one anytime to save your stats and groups.
+            </div>
+          )}
           {activeRound && !activeRound.tournamentId && !isRoundDone(activeRound) && (
             <div className="gsc-card" style={{ border: "2px solid #B08D57" }}>
               <div className="gsc-label">Round in progress</div>
@@ -5475,6 +5451,18 @@ function computeRoundScoring(round) {
               })}
             </div>
           </div>
+
+          {!session && (
+            <div className="gsc-card gsc-winner-card">
+              <div style={{ fontWeight: 700, fontSize: 16 }}>{"\u{1F513}"} Unlock more with an account</div>
+              <div style={{ fontSize: 13, color: "#4b4b45", marginTop: 3 }}>
+                Create or log in to your account now to access premium features including GPS, course info, stats, groups, leaderboards, and prior saved rounds!
+              </div>
+              <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 10 }} onClick={() => { setAuthErr(""); goToScreen("login"); }}>
+                Log In or Create Account
+              </button>
+            </div>
+          )}
 
           <div className="gsc-card gsc-winner-card" style={{ cursor: "pointer" }} onClick={startWizard}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -9761,30 +9749,6 @@ function computeRoundScoring(round) {
                   <div style={{ fontSize: 12, color: "#B08D57", fontWeight: 700, marginTop: 4 }}>
                     {round.players[teamsThisHole[0][0]].name}+{round.players[teamsThisHole[0][1]].name} vs {round.players[teamsThisHole[1][0]].name}+{round.players[teamsThisHole[1][1]].name}
                   </div>
-                )}
-                {Object.keys(hs).some((k) => hs[k] && hs[k].strokes !== "" && hs[k].strokes != null) && (
-                  clearHoleConfirming ? (
-                    <div style={{ marginTop: 6, padding: "8px 10px", background: "#FBEAE5", border: "1px solid #A42E2D", borderRadius: 8, maxWidth: 240 }}>
-                      <div style={{ fontSize: 12, color: "#A42E2D", fontWeight: 700, marginBottom: 6 }}>
-                        Clear everyone's scores for hole {holeIdx + 1}?
-                      </div>
-                      <div style={{ display: "flex", gap: 6 }}>
-                        <button className="gsc-btn" style={{ background: "#A42E2D", color: "#fff", flex: 1, padding: "6px 8px", fontSize: 12 }} onClick={clearHoleScores}>
-                          Yes, clear
-                        </button>
-                        <button className="gsc-btn gsc-btn-outline" style={{ flex: 1, padding: "6px 8px", fontSize: 12 }} onClick={() => setClearHoleConfirming(false)}>
-                          Cancel
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => setClearHoleConfirming(true)}
-                      style={{ background: "none", border: "none", padding: 0, marginTop: 6, color: "#A42E2D", fontSize: 11, textDecoration: "underline", cursor: "pointer" }}
-                    >
-                      Entered the wrong hole? Clear this hole
-                    </button>
-                  )
                 )}
               </div>
               <button className="gsc-btn gsc-btn-outline" disabled={holeIdx === 17} onClick={() => setHoleIdx((h) => h + 1)}>Next</button>
