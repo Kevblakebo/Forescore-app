@@ -1194,6 +1194,7 @@ export default function GolfScorecard() {
   const [postRoundGroupBusy, setPostRoundGroupBusy] = useState(false);
   const [postRoundGroupErr, setPostRoundGroupErr] = useState("");
   const [postRoundGroupCreated, setPostRoundGroupCreated] = useState(false);
+  const [saveAsNewGroup, setSaveAsNewGroup] = useState(false);
   const [postRoundGroupDismissed, setPostRoundGroupDismissed] = useState(false);
   const [profileAvatarPickerOpen, setProfileAvatarPickerOpen] = useState(false);
   const [scoringAvatarPickerFor, setScoringAvatarPickerFor] = useState(null); // same idea, but for the scoring screen, kept separate since it edits an already-saved round rather than in-progress setup
@@ -2165,18 +2166,19 @@ export default function GolfScorecard() {
   // requiring each person to separately join via the group's code - relies
   // on the "group creator can add members directly" policy, scoped to only
   // groups this account itself creates.
-  async function createGroupFromRound() {
-    if (!session || !supabase || !round) return;
-    const name = postRoundGroupName.trim();
+  async function createGroupFromRound(roundOverride, nameOverride) {
+    const r = roundOverride || round;
+    if (!session || !supabase || !r) return;
+    const name = (nameOverride != null ? nameOverride : postRoundGroupName).trim();
     if (!name) {
       setPostRoundGroupErr("Enter a name for the group.");
       return;
     }
     setPostRoundGroupBusy(true);
     setPostRoundGroupErr("");
-    const linkedPlayers = round.players.filter((p) => p.user_id);
+    const linkedPlayers = r.players.filter((p) => p.user_id);
     const code = genCode();
-    const { error: groupErr } = await supabase.from("groups").insert({ id: code, name, avatar: round.avatar || "", created_by: session.user.id });
+    const { error: groupErr } = await supabase.from("groups").insert({ id: code, name, avatar: r.avatar || "", created_by: session.user.id });
     if (groupErr) {
       setPostRoundGroupBusy(false);
       setPostRoundGroupErr(`Couldn't create the group (${groupErr.message}).`);
@@ -3030,6 +3032,15 @@ export default function GolfScorecard() {
     setFinishedRounds(idx);
     await storageDelete(ACTIVE_KEY, false);
     setActiveRound(null);
+    if (finishedRound.createGroupOnFinish && session) {
+      // Best-effort, same as the round-index writes above - if this
+      // fails, the round itself is still fully saved and finished, it
+      // just won't have automatically become a group too. Uses
+      // finishedRound (not the setup-time state) so it reflects whoever
+      // actually ended up linked by the time the round was finished,
+      // including anyone added or corrected via "Edit players" mid-round.
+      createGroupFromRound(finishedRound, finishedRound.createGroupName || finishedRound.name);
+    }
     // Celebrate on a dedicated screen with final standings before heading
     // home - keep `round` populated so that screen can show the finished
     // scorecard; it gets cleared when the person taps through to Home from
@@ -3895,6 +3906,8 @@ export default function GolfScorecard() {
       createdAt: Date.now(),
       tournamentId: isTournament ? activeTournament.id : null,
       foursomeName: isTournament ? foursomeName : null,
+      createGroupOnFinish: !isTournament && saveAsNewGroup && !!session,
+      createGroupName: roundName.trim() || null,
     };
     setBusy(true);
     failCountRef.current = 0;
@@ -7515,6 +7528,14 @@ function computeRoundScoring(round) {
                   </div>
                 )}
               </div>
+              {!isTournament && session && (
+                <label style={{ display: "flex", alignItems: "flex-start", gap: 8, marginTop: 14, cursor: "pointer" }}>
+                  <input type="checkbox" checked={saveAsNewGroup} onChange={(e) => setSaveAsNewGroup(e.target.checked)} style={{ marginTop: 2 }} />
+                  <span style={{ fontSize: 13, color: "#4b4b45" }}>
+                    Create a group from today's players{roundName.trim() ? ` called "${roundName.trim()}"` : ""} once this round is finished
+                  </span>
+                </label>
+              )}
               <button
                 className="gsc-btn gsc-btn-primary"
                 style={{ width: "100%", marginTop: 14 }}
@@ -8029,6 +8050,14 @@ function computeRoundScoring(round) {
                   </div>
                 )}
               </div>
+            )}
+            {!activeTournament && session && (
+              <label style={{ display: "flex", alignItems: "flex-start", gap: 8, marginTop: 4, marginBottom: 12, cursor: "pointer" }}>
+                <input type="checkbox" checked={saveAsNewGroup} onChange={(e) => setSaveAsNewGroup(e.target.checked)} style={{ marginTop: 2 }} />
+                <span style={{ fontSize: 13, color: "#4b4b45" }}>
+                  Create a group from today's players{roundName.trim() ? ` called "${roundName.trim()}"` : ""} once this round is finished
+                </span>
+              </label>
             )}
             {!activeTournament && (
               <div className="gsc-field" style={{ marginTop: 12 }}>
