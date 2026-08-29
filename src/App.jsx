@@ -1244,6 +1244,7 @@ export default function GolfScorecard() {
   const [yearlyRecapData, setYearlyRecapData] = useState(null);
   const [yearlyRecapLoading, setYearlyRecapLoading] = useState(false);
   const [yearlyRecapErr, setYearlyRecapErr] = useState("");
+  const [earnedMoments, setEarnedMoments] = useState([]);
   const [headToHeadModalData, setHeadToHeadModalData] = useState(null);
   const [headToHeadModalLoading, setHeadToHeadModalLoading] = useState(false);
   const [statsLoading, setStatsLoading] = useState(false);
@@ -1892,7 +1893,7 @@ export default function GolfScorecard() {
 
     if (!myRoundsIndex || myRoundsIndex.length === 0) {
       setStatsLoading(false);
-      setStats({ roundsPlayed: 0, avgStrokes: null, avgPutts: null, wins: 0, eagles: 0, birdies: 0, pars: 0, holesInOne: 0, recent: [] });
+      setStats({ roundsPlayed: 0, avgStrokes: null, avgPutts: null, wins: 0, eagles: 0, birdies: 0, pars: 0, holesInOne: 0, bestRoundStrokes: null, recent: [] });
       return;
     }
 
@@ -1901,6 +1902,7 @@ export default function GolfScorecard() {
     let puttsSum = 0, puttsCount = 0;
     let wins = 0;
     let eagles = 0, birdies = 0, pars = 0, holesInOne = 0;
+    let bestRoundStrokes = null;
     const recent = [];
 
     // Fetch every round's data in parallel rather than one at a time -
@@ -1972,6 +1974,9 @@ export default function GolfScorecard() {
         strokesCount++;
         puttsSum += myPuttsTotal * scale;
         puttsCount++;
+        if (holesPlayed === 18 && (bestRoundStrokes === null || myStrokesTotal < bestRoundStrokes)) {
+          bestRoundStrokes = myStrokesTotal;
+        }
 
         const computedForRound = computeRoundScoring(r);
         if (computedForRound) {
@@ -1993,6 +1998,7 @@ export default function GolfScorecard() {
       birdies,
       pars,
       holesInOne,
+      bestRoundStrokes,
       recent: recent.slice(0, 5),
     });
 
@@ -2029,6 +2035,7 @@ export default function GolfScorecard() {
           pars,
           eagles,
           holes_in_one: holesInOne,
+          best_round_strokes: bestRoundStrokes,
           updated_at: new Date().toISOString(),
         },
         { onConflict: "user_id" }
@@ -2833,6 +2840,83 @@ export default function GolfScorecard() {
     }));
     setYearlyRecapLoading(false);
     setYearlyRecapData({ rows: enriched });
+  }
+
+  // Checks a just-finished round for small, one-time "moments of
+  // delight" - a first eagle/birdie/hole-in-one, beating a personal
+  // best, or hitting a round-count milestone with a specific group.
+  // Deliberately lightweight: the "first ever" and "personal best"
+  // checks use whatever stats were already cached from before this
+  // round (not a fresh recalculation, which would already include this
+  // round's own numbers and make "was this the first" unanswerable) -
+  // good enough for a fun, low-stakes celebration, not meant to be a
+  // precise, guaranteed-accurate record the way the actual stats are.
+  async function detectMoments(finishedRound) {
+    if (!session) return [];
+    const myIdx = finishedRound.players.findIndex((p) => p.user_id === session.user.id);
+    if (myIdx === -1) return [];
+
+    let hadEagle = false, hadBirdie = false, hadHoleInOne = false;
+    let myStrokesTotal = 0, holesPlayed = 0;
+    for (let h = 0; h < 18; h++) {
+      const entry = finishedRound.scores && finishedRound.scores[h] ? finishedRound.scores[h][myIdx] : null;
+      const parH = finishedRound.par ? finishedRound.par[h] : null;
+      if (entry && entry.strokes != null && entry.strokes !== "") {
+        holesPlayed++;
+        const sv = Number(entry.strokes);
+        myStrokesTotal += sv;
+        if (sv === 1) hadHoleInOne = true;
+        else if (parH != null) {
+          const diff = sv - parH;
+          if (diff <= -2) hadEagle = true;
+          else if (diff === -1) hadBirdie = true;
+        }
+      }
+    }
+
+    const moments = [];
+    if (stats) {
+      if (hadHoleInOne && stats.holesInOne === 0) moments.push({ emoji: "\u{1F3AF}", text: "Your first hole-in-one!" });
+      else if (hadEagle && stats.eagles === 0) moments.push({ emoji: "\u{1F985}", text: "Your first eagle!" });
+      else if (hadBirdie && stats.birdies === 0) moments.push({ emoji: "\u{1F426}", text: "Your first birdie!" });
+
+      if (holesPlayed === 18 && stats.bestRoundStrokes != null && myStrokesTotal < stats.bestRoundStrokes) {
+        moments.push({ emoji: "\u{1F525}", text: `New personal best! ${myStrokesTotal} strokes (previous best: ${stats.bestRoundStrokes})` });
+      }
+    }
+
+    if (supabase) {
+      try {
+        const { data: myMemberships } = await withJwtRetry(() => supabase.from("group_members").select("group_id").eq("user_id", session.user.id));
+        const myGroupIds = (myMemberships || []).map((m) => m.group_id);
+        if (myGroupIds.length > 0) {
+          const { data: allMemberships } = await withJwtRetry(() => supabase.from("group_members").select("group_id, user_id").in("group_id", myGroupIds));
+          const membersByGroup = {};
+          for (const m of allMemberships || []) {
+            if (!membersByGroup[m.group_id]) membersByGroup[m.group_id] = [];
+            membersByGroup[m.group_id].push(m.user_id);
+          }
+          const { data: groupStatsRows } = await withJwtRetry(() =>
+            supabase.from("group_member_stats").select("group_id, rounds_played").eq("user_id", session.user.id).in("group_id", myGroupIds)
+          );
+          const milestones = [5, 10, 25, 50, 100, 250, 500];
+          for (const gs of groupStatsRows || []) {
+            const memberSet = new Set(membersByGroup[gs.group_id] || []);
+            const playedWithGroup = finishedRound.players.some((p, i) => i !== myIdx && p.user_id && memberSet.has(p.user_id));
+            if (!playedWithGroup) continue;
+            const newCount = (gs.rounds_played || 0) + 1;
+            if (milestones.includes(newCount)) {
+              const g = myGroups.find((mg) => mg.id === gs.group_id);
+              moments.push({ emoji: "\u{1F389}", text: `${newCount}th round with ${g ? g.name : "this group"}!` });
+            }
+          }
+        }
+      } catch (e) {
+        console.warn("detectMoments group-milestone check failed:", e);
+      }
+    }
+
+    return moments;
   }
 
   // Opens the head-to-head detail view for a specific opponent - checks
@@ -3749,6 +3833,7 @@ export default function GolfScorecard() {
       // including anyone added or corrected via "Edit players" mid-round.
       createGroupFromRound(finishedRound, finishedRound.createGroupName || finishedRound.name);
     }
+    detectMoments(finishedRound).then(setEarnedMoments);
     // Celebrate on a dedicated screen with final standings before heading
     // home - keep `round` populated so that screen can show the finished
     // scorecard; it gets cleared when the person taps through to Home from
@@ -3762,6 +3847,7 @@ export default function GolfScorecard() {
 
   function finishCelebrationAndGoHome() {
     setRound(null);
+    setEarnedMoments([]);
     setScreen("home");
   }
 
@@ -10107,6 +10193,19 @@ function computeRoundScoring(round) {
                 </div>
               </div>
             )
+          )}
+
+          {earnedMoments.length > 0 && (
+            <div className="gsc-card" style={{ background: "#F8F1E4", border: "1px solid #B08D57" }}>
+              <div style={{ fontSize: 11, color: "#8a6a2f", textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 700, marginBottom: 8 }}>
+                Moments from today
+              </div>
+              {earnedMoments.map((m, i) => (
+                <div key={i} style={{ fontSize: 14, fontWeight: 600, color: "#1B4332", padding: "4px 0" }}>
+                  {m.emoji} {m.text}
+                </div>
+              ))}
+            </div>
           )}
 
           {!g.singleTeam && (
