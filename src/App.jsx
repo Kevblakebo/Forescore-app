@@ -2833,11 +2833,22 @@ export default function GolfScorecard() {
     const userIds = rows.map((r) => r.user_id);
     const { data: names } = await withJwtRetry(() => supabase.from("leaderboard_stats").select("user_id, display_name, avatar").in("user_id", userIds));
     const nameById = new Map((names || []).map((n) => [n.user_id, n]));
-    const enriched = rows.map((r) => ({
-      ...r,
-      name: (nameById.get(r.user_id) || {}).display_name || "Golfer",
-      avatar: (nameById.get(r.user_id) || {}).avatar || "",
-    }));
+    const enriched = rows.map((r) => {
+      // Same reasoning as the group leaderboard - leaderboard_stats is a
+      // cached copy of your own name/avatar that only refreshes when
+      // you've visited certain pages, so it can be stale or still show
+      // the generic "Golfer" placeholder even while everything else
+      // about you (rounds played, wins, etc.) is accurate. For yourself
+      // specifically, always prefer your own live profile data instead.
+      if (session && profile && r.user_id === session.user.id) {
+        return { ...r, name: profile.name || "Golfer", avatar: profile.avatar || "" };
+      }
+      return {
+        ...r,
+        name: (nameById.get(r.user_id) || {}).display_name || "Golfer",
+        avatar: (nameById.get(r.user_id) || {}).avatar || "",
+      };
+    });
     setYearlyRecapLoading(false);
     setYearlyRecapData({ rows: enriched });
   }
@@ -3697,7 +3708,18 @@ export default function GolfScorecard() {
         try {
           const fRound = JSON.parse(fRes.value);
           if (!fRound.finished) {
-            await storageSet(`golfround:${fs.id}`, JSON.stringify({ ...fRound, finished: true }), true);
+            // Same reasoning as the regular round-finish path - compute
+            // and save who actually won this specific foursome (using
+            // the same real, per-format logic already correct for every
+            // game type) rather than leaving it for something downstream
+            // to re-derive later.
+            const computedForFoursome = computeRoundScoring(fRound);
+            const foursomeWinnerUserIds = computedForFoursome
+              ? determineWinners(fRound, computedForFoursome)
+                  .map((w) => fRound.players[w.idx] && fRound.players[w.idx].user_id)
+                  .filter(Boolean)
+              : [];
+            await storageSet(`golfround:${fs.id}`, JSON.stringify({ ...fRound, finished: true, winnerUserIds: foursomeWinnerUserIds }), true);
           }
         } catch (e) {
           // If one foursome's data is unreadable, don't block finishing
@@ -3788,7 +3810,22 @@ export default function GolfScorecard() {
     // archive, meaning nobody else (including this same account viewed
     // from a different device, like the Profile page's stats) could ever
     // correctly tell this round was actually done.
-    const finishedRound = { ...r, finished: true };
+    //
+    // Also compute and save who actually won, right now, using this
+    // app's own real, format-specific winner logic - the same logic
+    // that's already correct for every one of the 15 game formats
+    // (team games, points-based games, stroke play, all of it). Saving
+    // the answer here means nothing downstream (including any future
+    // server-side stats calculation) ever needs to re-derive "who won"
+    // itself in a different, second implementation that could drift out
+    // of sync with this one.
+    const computedForFinish = computeRoundScoring(r);
+    const winnerUserIds = computedForFinish
+      ? determineWinners(r, computedForFinish)
+          .map((w) => r.players[w.idx] && r.players[w.idx].user_id)
+          .filter(Boolean)
+      : [];
+    const finishedRound = { ...r, finished: true, winnerUserIds };
     const sharedRes = await storageSet(`golfround:${r.id}`, JSON.stringify(finishedRound), true);
     if (!sharedRes.ok) {
       setBusy(false);
