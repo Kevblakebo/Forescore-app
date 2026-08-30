@@ -8605,7 +8605,10 @@ function computeRoundScoring(round) {
               <div style={{ fontWeight: 700, fontSize: 19, marginTop: 4 }}>{g.name}</div>
               <div className="gsc-tag" style={{ marginTop: 6 }}>{g.tag}</div>
               <div className="gsc-no-select" style={{ fontSize: 13, marginTop: 10, color: "#4b4b45" }}>{g.desc}</div>
-              <button className="gsc-link" style={{ marginTop: 10, fontSize: 13 }} onClick={() => openRules(wizardAnswers.resolvedGameKey)}>
+              <button className="gsc-link" style={{ marginTop: 10, fontSize: 13, display: "block" }} onClick={() => openRules(wizardAnswers.resolvedGameKey)}>
+                Why people love this game
+              </button>
+              <button className="gsc-link" style={{ marginTop: 6, fontSize: 13 }} onClick={() => openRules(wizardAnswers.resolvedGameKey)}>
                 View full rules
               </button>
               <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 14 }} onClick={() => wizardGoNext("confirmGame", {})}>
