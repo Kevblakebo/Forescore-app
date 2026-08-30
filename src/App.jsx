@@ -11149,14 +11149,13 @@ function computeRoundScoring(round) {
                       const noLimitSet = (round.cfg.mulliganSegment || 0) === 0;
                       const usedSoFar = computed.mulligansUsed[i][mulSeg];
                       return (
-                        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "center", gap: 6, flexWrap: "nowrap" }}>
-                          <div style={{ fontSize: 11, color: "#6b6b63", whiteSpace: "nowrap" }}>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, flexWrap: "nowrap" }}>
+                          <div style={{ display: "flex", alignItems: "center", height: 18, fontSize: 11, color: "#6b6b63", whiteSpace: "nowrap" }}>
                             {noLimitSet ? "MULLIGAN" : `MULLIGAN (${Math.max(0, mulLeft)} left)`}
                           </div>
-                          <label className="gsc-mull" style={{ display: "inline-block", margin: 0, whiteSpace: "nowrap", fontSize: 11, color: "#6b6b63" }}>
+                          <label className="gsc-mull" style={{ display: "flex", alignItems: "center", height: 18, margin: 0, whiteSpace: "nowrap", fontSize: 11, color: "#6b6b63" }}>
                             <input
                               type="checkbox"
-                              style={{ verticalAlign: "middle", position: "relative", top: -1 }}
                               checked={!!e.mulligan}
                               disabled={!noLimitSet && !e.mulligan && mulLeft <= 0}
                               onChange={(ev) => updateHoleEntry(i, "mulligan", ev.target.checked)}
