@@ -9013,28 +9013,30 @@ function computeRoundScoring(round) {
                   If set, anyone can award a player an extra mulligan on the scoring screen once they've done this.
                 </div>
               </div>
-              <div className="gsc-field" style={{ marginTop: 10 }}>
-                <div className="gsc-label">Use per-hole handicapping (net scoring)?</div>
-                <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 6 }}>
-                  Strokes are given to higher-handicap players on the hardest holes, and net scores are used for scoring, points, and standings.
+              {wizardAnswers.resolvedGameKey !== "avoscramble" && (
+                <div className="gsc-field" style={{ marginTop: 10 }}>
+                  <div className="gsc-label">Use per-hole handicapping (net scoring)?</div>
+                  <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 6 }}>
+                    Strokes are given to higher-handicap players on the hardest holes, and net scores are used for scoring, points, and standings.
+                  </div>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button
+                      className="gsc-btn"
+                      style={{ flex: 1, background: !activeCfg.netScoring ? "#A42E2D" : "transparent", color: !activeCfg.netScoring ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
+                      onClick={() => setActiveCfg({ ...activeCfg, netScoring: false })}
+                    >
+                      No
+                    </button>
+                    <button
+                      className="gsc-btn"
+                      style={{ flex: 1, background: activeCfg.netScoring ? "#A42E2D" : "transparent", color: activeCfg.netScoring ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
+                      onClick={() => setActiveCfg({ ...activeCfg, netScoring: true })}
+                    >
+                      Yes
+                    </button>
+                  </div>
                 </div>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <button
-                    className="gsc-btn"
-                    style={{ flex: 1, background: !activeCfg.netScoring ? "#A42E2D" : "transparent", color: !activeCfg.netScoring ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
-                    onClick={() => setActiveCfg({ ...activeCfg, netScoring: false })}
-                  >
-                    No
-                  </button>
-                  <button
-                    className="gsc-btn"
-                    style={{ flex: 1, background: activeCfg.netScoring ? "#A42E2D" : "transparent", color: activeCfg.netScoring ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
-                    onClick={() => setActiveCfg({ ...activeCfg, netScoring: true })}
-                  >
-                    Yes
-                  </button>
-                </div>
-              </div>
+              )}
               {g.tracksDrives && (
                 <div className="gsc-field" style={{ marginTop: 10 }}>
                   <div className="gsc-label">Minimum drives per player</div>
@@ -10114,7 +10116,7 @@ function computeRoundScoring(round) {
                 </div>
               </div>
             )}
-            {tg.hasScore && (
+            {tg.hasScore && tournamentGameKey !== "avoscramble" && (
               <div className="gsc-field">
                 <div className="gsc-label">Use per-hole handicapping (net scoring)?</div>
                 <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 6 }}>
