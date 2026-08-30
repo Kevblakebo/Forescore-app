@@ -627,6 +627,83 @@ const GAME_TILE_STYLE = (() => {
   return map;
 })();
 
+// Why people actually enjoy each format, in their own right - kept
+// separate from each game's instructional "rules" array on purpose,
+// since one explains how to play and the other explains why it's worth
+// playing. Researched per-format rather than guessed, and reused in two
+// places: appended under each game's full rules, and gathered together
+// on its own Library page.
+const WHY_PLAY = {
+  teamstrokes: "Combined stroke totals work as a team format because every player's score genuinely matters - there's no \"best of\" cushion like Best Ball, so both teammates stay engaged and accountable on every hole, not just the one carrying the round. Recreational golfers generally value stroke-based formats because they reward consistent, steady performance over an entire round rather than any single hole, and offer a straightforward way to track real improvement over time. Pairing that discipline with a teammate adds a shared stake to it - a bad hole isn't just your own problem anymore, it's something you're navigating together.",
+  teamputts: "Putting-focused side games isolate the short game specifically, rewarding a skill that has little to do with how far someone hits the ball - which is exactly why they resonate with groups that have a wide range of driving distances but a much narrower gap once everyone's on the green. As a team format, it adds a layer of shared strategy: who's the better putter today, and does that change how aggressively the other player should approach the green.",
+  seabluffe: "This format creates several mini-matches within a single round rather than one long, fixed pairing - often described as a \"golf buffet\" of different matchups that adds variety and keeps camaraderie high all day. Chi Chi Rodriguez, who wrote extensively about golf games, described it as a great way for players of mixed abilities to spend an afternoon together, since a weaker player still gets a real chance to win a match and nobody feels like they have to carry the group the whole day. Because partners rotate and everyone eventually pairs with (and competes against) everyone else, no single mismatch in skill can dominate the whole round.",
+  moonlightwolf: "Wolf appeals to golfers of every skill level because it blends individual play with team dynamics - letting someone showcase their own game when they're the Wolf, while also rewarding smart, in-the-moment strategy about when to team up versus go it alone. It keeps players engaged on every single hole, since each one presents a brand-new decision about whether to partner up or bet on yourself. The lone-wolf option is what gives it real teeth - going alone against the other three isn't easy, but the risk-reward of pulling it off is exactly what makes people love the format.",
+  ponto: "Skins is beloved for its simplicity and the competitive edge it adds to every hole, since the focus shifts entirely to who performs best on that specific hole rather than an aggregate score. Ties rolling over to the next hole create real suspense and the potential for big swings in fortune, which is what keeps the format exciting from the first tee to the last green. As a team version, it adds a layer of shared responsibility - winning (or losing) a skin now reflects on the pair, not just one player's day.",
+  vegas: "What makes Vegas different is that a team's two scores aren't added together - they're combined into a single two-digit number, meaning a single bad hole can swing the result wildly, and a well-timed birdie can be worth a fortune. That volatility is exactly why it's considered one of the most exciting partner formats in golf - every hole can shift dramatically depending on how the two scores combine. It also rewards genuine teamwork and consistency over raw individual talent, since it's rarely just the best player who wins - it's the pair that best manages the format's ups and downs together.",
+  beachside: "Best Ball turns an individual sport into something that feels like a team sport - golfers can be bailed out during a rough stretch by a teammate, and everyone stays motivated to contribute since only the best score on the team counts each hole. People love that it lets them focus on their own game while still being part of something bigger - if you have a bad hole, you don't have to dwell on it, knowing your partner might still post a good score for the team.",
+  tourneybb: "The same core appeal as Best Ball carries over into a tournament setting, just at a larger scale. It's a format that works cleanly with two, three, or four-person teams, and it's genuinely popular in bigger events because every player still gets to record their own individual score for the day, even while playing as part of a team. It's also a natural fit for events with a wide range of skill levels in the field, since it combines individual accountability with the safety net of a team.",
+  tourneygg: "This format works well for larger events for the same reason it works in a smaller group: every player's score genuinely counts toward the team total, so nobody can quietly coast through a round. That mirrors why stroke-based formats resonate broadly in the first place - they reward full-round consistency, and everyone can track exactly how their own game held up. In a tournament setting, that shared stake across a whole team gives teammates a natural reason to encourage (and lightly needle) each other all day.",
+  avoscramble: "The scramble is one of the most popular group formats in recreational golf, and for good reason - everyone hits a tee shot, the team plays the best one, and nobody's individual bad shot ever actually matters, since there's always a good ball to play from. No other format removes the pressure of a bad hole as effectively, which is exactly why it's the near-universal choice for charity tournaments and company outings - it works across every skill level and keeps the whole group moving and involved.",
+  swami: "Stroke play is one of the most widely recognized formats in golf because it's simple: count every stroke for the whole round, and the lowest total wins. It's a genuine test of accuracy and consistency, since every single shot counts toward the final score - which is exactly why it remains the standard people reach for when they want an honest, uncomplicated read on how their round actually went.",
+  dstreet: "Skins fits golfers with short memories - which is basically everyone - because every hole is its own fresh opportunity, whatever happened on the last one. The format's real appeal is how it mixes up an otherwise ordinary round, with the suspense of rolling skins and the potential for a big swing in fortune keeping things interesting from the first hole to the last. As an individual format, every skin won (or lost) is entirely yours - no one to share the credit or the blame with.",
+  individualputts: "Putting-only formats put a specific skill on trial, separate from anything to do with distance off the tee, which is exactly why they're seen as a fair test even in mixed-ability groups. It's a natural fit for anyone who feels their actual scoring ability doesn't always show up in a full 18-hole total - this format lets that specific strength (or weakness) stand entirely on its own.",
+  pontobango: "What makes this format special is that none of its three points is about who hits the ball the furthest - each one rewards a completely different skill, including simply being in the right position to play first. Because the player farthest from the hole always plays first, shorter hitters get the first real shot at points on plenty of holes, and the golfer with the toughest position on the green gets a fair chance too. That built-in leveling is exactly why it's so popular among groups with a real spread of handicaps playing together.",
+  stableford: "Stableford's biggest draw is that a single poor hole can't ruin an entire round - it only ever costs zero points, which keeps the pressure low and the format genuinely relaxed and enjoyable for casual and club play alike. It also rewards aggressive play in a way stroke play doesn't, letting golfers go after a spectacular shot without the same fear of a blown-up score. It was originally created specifically to help the average club golfer enjoy a competitive round more - and that founding idea is still exactly why it remains so popular today.",
+};
+
+// Maps a "what matters most" vibe answer to actual game(s), grouped by
+// player-count bucket. Three possible shapes for each entry:
+//  - a single string: fully resolved, no further question needed
+//  - an array of 2 keys: still a tie between two close options, needs
+//    a short follow-up question showing just those two
+//  - an object with team/individual keys: at 4 players, several vibes
+//    have both a team and an individual version, so this needs one
+//    more small question before it resolves to either a single game
+//    or (again) an array needing a follow-up
+const VIBE_GAME_MAP = {
+  "2-3": {
+    simple: ["swami", "individualputts"],
+    mixedSkill: ["pontobango", "stableford"],
+    highDrama: "dstreet",
+  },
+  "4": {
+    simple: { team: ["teamstrokes", "teamputts"], individual: ["swami", "individualputts"] },
+    mixedSkill: { team: ["seabluffe", "beachside"], individual: ["pontobango", "stableford"] },
+    highDrama: { team: ["ponto", "vegas"], individual: "dstreet" },
+    maxStrategy: "moonlightwolf",
+  },
+  tournament: {
+    simple: "tourneygg",
+    mixedSkill: ["avoscramble", "tourneybb"],
+    highDrama: "tourneybb",
+  },
+};
+
+function vibePlayerCountBucket(playerCount) {
+  const n = Number(playerCount);
+  if (n > 4) return "tournament";
+  if (n === 4) return "4";
+  return "2-3";
+}
+
+// Resolves as far as the current answers allow. Returns { resolved:
+// "gameKey" } if fully decided, { candidates: [keyA, keyB] } if a
+// follow-up question is needed, or { needsTeamOrIndividual: true } if
+// (only possible at 4 players) a team-vs-individual question has to be
+// asked before anything else can be resolved.
+function resolveVibeEntry(playerCount, vibe, roundMode) {
+  const bucket = vibePlayerCountBucket(playerCount);
+  let entry = VIBE_GAME_MAP[bucket] ? VIBE_GAME_MAP[bucket][vibe] : null;
+  if (!entry) return {};
+  if (bucket === "4" && typeof entry === "object" && !Array.isArray(entry)) {
+    if (!roundMode) return { needsTeamOrIndividual: true };
+    entry = entry[roundMode];
+    if (!entry) return {};
+  }
+  if (Array.isArray(entry)) return { candidates: entry };
+  return { resolved: entry };
+}
+
 // Reference-only library of other popular golf games/formats - informational,
 // not trackable in this app. Grouped the same way the user organized them.
 const GAME_LIBRARY = [
@@ -1239,6 +1316,7 @@ export default function GolfScorecard() {
   const [headToHeadList, setHeadToHeadList] = useState([]);
   const [headToHeadLoading, setHeadToHeadLoading] = useState(false);
   const [headToHeadModal, setHeadToHeadModal] = useState(null); // { opponentId, opponentName, opponentAvatar } while open
+  const [gameDetailsOpen, setGameDetailsOpen] = useState(false);
   const [yearlyRecapOpen, setYearlyRecapOpen] = useState(false);
   const [yearlyRecapYear, setYearlyRecapYear] = useState(new Date().getFullYear());
   const [yearlyRecapData, setYearlyRecapData] = useState(null);
@@ -3144,6 +3222,30 @@ export default function GolfScorecard() {
     );
   }
 
+  function GameDetailsModal() {
+    if (!gameDetailsOpen || !round) return null;
+    const cfg = round.cfg || {};
+    return (
+      <div className="gsc-modal-backdrop" onClick={() => setGameDetailsOpen(false)}>
+        <div className="gsc-modal" onClick={(e) => e.stopPropagation()}>
+          <div className="gsc-modal-title">Game Details</div>
+          <div style={{ fontSize: 13, color: "#4b4b45", lineHeight: 1.9 }}>
+            <div><b>Max score over par per hole:</b> {cfg.maxOverPar != null ? `+${cfg.maxOverPar}` : "No limit set"}</div>
+            <div><b>Max putts per hole:</b> {cfg.maxPutts != null ? cfg.maxPutts : "No limit set"}</div>
+            <div><b>Mulligans per player:</b> {cfg.mulliganSegment ? cfg.mulliganSegment : "None set (tracked freely)"}</div>
+            <div><b>Earn a bonus mulligan:</b> {cfg.mulliganChallenge ? cfg.mulliganChallenge : "Not set"}</div>
+            <div><b>Prize / stakes:</b> {cfg.prize ? cfg.prize : "Not set"}</div>
+            <div><b>Venmo handle for settling up:</b> {cfg.venmo ? cfg.venmo : "Not set"}</div>
+            <div><b>Use per-hole handicapping:</b> {cfg.netScoring ? "Yes" : "No"}</div>
+          </div>
+          <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 14 }} onClick={() => setGameDetailsOpen(false)}>
+            Close
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   function HeadToHeadModal() {
     if (!headToHeadModal) return null;
     const h = headToHeadModalData;
@@ -3242,6 +3344,14 @@ export default function GolfScorecard() {
               )
             )}
           </ul>
+          {WHY_PLAY[rulesOpenFor] && (
+            <div style={{ background: "#F8F1E4", borderRadius: 10, padding: "12px 14px", marginBottom: 16 }}>
+              <div style={{ fontSize: 11, color: "#8a6a2f", textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 700, marginBottom: 6 }}>
+                Why people love this game
+              </div>
+              <div style={{ fontSize: 13, color: "#4b4b45", lineHeight: 1.6 }}>{WHY_PLAY[rulesOpenFor]}</div>
+            </div>
+          )}
           <button className="gsc-btn gsc-btn-primary" style={{ width: "100%" }} onClick={closeRules}>
             Close
           </button>
@@ -3760,6 +3870,11 @@ export default function GolfScorecard() {
       puttsRanked: board && board.tournament && board.tournament.id === t.id ? board.puttsRanked : [],
       hasPutts: GAMES[t.game] ? GAMES[t.game].hasPutts : false,
     });
+    if (supabase) {
+      // Same reasoning as the regular round-finish trigger - best-effort,
+      // the hourly schedule still catches it either way.
+      supabase.functions.invoke("refresh-all-stats").catch((e) => console.warn("Immediate stats refresh failed (hourly schedule will catch it):", e));
+    }
     goToScreen("tournamentFinishCelebration");
   }
 
@@ -3871,6 +3986,14 @@ export default function GolfScorecard() {
       createGroupFromRound(finishedRound, finishedRound.createGroupName || finishedRound.name);
     }
     detectMoments(finishedRound).then(setEarnedMoments);
+    if (supabase) {
+      // Best-effort, same as everything else here - if this fails (e.g.
+      // no connection at this exact moment), the hourly scheduled run
+      // still catches it later. This just means someone doesn't have to
+      // wait up to an hour to see their own numbers update right after
+      // the round they were actually curious about.
+      supabase.functions.invoke("refresh-all-stats").catch((e) => console.warn("Immediate stats refresh failed (hourly schedule will catch it):", e));
+    }
     // Celebrate on a dedicated screen with final standings before heading
     // home - keep `round` populated so that screen can show the finished
     // scorecard; it gets cleared when the person taps through to Home from
@@ -4229,28 +4352,31 @@ export default function GolfScorecard() {
 
   // Scoped the other direction - skips the player-count question entirely
   // (tournaments don't need it the same way a round does) and starts
-  // directly on the tournament scoring question, pre-seeding the answers
-  // a normal "more than 4 players" path would have set.
+  // directly on the vibe question, pre-seeding the answers a normal
+  // "more than 4 players" path would have set.
   function startWizardForTournament() {
     startWizard();
     setWizardOnlyMode("tournament");
-    setWizardStepId("tournamentScoring");
+    setWizardStepId("vibe");
     setWizardAnswers({ playerCount: 8 });
   }
 
   function wizardNextStepId(stepId, answers) {
     switch (stepId) {
       case "playerCount":
-        if (Number(answers.playerCount) > 4) return "tournamentScoring";
         if (Number(answers.playerCount) === 1) return "confirmGame";
-        return Number(answers.playerCount) === 4 ? "roundMode" : "individualScoring";
-      case "roundMode":
-        return answers.roundMode === "team" ? "teamType" : "individualScoring";
-      case "teamType":
-        return answers.resolvedGameKey ? "confirmGame" : "teamScoring";
-      case "teamScoring":
-      case "individualScoring":
-      case "tournamentScoring":
+        return "vibe";
+      case "vibe": {
+        const r = resolveVibeEntry(answers.playerCount, answers.vibe, answers.roundMode);
+        if (r.needsTeamOrIndividual) return "roundMode";
+        if (r.candidates) return "vibeFollowup";
+        return "confirmGame";
+      }
+      case "roundMode": {
+        const r = resolveVibeEntry(answers.playerCount, answers.vibe, answers.roundMode);
+        return r.candidates ? "vibeFollowup" : "confirmGame";
+      }
+      case "vibeFollowup":
         return "confirmGame";
       case "confirmGame":
         return "field_name";
@@ -4287,7 +4413,7 @@ export default function GolfScorecard() {
     if (fieldIdx >= 0) return Math.round(38 + (60 * fieldIdx) / fields.length);
     if (wizardStepId === "confirmGame") return 35;
     if (wizardStepId === "finish") return 100;
-    const branchOrder = ["playerCount", "roundMode", "teamType", "teamScoring", "individualScoring", "tournamentScoring"];
+    const branchOrder = ["playerCount", "vibe", "roundMode", "vibeFollowup"];
     const idx = branchOrder.indexOf(wizardStepId);
     return Math.min(30, 8 + Math.max(0, idx) * 7);
   }
@@ -7417,6 +7543,16 @@ function computeRoundScoring(round) {
         <style>{STYLE}</style>
         <Header title={<span style={{ fontSize: 23 }}>Library</span>} sub="Games & about this app" />
         <div className="gsc-body gsc-body-tabbed">
+          <div className="gsc-card" style={{ cursor: "pointer" }} onClick={() => goToScreen("whyPlay")}>
+            <div className="gsc-label" style={{ marginBottom: 6 }}>Why People Love These Games</div>
+            <div style={{ fontSize: 13, color: "#4b4b45" }}>
+              What makes each of the 15 formats worth playing, straight from the golfers who love them.
+            </div>
+            <button className="gsc-link" style={{ marginTop: 8, fontSize: 12 }} onClick={() => goToScreen("whyPlay")}>
+              Read more
+            </button>
+          </div>
+
           <div className="gsc-card" style={{ cursor: "pointer" }} onClick={() => goToScreen("library")}>
             <div className="gsc-label" style={{ marginBottom: 6 }}>Golf Games Library</div>
             <div style={{ fontSize: 13, color: "#4b4b45" }}>
@@ -7565,6 +7701,29 @@ function computeRoundScoring(round) {
               <p style={{ margin: 0 }}>
                 Whether it's a casual Saturday game or a full club tournament, RipScore keeps the math out of your golf - so all that's left is golf.
               </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (screen === "whyPlay") {
+    return (
+      <div className="gsc">
+        <style>{STYLE}</style>
+        <Header title="Why People Love These Games" sub="What makes each format worth trying" onBack={() => goBack("libraryTab")} />
+        <div className="gsc-body">
+          <div className="gsc-card gsc-no-select">
+            <div style={{ fontSize: 13, color: "#4b4b45", lineHeight: 1.6 }}>
+              {Object.keys(GAME_TILE_STYLE).map((key, i) => (
+                <div key={key} style={{ marginBottom: i === Object.keys(GAME_TILE_STYLE).length - 1 ? 0 : 20 }}>
+                  <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px", fontSize: 14 }}>
+                    {GAME_TILE_STYLE[key].emoji} {GAMES[key].name}
+                  </p>
+                  <p style={{ margin: 0 }}>{WHY_PLAY[key]}</p>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -8296,89 +8455,72 @@ function computeRoundScoring(round) {
             </div>
           )}
 
+          {wizardStepId === "vibe" &&
+            (() => {
+              const isTourn = vibePlayerCountBucket(wizardAnswers.playerCount) === "tournament";
+              const pickVibe = (vibeKey) => {
+                const r = resolveVibeEntry(wizardAnswers.playerCount, vibeKey, undefined);
+                wizardGoNext("vibe", { vibe: vibeKey, resolvedGameKey: r.resolved || null, isTournament: !!r.resolved && isTourn });
+              };
+              return (
+                <div className="gsc-card">
+                  <div className="gsc-label" style={{ marginBottom: 10, fontSize: 16 }}>What matters most for your {isTourn ? "tournament" : "round"} today?</div>
+                  <OptionButton onClick={() => pickVibe("simple")}>Keep it simple - straightforward, easy to track</OptionButton>
+                  <OptionButton onClick={() => pickVibe("mixedSkill")}>Mixed skill levels - level the playing field</OptionButton>
+                  <OptionButton onClick={() => pickVibe("highDrama")}>
+                    High stakes - lots of drama, every hole can swing{isTourn ? " (closest fit: Best Ball Tournament)" : ""}
+                  </OptionButton>
+                  {Number(wizardAnswers.playerCount) === 4 && (
+                    <OptionButton onClick={() => pickVibe("maxStrategy")}>Maximum strategy - constant partner decisions (Wolf)</OptionButton>
+                  )}
+                </div>
+              );
+            })()}
+
           {wizardStepId === "roundMode" && (
             <div className="gsc-card">
-              <div className="gsc-label" style={{ marginBottom: 10, fontSize: 16 }}>How do you want to play?</div>
-              <OptionButton onClick={() => wizardGoNext("roundMode", { roundMode: "team", resolvedGameKey: null })}>2 vs 2 Teams</OptionButton>
-              <OptionButton onClick={() => wizardGoNext("roundMode", { roundMode: "individual", resolvedGameKey: null })}>Individually - every player for themselves</OptionButton>
-            </div>
-          )}
-
-          {wizardStepId === "teamType" && (
-            <div className="gsc-card">
-              <div className="gsc-label" style={{ marginBottom: 10, fontSize: 16 }}>Rotating teams, or the same teams all round?</div>
-              <OptionButton onClick={() => wizardGoNext("teamType", { teamType: "rotating", resolvedGameKey: "seabluffe", isTournament: false })}>
-                Rotating teams - new partner every 6 holes
+              <div className="gsc-label" style={{ marginBottom: 10, fontSize: 16 }}>Team up, or every player for themselves?</div>
+              <OptionButton
+                onClick={() => {
+                  const r = resolveVibeEntry(wizardAnswers.playerCount, wizardAnswers.vibe, "team");
+                  wizardGoNext("roundMode", { roundMode: "team", resolvedGameKey: r.resolved || null });
+                }}
+              >
+                2 vs 2 Teams
               </OptionButton>
-              <OptionButton onClick={() => wizardGoNext("teamType", { teamType: "wolf", resolvedGameKey: "moonlightwolf", isTournament: false })}>
-                Rotating teams - new partner every hole (the Wolf selects their partner, or goes "Lone Wolf")
-              </OptionButton>
-              <OptionButton onClick={() => wizardGoNext("teamType", { teamType: "fixed", resolvedGameKey: null })}>Same teams the whole round</OptionButton>
-            </div>
-          )}
-
-          {wizardStepId === "teamScoring" && (
-            <div className="gsc-card">
-              <div className="gsc-label" style={{ marginBottom: 10, fontSize: 16 }}>How should your team's score work each hole?</div>
-              <OptionButton onClick={() => wizardGoNext("teamScoring", { teamScoring: "bestball", resolvedGameKey: "beachside", isTournament: false })}>
-                Team Best Ball - the lower of your two scores counts
-              </OptionButton>
-              <OptionButton onClick={() => wizardGoNext("teamScoring", { teamScoring: "combined", resolvedGameKey: "ponto", isTournament: false })}>
-                Team Skins - points for lowest team strokes and putts
-              </OptionButton>
-              <OptionButton onClick={() => wizardGoNext("teamScoring", { teamScoring: "teamstrokes", resolvedGameKey: "teamstrokes", isTournament: false })}>
-                Team Strokes - both scores add together
-              </OptionButton>
-              <OptionButton onClick={() => wizardGoNext("teamScoring", { teamScoring: "teamputts", resolvedGameKey: "teamputts", isTournament: false })}>
-                Team Putts - point per hole for lowest number of combined team putts
-              </OptionButton>
-              <OptionButton onClick={() => wizardGoNext("teamScoring", { teamScoring: "vegas", resolvedGameKey: "vegas", isTournament: false })}>
-                Team Skins - Vegas scoring format (see rules detail)
+              <OptionButton
+                onClick={() => {
+                  const r = resolveVibeEntry(wizardAnswers.playerCount, wizardAnswers.vibe, "individual");
+                  wizardGoNext("roundMode", { roundMode: "individual", resolvedGameKey: r.resolved || null });
+                }}
+              >
+                Individually - every player for themselves
               </OptionButton>
             </div>
           )}
 
-          {wizardStepId === "individualScoring" && (
-            <div className="gsc-card">
-              <div className="gsc-label" style={{ marginBottom: 10, fontSize: 16 }}>How do you want to decide the winner?</div>
-              <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 12 }}>All formats keep track of everyone's strokes and putts - this is just about how a winner gets picked.</div>
-              <OptionButton onClick={() => wizardGoNext("individualScoring", { individualScoring: "totalscore", resolvedGameKey: "swami", isTournament: false })}>
-                Total Score - lowest score wins, putts settle a tie
-              </OptionButton>
-              <OptionButton onClick={() => wizardGoNext("individualScoring", { individualScoring: "skins", resolvedGameKey: "dstreet", isTournament: false })}>
-                Skins - points awarded each hole for strokes AND putts
-              </OptionButton>
-              <OptionButton onClick={() => wizardGoNext("individualScoring", { individualScoring: "individualputts", resolvedGameKey: "individualputts", isTournament: false })}>
-                Player with lowest number of putts wins (strokes can still be kept track of)
-              </OptionButton>
-              <OptionButton onClick={() => wizardGoNext("individualScoring", { individualScoring: "pontobango", resolvedGameKey: "pontobango", isTournament: false })}>
-                Points awarded for First on, closest to pin, & longest putt
-              </OptionButton>
-              <OptionButton onClick={() => wizardGoNext("individualScoring", { individualScoring: "stableford", resolvedGameKey: "stableford", isTournament: false })}>
-                Points awarded on each individual hole based on your score relative to par
-              </OptionButton>
-              {Number(wizardAnswers.playerCount) === 4 && (
-                <OptionButton onClick={() => wizardGoNext("individualScoring", { individualScoring: "wolf", resolvedGameKey: "moonlightwolf", isTournament: false })}>
-                  Rotating partner scores for each hole, chosen by that hole's Wolf
-                </OptionButton>
-              )}
-            </div>
-          )}
-
-          {wizardStepId === "tournamentScoring" && (
-            <div className="gsc-card">
-              <div className="gsc-label" style={{ marginBottom: 10, fontSize: 16 }}>How should each foursome's score work?</div>
-              <OptionButton onClick={() => wizardGoNext("tournamentScoring", { tournamentScoring: "bestball", resolvedGameKey: "tourneybb", isTournament: true })}>
-                Best-Ball - lowest score on each hole counts
-              </OptionButton>
-              <OptionButton onClick={() => wizardGoNext("tournamentScoring", { tournamentScoring: "combined", resolvedGameKey: "tourneygg", isTournament: true })}>
-                Team Skins - all 4 players add together
-              </OptionButton>
-              <OptionButton onClick={() => wizardGoNext("tournamentScoring", { tournamentScoring: "scramble", resolvedGameKey: "avoscramble", isTournament: true })}>
-                One score for the team - Teams play the best shot of the foursome from tee to hole for the score
-              </OptionButton>
-            </div>
-          )}
+          {wizardStepId === "vibeFollowup" &&
+            (() => {
+              const r = resolveVibeEntry(wizardAnswers.playerCount, wizardAnswers.vibe, wizardAnswers.roundMode);
+              const candidates = r.candidates || [];
+              const isTourn = vibePlayerCountBucket(wizardAnswers.playerCount) === "tournament";
+              return (
+                <div className="gsc-card">
+                  <div className="gsc-label" style={{ marginBottom: 10, fontSize: 16 }}>Two good fits - which sounds more like your group?</div>
+                  {candidates.map((key) => (
+                    <button
+                      key={key}
+                      className="gsc-btn gsc-btn-outline"
+                      style={{ width: "100%", marginBottom: 10, padding: 14, fontSize: 14, textAlign: "left" }}
+                      onClick={() => wizardGoNext("vibeFollowup", { resolvedGameKey: key, isTournament: isTourn })}
+                    >
+                      <div style={{ fontWeight: 700, marginBottom: 4 }}>{GAMES[key].name}</div>
+                      <div style={{ fontWeight: 400, fontSize: 12, color: "#6b6b63" }}>{GAMES[key].desc}</div>
+                    </button>
+                  ))}
+                </div>
+              );
+            })()}
 
           {wizardStepId === "confirmGame" && g && (
             <div className="gsc-card gsc-winner-card">
@@ -8398,7 +8540,7 @@ function computeRoundScoring(round) {
           {wizardStepId === "field_name" && (
             <div className="gsc-card">
               <div className="gsc-label" style={{ marginBottom: 10, fontSize: 16 }}>
-                What do you want to name your {isTournament ? "tournament" : "round"}? (Optional)
+                What do you want to name your {isTournament ? "tournament" : "Group"}? (Optional)
               </div>
               {!isTournament && session && (
                 <button className="gsc-link" style={{ fontSize: 13, fontWeight: 700, marginBottom: 8, display: "inline-block" }} onClick={() => openGroupFillPicker("playersAndMeta")}>
@@ -10535,6 +10677,9 @@ function computeRoundScoring(round) {
               <button className="gsc-link" style={{ color: "#F3EFE0", fontSize: 11, textDecoration: "underline" }} onClick={() => openRules(round.game)}>
                 Rules
               </button>
+              <button className="gsc-link" style={{ color: "#F3EFE0", fontSize: 11, textDecoration: "underline" }} onClick={() => setGameDetailsOpen(true)}>
+                Game Details
+              </button>
               <button className="gsc-link" style={{ color: "#F3EFE0", fontSize: 11, textDecoration: "underline" }} onClick={() => openEditFoursome(round.id, round)}>
                 Edit Players
               </button>
@@ -10937,7 +11082,7 @@ function computeRoundScoring(round) {
                           <div style={{ fontSize: 11, color: "#6b6b63", whiteSpace: "nowrap" }}>
                             {noLimitSet ? "MULLIGAN" : `MULLIGAN (${Math.max(0, mulLeft)} left)`}
                           </div>
-                          <label className="gsc-mull" style={{ margin: 0, whiteSpace: "nowrap" }}>
+                          <label className="gsc-mull" style={{ margin: 0, whiteSpace: "nowrap", fontSize: 11, color: "#6b6b63" }}>
                             <input
                               type="checkbox"
                               checked={!!e.mulligan}
@@ -11176,36 +11321,50 @@ function computeRoundScoring(round) {
           <div className="gsc-card">
             <div className="gsc-label" style={{ marginBottom: 8, fontSize: 15, color: "#1B4332", fontWeight: 800 }}>Standings</div>
             {ranks.map((p, idx) => (
-              <div key={p.idx} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", borderBottom: "1px solid #eee6cf", fontSize: 13 }}>
+              <div key={p.idx} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "6px 0", borderBottom: "1px solid #eee6cf", fontSize: 13 }}>
                 <div style={{ fontWeight: 700 }}>
-                  {p.avatar && <span style={{ marginRight: 4 }}>{p.avatar}</span>}
-                  {p.name}
+                  <div>
+                    {p.avatar && <span style={{ marginRight: 4 }}>{p.avatar}</span>}
+                    {p.name}
+                  </div>
                   {(g.rankByTeamTotal
                     ? holeIdx === 17 && hr.complete && ranks.length > 0 && round.teams && round.teams.find((t) => t.includes(ranks[0].idx))?.includes(p.idx)
                     : g.totalScoring && holeIdx === 17 && hr.complete && idx === 0
-                  ) && <span className="gsc-chip gsc-lead">WINNER</span>}
-                  {!g.singleTeam && !g.totalScoring && holeIdx === 17 && hr.complete && idx < Math.floor(ranks.length / 2) && <span className="gsc-chip gsc-lead">WIN</span>}
-                  {!g.singleTeam && !g.totalScoring && holeIdx === 17 && hr.complete && idx >= Math.ceil(ranks.length / 2) && <span className="gsc-chip gsc-loss">LOSS</span>}
+                  ) && (
+                    <div style={{ marginTop: 3 }}>
+                      <span className="gsc-chip gsc-lead">WINNER</span>
+                    </div>
+                  )}
+                  {!g.singleTeam && !g.totalScoring && holeIdx === 17 && hr.complete && idx < Math.floor(ranks.length / 2) && (
+                    <div style={{ marginTop: 3 }}>
+                      <span className="gsc-chip gsc-lead">WIN</span>
+                    </div>
+                  )}
+                  {!g.singleTeam && !g.totalScoring && holeIdx === 17 && hr.complete && idx >= Math.ceil(ranks.length / 2) && (
+                    <div style={{ marginTop: 3 }}>
+                      <span className="gsc-chip gsc-loss">LOSS</span>
+                    </div>
+                  )}
                 </div>
-                <div className="gsc-mono" style={{ fontWeight: 700 }}>
-                  {!g.singleTeam && !g.totalScoring && <>{p.points} pts </>}
+                <div className="gsc-mono" style={{ fontWeight: 700, textAlign: "right" }}>
+                  {!g.singleTeam && !g.totalScoring && <div>{p.points} pts</div>}
                   {g.rankByTeamTotal ? (
-                    <span style={{ fontWeight: 700, fontSize: 17, whiteSpace: "nowrap" }}>
-                      {p.score}str{round.cfg.netScoring && <> (net {p.netScore})</>}{" "}
-                      <span style={{ fontWeight: 700, color: "#6b6b63" }}>({p.individualScore}str/{p.individualPutts}putt/{formatRelPar(p.relPar)})</span>
-                    </span>
+                    <div style={{ fontWeight: 700, fontSize: 17, whiteSpace: "nowrap" }}>
+                      {p.score}str{round.cfg.netScoring && <> (net {p.netScore})</>}
+                      <div style={{ fontWeight: 700, fontSize: 13, color: "#6b6b63" }}>({p.individualScore}str/{p.individualPutts}putt/{formatRelPar(p.relPar)})</div>
+                    </div>
                   ) : g.rankByPutts ? (
-                    <span style={{ fontWeight: 700, fontSize: 17, whiteSpace: "nowrap" }}>
+                    <div style={{ fontWeight: 700, fontSize: 17, whiteSpace: "nowrap" }}>
                       {p.putts}putt/{p.score}str{round.cfg.netScoring && <> (net {p.netScore})</>}/{formatRelPar(p.relPar)}
-                    </span>
+                    </div>
                   ) : g.totalScoring ? (
-                    <span style={{ fontWeight: 700, fontSize: 17, whiteSpace: "nowrap" }}>
+                    <div style={{ fontWeight: 700, fontSize: 17, whiteSpace: "nowrap" }}>
                       {p.score}str{round.cfg.netScoring && <> (net {p.netScore})</>}/{p.putts}putt/{formatRelPar(p.relPar)}
-                    </span>
+                    </div>
                   ) : (
-                    <span style={{ fontWeight: 700, color: "#6b6b63", whiteSpace: "nowrap" }}>
+                    <div style={{ fontWeight: 700, color: "#6b6b63", whiteSpace: "nowrap" }}>
                       ({p.score}str{round.cfg.netScoring && <> / net {p.netScore}</>}/{p.putts}putt/{formatRelPar(p.relPar)})
-                    </span>
+                    </div>
                   )}
                 </div>
               </div>
@@ -11403,6 +11562,7 @@ function computeRoundScoring(round) {
         )}
         {RulesModal()}
         {EditFoursomeModal()}
+        {GameDetailsModal()}
       </div>
     );
   }
