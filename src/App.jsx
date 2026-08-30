@@ -6469,7 +6469,16 @@ function computeRoundScoring(round) {
                 ? `Welcome ${profile.name}, what game do you want to play today?`
                 : "What game do you want to play today?"
             ) : (
-              "Built for every group you play with. Set up your crew once, then pick from 15 game formats and fill everyone in with one tap each time you play. RipScore handles the scoring, GPS distance-to-green, and a leaderboard just between your group, so all that's left is golf: no paper scorecards, no redoing the math, no arguing about the rules, just easy golf games, and a clear answer to who owes who at the 19th!"
+              <>
+                Built for every group you play with.
+                <ul style={{ margin: "8px 0 0", paddingLeft: 18 }}>
+                  <li style={{ marginBottom: 4 }}>Set up your crew once, then fill everyone in with one tap each time you play</li>
+                  <li style={{ marginBottom: 4 }}>Choose from 15 game formats</li>
+                  <li style={{ marginBottom: 4 }}>RipScore handles the scoring, GPS distance-to-green, and a leaderboard just for your group</li>
+                  <li style={{ marginBottom: 4 }}>No paper scorecards, no redoing the math, no arguing about the rules</li>
+                  <li>A clear answer to who owes who at the 19th!</li>
+                </ul>
+              </>
             )}
             <br />
             <br />
