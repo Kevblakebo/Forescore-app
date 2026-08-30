@@ -3188,6 +3188,7 @@ export default function GolfScorecard() {
   const [claimSlotBusy, setClaimSlotBusy] = useState(false);
   const [claimSlotErr, setClaimSlotErr] = useState("");
   const [editFoursomePlayers, setEditFoursomePlayers] = useState([]);
+  const [editFoursomeCaptainIdx, setEditFoursomeCaptainIdx] = useState(0);
   const [editFoursomeErr, setEditFoursomeErr] = useState("");
   const [editFoursomeBusy, setEditFoursomeBusy] = useState(false);
   const [boardLoading, setBoardLoading] = useState(false);
@@ -3622,6 +3623,33 @@ export default function GolfScorecard() {
               )}
             </div>
           ))}
+          {editFoursomeIsTournament && (
+            <div style={{ marginTop: 8, marginBottom: 8 }}>
+              <div className="gsc-label" style={{ marginBottom: 6 }}>Who's this foursome's captain?</div>
+              <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 8 }}>
+                Only the captain can enter or change scores for this foursome - everyone else can just view.
+              </div>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                {editFoursomePlayers.map((p, i) => (
+                  <button
+                    key={i}
+                    className="gsc-btn"
+                    style={{
+                      flex: "1 1 auto",
+                      padding: "8px 10px",
+                      fontSize: 12,
+                      background: editFoursomeCaptainIdx === i ? "#1B4332" : "transparent",
+                      color: editFoursomeCaptainIdx === i ? "#F3EFE0" : "#1B4332",
+                      border: "1.5px solid #1B4332",
+                    }}
+                    onClick={() => setEditFoursomeCaptainIdx(i)}
+                  >
+                    {p.name.trim() || `Player ${LETTERS[i]}`}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
           {editFoursomeErr && <div style={{ color: "#A42E2D", fontSize: 13, margin: "8px 0" }}>{editFoursomeErr}</div>}
           <div className="gsc-modal-row" style={{ marginTop: 12 }}>
             <button className="gsc-btn gsc-btn-outline" onClick={() => setEditFoursomeOpen(false)}>Cancel</button>
@@ -3815,6 +3843,35 @@ export default function GolfScorecard() {
     if (isRoundFullyComplete(r)) return true;
     const list = finishedList || finishedRoundsRef.current;
     return list.some((fr) => fr.id === r.id);
+  }
+
+  // Full edit rights (entering/adjusting scores, editing players) on a
+  // tournament foursome belong only to two people: the tournament's
+  // organizer (who can touch every foursome), and that specific
+  // foursome's own designated captain (who can only touch their own).
+  // Everyone else gets view-only. This never restricts a regular,
+  // non-tournament round at all, and if a tournament was ever created
+  // while logged out (so there's no real organizer account to check
+  // against), it defaults open rather than accidentally locking
+  // everyone out except whoever happens to be captain.
+  function canEditTournamentRound(r) {
+    if (!r || !r.tournamentId) return true;
+    if (!r.organizerId) return true;
+    if (!session) return false;
+    if (session.user.id === r.organizerId) return true;
+    const captainIdx = r.captainIdx ?? 0;
+    const captain = r.players && r.players[captainIdx];
+    return !!captain && !!captain.user_id && captain.user_id === session.user.id;
+  }
+
+  // Same reasoning as canEditTournamentRound, but for actions that affect
+  // the whole tournament (adding a foursome, finishing it) rather than
+  // one specific foursome's own scoring - these are organizer-only, full
+  // stop, with no captain exception.
+  function isTournamentOrganizer(t) {
+    if (!t) return false;
+    if (!t.organizerId) return true;
+    return !!session && session.user.id === t.organizerId;
   }
 
   function resumeActiveRound() {
@@ -4629,7 +4686,7 @@ export default function GolfScorecard() {
     setCourseName(tournament.course || "");
     setCourseMsg("");
     setTournamentErr("");
-    const pointer = { id: tournament.id, name: tournament.name };
+    const pointer = { id: tournament.id, name: tournament.name, organizerId: tournament.organizerId ?? null };
     setLastTournament(pointer);
     storageSet(LAST_TOURNAMENT_KEY, JSON.stringify(pointer), false);
     goToScreen("setup");
@@ -4972,6 +5029,7 @@ export default function GolfScorecard() {
       createdAt: Date.now(),
       tournamentId: isTournament ? activeTournament.id : null,
       foursomeName: isTournament ? foursomeName : null,
+      organizerId: isTournament ? activeTournament.organizerId ?? null : null,
       createGroupOnFinish: !isTournament && saveAsNewGroup && !!session,
       createGroupName: roundName.trim() || null,
     };
@@ -5105,6 +5163,14 @@ export default function GolfScorecard() {
     });
   }
 
+  function setFoursomeDraftCaptain(fi, pi) {
+    setTournamentFoursomesDraft((draft) => {
+      const next = [...draft];
+      next[fi] = { ...next[fi], captainIdx: pi };
+      return next;
+    });
+  }
+
   // Same idea as selectGroupmateForSlot, for the multi-foursome tournament
   // draft's different data shape.
   function selectGroupmateForFoursomeSlot(fi, pi, mate) {
@@ -5185,6 +5251,8 @@ export default function GolfScorecard() {
         createdAt: Date.now(),
         tournamentId: code,
         foursomeName,
+        organizerId: session ? session.user.id : null,
+        captainIdx: draft.captainIdx ?? 0,
       };
       const rw = await storageSet(`golfround:${foursomeCode}`, JSON.stringify(foursomeRound), true);
       if (!rw.ok) {
@@ -5223,6 +5291,7 @@ export default function GolfScorecard() {
       strokeIndex: cleanStrokeIndex,
       foursomes: foursomeEntries,
       createdAt: Date.now(),
+      organizerId: session ? session.user.id : null,
     };
     const w = await storageSet(`${TOURNAMENT_PREFIX}${code}`, JSON.stringify(tournament), true);
     setTournamentBusy(false);
@@ -5230,7 +5299,7 @@ export default function GolfScorecard() {
       setTournamentErr(`All ${foursomeEntries.length} foursomes were saved, but the tournament record itself failed to save (${w.error}). Try again.`);
       return;
     }
-    const pointer = { id: tournament.id, name: tournament.name };
+    const pointer = { id: tournament.id, name: tournament.name, organizerId: tournament.organizerId ?? null };
     setLastTournament(pointer);
     storageSet(LAST_TOURNAMENT_KEY, JSON.stringify(pointer), false);
     setTournamentCreatedSnapshot({ tournament, foursomeCount: foursomeEntries.length });
@@ -5322,6 +5391,7 @@ export default function GolfScorecard() {
     setEditFoursomeIsTournament(!!roundData.tournamentId);
     setEditFoursomeName(roundData.foursomeName || roundData.name || "");
     setEditFoursomePlayers(roundData.players.map((p) => ({ name: p.name, hcp: p.hcp, originalName: p.name, avatar: p.avatar || "", user_id: p.user_id || null })));
+    setEditFoursomeCaptainIdx(roundData.captainIdx ?? 0);
     setEditFoursomeOpen(true);
   }
 
@@ -5393,6 +5463,7 @@ export default function GolfScorecard() {
     if (r.tournamentId) {
       r.foursomeName = cleanName;
       r.name = cleanName + (activeTournament ? ` - ${activeTournament.name}` : "");
+      r.captainIdx = editFoursomeCaptainIdx;
     } else {
       r.name = cleanName;
     }
@@ -6581,14 +6652,16 @@ function computeRoundScoring(round) {
                 <button className="gsc-btn gsc-btn-primary" style={{ flex: 1 }} onClick={() => openTournamentBoard(lastTournament.id)}>Continue tournament</button>
                 <button className="gsc-btn gsc-btn-outline" onClick={discardTournament}>Discard</button>
               </div>
-              <button
-                className="gsc-link"
-                style={{ marginTop: 10, fontSize: 12 }}
-                disabled={tournamentBusy}
-                onClick={() => addFoursomeToTournamentId(lastTournament.id)}
-              >
-                Add a foursome
-              </button>
+              {isTournamentOrganizer(lastTournament) && (
+                <button
+                  className="gsc-link"
+                  style={{ marginTop: 10, fontSize: 12 }}
+                  disabled={tournamentBusy}
+                  onClick={() => addFoursomeToTournamentId(lastTournament.id)}
+                >
+                  Add a foursome
+                </button>
+              )}
             </div>
           )}
 
@@ -6727,14 +6800,16 @@ function computeRoundScoring(round) {
                 <button className="gsc-btn gsc-btn-primary" style={{ flex: 1 }} onClick={() => openTournamentBoard(lastTournament.id)}>Continue tournament</button>
                 <button className="gsc-btn gsc-btn-outline" onClick={discardTournament}>Discard</button>
               </div>
-              <button
-                className="gsc-link"
-                style={{ marginTop: 10, fontSize: 12 }}
-                disabled={tournamentBusy}
-                onClick={() => addFoursomeToTournamentId(lastTournament.id)}
-              >
-                Add a foursome
-              </button>
+              {isTournamentOrganizer(lastTournament) && (
+                <button
+                  className="gsc-link"
+                  style={{ marginTop: 10, fontSize: 12 }}
+                  disabled={tournamentBusy}
+                  onClick={() => addFoursomeToTournamentId(lastTournament.id)}
+                >
+                  Add a foursome
+                </button>
+              )}
             </div>
           )}
 
@@ -10424,6 +10499,31 @@ function computeRoundScoring(round) {
                 </div>
                 );
               })}
+              <div style={{ marginTop: 10 }}>
+                <div className="gsc-label" style={{ marginBottom: 6 }}>Who's this foursome's captain?</div>
+                <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 8 }}>
+                  Only the captain can enter or change scores for this foursome - everyone else can just view. Defaults to Player A if not set.
+                </div>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  {f.players.map((p, pi) => (
+                    <button
+                      key={pi}
+                      className="gsc-btn"
+                      style={{
+                        flex: "1 1 auto",
+                        padding: "8px 10px",
+                        fontSize: 12,
+                        background: (f.captainIdx ?? 0) === pi ? "#1B4332" : "transparent",
+                        color: (f.captainIdx ?? 0) === pi ? "#F3EFE0" : "#1B4332",
+                        border: "1.5px solid #1B4332",
+                      }}
+                      onClick={() => setFoursomeDraftCaptain(fi, pi)}
+                    >
+                      {p.name.trim() || `Player ${LETTERS[pi]}`}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           ))}
           {tournamentErr && <div style={{ color: "#A42E2D", marginBottom: 10 }}>{tournamentErr}</div>}
@@ -10459,7 +10559,7 @@ function computeRoundScoring(round) {
               {idx + 1}. {row.name} {round && row.id === round.id && <span className="gsc-chip gsc-lead">YOU</span>}
             </div>
             <div style={{ fontSize: 12, color: "#6b6b63" }}>{row.error ? `Couldn't load (${row.error})` : `Thru ${row[holesKey]} holes`}</div>
-            {!row.error && (
+            {!row.error && canEditTournamentRound(row.round) && (
               <button
                 className="gsc-link"
                 style={{ fontSize: 11, marginTop: 2 }}
@@ -10525,9 +10625,11 @@ function computeRoundScoring(round) {
                 <button className="gsc-link" style={{ color: "#F3EFE0", fontSize: 11, textDecoration: "underline" }} onClick={() => openRules(t.game)}>
                   Rules
                 </button>
-                <button className="gsc-link" style={{ color: "#F3EFE0", fontSize: 11, textDecoration: "underline" }} onClick={() => startTournamentFoursome(t)}>
-                  Add Foursome
-                </button>
+                {isTournamentOrganizer(t) && (
+                  <button className="gsc-link" style={{ color: "#F3EFE0", fontSize: 11, textDecoration: "underline" }} onClick={() => startTournamentFoursome(t)}>
+                    Add Foursome
+                  </button>
+                )}
               </div>
             )
           }
@@ -10571,10 +10673,15 @@ function computeRoundScoring(round) {
               {board.puttsRanked.map((row, idx) => renderFoursomeRow(row, idx, "totalPutts", "puttHoles"))}
             </div>
           )}
-          {t && (
+          {t && isTournamentOrganizer(t) && (
             <button className="gsc-btn" style={{ width: "100%", marginTop: 14, background: "#A42E2D", color: "#fff" }} disabled={finishTournamentBusy} onClick={() => finishTournament(t)}>
               {finishTournamentBusy ? "Saving..." : "Finish tournament"}
             </button>
+          )}
+          {t && !isTournamentOrganizer(t) && (
+            <div style={{ fontSize: 12, color: "#8a8a80", textAlign: "center", marginTop: 14 }}>
+              Only the tournament organizer can finish the tournament.
+            </div>
           )}
           {finishTournamentErr && <div style={{ color: "#A42E2D", fontSize: 12, textAlign: "center", marginTop: 8 }}>{finishTournamentErr}</div>}
           <div style={{ fontSize: 11, color: "#8a8a80", textAlign: "center", marginTop: 6 }}>
@@ -10870,6 +10977,10 @@ function computeRoundScoring(round) {
 
   if (screen === "card" && round && computed) {
     const g = GAMES[round.game];
+    // Only ever restrictive for a tournament foursome - completely unused
+    // (always true) for a regular round, since the organizer/captain
+    // system only applies to the 3 tournament formats.
+    const canEditThisRound = canEditTournamentRound(round);
     const parH = round.par[holeIdx] ?? 4;
     const hs = round.scores[holeIdx] || {};
     const mulSeg = Math.floor(holeIdx / mulliganWindow(round.game));
@@ -10971,9 +11082,11 @@ function computeRoundScoring(round) {
               <button className="gsc-link" style={{ color: "#F3EFE0", fontSize: 11, textDecoration: "underline" }} onClick={() => setGameDetailsOpen(true)}>
                 Game Details
               </button>
-              <button className="gsc-link" style={{ color: "#F3EFE0", fontSize: 11, textDecoration: "underline" }} onClick={() => openEditFoursome(round.id, round)}>
-                Edit Players
-              </button>
+              {canEditThisRound && (
+                <button className="gsc-link" style={{ color: "#F3EFE0", fontSize: 11, textDecoration: "underline" }} onClick={() => openEditFoursome(round.id, round)}>
+                  Edit Players
+                </button>
+              )}
               {round.tournamentId && (
                 <button className="gsc-link" style={{ color: "#F3EFE0", fontSize: 11, textDecoration: "underline" }} onClick={() => openTournamentBoard(round.tournamentId)}>
                   Leaderboard
@@ -11144,6 +11257,12 @@ function computeRoundScoring(round) {
               <button className="gsc-btn gsc-btn-outline" disabled={holeIdx === 17} onClick={() => setHoleIdx((h) => h + 1)}>Next</button>
             </div>
 
+            {!canEditThisRound && (
+              <div style={{ background: "#F8F1E4", border: "1px solid #B08D57", borderRadius: 10, padding: "10px 12px", marginBottom: 10, fontSize: 12, color: "#8a6a2f", textAlign: "center" }}>
+                {"\u{1F441}\u{FE0F}"} View only - only the tournament organizer or this foursome's captain can enter or change scores.
+              </div>
+            )}
+            <div style={{ pointerEvents: canEditThisRound ? "auto" : "none", opacity: canEditThisRound ? 1 : 0.6 }}>
             {g.oneTeamScore ? (
               (() => {
                 const teamEntry = hs[0] || {};
@@ -11390,6 +11509,7 @@ function computeRoundScoring(round) {
               );
             })
             )}
+            </div>
 
             {g.tracksPontoBangoBongo && (() => {
               const selectors = [
@@ -11811,15 +11931,23 @@ function computeRoundScoring(round) {
           <div style={{ fontSize: 12, color: "#8a8a80", textAlign: "center", marginTop: 16 }}>
             Share code <b className="gsc-mono">{round.id}</b> with your group so everyone can enter or view scores.
           </div>
-          <button className="gsc-btn" style={{ width: "100%", marginTop: 14, background: "#A42E2D", color: "#fff" }} disabled={busy} onClick={() => setConfirmFinishOpen(true)}>
-            {busy ? "Saving..." : "Finish & exit this round"}
-          </button>
-          {archiveErr && <div style={{ color: "#A42E2D", fontSize: 12, textAlign: "center", marginTop: 8 }}>{archiveErr}</div>}
-          <div style={{ fontSize: 11, color: "#8a8a80", textAlign: "center", marginTop: 6 }}>
-            {session
-              ? "This saves it to \"Finished rounds\" in your Profile - it won't be deleted."
-              : "You'll still see your results on the next page, and this round stays under \"Games\" for this session - but it'll be gone for good once you close the app, unless you log in."}
-          </div>
+          {canEditThisRound ? (
+            <>
+              <button className="gsc-btn" style={{ width: "100%", marginTop: 14, background: "#A42E2D", color: "#fff" }} disabled={busy} onClick={() => setConfirmFinishOpen(true)}>
+                {busy ? "Saving..." : "Finish & exit this round"}
+              </button>
+              {archiveErr && <div style={{ color: "#A42E2D", fontSize: 12, textAlign: "center", marginTop: 8 }}>{archiveErr}</div>}
+              <div style={{ fontSize: 11, color: "#8a8a80", textAlign: "center", marginTop: 6 }}>
+                {session
+                  ? "This saves it to \"Finished rounds\" in your Profile - it won't be deleted."
+                  : "You'll still see your results on the next page, and this round stays under \"Games\" for this session - but it'll be gone for good once you close the app, unless you log in."}
+              </div>
+            </>
+          ) : (
+            <div style={{ fontSize: 12, color: "#8a8a80", textAlign: "center", marginTop: 14 }}>
+              Only the tournament organizer or this foursome's captain can finish this round.
+            </div>
+          )}
         </div>
         {confirmLeaveOpen && (
           <div className="gsc-modal-backdrop" onClick={cancelLeaveRound}>
