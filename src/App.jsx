@@ -141,12 +141,12 @@ const GAMES = {
     hasScore: true,
     hasPutts: true,
     puttsOnlyScoring: true,
-    defaults: { maxOver: "", maxPutts: "", mulliganSegment: "", mulliganChallenge: "", prize: "" },
+    defaults: { maxOver: "", maxPutts: "", mulliganSegment: "", mulliganChallenge: "", prize: "", tiesCarryOver: false },
     rules: [
       "Team putting game for 4 players (2 vs 2 teams).",
       "Total strokes and putts are kept track of.",
       "1 point is earned per hole by the team with the lowest combined putts.",
-      "0 points are earned for ties. Ties do not carry over.",
+      "Ties carryover: to be agreed on prior to round.",
       "Prize: to be agreed on prior to round.",
       "Strokes max: to be agreed on prior to round.",
       "Putts max: to be agreed on prior to round.",
@@ -253,7 +253,7 @@ const GAMES = {
     rotates: false,
     hasScore: true,
     hasPutts: true,
-    defaults: { maxOver: "", maxPutts: "", mulliganSegment: "", mulliganChallenge: "", prize: "" },
+    defaults: { maxOver: "", maxPutts: "", mulliganSegment: "", mulliganChallenge: "", prize: "", tiesCarryOver: false },
     rules: [
       "Two 2-person team strokes and putting competition (same game as Round Robin, except no team rotation).",
       {
@@ -269,7 +269,7 @@ const GAMES = {
       "Must putt all the way into the hole.",
       "Flagstick can stay in.",
       "Putts start once on the putting green.",
-      "No carry-overs on ties.",
+      "Ties carryover: to be agreed on prior to round.",
       "Handicaps (net score per hole) optional in game scoring settings.",
       "Great for similar handicap groups.",
     ],
@@ -423,7 +423,7 @@ const GAMES = {
     oneTeamScore: true,
     tournamentOnly: true,
     tracksDrives: true,
-    defaults: { maxOver: "", maxPutts: "", mulliganSegment: "", mulliganChallenge: "", minDrives: 3, prize: "" },
+    defaults: { maxOver: "", maxPutts: "", mulliganSegment: "", mulliganChallenge: "", minDrives: "", prize: "" },
     rules: [
       "4-person team strokes competition - the whole foursome plays as one team",
       {
@@ -482,7 +482,7 @@ const GAMES = {
     rotates: false,
     hasScore: true,
     hasPutts: true,
-    defaults: { maxOver: "", maxPutts: "", mulliganSegment: "", mulliganChallenge: "", prize: "" },
+    defaults: { maxOver: "", maxPutts: "", mulliganSegment: "", mulliganChallenge: "", prize: "", tiesCarryOver: false },
     rules: [
       "Individual strokes and putting skins game for up to 4 players. Points for low strokes AND low putts each hole. Most points wins.",
       {
@@ -501,7 +501,7 @@ const GAMES = {
       "Must putt all the way into the hole.",
       "Flagstick can stay in.",
       "Putts start once on the putting green.",
-      "No carry-overs on ties.",
+      "Ties carryover: to be agreed on prior to round.",
       "Handicaps (net score per hole) optional in game scoring settings.",
       "Great for similar handicap foursomes.",
     ],
@@ -3316,6 +3316,9 @@ export default function GolfScorecard() {
             <div><b>Prize / stakes:</b> {cfg.prize ? cfg.prize : "Not set"}</div>
             <div><b>Venmo handle for settling up:</b> {cfg.venmo ? cfg.venmo : "Not set"}</div>
             <div><b>Use per-hole handicapping:</b> {cfg.netScoring ? "Yes" : "No"}</div>
+            {["dstreet", "ponto", "teamputts"].includes(round.game) && (
+              <div><b>Ties carry over to next hole:</b> {cfg.tiesCarryOver ? "Yes" : "No"}</div>
+            )}
           </div>
           <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 14 }} onClick={() => setGameDetailsOpen(false)}>
             Close
@@ -6026,6 +6029,17 @@ function computeRoundScoring(round) {
   const teamPointsByTeamIdx = null; // was only used by the now-removed Ponto Putt-Off game
   const holeResults = [];
 
+  // Running, cross-hole carryover pools for "ties carry over to next
+  // hole" (Individual Skins, Team Skins, Team Putts only). Strokes and
+  // putts carry independently of each other, per an explicit design
+  // decision, since they're genuinely separate competitions each hole -
+  // a strokes tie shouldn't affect whether putts points are riding into
+  // the next hole, or vice versa. Declared here (not inside the hole
+  // loop) specifically so the accumulated value survives from one
+  // iteration to the next.
+  const tiesCarryOverOn = !!round.cfg.tiesCarryOver;
+  const carryPools = { score: 0, putt: 0 };
+
   // Per-hole handicapping ("net scoring") - computed once for the whole
   // round, since each player's total allocation never changes hole to
   // hole, only which specific holes it applies to (via stroke index).
@@ -6112,15 +6126,26 @@ function computeRoundScoring(round) {
     // the same for 2-team games (a tie just means nobody scores that
     // category) and for individual skins-style games with more entrants
     // (e.g. two players tied for lowest putts each get the point).
-    function awardLowest(sums) {
+    function awardLowest(sums, poolKey) {
       const awarded = sums.map(() => 0);
-      if (!sums.every((v) => v != null)) return awarded;
+      if (!sums.every((v) => v != null)) return awarded; // hole not played yet - leave any carry pool untouched, award nothing
       const min = Math.min(...sums);
       const winners = sums.filter((v) => v === min).length;
       if (winners < sums.length) {
+        // A real winner (or several tied-for-lowest, per the existing
+        // rule that a partial tie still pays everyone tied for the
+        // lead) - award this hole's point plus whatever's built up in
+        // the pool, then the pool resets to zero.
+        const value = poolKey && tiesCarryOverOn ? 1 + carryPools[poolKey] : 1;
+        if (poolKey) carryPools[poolKey] = 0;
         sums.forEach((v, i) => {
-          if (v === min) awarded[i] = 1;
+          if (v === min) awarded[i] = value;
         });
+      } else if (poolKey && tiesCarryOverOn) {
+        // Everyone tied for this category on a fully-played hole - carry
+        // one more point into whichever hole finally breaks the tie,
+        // rather than awarding (and losing) it now.
+        carryPools[poolKey] += 1;
       }
       return awarded;
     }
@@ -6214,11 +6239,11 @@ function computeRoundScoring(round) {
       });
     } else if (g.hasScore && !g.totalScoring && !g.puttsOnlyScoring) {
       const sums = teamRes.map((t) => t.scoreSum);
-      awardLowest(sums).forEach((v, i) => (ptsAwarded[i].score = v));
+      awardLowest(sums, "score").forEach((v, i) => (ptsAwarded[i].score = v));
     }
     if (!g.tracksPontoBangoBongo && !g.tracksWolf && !g.tracksVegas && !g.tracksStableford && g.hasPutts && !g.totalScoring) {
       const sums = teamRes.map((t) => t.puttSum);
-      awardLowest(sums).forEach((v, i) => (ptsAwarded[i].putt = v));
+      awardLowest(sums, "putt").forEach((v, i) => (ptsAwarded[i].putt = v));
     }
 
     teamsThisHole.forEach((team, ti) => {
@@ -6243,7 +6268,7 @@ function computeRoundScoring(round) {
     }
   }
 
-  return { playerPoints, playerTotalScore, playerTotalNetScore, playerTotalPutts, playerParPlayed, teamPointsByTeamIdx, holeResults, mulligansUsed, netScoringOn, allocatedStrokes, strokesOffForHole };
+  return { playerPoints, playerTotalScore, playerTotalNetScore, playerTotalPutts, playerParPlayed, teamPointsByTeamIdx, holeResults, mulligansUsed, netScoringOn, allocatedStrokes, strokesOffForHole, carryPools };
 }
 
   const computed = useMemo(() => computeRoundScoring(round), [round]);
@@ -9037,6 +9062,30 @@ function computeRoundScoring(round) {
                   </div>
                 </div>
               )}
+              {["dstreet", "ponto", "teamputts"].includes(wizardAnswers.resolvedGameKey) && (
+                <div className="gsc-field" style={{ marginTop: 10 }}>
+                  <div className="gsc-label">Ties carry over to next hole?</div>
+                  <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 6 }}>
+                    If a hole ties, the point rides into the next hole instead of going unclaimed - whoever finally wins a hole collects everything that's built up.
+                  </div>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button
+                      className="gsc-btn"
+                      style={{ flex: 1, background: !activeCfg.tiesCarryOver ? "#A42E2D" : "transparent", color: !activeCfg.tiesCarryOver ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
+                      onClick={() => setActiveCfg({ ...activeCfg, tiesCarryOver: false })}
+                    >
+                      No
+                    </button>
+                    <button
+                      className="gsc-btn"
+                      style={{ flex: 1, background: activeCfg.tiesCarryOver ? "#A42E2D" : "transparent", color: activeCfg.tiesCarryOver ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
+                      onClick={() => setActiveCfg({ ...activeCfg, tiesCarryOver: true })}
+                    >
+                      Yes
+                    </button>
+                  </div>
+                </div>
+              )}
               {g.tracksDrives && (
                 <div className="gsc-field" style={{ marginTop: 10 }}>
                   <div className="gsc-label">Minimum drives per player</div>
@@ -9628,6 +9677,30 @@ function computeRoundScoring(round) {
                 </div>
               </div>
             )}
+            {["dstreet", "ponto", "teamputts"].includes(gameKey) && (
+              <div className="gsc-field">
+                <div className="gsc-label">Ties carry over to next hole?</div>
+                <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 6 }}>
+                  If a hole ties, the point rides into the next hole instead of going unclaimed - whoever finally wins a hole collects everything that's built up.
+                </div>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button
+                    className="gsc-btn"
+                    style={{ flex: 1, background: !cfg.tiesCarryOver ? "#A42E2D" : "transparent", color: !cfg.tiesCarryOver ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
+                    onClick={() => setCfg({ ...cfg, tiesCarryOver: false })}
+                  >
+                    No
+                  </button>
+                  <button
+                    className="gsc-btn"
+                    style={{ flex: 1, background: cfg.tiesCarryOver ? "#A42E2D" : "transparent", color: cfg.tiesCarryOver ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
+                    onClick={() => setCfg({ ...cfg, tiesCarryOver: true })}
+                  >
+                    Yes
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
           )}
 
@@ -10147,13 +10220,11 @@ function computeRoundScoring(round) {
                   className="gsc-input"
                   type="number"
                   min="0"
+                  placeholder="3"
                   value={tournamentCfg.minDrives}
                   onChange={(e) => {
                     const raw = cleanNumericText(e.target.value);
                     setTournamentCfg({ ...tournamentCfg, minDrives: raw === "" ? "" : Number(raw) });
-                  }}
-                  onBlur={(e) => {
-                    if (e.target.value === "") setTournamentCfg((c) => ({ ...c, minDrives: 3 }));
                   }}
                 />
                 <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 6 }}>
