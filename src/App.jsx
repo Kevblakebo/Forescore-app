@@ -1081,6 +1081,7 @@ const ACTIVE_KEY = "gsc-active-round";
 const LAST_TOURNAMENT_KEY = "gsc-last-tournament";
 const FINISHED_TOURNAMENT_INDEX_KEY = "gsc-finished-tournament-index";
 const FINISHED_INDEX_KEY = "gsc-finished-index";
+const DISMISSED_JOINABLE_KEY = "gsc-dismissed-joinable-rounds";
 const FINISHED_PREFIX = "gsc-finished-round:";
 const TOURNAMENT_PREFIX = "gsc-tournament:";
 // Tournaments only ever use the dedicated tournament game - a true 4-person
@@ -2914,11 +2915,9 @@ export default function GolfScorecard() {
       setJoinableGroupRounds([]);
       return;
     }
-    const myOwnActiveCode = activeRound ? activeRound.id : null;
     const found = [];
     for (const link of links) {
       if (link.tournament_id) continue;
-      if (link.round_code === myOwnActiveCode) continue;
       if (dismissedJoinableRounds.includes(link.round_code)) continue;
       const res = await storageGet(`golfround:${link.round_code}`, true);
       if (!res.ok || !res.value) continue;
@@ -2929,11 +2928,29 @@ export default function GolfScorecard() {
         continue;
       }
       if (r.finished) continue;
+      // Slot 0 is always the actual person who ran setup for this round
+      // (set directly from their own session at creation time) - this is
+      // a definitive, authoritative check for "did I start this myself,"
+      // unlike comparing against local activeRound state, which is
+      // restored asynchronously and might not have loaded yet at the
+      // exact moment this runs.
+      if (r.players && r.players[0] && r.players[0].user_id === session.user.id) continue;
       const organizer = r.players && r.players[0];
       found.push({ code: link.round_code, round: r, organizerName: (organizer && organizer.name) || "Someone" });
       if (found.length >= 3) break;
     }
     setJoinableGroupRounds(found);
+  }
+
+  // Permanently dismisses one round from the "ready to join" homepage
+  // card - persisted via account-level storage (not just in-memory state)
+  // so it stays dismissed across app restarts and other devices signed
+  // into the same account. Capped to the most recent 50 so this can't
+  // grow unbounded over years of use.
+  async function dismissJoinableRound(code) {
+    const next = [...dismissedJoinableRounds, code].slice(-50);
+    setDismissedJoinableRounds(next);
+    storageSet(DISMISSED_JOINABLE_KEY, JSON.stringify(next), false);
   }
 
   async function loadYearlyRecap(groupId, year) {
@@ -3732,6 +3749,12 @@ export default function GolfScorecard() {
       if (ftRes.ok && ftRes.value) {
         try {
           setFinishedTournaments(JSON.parse(ftRes.value));
+        } catch (e) {}
+      }
+      const djRes = await storageGet(DISMISSED_JOINABLE_KEY, false);
+      if (djRes.ok && djRes.value) {
+        try {
+          setDismissedJoinableRounds(JSON.parse(djRes.value));
         } catch (e) {}
       }
     })();
@@ -6433,7 +6456,7 @@ function computeRoundScoring(round) {
                 <button
                   className="gsc-btn gsc-btn-outline"
                   style={{ flex: "0 0 auto" }}
-                  onClick={() => setDismissedJoinableRounds((prev) => [...prev, jr.code])}
+                  onClick={() => dismissJoinableRound(jr.code)}
                 >
                   Not now
                 </button>
