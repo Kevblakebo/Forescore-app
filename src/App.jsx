@@ -6470,14 +6470,18 @@ function computeRoundScoring(round) {
                 : "What game do you want to play today?"
             ) : (
               <>
-                Built for every group you play with.
+                RipScore is the app built for every group you play with.
                 <ul style={{ margin: "8px 0 0", paddingLeft: 18 }}>
-                  <li style={{ marginBottom: 4 }}>Set up your crew once, then fill everyone in with one tap each time you play</li>
-                  <li style={{ marginBottom: 4 }}>Choose from 15 game formats</li>
-                  <li style={{ marginBottom: 4 }}>RipScore handles the scoring, GPS distance-to-green, and a leaderboard just for your group</li>
-                  <li style={{ marginBottom: 4 }}>No paper scorecards, no redoing the math, no arguing about the rules</li>
-                  <li>A clear answer to who owes who at the 19th!</li>
+                  <li style={{ marginBottom: 4 }}>{"\u{1F465}"} Set Up Your Group Once</li>
+                  <li style={{ marginBottom: 4 }}>{"\u26F3"} 15 Game Formats, for Every Kind of Day</li>
+                  <li style={{ marginBottom: 4 }}>{"\u{1F4CD}"} Live Distance to the Green</li>
+                  <li style={{ marginBottom: 4 }}>{"\u{1F3CC}\u{FE0F}"} Optional Handicapping, Done Right</li>
+                  <li style={{ marginBottom: 4 }}>{"\u{1F4CA}"} A Leaderboard Just for Your Group</li>
+                  <li style={{ marginBottom: 4 }}>{"\u{1F4B5}"} Settle Up Without the Argument</li>
                 </ul>
+                <div style={{ marginTop: 8 }}>
+                  Whether it's a casual Saturday game or a full club tournament, RipScore keeps the math out of your golf - so all that's left is golf.
+                </div>
               </>
             )}
             <br />
