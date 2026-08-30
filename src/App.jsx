@@ -8575,15 +8575,25 @@ function computeRoundScoring(round) {
                 <div className="gsc-card">
                   <div className="gsc-label" style={{ marginBottom: 10, fontSize: 16 }}>Two good fits - which sounds more like your group?</div>
                   {candidates.map((key) => (
-                    <button
+                    <div
                       key={key}
                       className="gsc-btn gsc-btn-outline"
-                      style={{ width: "100%", marginBottom: 10, padding: 14, fontSize: 14, textAlign: "left" }}
+                      style={{ width: "100%", marginBottom: 10, padding: 14, fontSize: 14, textAlign: "left", cursor: "pointer" }}
                       onClick={() => wizardGoNext("vibeFollowup", { resolvedGameKey: key, isTournament: isTourn })}
                     >
                       <div style={{ fontWeight: 700, marginBottom: 4 }}>{GAMES[key].name}</div>
                       <div style={{ fontWeight: 400, fontSize: 12, color: "#6b6b63" }}>{GAMES[key].desc}</div>
-                    </button>
+                      <button
+                        className="gsc-link"
+                        style={{ marginTop: 6, fontSize: 12 }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openRules(key);
+                        }}
+                      >
+                        Why people love this game
+                      </button>
+                    </div>
                   ))}
                 </div>
               );
