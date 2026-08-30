@@ -1545,6 +1545,7 @@ export default function GolfScorecard() {
   const [confirmFinishOpen, setConfirmFinishOpen] = useState(false);
   const [viewingRoundFromStats, setViewingRoundFromStats] = useState(false);
   const [rulesOpenFor, setRulesOpenFor] = useState(null);
+  const [whyPlayOpenFor, setWhyPlayOpenFor] = useState(null);
   const [quickInfoFor, setQuickInfoFor] = useState(null);
   const [mulliganAwardedFlash, setMulliganAwardedFlash] = useState(null);
 
@@ -3122,6 +3123,12 @@ export default function GolfScorecard() {
   function closeRules() {
     setRulesOpenFor(null);
   }
+  function openWhyPlay(key) {
+    setWhyPlayOpenFor(key);
+  }
+  function closeWhyPlay() {
+    setWhyPlayOpenFor(null);
+  }
 
   function YearlyRecapModal() {
     if (!yearlyRecapOpen) return null;
@@ -3344,15 +3351,24 @@ export default function GolfScorecard() {
               )
             )}
           </ul>
-          {WHY_PLAY[rulesOpenFor] && (
-            <div style={{ background: "#F8F1E4", borderRadius: 10, padding: "12px 14px", marginBottom: 16 }}>
-              <div style={{ fontSize: 11, color: "#8a6a2f", textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 700, marginBottom: 6 }}>
-                Why people love this game
-              </div>
-              <div style={{ fontSize: 13, color: "#4b4b45", lineHeight: 1.6 }}>{WHY_PLAY[rulesOpenFor]}</div>
-            </div>
-          )}
           <button className="gsc-btn gsc-btn-primary" style={{ width: "100%" }} onClick={closeRules}>
+            Close
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  function WhyPlayModal() {
+    if (!whyPlayOpenFor) return null;
+    const rg = GAMES[whyPlayOpenFor];
+    if (!rg || !WHY_PLAY[whyPlayOpenFor]) return null;
+    return (
+      <div className="gsc-modal-backdrop" onClick={closeWhyPlay}>
+        <div className="gsc-modal" style={{ maxWidth: 440, maxHeight: "80vh", overflowY: "auto" }} onClick={(e) => e.stopPropagation()}>
+          <div className="gsc-modal-title">Why People Love {rg.name}</div>
+          <div style={{ fontSize: 13, color: "#4b4b45", lineHeight: 1.6, marginBottom: 16 }}>{WHY_PLAY[whyPlayOpenFor]}</div>
+          <button className="gsc-btn gsc-btn-primary" style={{ width: "100%" }} onClick={closeWhyPlay}>
             Close
           </button>
         </div>
@@ -3433,6 +3449,18 @@ export default function GolfScorecard() {
           <div className="gsc-modal-title">{qg.name}</div>
           {qg.tag && <div className="gsc-tag" style={{ marginBottom: 14 }}>{qg.tag}</div>}
           <div style={{ fontSize: 14, color: "#4b4b45", lineHeight: 1.6, marginBottom: 16 }}>{qg.desc}</div>
+          {WHY_PLAY[quickInfoFor] && (
+            <button
+              className="gsc-link"
+              style={{ fontSize: 13, fontWeight: 700, marginBottom: 10, display: "block" }}
+              onClick={() => {
+                setQuickInfoFor(null);
+                openWhyPlay(quickInfoFor);
+              }}
+            >
+              Why people love this game
+            </button>
+          )}
           <button
             className="gsc-link"
             style={{ fontSize: 13, fontWeight: 700, marginBottom: 16, display: "block" }}
@@ -6510,6 +6538,7 @@ function computeRoundScoring(round) {
           </div>
         </div>
         {RulesModal()}
+        {WhyPlayModal()}
         {QuickInfoModal()}
         <BottomNav />
       </div>
@@ -6609,9 +6638,21 @@ function computeRoundScoring(round) {
                   </div>
                   <div className="gsc-tag">{g.tag}</div>
                   <div className="gsc-no-select" style={{ fontSize: 13, marginTop: 8, color: "#4b4b45" }}>{g.desc}</div>
+                  {WHY_PLAY[key] && (
+                    <button
+                      className="gsc-link"
+                      style={{ marginTop: 8, fontSize: 12, display: "block" }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openWhyPlay(key);
+                      }}
+                    >
+                      Why people love this game
+                    </button>
+                  )}
                   <button
                     className="gsc-link"
-                    style={{ marginTop: 8, fontSize: 12 }}
+                    style={{ marginTop: 8, fontSize: 12, display: "block" }}
                     onClick={(e) => {
                       e.stopPropagation();
                       openRules(key);
@@ -6638,9 +6679,21 @@ function computeRoundScoring(round) {
                   </div>
                   <div className="gsc-tag">{g.tag}</div>
                   <div className="gsc-no-select" style={{ fontSize: 13, marginTop: 8, color: "#4b4b45" }}>{g.desc}</div>
+                  {WHY_PLAY[key] && (
+                    <button
+                      className="gsc-link"
+                      style={{ marginTop: 8, fontSize: 12, display: "block" }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openWhyPlay(key);
+                      }}
+                    >
+                      Why people love this game
+                    </button>
+                  )}
                   <button
                     className="gsc-link"
-                    style={{ marginTop: 8, fontSize: 12 }}
+                    style={{ marginTop: 8, fontSize: 12, display: "block" }}
                     onClick={(e) => {
                       e.stopPropagation();
                       openRules(key);
@@ -6670,9 +6723,21 @@ function computeRoundScoring(round) {
                   </div>
                   <div className="gsc-tag">{g.tag}</div>
                   <div className="gsc-no-select" style={{ fontSize: 13, marginTop: 8, color: "#4b4b45" }}>{g.desc}</div>
+                  {WHY_PLAY[key] && (
+                    <button
+                      className="gsc-link"
+                      style={{ marginTop: 8, fontSize: 12, display: "block" }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openWhyPlay(key);
+                      }}
+                    >
+                      Why people love this game
+                    </button>
+                  )}
                   <button
                     className="gsc-link"
-                    style={{ marginTop: 8, fontSize: 12 }}
+                    style={{ marginTop: 8, fontSize: 12, display: "block" }}
                     onClick={(e) => {
                       e.stopPropagation();
                       openRules(key);
@@ -6724,6 +6789,7 @@ function computeRoundScoring(round) {
           </div>
         )}
         {RulesModal()}
+        {WhyPlayModal()}
         <BottomNav />
       </div>
     );
@@ -7529,6 +7595,7 @@ function computeRoundScoring(round) {
           )}
         </div>
         {RulesModal()}
+        {WhyPlayModal()}
         {DeleteHistoryConfirmModal()}
         {HeadToHeadModal()}
         {YearlyRecapModal()}
@@ -7573,6 +7640,16 @@ function computeRoundScoring(round) {
             </button>
           </div>
 
+          <div className="gsc-card" style={{ cursor: "pointer" }} onClick={() => goToScreen("feedback")}>
+            <div className="gsc-label" style={{ marginBottom: 6 }}>Give Feedback</div>
+            <div style={{ fontSize: 13, color: "#4b4b45" }}>
+              Two minutes, ten questions - tell us what's working and what isn't.
+            </div>
+            <button className="gsc-link" style={{ marginTop: 8, fontSize: 12 }} onClick={() => goToScreen("feedback")}>
+              Start feedback survey
+            </button>
+          </div>
+
           <div className="gsc-card" style={{ cursor: "pointer" }} onClick={() => goToScreen("termsOfService")}>
             <div className="gsc-label" style={{ marginBottom: 6 }}>Terms of Service</div>
             <div style={{ fontSize: 13, color: "#4b4b45" }}>
@@ -7590,16 +7667,6 @@ function computeRoundScoring(round) {
             </div>
             <button className="gsc-link" style={{ marginTop: 8, fontSize: 12 }} onClick={() => goToScreen("privacyPolicy")}>
               Read more
-            </button>
-          </div>
-
-          <div className="gsc-card" style={{ cursor: "pointer" }} onClick={() => goToScreen("feedback")}>
-            <div className="gsc-label" style={{ marginBottom: 6 }}>Give Feedback</div>
-            <div style={{ fontSize: 13, color: "#4b4b45" }}>
-              Two minutes, ten questions - tell us what's working and what isn't.
-            </div>
-            <button className="gsc-link" style={{ marginTop: 8, fontSize: 12 }} onClick={() => goToScreen("feedback")}>
-              Start feedback survey
             </button>
           </div>
         </div>
@@ -9016,6 +9083,7 @@ function computeRoundScoring(round) {
           )}
         </div>
         {RulesModal()}
+        {WhyPlayModal()}
         {GroupFillModal()}
       </div>
     );
@@ -9601,6 +9669,7 @@ function computeRoundScoring(round) {
           </button>
         </div>
         {RulesModal()}
+        {WhyPlayModal()}
         {GroupFillModal()}
       </div>
     );
@@ -9976,6 +10045,7 @@ function computeRoundScoring(round) {
           </button>
         </div>
         {RulesModal()}
+        {WhyPlayModal()}
       </div>
     );
   }
@@ -10293,6 +10363,7 @@ function computeRoundScoring(round) {
         </div>
         {EditFoursomeModal()}
         {RulesModal()}
+        {WhyPlayModal()}
       </div>
     );
   }
@@ -11078,7 +11149,7 @@ function computeRoundScoring(round) {
                       const noLimitSet = (round.cfg.mulliganSegment || 0) === 0;
                       const usedSoFar = computed.mulligansUsed[i][mulSeg];
                       return (
-                        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, flexWrap: "nowrap" }}>
+                        <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "center", gap: 6, flexWrap: "nowrap" }}>
                           <div style={{ fontSize: 11, color: "#6b6b63", whiteSpace: "nowrap" }}>
                             {noLimitSet ? "MULLIGAN" : `MULLIGAN (${Math.max(0, mulLeft)} left)`}
                           </div>
@@ -11089,7 +11160,7 @@ function computeRoundScoring(round) {
                               disabled={!noLimitSet && !e.mulligan && mulLeft <= 0}
                               onChange={(ev) => updateHoleEntry(i, "mulligan", ev.target.checked)}
                             />
-                            used ({usedSoFar})
+                            USED ({usedSoFar})
                           </label>
                         </div>
                       );
@@ -11561,6 +11632,7 @@ function computeRoundScoring(round) {
           </div>
         )}
         {RulesModal()}
+        {WhyPlayModal()}
         {EditFoursomeModal()}
         {GameDetailsModal()}
       </div>
