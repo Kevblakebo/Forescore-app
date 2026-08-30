@@ -11715,7 +11715,9 @@ function computeRoundScoring(round) {
           </button>
           {archiveErr && <div style={{ color: "#A42E2D", fontSize: 12, textAlign: "center", marginTop: 8 }}>{archiveErr}</div>}
           <div style={{ fontSize: 11, color: "#8a8a80", textAlign: "center", marginTop: 6 }}>
-            This saves it to "Finished rounds" on the home screen - it won't be deleted.
+            {session
+              ? "This saves it to \"Finished rounds\" in your Profile - it won't be deleted."
+              : "You'll still see your results on the next page, and this round stays under \"Games\" for this session - but it'll be gone for good once you close the app, unless you log in."}
           </div>
         </div>
         {confirmLeaveOpen && (
