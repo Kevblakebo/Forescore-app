@@ -11149,13 +11149,14 @@ function computeRoundScoring(round) {
                       const noLimitSet = (round.cfg.mulliganSegment || 0) === 0;
                       const usedSoFar = computed.mulligansUsed[i][mulSeg];
                       return (
-                        <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "center", gap: 6, flexWrap: "nowrap" }}>
+                        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "center", gap: 6, flexWrap: "nowrap" }}>
                           <div style={{ fontSize: 11, color: "#6b6b63", whiteSpace: "nowrap" }}>
                             {noLimitSet ? "MULLIGAN" : `MULLIGAN (${Math.max(0, mulLeft)} left)`}
                           </div>
-                          <label className="gsc-mull" style={{ margin: 0, whiteSpace: "nowrap", fontSize: 11, color: "#6b6b63" }}>
+                          <label className="gsc-mull" style={{ display: "inline-block", margin: 0, whiteSpace: "nowrap", fontSize: 11, color: "#6b6b63" }}>
                             <input
                               type="checkbox"
+                              style={{ verticalAlign: "middle", position: "relative", top: -1 }}
                               checked={!!e.mulligan}
                               disabled={!noLimitSet && !e.mulligan && mulLeft <= 0}
                               onChange={(ev) => updateHoleEntry(i, "mulligan", ev.target.checked)}
@@ -11394,7 +11395,7 @@ function computeRoundScoring(round) {
             {ranks.map((p, idx) => (
               <div key={p.idx} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "6px 0", borderBottom: "1px solid #eee6cf", fontSize: 13 }}>
                 <div style={{ fontWeight: 700 }}>
-                  <div>
+                  <div style={{ fontSize: 15 }}>
                     {p.avatar && <span style={{ marginRight: 4 }}>{p.avatar}</span>}
                     {p.name}
                   </div>
