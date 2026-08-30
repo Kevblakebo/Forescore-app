@@ -1575,7 +1575,21 @@ export default function GolfScorecard() {
   const [tournamentCreatedSnapshot, setTournamentCreatedSnapshot] = useState(null); // captured data for the "tournament just created" celebration
 
   // ---- Feedback survey state ----
-  const FEEDBACK_FEATURES = ["Mulligan tracking", "Course search (auto-fill par)", "Avatars", "Tournaments / Leaderboard", "Full 18-hole scorecard view", "Accolades (birdie/eagle celebrations)"];
+  const FEEDBACK_FEATURES = [
+    "Mulligan tracking",
+    "Course search (auto-fill par)",
+    "Avatars",
+    "Tournaments / Leaderboard",
+    "Full 18-hole scorecard view",
+    "Accolades (birdie/eagle celebrations)",
+    "Moments from today (first birdie, personal best, group milestones)",
+    "Group-scoped leaderboards",
+    "Head-to-head records vs a specific person",
+    "Yearly group recap",
+    "\"Why people love this game\" info",
+    "The redesigned Game Wizard (asks what you want, not just mechanics)",
+    "\"Ready to join\" homepage prompt when a group-mate starts a round",
+  ];
   const [feedbackAnswers, setFeedbackAnswers] = useState({
     setupMethod: null,
     setupEase: null,
@@ -8463,6 +8477,20 @@ function computeRoundScoring(round) {
             ))}
           </div>
 
+          {a.setupMethod === "Used the Game Wizard" && (
+            <div className="gsc-card">
+              <div className="gsc-label" style={{ marginBottom: 8 }}>The Wizard now leads with questions like "what matters most for your round" instead of just mechanics. How well did that help you land on the right game?</div>
+              <div style={{ display: "flex", gap: 8 }}>
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <button key={n} style={scaleBtn(a.wizardVibeHelpfulness === n)} onClick={() => updateFeedback("wizardVibeHelpfulness", n)}>{n}</button>
+                ))}
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#6b6b63", marginTop: 6 }}>
+                <span>Didn't help</span><span>Nailed it</span>
+              </div>
+            </div>
+          )}
+
           <div className="gsc-card">
             <div className="gsc-label" style={{ marginBottom: 8 }}>How easy was it to get your round started and playing?</div>
             <div style={{ display: "flex", gap: 8 }}>
@@ -8485,7 +8513,7 @@ function computeRoundScoring(round) {
           <div className="gsc-card">
             <div className="gsc-label" style={{ marginBottom: 8 }}>Which game format(s) have you played? <span style={{ textTransform: "none", fontWeight: 400 }}>(select all that apply)</span></div>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              {["Individual Strokes", "Individual Skins", "Bingo Bango Bongo", "Team Best Ball", "Team Skins", "Round Robin", "Wolf", "A tournament format"].map((opt) => (
+              {["Team Strokes", "Team Putts", "Round Robin", "Wolf", "Team Skins", "Vegas", "Team Best Ball", "Best Ball Tournament", "Combined Strokes Tournament", "Scramble Tournament", "Individual Strokes", "Individual Skins", "Individual Putts", "Bingo Bango Bongo", "Stableford"].map((opt) => (
                 <button key={opt} style={pillBtn(a.formats.includes(opt))} onClick={() => toggleFeedbackFormat(opt)}>{opt}</button>
               ))}
             </div>
