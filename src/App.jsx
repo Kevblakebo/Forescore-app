@@ -6484,18 +6484,34 @@ function computeRoundScoring(round) {
                 </div>
               </>
             )}
-            <br />
-            <br />
-            To join an existing round or start a new round:
-            <br />
-            1) Enter your game code or start a new round below
-            <br />
-            2) Set up your round detail and share your code
-            <br />
-            3) Enter the strokes for you or your group as you play
-            <br />
-            <br />
-            You're all set, next hole... the 19th!
+            <div style={{ marginTop: 16, marginBottom: 4 }}>To join an existing round or start a new round:</div>
+            {[
+              "Enter your game code or start a new round below",
+              "Set up your round detail and share your code",
+              "Enter the strokes for you or your group as you play",
+            ].map((step, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, margin: "8px 0" }}>
+                <div
+                  style={{
+                    flex: "0 0 auto",
+                    width: 22,
+                    height: 22,
+                    borderRadius: "50%",
+                    background: "#1B4332",
+                    color: "#F3EFE0",
+                    fontSize: 12,
+                    fontWeight: 700,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  {i + 1}
+                </div>
+                <div>{step}</div>
+              </div>
+            ))}
+            <div style={{ marginTop: 12 }}>You're all set, next hole... the 19th!</div>
           </div>
           {!session && (
             <div style={{ fontSize: 12, color: "#8a8a80", margin: "-8px 0 16px" }}>
