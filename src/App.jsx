@@ -8583,16 +8583,6 @@ function computeRoundScoring(round) {
                     >
                       <div style={{ fontWeight: 700, marginBottom: 4 }}>{GAMES[key].name}</div>
                       <div style={{ fontWeight: 400, fontSize: 12, color: "#6b6b63" }}>{GAMES[key].desc}</div>
-                      <button
-                        className="gsc-link"
-                        style={{ marginTop: 6, fontSize: 12 }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openRules(key);
-                        }}
-                      >
-                        Why people love this game
-                      </button>
                     </div>
                   ))}
                 </div>
@@ -8605,7 +8595,7 @@ function computeRoundScoring(round) {
               <div style={{ fontWeight: 700, fontSize: 19, marginTop: 4 }}>{g.name}</div>
               <div className="gsc-tag" style={{ marginTop: 6 }}>{g.tag}</div>
               <div className="gsc-no-select" style={{ fontSize: 13, marginTop: 10, color: "#4b4b45" }}>{g.desc}</div>
-              <button className="gsc-link" style={{ marginTop: 10, fontSize: 13, display: "block" }} onClick={() => openRules(wizardAnswers.resolvedGameKey)}>
+              <button className="gsc-link" style={{ marginTop: 10, fontSize: 13, display: "block" }} onClick={() => openWhyPlay(wizardAnswers.resolvedGameKey)}>
                 Why people love this game
               </button>
               <button className="gsc-link" style={{ marginTop: 6, fontSize: 13 }} onClick={() => openRules(wizardAnswers.resolvedGameKey)}>
