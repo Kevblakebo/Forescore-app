@@ -8582,7 +8582,7 @@ function computeRoundScoring(round) {
                       onClick={() => wizardGoNext("vibeFollowup", { resolvedGameKey: key, isTournament: isTourn })}
                     >
                       <div style={{ fontWeight: 700, marginBottom: 4 }}>{GAMES[key].name}</div>
-                      <div style={{ fontWeight: 400, fontSize: 12, color: "#6b6b63" }}>{GAMES[key].desc}</div>
+                      <div style={{ fontWeight: 400, fontSize: 12, color: "#6b6b63" }}>{WHY_PLAY[key]}</div>
                     </div>
                   ))}
                 </div>
