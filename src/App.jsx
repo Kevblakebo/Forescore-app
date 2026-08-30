@@ -1322,6 +1322,8 @@ export default function GolfScorecard() {
   const [yearlyRecapData, setYearlyRecapData] = useState(null);
   const [yearlyRecapLoading, setYearlyRecapLoading] = useState(false);
   const [yearlyRecapErr, setYearlyRecapErr] = useState("");
+  const [joinableGroupRounds, setJoinableGroupRounds] = useState([]);
+  const [dismissedJoinableRounds, setDismissedJoinableRounds] = useState([]);
   const [earnedMoments, setEarnedMoments] = useState([]);
   const [headToHeadModalData, setHeadToHeadModalData] = useState(null);
   const [headToHeadModalLoading, setHeadToHeadModalLoading] = useState(false);
@@ -1508,6 +1510,7 @@ export default function GolfScorecard() {
       loadStats();
       loadMyGroups();
       refreshAllMyStats();
+      loadJoinableGroupRounds();
     }
   }, [screen, session && session.user && session.user.id]);
 
@@ -2661,14 +2664,16 @@ export default function GolfScorecard() {
           // head-to-head despite having a worse (higher) handicap than
           // them that day? The margin is how much worse mine was -
           // bigger gap, bigger upset.
-          const myHcp = Number(r.players[myIdx].hcp);
+          const myHcpRaw = r.players[myIdx].hcp;
+          const myHcp = myHcpRaw === "" || myHcpRaw == null ? NaN : Number(myHcpRaw);
           let upsetMargin = null;
           if (!isNaN(myHcp)) {
             for (let oppIdx = 0; oppIdx < r.players.length; oppIdx++) {
               if (oppIdx === myIdx) continue;
               const opp = r.players[oppIdx];
               if (!opp.user_id || !memberSet.has(opp.user_id)) continue;
-              const oppHcp = Number(opp.hcp);
+              const oppHcpRaw = opp.hcp;
+              const oppHcp = oppHcpRaw === "" || oppHcpRaw == null ? NaN : Number(oppHcpRaw);
               if (isNaN(oppHcp) || oppHcp >= myHcp) continue;
               let oppHolesPlayed = 0, oppStrokesTotal = 0;
               for (let h = 0; h < 18; h++) {
@@ -2706,9 +2711,6 @@ export default function GolfScorecard() {
               biggestUpset = { margin: e.upsetMargin, date: e.date };
             }
           }
-          const firstHcp = entries.find((e) => e.myHcp !== null);
-          const lastHcp = entries.slice().reverse().find((e) => e.myHcp !== null);
-
           supabase
             .from("group_yearly_recap")
             .upsert(
@@ -2723,8 +2725,6 @@ export default function GolfScorecard() {
                 best_round_code: bestCode,
                 biggest_upset_margin: biggestUpset ? biggestUpset.margin : null,
                 biggest_upset_date: biggestUpset ? biggestUpset.date : null,
-                handicap_start: firstHcp ? firstHcp.myHcp : null,
-                handicap_end: lastHcp ? lastHcp.myHcp : null,
                 updated_at: new Date().toISOString(),
               },
               { onConflict: "group_id,year,user_id" }
@@ -2893,6 +2893,49 @@ export default function GolfScorecard() {
   // member's own contribution. Assembling "best round in the group" or
   // "most wins" means comparing across everyone's rows together here,
   // not something any single row can answer by itself.
+  // Checks for any round a group-mate already started, that this person
+  // is already linked to (via the group-fill feature) but hasn't opened
+  // yet on this device. Scoped to regular rounds only, not tournaments,
+  // since joining a specific tournament foursome is a separate, more
+  // involved flow. Capped to the last 12 hours so this never surfaces an
+  // old, long-abandoned round someone never actually joined.
+  async function loadJoinableGroupRounds() {
+    if (!session || !supabase) return;
+    const twelveHoursAgo = new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString();
+    const { data: links, error } = await withJwtRetry(() =>
+      supabase
+        .from("user_rounds")
+        .select("round_code, tournament_id, created_at")
+        .eq("user_id", session.user.id)
+        .gte("created_at", twelveHoursAgo)
+        .order("created_at", { ascending: false })
+    );
+    if (error || !links || links.length === 0) {
+      setJoinableGroupRounds([]);
+      return;
+    }
+    const myOwnActiveCode = activeRound ? activeRound.id : null;
+    const found = [];
+    for (const link of links) {
+      if (link.tournament_id) continue;
+      if (link.round_code === myOwnActiveCode) continue;
+      if (dismissedJoinableRounds.includes(link.round_code)) continue;
+      const res = await storageGet(`golfround:${link.round_code}`, true);
+      if (!res.ok || !res.value) continue;
+      let r;
+      try {
+        r = JSON.parse(res.value);
+      } catch (e) {
+        continue;
+      }
+      if (r.finished) continue;
+      const organizer = r.players && r.players[0];
+      found.push({ code: link.round_code, round: r, organizerName: (organizer && organizer.name) || "Someone" });
+      if (found.length >= 3) break;
+    }
+    setJoinableGroupRounds(found);
+  }
+
   async function loadYearlyRecap(groupId, year) {
     if (!session || !supabase) return;
     setYearlyRecapLoading(true);
@@ -2910,22 +2953,23 @@ export default function GolfScorecard() {
       return;
     }
     const userIds = rows.map((r) => r.user_id);
-    const { data: names } = await withJwtRetry(() => supabase.from("leaderboard_stats").select("user_id, display_name, avatar").in("user_id", userIds));
+    const { data: names } = await withJwtRetry(() => supabase.from("leaderboard_stats").select("user_id, display_name, avatar, handicap").in("user_id", userIds));
     const nameById = new Map((names || []).map((n) => [n.user_id, n]));
     const enriched = rows.map((r) => {
       // Same reasoning as the group leaderboard - leaderboard_stats is a
-      // cached copy of your own name/avatar that only refreshes when
-      // you've visited certain pages, so it can be stale or still show
-      // the generic "Golfer" placeholder even while everything else
+      // cached copy of your own name/avatar/handicap that only refreshes
+      // when you've visited certain pages, so it can be stale or still
+      // show the generic "Golfer" placeholder even while everything else
       // about you (rounds played, wins, etc.) is accurate. For yourself
       // specifically, always prefer your own live profile data instead.
       if (session && profile && r.user_id === session.user.id) {
-        return { ...r, name: profile.name || "Golfer", avatar: profile.avatar || "" };
+        return { ...r, name: profile.name || "Golfer", avatar: profile.avatar || "", currentHandicap: profile.handicap || "" };
       }
       return {
         ...r,
         name: (nameById.get(r.user_id) || {}).display_name || "Golfer",
         avatar: (nameById.get(r.user_id) || {}).avatar || "",
+        currentHandicap: (nameById.get(r.user_id) || {}).handicap || "",
       };
     });
     setYearlyRecapLoading(false);
@@ -3138,10 +3182,10 @@ export default function GolfScorecard() {
     const bestRound = rows.filter((r) => r.best_round_strokes != null).sort((a, b) => a.best_round_strokes - b.best_round_strokes)[0];
     const mostWins = rows.filter((r) => r.wins > 0).sort((a, b) => b.wins - a.wins)[0];
     const biggestUpset = rows.filter((r) => r.biggest_upset_margin != null).sort((a, b) => b.biggest_upset_margin - a.biggest_upset_margin)[0];
-    const handicapTrends = rows
-      .filter((r) => r.handicap_start != null && r.handicap_end != null)
-      .map((r) => ({ ...r, change: r.handicap_end - r.handicap_start }))
-      .sort((a, b) => a.change - b.change); // most improved (most negative) first
+    const currentHandicaps = rows
+      .filter((r) => r.currentHandicap != null && r.currentHandicap !== "" && !isNaN(Number(r.currentHandicap)))
+      .map((r) => ({ ...r, hcpNum: Number(r.currentHandicap) }))
+      .sort((a, b) => a.hcpNum - b.hcpNum);
 
     return (
       <div className="gsc-modal-backdrop" onClick={() => setYearlyRecapOpen(false)}>
@@ -3199,21 +3243,18 @@ export default function GolfScorecard() {
                   {biggestUpset.biggest_upset_date && <div style={{ fontSize: 11, color: "#8a8a80" }}>{biggestUpset.biggest_upset_date}</div>}
                 </div>
               )}
-              {handicapTrends.length > 0 && (
+              {currentHandicaps.length > 0 && (
                 <div style={{ padding: "10px 0" }}>
-                  <div style={{ fontSize: 11, color: "#8a8a80", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 6 }}>{"\u{1F4C8}"} Handicap Trends</div>
-                  {handicapTrends.map((h) => (
+                  <div style={{ fontSize: 11, color: "#8a8a80", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 6 }}>{"\u26F3"} Current Handicaps</div>
+                  {currentHandicaps.map((h) => (
                     <div key={h.user_id} style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: "#4b4b45", padding: "3px 0" }}>
                       <div>{h.avatar ? `${h.avatar} ` : ""}{h.name}</div>
-                      <div style={{ fontWeight: 600, color: h.change < 0 ? "#1B4332" : h.change > 0 ? "#A42E2D" : "#8a8a80" }}>
-                        {h.handicap_start.toFixed(1)} {"\u2192"} {h.handicap_end.toFixed(1)}
-                        {h.change !== 0 && ` (${h.change > 0 ? "+" : ""}${h.change.toFixed(1)})`}
-                      </div>
+                      <div style={{ fontWeight: 600, color: "#1B4332" }}>{h.hcpNum.toFixed(1)}</div>
                     </div>
                   ))}
                 </div>
               )}
-              {!bestRound && !mostWins && !biggestUpset && handicapTrends.length === 0 && (
+              {!bestRound && !mostWins && !biggestUpset && currentHandicaps.length === 0 && (
                 <div style={{ fontSize: 14, color: "#6b6b63", padding: "8px 0", textAlign: "center" }}>
                   Not quite enough finished rounds yet to build out this year's recap.
                 </div>
@@ -6377,6 +6418,28 @@ function computeRoundScoring(round) {
           sub=""
         />
         <div className="gsc-body gsc-body-tabbed">
+          {joinableGroupRounds.filter((jr) => !dismissedJoinableRounds.includes(jr.code)).map((jr) => (
+            <div key={jr.code} className="gsc-card" style={{ background: "#F8F1E4", border: "1px solid #B08D57", marginBottom: 16 }}>
+              <div style={{ fontSize: 11, color: "#8a6a2f", textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 700, marginBottom: 6 }}>
+                {"\u26F3"} Ready to join
+              </div>
+              <div style={{ fontSize: 14, color: "#1B4332", fontWeight: 700, marginBottom: 2 }}>
+                {jr.organizerName} started a round{jr.round.course ? ` at ${jr.round.course}` : ""}
+              </div>
+              <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+                <button className="gsc-btn gsc-btn-primary" style={{ flex: 1 }} onClick={() => joinRoundOrTournament(jr.code)}>
+                  Join round
+                </button>
+                <button
+                  className="gsc-btn gsc-btn-outline"
+                  style={{ flex: "0 0 auto" }}
+                  onClick={() => setDismissedJoinableRounds((prev) => [...prev, jr.code])}
+                >
+                  Not now
+                </button>
+              </div>
+            </div>
+          ))}
           <div style={{ fontSize: 13, color: "#4b4b45", lineHeight: 1.55, margin: "0 0 16px" }}>
             {session ? (
               profile && profile.name
@@ -7283,18 +7346,6 @@ function computeRoundScoring(round) {
                       </div>
                     );
                   })()}
-                  <button
-                    className="gsc-btn gsc-btn-outline"
-                    style={{ width: "100%", marginBottom: 12 }}
-                    onClick={() => {
-                      const y = new Date().getFullYear();
-                      setYearlyRecapYear(y);
-                      setYearlyRecapOpen(true);
-                      loadYearlyRecap(selectedGroupId, y);
-                    }}
-                  >
-                    {"\u{1F4C5}"} {new Date().getFullYear()} Recap
-                  </button>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
                     {Object.entries(LEADERBOARD_CATEGORIES).map(([key, cat]) => (
                       <button
@@ -7438,6 +7489,19 @@ function computeRoundScoring(round) {
                       </div>
                     );
                   })()}
+
+                  <button
+                    className="gsc-btn gsc-btn-outline"
+                    style={{ width: "100%", marginTop: 16 }}
+                    onClick={() => {
+                      const y = new Date().getFullYear();
+                      setYearlyRecapYear(y);
+                      setYearlyRecapOpen(true);
+                      loadYearlyRecap(selectedGroupId, y);
+                    }}
+                  >
+                    {"\u{1F4C5}"} {new Date().getFullYear()} Recap
+                  </button>
 
                   {!leaveGroupConfirming && !deleteGroupConfirming && (
                     <div style={{ display: "flex", justifyContent: "space-between", marginTop: 16 }}>
