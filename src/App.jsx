@@ -6740,7 +6740,7 @@ function computeRoundScoring(round) {
                 <div style={{ margin: "8px 0 0" }}>
                   <div style={{ marginBottom: 4 }}>{"\u{1F465}"} Set Up Your Group Once</div>
                   <div style={{ marginBottom: 4 }}>{"\u26F3"} 15 Game Formats, for Every Kind of Day</div>
-                  <div style={{ marginBottom: 4 }}>{"\u{1F4CD}"} Live Distance to the Green</div>
+                  <div style={{ marginBottom: 4 }}>{"\u{1F4CD}"} Live Distance to the Green GPS</div>
                   <div style={{ marginBottom: 4 }}>{"\u{1F3CC}\u{FE0F}"} Optional Handicapping, Done Right</div>
                   <div style={{ marginBottom: 4 }}>{"\u{1F4CA}"} A Leaderboard Just for Your Group</div>
                   <div style={{ marginBottom: 4 }}>{"\u{1F4B5}"} Settle Up Without the Argument</div>
