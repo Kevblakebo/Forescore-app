@@ -3384,7 +3384,13 @@ export default function GolfScorecard() {
                 borderRadius: "50%",
                 border: "4px solid #1B4332",
                 background: `conic-gradient(${games
-                  .map((key, i) => `${wheelColors[i]} ${i * segmentAngle}deg ${(i + 1) * segmentAngle}deg`)
+                  .map((key, i) => {
+                    const start = i * segmentAngle;
+                    const end = (i + 1) * segmentAngle;
+                    const borderColor = "#F3EFE0";
+                    const borderWidth = 1.5; // degrees - a thin dividing line, not eating meaningfully into the slice itself
+                    return `${borderColor} ${start}deg ${start + borderWidth}deg, ${wheelColors[i]} ${start + borderWidth}deg ${end}deg`;
+                  })
                   .join(", ")})`,
                 transform: `rotate(${wheelRotation}deg)`,
                 transition: wheelSpinning ? "transform 4.2s cubic-bezier(0.17, 0.89, 0.24, 1)" : "none",
@@ -3400,12 +3406,19 @@ export default function GolfScorecard() {
                       position: "absolute",
                       top: "50%",
                       left: "50%",
-                      width: 0,
-                      height: 0,
-                      transform: `rotate(${midAngle}deg) translate(0, -95px)`,
+                      width: 24,
+                      height: 24,
+                      marginLeft: -12,
+                      marginTop: -12,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: 20,
+                      lineHeight: 1,
+                      transform: `rotate(${midAngle}deg) translate(0, -95px) rotate(${-midAngle}deg)`,
                     }}
                   >
-                    <div style={{ fontSize: 20, transform: `translate(-50%, -50%) rotate(${-midAngle}deg)` }}>{GAME_TILE_STYLE[key].emoji}</div>
+                    {GAME_TILE_STYLE[key].emoji}
                   </div>
                 );
               })}
