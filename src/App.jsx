@@ -704,6 +704,23 @@ function resolveVibeEntry(playerCount, vibe, roundMode) {
   return { resolved: entry };
 }
 
+// Every game genuinely playable at a given player count, flattened out
+// of VIBE_GAME_MAP's per-vibe structure - used by the "spin the wheel"
+// randomizer so it can only ever land on something that's actually
+// possible to set up for however many people showed up today.
+function gamesForPlayerCount(playerCount) {
+  const bucket = vibePlayerCountBucket(playerCount);
+  const bucketMap = VIBE_GAME_MAP[bucket] || {};
+  const set = new Set();
+  const addEntry = (entry) => {
+    if (typeof entry === "string") set.add(entry);
+    else if (Array.isArray(entry)) entry.forEach((k) => set.add(k));
+    else if (entry && typeof entry === "object") Object.values(entry).forEach(addEntry);
+  };
+  Object.values(bucketMap).forEach(addEntry);
+  return Array.from(set);
+}
+
 // Reference-only library of other popular golf games/formats - informational,
 // not trackable in this app. Grouped the same way the user organized them.
 const GAME_LIBRARY = [
@@ -1325,6 +1342,10 @@ export default function GolfScorecard() {
   const [yearlyRecapErr, setYearlyRecapErr] = useState("");
   const [joinableGroupRounds, setJoinableGroupRounds] = useState([]);
   const [dismissedJoinableRounds, setDismissedJoinableRounds] = useState([]);
+  const [wheelOpen, setWheelOpen] = useState(false);
+  const [wheelSpinning, setWheelSpinning] = useState(false);
+  const [wheelRotation, setWheelRotation] = useState(0);
+  const [wheelResult, setWheelResult] = useState(null);
   const [earnedMoments, setEarnedMoments] = useState([]);
   const [headToHeadModalData, setHeadToHeadModalData] = useState(null);
   const [headToHeadModalLoading, setHeadToHeadModalLoading] = useState(false);
@@ -3295,6 +3316,107 @@ export default function GolfScorecard() {
           )}
 
           <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 8 }} onClick={() => setYearlyRecapOpen(false)}>
+            Close
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  function spinWheel() {
+    if (wheelSpinning) return;
+    const games = gamesForPlayerCount(wizardAnswers.playerCount);
+    if (games.length === 0) return;
+    const winnerIdx = Math.floor(Math.random() * games.length);
+    const segmentAngle = 360 / games.length;
+    // The pointer is fixed at the top (0deg). To land segment winnerIdx's
+    // midpoint there, the wheel needs to end at this rotation (mod 360),
+    // regardless of where it currently sits.
+    const targetMod = (360 - (winnerIdx + 0.5) * segmentAngle + 360) % 360;
+    const currentMod = ((wheelRotation % 360) + 360) % 360;
+    let delta = targetMod - currentMod;
+    if (delta <= 0) delta += 360;
+    const nextRotation = wheelRotation + delta + 5 * 360; // a few extra full spins for effect
+    setWheelResult(null);
+    setWheelSpinning(true);
+    setWheelRotation(nextRotation);
+    setTimeout(() => {
+      setWheelSpinning(false);
+      setWheelResult(games[winnerIdx]);
+    }, 4200);
+  }
+
+  function WheelModal() {
+    if (!wheelOpen) return null;
+    const games = gamesForPlayerCount(wizardAnswers.playerCount);
+    const segmentAngle = 360 / (games.length || 1);
+    return (
+      <div className="gsc-modal-backdrop" onClick={() => !wheelSpinning && setWheelOpen(false)}>
+        <div className="gsc-modal" onClick={(e) => e.stopPropagation()} style={{ textAlign: "center" }}>
+          <div className="gsc-modal-title">{"\u{1F3B0}"} Spin for a Game</div>
+          <div style={{ position: "relative", width: 260, height: 260, margin: "10px auto" }}>
+            <div style={{ position: "absolute", top: -6, left: "50%", transform: "translateX(-50%)", fontSize: 26, zIndex: 2 }}>{"\u{1F53B}"}</div>
+            <div
+              style={{
+                width: 260,
+                height: 260,
+                borderRadius: "50%",
+                border: "4px solid #1B4332",
+                background: `conic-gradient(${games
+                  .map((key, i) => `${GAME_TILE_STYLE[key].color} ${i * segmentAngle}deg ${(i + 1) * segmentAngle}deg`)
+                  .join(", ")})`,
+                transform: `rotate(${wheelRotation}deg)`,
+                transition: wheelSpinning ? "transform 4.2s cubic-bezier(0.17, 0.89, 0.24, 1)" : "none",
+                position: "relative",
+              }}
+            >
+              {games.map((key, i) => {
+                const midAngle = (i + 0.5) * segmentAngle;
+                return (
+                  <div
+                    key={key}
+                    style={{
+                      position: "absolute",
+                      top: "50%",
+                      left: "50%",
+                      width: 0,
+                      height: 0,
+                      transform: `rotate(${midAngle}deg) translate(0, -95px)`,
+                    }}
+                  >
+                    <div style={{ fontSize: 20, transform: `translate(-50%, -50%) rotate(${-midAngle}deg)` }}>{GAME_TILE_STYLE[key].emoji}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {wheelResult ? (
+            <>
+              <div style={{ fontSize: 15, fontWeight: 700, color: "#1B4332", margin: "10px 0 4px" }}>
+                {"\u{1F389}"} You got: {GAMES[wheelResult].name}!
+              </div>
+              <button
+                className="gsc-btn gsc-btn-primary"
+                style={{ width: "100%", marginTop: 8 }}
+                onClick={() => {
+                  setWheelOpen(false);
+                  const isTourn = vibePlayerCountBucket(wizardAnswers.playerCount) === "tournament";
+                  wizardGoNext("vibe", { resolvedGameKey: wheelResult, isTournament: isTourn });
+                }}
+              >
+                Let's play this!
+              </button>
+              <button className="gsc-link" style={{ marginTop: 10, fontSize: 13 }} onClick={spinWheel}>
+                Spin again
+              </button>
+            </>
+          ) : (
+            <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 10 }} disabled={wheelSpinning} onClick={spinWheel}>
+              {wheelSpinning ? "Spinning..." : "Spin"}
+            </button>
+          )}
+          <button className="gsc-btn gsc-btn-outline" style={{ width: "100%", marginTop: 8 }} disabled={wheelSpinning} onClick={() => setWheelOpen(false)}>
             Close
           </button>
         </div>
@@ -8784,6 +8906,17 @@ function computeRoundScoring(round) {
                   {Number(wizardAnswers.playerCount) === 4 && (
                     <OptionButton onClick={() => pickVibe("maxStrategy")}>Maximum strategy - constant partner decisions (Wolf)</OptionButton>
                   )}
+                  <button
+                    className="gsc-btn gsc-btn-outline"
+                    style={{ width: "100%", marginTop: 4 }}
+                    onClick={() => {
+                      setWheelResult(null);
+                      setWheelRotation(0);
+                      setWheelOpen(true);
+                    }}
+                  >
+                    {"\u{1F3B0}"} Can't decide? Spin the wheel
+                  </button>
                 </div>
               );
             })()}
@@ -9358,6 +9491,7 @@ function computeRoundScoring(round) {
         {RulesModal()}
         {WhyPlayModal()}
         {GroupFillModal()}
+        {WheelModal()}
       </div>
     );
   }
