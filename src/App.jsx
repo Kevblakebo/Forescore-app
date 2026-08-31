@@ -7507,42 +7507,6 @@ function computeRoundScoring(round) {
               ))}
             </div>
           )}
-          {session && headToHeadList.length > 0 && (
-            <div className="gsc-card">
-              <div className="gsc-label" style={{ marginBottom: 10 }}>Head-to-Head Records</div>
-              {headToHeadList.map((h, i) => {
-                const avgDiff = h.rounds_played > 0 ? (h.opp_strokes_sum - h.my_strokes_sum) / h.rounds_played : 0;
-                return (
-                  <div
-                    key={h.opponent_id}
-                    style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: i === headToHeadList.length - 1 ? "none" : "1px solid #eee6cf" }}
-                  >
-                    <div>
-                      <div style={{ fontSize: 13, color: "#1B4332", fontWeight: 600 }}>
-                        {h.opponentAvatar} {h.opponentName}
-                      </div>
-                      <div style={{ fontSize: 11, color: "#8a8a80", marginTop: 2 }}>
-                        {h.rounds_played} round{h.rounds_played === 1 ? "" : "s"} played
-                        {Math.abs(h.current_streak) >= 2 && (
-                          <span> - {"\u{1F525}"} {Math.abs(h.current_streak)} {h.current_streak > 0 ? "wins" : "losses"} in a row</span>
-                        )}
-                      </div>
-                    </div>
-                    <div style={{ textAlign: "right" }}>
-                      <div style={{ fontSize: 15, fontWeight: 800, color: h.wins >= h.losses ? "#1B4332" : "#A42E2D" }}>
-                        {h.wins}-{h.losses}{h.ties > 0 ? `-${h.ties}` : ""}
-                      </div>
-                      <div style={{ fontSize: 11, color: "#8a8a80" }}>
-                        {avgDiff > 0 ? `+${avgDiff.toFixed(1)} avg` : avgDiff < 0 ? `${avgDiff.toFixed(1)} avg` : "even avg"}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-
           {session && (
             <div className="gsc-card">
               <div className="gsc-label" style={{ marginBottom: 10 }}>Public Leaderboard</div>
@@ -7614,6 +7578,42 @@ function computeRoundScoring(round) {
                   });
                 })()
               )}
+            </div>
+          )}
+
+
+          {session && headToHeadList.length > 0 && (
+            <div className="gsc-card">
+              <div className="gsc-label" style={{ marginBottom: 10 }}>Head-to-Head Records</div>
+              {headToHeadList.map((h, i) => {
+                const avgDiff = h.rounds_played > 0 ? (h.opp_strokes_sum - h.my_strokes_sum) / h.rounds_played : 0;
+                return (
+                  <div
+                    key={h.opponent_id}
+                    style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: i === headToHeadList.length - 1 ? "none" : "1px solid #eee6cf" }}
+                  >
+                    <div>
+                      <div style={{ fontSize: 13, color: "#1B4332", fontWeight: 600 }}>
+                        {h.opponentAvatar} {h.opponentName}
+                      </div>
+                      <div style={{ fontSize: 11, color: "#8a8a80", marginTop: 2 }}>
+                        {h.rounds_played} round{h.rounds_played === 1 ? "" : "s"} played
+                        {Math.abs(h.current_streak) >= 2 && (
+                          <span> - {"\u{1F525}"} {Math.abs(h.current_streak)} {h.current_streak > 0 ? "wins" : "losses"} in a row</span>
+                        )}
+                      </div>
+                    </div>
+                    <div style={{ textAlign: "right" }}>
+                      <div style={{ fontSize: 15, fontWeight: 800, color: h.wins >= h.losses ? "#1B4332" : "#A42E2D" }}>
+                        {h.wins}-{h.losses}{h.ties > 0 ? `-${h.ties}` : ""}
+                      </div>
+                      <div style={{ fontSize: 11, color: "#8a8a80" }}>
+                        {avgDiff > 0 ? `+${avgDiff.toFixed(1)} avg` : avgDiff < 0 ? `${avgDiff.toFixed(1)} avg` : "even avg"}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
 
