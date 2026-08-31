@@ -1099,6 +1099,7 @@ const LAST_TOURNAMENT_KEY = "gsc-last-tournament";
 const FINISHED_TOURNAMENT_INDEX_KEY = "gsc-finished-tournament-index";
 const FINISHED_INDEX_KEY = "gsc-finished-index";
 const DISMISSED_JOINABLE_KEY = "gsc-dismissed-joinable-rounds";
+const GPS_EXPLAINED_KEY = "gsc-gps-explained";
 const FINISHED_PREFIX = "gsc-finished-round:";
 const TOURNAMENT_PREFIX = "gsc-tournament:";
 // Tournaments only ever use the dedicated tournament game - a true 4-person
@@ -1393,7 +1394,9 @@ export default function GolfScorecard() {
   // green's coordinates (round.holeGPS) is a separate concern - this part
   // works the same no matter what fills that in later.
   const [playerGPS, setPlayerGPS] = useState(null); // { lat, lng, accuracy } or null
-  const [gpsStatus, setGpsStatus] = useState("idle"); // "idle" | "locating" | "active" | "denied" | "unsupported" | "error"
+  const [gpsStatus, setGpsStatus] = useState("idle"); // "idle" | "locating" | "active" | "denied" | "unsupported" | "error" | "skipped"
+  const [gpsExplained, setGpsExplained] = useState(false);
+  const [gpsExplainerOpen, setGpsExplainerOpen] = useState(false);
   const gpsWatchIdRef = useRef(null);
 
   function startGPSWatch() {
@@ -1421,6 +1424,49 @@ export default function GolfScorecard() {
     gpsWatchIdRef.current = null;
     setGpsStatus("idle");
     setPlayerGPS(null);
+  }
+
+  function acceptGpsExplainer() {
+    setGpsExplained(true);
+    setGpsExplainerOpen(false);
+    storageSet(GPS_EXPLAINED_KEY, "true", false);
+    startGPSWatch();
+  }
+
+  function declineGpsExplainer() {
+    setGpsExplained(true);
+    setGpsExplainerOpen(false);
+    storageSet(GPS_EXPLAINED_KEY, "true", false);
+    // Deliberately never calls startGPSWatch() here, so the browser's
+    // own permission prompt never actually appears - this is a genuine
+    // "not now" rather than a denial, meaning it's still fully
+    // recoverable later (tapping retry on the distance-to-green badge
+    // still triggers the real prompt fresh, unlike an actual browser
+    // denial which usually requires changing site settings to undo).
+    setGpsStatus("skipped");
+  }
+
+  function GPSExplainerModal() {
+    if (!gpsExplainerOpen) return null;
+    return (
+      <div className="gsc-modal-backdrop">
+        <div className="gsc-modal" onClick={(e) => e.stopPropagation()}>
+          <div className="gsc-modal-title">{"\u{1F4CD}"} Live Distance to the Green</div>
+          <div style={{ fontSize: 13, color: "#4b4b45", lineHeight: 1.6, marginBottom: 16 }}>
+            RipScore can show live distances to the green while you play, using your phone's location. This is never used to track or store where you've been - it only ever calculates distance to the hole you're currently on, in the moment.
+            <br />
+            <br />
+            If you say no, everything else in the app still works completely normally - you just won't see GPS distances.
+          </div>
+          <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginBottom: 8 }} onClick={acceptGpsExplainer}>
+            Enable GPS Distances
+          </button>
+          <button className="gsc-btn gsc-btn-outline" style={{ width: "100%" }} onClick={declineGpsExplainer}>
+            Not Now
+          </button>
+        </div>
+      </div>
+    );
   }
 
   const [wizardStepId, setWizardStepId] = useState("playerCount");
@@ -4009,6 +4055,10 @@ export default function GolfScorecard() {
           setDismissedJoinableRounds(JSON.parse(djRes.value));
         } catch (e) {}
       }
+      const gpsExplainedRes = await storageGet(GPS_EXPLAINED_KEY, false);
+      if (gpsExplainedRes.ok && gpsExplainedRes.value === "true") {
+        setGpsExplained(true);
+      }
     })();
   }, []);
 
@@ -6233,7 +6283,11 @@ export default function GolfScorecard() {
 
   useEffect(() => {
     if (screen === "card") {
-      startGPSWatch();
+      if (gpsExplained) {
+        startGPSWatch();
+      } else {
+        setGpsExplainerOpen(true);
+      }
     } else {
       stopGPSWatch();
     }
@@ -11452,12 +11506,14 @@ function computeRoundScoring(round) {
                     content = "Finding your location...";
                   } else if (gpsStatus === "denied") {
                     content = "Location access denied - enable it, then tap to retry";
+                  } else if (gpsStatus === "skipped") {
+                    content = "Distance to green turned off - tap to enable";
                   } else if (gpsStatus === "unsupported") {
                     content = "Distance to green isn't supported on this device";
                   } else if (gpsStatus === "error") {
                     content = "Couldn't get your location - tap to retry";
                   }
-                  const retryable = gpsStatus === "denied" || gpsStatus === "error";
+                  const retryable = gpsStatus === "denied" || gpsStatus === "error" || gpsStatus === "skipped";
                   return (
                     <div
                       onClick={retryable ? () => startGPSWatch() : undefined}
@@ -12204,6 +12260,7 @@ function computeRoundScoring(round) {
         {WhyPlayModal()}
         {EditFoursomeModal()}
         {GameDetailsModal()}
+        {GPSExplainerModal()}
       </div>
     );
   }
