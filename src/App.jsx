@@ -3323,6 +3323,26 @@ export default function GolfScorecard() {
     );
   }
 
+  // Colors segments by their position on the wheel (not each game's own
+  // fixed, global color), so two games that happen to land next to each
+  // other never share a color just by coincidence. Cycling a palette by
+  // position guarantees every consecutive pair differs - except
+  // possibly the wrap-around point where the last segment meets the
+  // first again, which a plain cycle can still collide on depending on
+  // how many segments there are. Explicitly checked and fixed here.
+  function getWheelColors(n) {
+    const palette = ["#1B4332", "#B08D57", "#3A7352", "#8A6A2F"];
+    const result = [];
+    for (let i = 0; i < n; i++) result.push(palette[i % palette.length]);
+    if (n > 1 && result[n - 1] === result[0]) {
+      const prev = result[n - 2];
+      const next = result[0];
+      const replacement = palette.find((c) => c !== prev && c !== next);
+      if (replacement) result[n - 1] = replacement;
+    }
+    return result;
+  }
+
   function spinWheel() {
     if (wheelSpinning) return;
     const games = gamesForPlayerCount(wizardAnswers.playerCount);
@@ -3350,6 +3370,7 @@ export default function GolfScorecard() {
     if (!wheelOpen) return null;
     const games = gamesForPlayerCount(wizardAnswers.playerCount);
     const segmentAngle = 360 / (games.length || 1);
+    const wheelColors = getWheelColors(games.length);
     return (
       <div className="gsc-modal-backdrop" onClick={() => !wheelSpinning && setWheelOpen(false)}>
         <div className="gsc-modal" onClick={(e) => e.stopPropagation()} style={{ textAlign: "center" }}>
@@ -3363,7 +3384,7 @@ export default function GolfScorecard() {
                 borderRadius: "50%",
                 border: "4px solid #1B4332",
                 background: `conic-gradient(${games
-                  .map((key, i) => `${GAME_TILE_STYLE[key].color} ${i * segmentAngle}deg ${(i + 1) * segmentAngle}deg`)
+                  .map((key, i) => `${wheelColors[i]} ${i * segmentAngle}deg ${(i + 1) * segmentAngle}deg`)
                   .join(", ")})`,
                 transform: `rotate(${wheelRotation}deg)`,
                 transition: wheelSpinning ? "transform 4.2s cubic-bezier(0.17, 0.89, 0.24, 1)" : "none",
@@ -6703,14 +6724,14 @@ function computeRoundScoring(round) {
             ) : (
               <>
                 RipScore is the app built for every group you play with.
-                <ul style={{ margin: "8px 0 0", paddingLeft: 18 }}>
-                  <li style={{ marginBottom: 4 }}>{"\u{1F465}"} Set Up Your Group Once</li>
-                  <li style={{ marginBottom: 4 }}>{"\u26F3"} 15 Game Formats, for Every Kind of Day</li>
-                  <li style={{ marginBottom: 4 }}>{"\u{1F4CD}"} Live Distance to the Green</li>
-                  <li style={{ marginBottom: 4 }}>{"\u{1F3CC}\u{FE0F}"} Optional Handicapping, Done Right</li>
-                  <li style={{ marginBottom: 4 }}>{"\u{1F4CA}"} A Leaderboard Just for Your Group</li>
-                  <li style={{ marginBottom: 4 }}>{"\u{1F4B5}"} Settle Up Without the Argument</li>
-                </ul>
+                <div style={{ margin: "8px 0 0" }}>
+                  <div style={{ marginBottom: 4 }}>{"\u{1F465}"} Set Up Your Group Once</div>
+                  <div style={{ marginBottom: 4 }}>{"\u26F3"} 15 Game Formats, for Every Kind of Day</div>
+                  <div style={{ marginBottom: 4 }}>{"\u{1F4CD}"} Live Distance to the Green</div>
+                  <div style={{ marginBottom: 4 }}>{"\u{1F3CC}\u{FE0F}"} Optional Handicapping, Done Right</div>
+                  <div style={{ marginBottom: 4 }}>{"\u{1F4CA}"} A Leaderboard Just for Your Group</div>
+                  <div style={{ marginBottom: 4 }}>{"\u{1F4B5}"} Settle Up Without the Argument</div>
+                </div>
                 <div style={{ marginTop: 8 }}>
                   Whether it's a casual Saturday game or a full club tournament, RipScore keeps the math out of your golf - so all that's left is golf.
                 </div>
