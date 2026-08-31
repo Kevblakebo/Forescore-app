@@ -3382,13 +3382,14 @@ export default function GolfScorecard() {
                 width: 260,
                 height: 260,
                 borderRadius: "50%",
-                border: "4px solid #1B4332",
+                border: "6px solid #1B4332",
+                boxSizing: "border-box",
                 background: `conic-gradient(${games
                   .map((key, i) => {
                     const start = i * segmentAngle;
                     const end = (i + 1) * segmentAngle;
                     const borderColor = "#F3EFE0";
-                    const borderWidth = 1.5; // degrees - a thin dividing line, not eating meaningfully into the slice itself
+                    const borderWidth = 2.5; // degrees - wide enough to render crisply rather than get anti-aliased into softness at this wheel size
                     return `${borderColor} ${start}deg ${start + borderWidth}deg, ${wheelColors[i]} ${start + borderWidth}deg ${end}deg`;
                   })
                   .join(", ")})`,
