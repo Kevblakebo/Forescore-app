@@ -1533,6 +1533,7 @@ export default function GolfScorecard() {
       loadMyGroups();
       refreshAllMyStats();
       loadJoinableGroupRounds();
+      backfillWinnerUserIds();
     }
   }, [screen, session && session.user && session.user.id]);
 
@@ -2975,6 +2976,55 @@ export default function GolfScorecard() {
       if (found.length >= 3) break;
     }
     setJoinableGroupRounds(found);
+  }
+
+  // Quiet, automatic self-healing check, run on every homepage visit.
+  // winnerUserIds is meant to be the app's own already-correct answer,
+  // saved once at the moment a round finishes - but for a while during
+  // this feature's own development, that save could be incomplete or
+  // wrong for some rounds (e.g. missing a teammate in a 2v2 game),
+  // which then permanently poisons every future stats calculation for
+  // that one round, since nothing downstream ever re-derives this
+  // itself. This re-runs the app's own real, per-format winner logic
+  // against the actual saved round data, and silently corrects the
+  // saved answer if it doesn't match. Since this field lives on the
+  // shared round itself, not per-player, fixing it here also fixes it
+  // for every other player linked to that same round - not just
+  // whoever happened to trigger this specific check.
+  async function backfillWinnerUserIds() {
+    if (!session || !supabase) return;
+    const { data: links } = await withJwtRetry(() => supabase.from("user_rounds").select("round_code, tournament_id").eq("user_id", session.user.id));
+    if (!links || links.length === 0) return;
+    let correctedAny = false;
+    for (const link of links) {
+      const res = await storageGet(`golfround:${link.round_code}`, true);
+      if (!res.ok || !res.value) continue;
+      let r;
+      try {
+        r = JSON.parse(res.value);
+      } catch (e) {
+        continue;
+      }
+      if (!r.finished) continue;
+      const computedForBackfill = computeRoundScoring(r);
+      if (!computedForBackfill) continue;
+      const correctWinnerIds = determineWinners(r, computedForBackfill)
+        .map((w) => r.players[w.idx] && r.players[w.idx].user_id)
+        .filter(Boolean);
+      const currentWinnerIds = Array.isArray(r.winnerUserIds) ? r.winnerUserIds : [];
+      const sameSet =
+        correctWinnerIds.length === currentWinnerIds.length && correctWinnerIds.every((id) => currentWinnerIds.includes(id));
+      if (!sameSet) {
+        await storageSet(`golfround:${link.round_code}`, JSON.stringify({ ...r, winnerUserIds: correctWinnerIds }), true);
+        correctedAny = true;
+      }
+    }
+    // If anything was actually corrected, immediately push a fresh
+    // stats recompute rather than waiting for the next hourly run, so
+    // the fix shows up right away instead of silently sitting there.
+    if (correctedAny && supabase) {
+      supabase.functions.invoke("refresh-all-stats").catch((e) => console.warn("Post-backfill stats refresh failed (hourly schedule will catch it):", e));
+    }
   }
 
   // Permanently dismisses one round from the "ready to join" homepage
