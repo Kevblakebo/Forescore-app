@@ -6732,7 +6732,7 @@ function computeRoundScoring(round) {
           <div style={{ fontSize: 13, color: "#4b4b45", lineHeight: 1.55, margin: "0 0 16px" }}>
             {session ? (
               profile && profile.name
-                ? `Welcome ${profile.name}, what game do you want to play today?`
+                ? `Welcome ${profile.name}, what game do you want to play?`
                 : "What game do you want to play today?"
             ) : (
               <>
