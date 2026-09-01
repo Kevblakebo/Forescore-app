@@ -99,6 +99,8 @@ const LEADERBOARD_CATEGORIES = {
   pars: { label: "Pars", lowerIsBetter: false, valueOf: (r) => r.pars, format: (v) => String(v) },
   eagles: { label: "Eagles", lowerIsBetter: false, valueOf: (r) => r.eagles, format: (v) => String(v) },
   holes_in_one: { label: "Holes-in-One", lowerIsBetter: false, valueOf: (r) => r.holes_in_one, format: (v) => String(v) },
+  gir_pct: { label: "Green in Reg", lowerIsBetter: false, valueOf: (r) => (r.gir_holes > 0 ? (r.gir_hits / r.gir_holes) * 100 : null), format: (v) => `${Math.round(v)}%` },
+  fir_pct: { label: "Fairways Hit", lowerIsBetter: false, valueOf: (r) => (r.fir_holes > 0 ? (r.fir_hits / r.fir_holes) * 100 : null), format: (v) => `${Math.round(v)}%` },
 };
 
 const GAMES = {
@@ -2058,7 +2060,7 @@ export default function GolfScorecard() {
 
     if (!myRoundsIndex || myRoundsIndex.length === 0) {
       setStatsLoading(false);
-      setStats({ roundsPlayed: 0, avgStrokes: null, avgPutts: null, wins: 0, eagles: 0, birdies: 0, pars: 0, holesInOne: 0, bestRoundStrokes: null, recent: [] });
+      setStats({ roundsPlayed: 0, avgStrokes: null, avgPutts: null, wins: 0, eagles: 0, birdies: 0, pars: 0, holesInOne: 0, girHits: 0, girHoles: 0, firHits: 0, firHoles: 0, bestRoundStrokes: null, recent: [] });
       return;
     }
 
@@ -2067,6 +2069,7 @@ export default function GolfScorecard() {
     let puttsSum = 0, puttsCount = 0;
     let wins = 0;
     let eagles = 0, birdies = 0, pars = 0, holesInOne = 0;
+    let girHits = 0, girHoles = 0, firHits = 0, firHoles = 0;
     let bestRoundStrokes = null;
     const recent = [];
 
@@ -2116,6 +2119,14 @@ export default function GolfScorecard() {
         if (entry && entry.putts != null && entry.putts !== "") {
           myPuttsTotal += Number(entry.putts);
         }
+        if (entry && entry.strokes != null && entry.strokes !== "") {
+          girHoles++;
+          if (entry.gir) girHits++;
+          if (parH === 4 || parH === 5) {
+            firHoles++;
+            if (entry.fir) firHits++;
+          }
+        }
       }
 
 
@@ -2163,6 +2174,10 @@ export default function GolfScorecard() {
       birdies,
       pars,
       holesInOne,
+      girHits,
+      girHoles,
+      firHits,
+      firHoles,
       bestRoundStrokes,
       recent: recent.slice(0, 5),
     });
@@ -2200,6 +2215,10 @@ export default function GolfScorecard() {
           pars,
           eagles,
           holes_in_one: holesInOne,
+          gir_hits: girHits,
+          gir_holes: girHoles,
+          fir_hits: firHits,
+          fir_holes: firHoles,
           best_round_strokes: bestRoundStrokes,
           updated_at: new Date().toISOString(),
         },
@@ -2563,6 +2582,7 @@ export default function GolfScorecard() {
       // all-time totals repeated everywhere.
       let groupRoundsPlayed = 0, groupWins = 0, groupBirdies = 0, groupPars = 0, groupEagles = 0, groupHolesInOne = 0;
       let groupStrokesSum = 0, groupStrokesCount = 0, groupPuttsSum = 0, groupPuttsCount = 0;
+      let groupGirHits = 0, groupGirHoles = 0, groupFirHits = 0, groupFirHoles = 0;
       for (const { ur, res } of roundResults) {
         if (!res.ok || !res.value) continue;
         let r;
@@ -2595,6 +2615,14 @@ export default function GolfScorecard() {
             }
           }
           if (entry && entry.putts != null && entry.putts !== "") myPuttsTotal += Number(entry.putts);
+          if (entry && entry.strokes != null && entry.strokes !== "") {
+            groupGirHoles++;
+            if (entry.gir) groupGirHits++;
+            if (parH === 4 || parH === 5) {
+              groupFirHoles++;
+              if (entry.fir) groupFirHits++;
+            }
+          }
         }
         if (holesPlayed === 0) continue;
         if (!(r.finished || holesPlayed === 18)) continue;
@@ -2633,6 +2661,10 @@ export default function GolfScorecard() {
             pars: groupPars,
             eagles: groupEagles,
             holes_in_one: groupHolesInOne,
+            gir_hits: groupGirHits,
+            gir_holes: groupGirHoles,
+            fir_hits: groupFirHits,
+            fir_holes: groupFirHoles,
             updated_at: new Date().toISOString(),
           },
           { onConflict: "group_id,user_id" }
@@ -2701,6 +2733,7 @@ export default function GolfScorecard() {
         const memberSet = new Set(membersByGroup[groupId] || []);
         let groupRoundsPlayed = 0, groupWins = 0, groupBirdies = 0, groupPars = 0, groupEagles = 0, groupHolesInOne = 0;
         let groupStrokesSum = 0, groupStrokesCount = 0, groupPuttsSum = 0, groupPuttsCount = 0;
+        let groupGirHits = 0, groupGirHoles = 0, groupFirHits = 0, groupFirHoles = 0;
         const byYear = {}; // year -> array of { strokes, date, code, won, myHcp, upsetMargin }
         for (const { r, code } of parsedRounds) {
           const myIdx = r.players.findIndex((p) => p.user_id === session.user.id);
@@ -2709,6 +2742,7 @@ export default function GolfScorecard() {
           if (!playedWithGroup) continue;
 
           let holesPlayed = 0, myStrokesTotal = 0, myPuttsTotal = 0;
+          let roundBirdies = 0, roundPars = 0;
           for (let h = 0; h < 18; h++) {
             const entry = r.scores && r.scores[h] ? r.scores[h][myIdx] : null;
             const parH = r.par ? r.par[h] : null;
@@ -2721,11 +2755,24 @@ export default function GolfScorecard() {
               } else if (parH != null) {
                 const diff = strokesVal - parH;
                 if (diff <= -2) groupEagles++;
-                else if (diff === -1) groupBirdies++;
-                else if (diff === 0) groupPars++;
+                else if (diff === -1) {
+                  groupBirdies++;
+                  roundBirdies++;
+                } else if (diff === 0) {
+                  groupPars++;
+                  roundPars++;
+                }
               }
             }
             if (entry && entry.putts != null && entry.putts !== "") myPuttsTotal += Number(entry.putts);
+            if (entry && entry.strokes != null && entry.strokes !== "") {
+              groupGirHoles++;
+              if (entry.gir) groupGirHits++;
+              if (parH === 4 || parH === 5) {
+                groupFirHoles++;
+                if (entry.fir) groupFirHits++;
+              }
+            }
           }
           if (holesPlayed === 0 || !(r.finished || holesPlayed === 18)) continue;
 
@@ -2775,7 +2822,7 @@ export default function GolfScorecard() {
           const year = (r.date || "").slice(0, 4);
           if (year.length === 4) {
             if (!byYear[year]) byYear[year] = [];
-            byYear[year].push({ strokes: Math.round(myStrokesTotal * scale), date: r.date, code, won: wonRound, myHcp: isNaN(myHcp) ? null : myHcp, upsetMargin });
+            byYear[year].push({ strokes: Math.round(myStrokesTotal * scale), date: r.date, code, won: wonRound, myHcp: isNaN(myHcp) ? null : myHcp, upsetMargin, birdies: roundBirdies, pars: roundPars });
           }
         }
 
@@ -2783,6 +2830,7 @@ export default function GolfScorecard() {
           const entries = byYear[year].slice().sort((a, b) => (a.date || "").localeCompare(b.date || ""));
           let wins = 0, bestStrokes = null, bestDate = null, bestCode = null;
           let biggestUpset = null;
+          let yearBirdies = 0, yearPars = 0;
           for (const e of entries) {
             if (e.won) wins++;
             if (bestStrokes === null || e.strokes < bestStrokes) {
@@ -2793,6 +2841,8 @@ export default function GolfScorecard() {
             if (e.upsetMargin !== null && (biggestUpset === null || e.upsetMargin > biggestUpset.margin)) {
               biggestUpset = { margin: e.upsetMargin, date: e.date };
             }
+            yearBirdies += e.birdies || 0;
+            yearPars += e.pars || 0;
           }
           supabase
             .from("group_yearly_recap")
@@ -2808,6 +2858,8 @@ export default function GolfScorecard() {
                 best_round_code: bestCode,
                 biggest_upset_margin: biggestUpset ? biggestUpset.margin : null,
                 biggest_upset_date: biggestUpset ? biggestUpset.date : null,
+                birdies: yearBirdies,
+                pars: yearPars,
                 updated_at: new Date().toISOString(),
               },
               { onConflict: "group_id,year,user_id" }
@@ -2833,6 +2885,10 @@ export default function GolfScorecard() {
               pars: groupPars,
               eagles: groupEagles,
               holes_in_one: groupHolesInOne,
+              gir_hits: groupGirHits,
+              gir_holes: groupGirHoles,
+              fir_hits: groupFirHits,
+              fir_holes: groupFirHoles,
               updated_at: new Date().toISOString(),
             },
             { onConflict: "group_id,user_id" }
@@ -3101,23 +3157,22 @@ export default function GolfScorecard() {
       return;
     }
     const userIds = rows.map((r) => r.user_id);
-    const { data: names } = await withJwtRetry(() => supabase.from("leaderboard_stats").select("user_id, display_name, avatar, handicap").in("user_id", userIds));
+    const { data: names } = await withJwtRetry(() => supabase.from("leaderboard_stats").select("user_id, display_name, avatar").in("user_id", userIds));
     const nameById = new Map((names || []).map((n) => [n.user_id, n]));
     const enriched = rows.map((r) => {
       // Same reasoning as the group leaderboard - leaderboard_stats is a
-      // cached copy of your own name/avatar/handicap that only refreshes
-      // when you've visited certain pages, so it can be stale or still
-      // show the generic "Golfer" placeholder even while everything else
+      // cached copy of your own name/avatar that only refreshes when
+      // you've visited certain pages, so it can be stale or still show
+      // the generic "Golfer" placeholder even while everything else
       // about you (rounds played, wins, etc.) is accurate. For yourself
       // specifically, always prefer your own live profile data instead.
       if (session && profile && r.user_id === session.user.id) {
-        return { ...r, name: profile.name || "Golfer", avatar: profile.avatar || "", currentHandicap: profile.handicap || "" };
+        return { ...r, name: profile.name || "Golfer", avatar: profile.avatar || "" };
       }
       return {
         ...r,
         name: (nameById.get(r.user_id) || {}).display_name || "Golfer",
         avatar: (nameById.get(r.user_id) || {}).avatar || "",
-        currentHandicap: (nameById.get(r.user_id) || {}).handicap || "",
       };
     });
     setYearlyRecapLoading(false);
@@ -3331,10 +3386,8 @@ export default function GolfScorecard() {
     const bestRound = rows.filter((r) => r.best_round_strokes != null).sort((a, b) => a.best_round_strokes - b.best_round_strokes)[0];
     const mostWins = rows.filter((r) => r.wins > 0).sort((a, b) => b.wins - a.wins)[0];
     const biggestUpset = rows.filter((r) => r.biggest_upset_margin != null).sort((a, b) => b.biggest_upset_margin - a.biggest_upset_margin)[0];
-    const currentHandicaps = rows
-      .filter((r) => r.currentHandicap != null && r.currentHandicap !== "" && !isNaN(Number(r.currentHandicap)))
-      .map((r) => ({ ...r, hcpNum: Number(r.currentHandicap) }))
-      .sort((a, b) => a.hcpNum - b.hcpNum);
+    const mostPars = rows.filter((r) => r.pars > 0).sort((a, b) => b.pars - a.pars)[0];
+    const mostBirdies = rows.filter((r) => r.birdies > 0).sort((a, b) => b.birdies - a.birdies)[0];
 
     return (
       <div className="gsc-modal-backdrop" onClick={() => setYearlyRecapOpen(false)}>
@@ -3392,18 +3445,23 @@ export default function GolfScorecard() {
                   {biggestUpset.biggest_upset_date && <div style={{ fontSize: 11, color: "#8a8a80" }}>{biggestUpset.biggest_upset_date}</div>}
                 </div>
               )}
-              {currentHandicaps.length > 0 && (
-                <div style={{ padding: "10px 0" }}>
-                  <div style={{ fontSize: 11, color: "#8a8a80", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 6 }}>{"\u26F3"} Current Handicaps</div>
-                  {currentHandicaps.map((h) => (
-                    <div key={h.user_id} style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: "#4b4b45", padding: "3px 0" }}>
-                      <div>{h.avatar ? `${h.avatar} ` : ""}{h.name}</div>
-                      <div style={{ fontWeight: 600, color: "#1B4332" }}>{h.hcpNum.toFixed(1)}</div>
-                    </div>
-                  ))}
+              {mostPars && (
+                <div style={{ padding: "10px 0", borderBottom: "1px solid #eee6cf" }}>
+                  <div style={{ fontSize: 11, color: "#8a8a80", textTransform: "uppercase", letterSpacing: "0.5px" }}>{"\u26F3"} Most Pars</div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: "#1B4332", marginTop: 2 }}>
+                    {mostPars.avatar ? `${mostPars.avatar} ` : ""}{mostPars.name} - {mostPars.pars} par{mostPars.pars === 1 ? "" : "s"}
+                  </div>
                 </div>
               )}
-              {!bestRound && !mostWins && !biggestUpset && currentHandicaps.length === 0 && (
+              {mostBirdies && (
+                <div style={{ padding: "10px 0" }}>
+                  <div style={{ fontSize: 11, color: "#8a8a80", textTransform: "uppercase", letterSpacing: "0.5px" }}>{"\u{1F426}"} Most Birdies</div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: "#1B4332", marginTop: 2 }}>
+                    {mostBirdies.avatar ? `${mostBirdies.avatar} ` : ""}{mostBirdies.name} - {mostBirdies.birdies} birdie{mostBirdies.birdies === 1 ? "" : "s"}
+                  </div>
+                </div>
+              )}
+              {!bestRound && !mostWins && !biggestUpset && !mostPars && !mostBirdies && (
                 <div style={{ fontSize: 14, color: "#6b6b63", padding: "8px 0", textAlign: "center" }}>
                   Not quite enough finished rounds yet to build out this year's recap.
                 </div>
@@ -11710,7 +11768,6 @@ function computeRoundScoring(round) {
                           <div className="gsc-stepper-val">{e.strokes === "" || e.strokes == null ? "-" : e.strokes}</div>
                           <button onClick={() => updateHoleEntry(i, "strokes", (Number(e.strokes) || 0) + 1)}>+</button>
                         </div>
-                        <div style={{ fontSize: 12, color: "#8a8a80", textAlign: "center", marginTop: 4 }}>Par {parH}</div>
                         {round.cfg.netScoring && e.strokes !== "" && e.strokes != null && (() => {
                           const strokesOff = computed.strokesOffForHole(i, holeIdx);
                           const net = Number(e.strokes) - strokesOff;
@@ -11779,6 +11836,18 @@ function computeRoundScoring(round) {
                         </div>
                       );
                     })()}
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 10, marginTop: 6 }}>
+                      <label style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "#6b6b63", whiteSpace: "nowrap" }}>
+                        <input type="checkbox" checked={!!e.gir} onChange={(ev) => updateHoleEntry(i, "gir", ev.target.checked)} />
+                        GIR
+                      </label>
+                      {(parH === 4 || parH === 5) && (
+                        <label style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "#6b6b63", whiteSpace: "nowrap" }}>
+                          <input type="checkbox" checked={!!e.fir} onChange={(ev) => updateHoleEntry(i, "fir", ev.target.checked)} />
+                          FIR
+                        </label>
+                      )}
+                    </div>
                   </div>
                 </div>
               );
