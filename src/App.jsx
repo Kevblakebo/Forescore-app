@@ -3398,16 +3398,16 @@ export default function GolfScorecard() {
     return (
       <div className="gsc-modal-backdrop" onClick={() => setYearlyRecapOpen(false)}>
         <div className="gsc-modal" onClick={(e) => e.stopPropagation()} style={{ maxHeight: "80vh", overflowY: "auto" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-            <button className="gsc-link" style={{ fontSize: 18 }} onClick={() => { const y = yearlyRecapYear - 1; setYearlyRecapYear(y); loadYearlyRecap(selectedGroupId, y); }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 4 }}>
+            <button className="gsc-link" style={{ fontSize: 18, lineHeight: "28px" }} onClick={() => { const y = yearlyRecapYear - 1; setYearlyRecapYear(y); loadYearlyRecap(selectedGroupId, y); }}>
               {"\u2039"}
             </button>
-            <div className="gsc-modal-title" style={{ marginBottom: 0 }}>
+            <div className="gsc-modal-title" style={{ marginBottom: 0, textAlign: "center", flex: 1 }}>
               {yearlyRecapYear} Recap{g ? ` - ${g.name}` : ""}
             </div>
             <button
               className="gsc-link"
-              style={{ fontSize: 18 }}
+              style={{ fontSize: 18, lineHeight: "28px" }}
               disabled={yearlyRecapYear >= new Date().getFullYear()}
               onClick={() => { const y = yearlyRecapYear + 1; setYearlyRecapYear(y); loadYearlyRecap(selectedGroupId, y); }}
             >
@@ -3627,7 +3627,7 @@ export default function GolfScorecard() {
         <div className="gsc-modal" onClick={(e) => e.stopPropagation()}>
           <div className="gsc-modal-title">Game Details</div>
           <div style={{ fontSize: 13, color: "#4b4b45", lineHeight: 1.9 }}>
-            <div><b>Max score over par per hole:</b> {cfg.maxOverPar != null ? `+${cfg.maxOverPar}` : "No limit set"}</div>
+            <div><b>Max score over par per hole:</b> {cfg.doubleParMax ? "Double par" : cfg.maxOver != null ? `+${cfg.maxOver}` : "No limit set"}</div>
             <div><b>Max putts per hole:</b> {cfg.maxPutts != null ? cfg.maxPutts : "No limit set"}</div>
             <div><b>Mulligans per player:</b> {cfg.mulliganSegment ? cfg.mulliganSegment : "None set (tracked freely)"}</div>
             <div><b>Earn a bonus mulligan:</b> {cfg.mulliganChallenge ? cfg.mulliganChallenge : "Not set"}</div>
@@ -6392,7 +6392,8 @@ function computeTournamentFoursomeTotals(round) {
   for (let h = 0; h < 18; h++) {
     const parH = round.par[h] ?? 4;
     const hs = round.scores[h] || {};
-    const capStroke = (v) => (v == null || v === "" ? null : Math.min(Number(v), parH + (round.cfg.maxOver ?? 99)));
+    const effectiveMaxOver = round.cfg.doubleParMax ? parH : round.cfg.maxOver;
+    const capStroke = (v) => (v == null || v === "" ? null : Math.min(Number(v), parH + (effectiveMaxOver ?? 99)));
     const capPutt = (v) => (v == null || v === "" ? null : Math.min(Number(v), round.cfg.maxPutts ?? 99));
     const strokes = [];
     const putts = [];
@@ -6469,7 +6470,8 @@ function computeRoundScoring(round) {
     const hs = round.scores[h] || {};
     const teamsThisHole = computeTeamsForHole(round, h, hs);
 
-    const capStroke = (v) => (v == null || v === "" ? null : Math.min(Number(v), parH + (round.cfg.maxOver ?? 99)));
+    const effectiveMaxOver = round.cfg.doubleParMax ? parH : round.cfg.maxOver;
+    const capStroke = (v) => (v == null || v === "" ? null : Math.min(Number(v), parH + (effectiveMaxOver ?? 99)));
     const capPutt = (v) => (v == null || v === "" ? null : Math.min(Number(v), round.cfg.maxPutts ?? 99));
     // Net version used everywhere scoring/points/standings are actually
     // decided - applies the mercy-rule cap to the gross score first (so
@@ -9426,7 +9428,24 @@ function computeRoundScoring(round) {
               {g.hasScore && (
                 <div className="gsc-field">
                   <div className="gsc-label">Max strokes over par per hole</div>
-                  <input className="gsc-input" type="number" min="0" placeholder="No max" value={activeCfg.maxOver} onChange={(e) => setActiveCfg({ ...activeCfg, maxOver: cleanNumericText(e.target.value) })} />
+                  <input
+                    className="gsc-input"
+                    type="number"
+                    min="0"
+                    placeholder="No max"
+                    disabled={!!activeCfg.doubleParMax}
+                    value={activeCfg.doubleParMax ? "" : activeCfg.maxOver}
+                    onChange={(e) => setActiveCfg({ ...activeCfg, maxOver: cleanNumericText(e.target.value) })}
+                    style={activeCfg.doubleParMax ? { opacity: 0.5 } : undefined}
+                  />
+                  <label style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 8, fontSize: 13, color: "#4b4b45" }}>
+                    <input
+                      type="checkbox"
+                      checked={!!activeCfg.doubleParMax}
+                      onChange={(e) => setActiveCfg({ ...activeCfg, doubleParMax: e.target.checked, maxOver: e.target.checked ? "" : activeCfg.maxOver })}
+                    />
+                    Use double par max instead (e.g. par 4 caps at 8)
+                  </label>
                 </div>
               )}
               {g.hasPutts && (
@@ -10044,7 +10063,9 @@ function computeRoundScoring(round) {
                   className="gsc-input"
                   type="number"
                   min="0"
-                  value={cfg.maxOver}
+                  value={cfg.doubleParMax ? "" : cfg.maxOver}
+                  disabled={!!cfg.doubleParMax}
+                  style={cfg.doubleParMax ? { opacity: 0.5 } : undefined}
                   onChange={(e) => {
                     const raw = cleanNumericText(e.target.value);
                     setCfg({ ...cfg, maxOver: raw === "" ? "" : Number(raw) });
@@ -10053,6 +10074,14 @@ function computeRoundScoring(round) {
                     if (e.target.value === "") setCfg((c) => ({ ...c, maxOver: "" }));
                   }}
                 />
+                <label style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 8, fontSize: 13, color: "#4b4b45" }}>
+                  <input
+                    type="checkbox"
+                    checked={!!cfg.doubleParMax}
+                    onChange={(e) => setCfg({ ...cfg, doubleParMax: e.target.checked, maxOver: e.target.checked ? "" : cfg.maxOver })}
+                  />
+                  Use double par max instead (e.g. par 4 caps at 8)
+                </label>
               </div>
             )}
             <div className="gsc-field">
@@ -10630,7 +10659,9 @@ function computeRoundScoring(round) {
                   className="gsc-input"
                   type="number"
                   min="0"
-                  value={tournamentCfg.maxOver}
+                  value={tournamentCfg.doubleParMax ? "" : tournamentCfg.maxOver}
+                  disabled={!!tournamentCfg.doubleParMax}
+                  style={tournamentCfg.doubleParMax ? { opacity: 0.5 } : undefined}
                   onChange={(e) => {
                     const raw = cleanNumericText(e.target.value);
                     setTournamentCfg({ ...tournamentCfg, maxOver: raw === "" ? "" : Number(raw) });
@@ -10639,6 +10670,14 @@ function computeRoundScoring(round) {
                     if (e.target.value === "") setTournamentCfg((c) => ({ ...c, maxOver: "" }));
                   }}
                 />
+                <label style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 8, fontSize: 13, color: "#4b4b45" }}>
+                  <input
+                    type="checkbox"
+                    checked={!!tournamentCfg.doubleParMax}
+                    onChange={(e) => setTournamentCfg({ ...tournamentCfg, doubleParMax: e.target.checked, maxOver: e.target.checked ? "" : tournamentCfg.maxOver })}
+                  />
+                  Use double par max instead (e.g. par 4 caps at 8)
+                </label>
               </div>
             )}
             {tg.hasPutts && (
@@ -11619,7 +11658,7 @@ function computeRoundScoring(round) {
               <button className="gsc-btn gsc-btn-outline" disabled={holeIdx === 0} onClick={() => setHoleIdx((h) => h - 1)}>Prev</button>
               <div style={{ textAlign: "center" }}>
                 <div className="gsc-hole-big">Hole {holeIdx + 1}</div>
-                <div className="gsc-par-badge">Par {parH}{round.cfg.maxOver != null ? ` - max ${parH + round.cfg.maxOver}` : ""}</div>
+                <div className="gsc-par-badge">Par {parH}{round.cfg.doubleParMax ? ` - max ${parH * 2}` : round.cfg.maxOver != null ? ` - max ${parH + round.cfg.maxOver}` : ""}</div>
                 {(() => {
                   const yd = (round.yardage || [])[holeIdx];
                   const si = (round.strokeIndex || [])[holeIdx];
