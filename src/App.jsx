@@ -11916,7 +11916,7 @@ function computeRoundScoring(round) {
                       const noLimitSet = (round.cfg.mulliganSegment || 0) === 0;
                       const usedSoFar = computed.mulligansUsed[i][mulSeg];
                       return (
-                        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, flexWrap: "nowrap" }}>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 6, flexWrap: "nowrap" }}>
                           <div style={{ display: "flex", alignItems: "center", height: 18, fontSize: 11, color: "#6b6b63", whiteSpace: "nowrap" }}>
                             {noLimitSet ? "MULLIGAN" : `MULLIGAN (${Math.max(0, mulLeft)} left)`}
                           </div>
