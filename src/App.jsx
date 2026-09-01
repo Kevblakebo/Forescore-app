@@ -1271,6 +1271,7 @@ export default function GolfScorecard() {
   const [courseSearchResults, setCourseSearchResults] = useState([]);
   const [courseSearchBusy, setCourseSearchBusy] = useState(false);
   const [courseSearchErr, setCourseSearchErr] = useState("");
+  const [gpsCourseSearchBusy, setGpsCourseSearchBusy] = useState(false);
   const [courseTeeOptions, setCourseTeeOptions] = useState(null); // {courseLabel, tees: [...]} once a course is picked
   const [showManualCourse, setShowManualCourse] = useState(false);
   const [courseSelectedViaSearch, setCourseSelectedViaSearch] = useState(false);
@@ -4674,6 +4675,50 @@ export default function GolfScorecard() {
       setCourseSearchErr("Course search isn't available right now. You can still enter par manually below.");
     }
     setCourseSearchBusy(false);
+  }
+
+  async function searchCoursesByGps() {
+    if (!("geolocation" in navigator)) {
+      setCourseSearchErr("Location isn't available on this device. Search by name instead.");
+      return;
+    }
+    setGpsCourseSearchBusy(true);
+    setCourseSearchErr("");
+    setCourseSearchResults([]);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const { latitude, longitude } = pos.coords;
+          const res = await fetch(`/api/course-gps-search?lat=${latitude}&lng=${longitude}`);
+          const data = await res.json().catch(() => null);
+          if (!res.ok || !data) {
+            setCourseSearchErr((data && data.error) || "Course search isn't available right now. You can still search by name or enter par manually below.");
+            setGpsCourseSearchBusy(false);
+            return;
+          }
+          setCourseSearchResults(data.courses || []);
+          if (!data.courses || data.courses.length === 0) {
+            setCourseSearchErr(
+              data.noCoordinatesAvailable
+                ? "Found nearby courses, but couldn't confirm their exact location. Try searching by name instead."
+                : "No courses found nearby. Try searching by name, or enter par manually below."
+            );
+          }
+        } catch (e) {
+          setCourseSearchErr("Course search isn't available right now. You can still search by name or enter par manually below.");
+        }
+        setGpsCourseSearchBusy(false);
+      },
+      (err) => {
+        setGpsCourseSearchBusy(false);
+        setCourseSearchErr(
+          err.code === 1
+            ? "Location access denied - you can still search by name below."
+            : "Couldn't get your location - you can still search by name below."
+        );
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
   }
 
   // Filters the raw coordinate dump down to just the green points (poi 1 -
@@ -9327,6 +9372,14 @@ function computeRoundScoring(round) {
                   {courseSearchBusy ? "Searching..." : "Search"}
                 </button>
               </div>
+              <button
+                className="gsc-btn gsc-btn-outline"
+                style={{ width: "100%", marginTop: 8 }}
+                disabled={gpsCourseSearchBusy}
+                onClick={searchCoursesByGps}
+              >
+                {gpsCourseSearchBusy ? "Finding nearby courses..." : `${"\u{1F4CD}"} Use my location instead`}
+              </button>
               {courseSearchErr && <div style={{ color: "#A42E2D", fontSize: 12, marginTop: 8 }}>{courseSearchErr}</div>}
               {courseSearchResults.length > 0 && !courseTeeOptions && (
                 <div style={{ marginTop: 10 }}>
@@ -9339,6 +9392,7 @@ function computeRoundScoring(round) {
                       <div>
                         <div style={{ fontWeight: 700, fontSize: 14 }}>{c.courseName && c.courseName !== c.clubName ? `${c.clubName} - ${c.courseName}` : c.clubName}</div>
                         {(c.city || c.state) && <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 2 }}>{c.city}{c.city && c.state ? ", " : ""}{c.state}</div>}
+                        {c.distanceMiles != null && <div style={{ fontSize: 12, color: "#8a6a2f", marginTop: 2 }}>{c.distanceMiles < 0.1 ? "Less than 0.1 mi away" : `${c.distanceMiles.toFixed(1)} mi away`}</div>}
                       </div>
                       <span style={{ color: "#8FA998", fontSize: 18, marginLeft: 8 }}>{"\u203A"}</span>
                     </div>
@@ -9928,6 +9982,14 @@ function computeRoundScoring(round) {
                     {courseSearchBusy ? "Searching..." : "Search"}
                   </button>
                 </div>
+                <button
+                  className="gsc-btn gsc-btn-outline"
+                  style={{ width: "100%", marginTop: 8 }}
+                  disabled={gpsCourseSearchBusy}
+                  onClick={searchCoursesByGps}
+                >
+                  {gpsCourseSearchBusy ? "Finding nearby courses..." : `${"\u{1F4CD}"} Use my location instead`}
+                </button>
                 {courseSearchErr && <div style={{ color: "#A42E2D", fontSize: 12, marginTop: 8 }}>{courseSearchErr}</div>}
 
                 {courseSearchResults.length > 0 && !courseTeeOptions && (
@@ -9946,6 +10008,7 @@ function computeRoundScoring(round) {
                         <div>
                           <div style={{ fontWeight: 700, fontSize: 14 }}>{c.courseName && c.courseName !== c.clubName ? `${c.clubName} - ${c.courseName}` : c.clubName}</div>
                           {(c.city || c.state) && <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 2 }}>{c.city}{c.city && c.state ? ", " : ""}{c.state}</div>}
+                          {c.distanceMiles != null && <div style={{ fontSize: 12, color: "#8a6a2f", marginTop: 2 }}>{c.distanceMiles < 0.1 ? "Less than 0.1 mi away" : `${c.distanceMiles.toFixed(1)} mi away`}</div>}
                         </div>
                         <span style={{ color: "#8FA998", fontSize: 18, marginLeft: 8 }}>{"\u203A"}</span>
                       </div>
@@ -10531,6 +10594,14 @@ function computeRoundScoring(round) {
                   {courseSearchBusy ? "Searching..." : "Search"}
                 </button>
               </div>
+              <button
+                className="gsc-btn gsc-btn-outline"
+                style={{ width: "100%", marginTop: 8 }}
+                disabled={gpsCourseSearchBusy}
+                onClick={searchCoursesByGps}
+              >
+                {gpsCourseSearchBusy ? "Finding nearby courses..." : `${"\u{1F4CD}"} Use my location instead`}
+              </button>
               {courseSearchErr && <div style={{ color: "#A42E2D", fontSize: 12, marginTop: 8 }}>{courseSearchErr}</div>}
 
               {courseSearchResults.length > 0 && !courseTeeOptions && (
@@ -10549,6 +10620,7 @@ function computeRoundScoring(round) {
                       <div>
                         <div style={{ fontWeight: 700, fontSize: 14 }}>{c.courseName && c.courseName !== c.clubName ? `${c.clubName} - ${c.courseName}` : c.clubName}</div>
                         {(c.city || c.state) && <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 2 }}>{c.city}{c.city && c.state ? ", " : ""}{c.state}</div>}
+                        {c.distanceMiles != null && <div style={{ fontSize: 12, color: "#8a6a2f", marginTop: 2 }}>{c.distanceMiles < 0.1 ? "Less than 0.1 mi away" : `${c.distanceMiles.toFixed(1)} mi away`}</div>}
                       </div>
                       <span style={{ color: "#8FA998", fontSize: 18, marginLeft: 8 }}>{"\u203A"}</span>
                     </div>
