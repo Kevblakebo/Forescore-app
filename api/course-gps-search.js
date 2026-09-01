@@ -66,7 +66,9 @@ export default async function handler(req, res) {
     // Cache check is best-effort - if Supabase isn't reachable or isn't
     // configured, this just falls through to a normal golfapi.io call
     // rather than failing the whole request over a cache problem.
-    if (supabase) {
+    // Skipped entirely in debug mode, so debug output always reflects a
+    // fresh call rather than possibly returning early with cached data.
+    if (supabase && !req.query.debug) {
       try {
         const { data: cached } = await supabase
           .from("course_gps_search_cache")
@@ -111,6 +113,14 @@ export default async function handler(req, res) {
       }
       const data = await upstream.json();
       const rawCourses = Array.isArray(data.courses) ? data.courses : [];
+
+      // TEMPORARY - remove once the real field names are confirmed.
+      // Shows the actual, raw shape of what golfapi.io returns for a
+      // course, so the real coordinate field names can be read directly
+      // instead of guessed at again.
+      if (req.query.debug) {
+        return res.status(200).json({ debugRawFirstCourse: rawCourses[0] || null, debugCount: rawCourses.length });
+      }
 
       if (supabase) {
         // Awaited, not fire-and-forget - a serverless function can be
