@@ -66,9 +66,7 @@ export default async function handler(req, res) {
     // Cache check is best-effort - if Supabase isn't reachable or isn't
     // configured, this just falls through to a normal golfapi.io call
     // rather than failing the whole request over a cache problem.
-    // Skipped entirely in debug mode, so debug output always reflects a
-    // fresh call rather than possibly returning early with cached data.
-    if (supabase && !req.query.debug) {
+    if (supabase) {
       try {
         const { data: cached } = await supabase
           .from("course_gps_search_cache")
@@ -113,14 +111,6 @@ export default async function handler(req, res) {
       }
       const data = await upstream.json();
       const rawCourses = Array.isArray(data.courses) ? data.courses : [];
-
-      // TEMPORARY - remove once the real field names are confirmed.
-      // Shows the actual, raw shape of what golfapi.io returns for a
-      // course, so the real coordinate field names can be read directly
-      // instead of guessed at again.
-      if (req.query.debug) {
-        return res.status(200).json({ debugRawFirstCourse: rawCourses[0] || null, debugCount: rawCourses.length });
-      }
 
       if (supabase) {
         // Awaited, not fire-and-forget - a serverless function can be
@@ -182,18 +172,28 @@ export default async function handler(req, res) {
   }
 }
 
-// Independently computes real distance for every course that has usable
-// coordinates, regardless of whether golfapi.io's own geo params did any
-// filtering - this is the actual source of truth this endpoint relies
-// on, not golfapi.io's filtering. Sorted closest-first, and anything
-// outside the radius is dropped.
+// Uses golfapi.io's own provided distance field as the real source of
+// truth - confirmed via a real test response that course objects from
+// their /courses geo-search include a ready-made "distance" +
+// "measureUnit" (km), sorted closest-first, rather than raw lat/lng
+// coordinates. Falls back to computing haversine distance from raw
+// coordinates only if a course is ever missing that field, for
+// robustness against a response shape golfapi.io hasn't shown us yet.
 function withDistances(rawCourses, lat, lng, radiusMiles) {
   return rawCourses
     .map((c) => {
-      const cLat = Number(c.latitude ?? c.lat ?? c.Latitude);
-      const cLng = Number(c.longitude ?? c.lng ?? c.lon ?? c.Longitude);
-      if (!Number.isFinite(cLat) || !Number.isFinite(cLng)) return null;
-      const distanceMiles = haversineMiles(lat, lng, cLat, cLng);
+      let distanceMiles = null;
+      if (typeof c.distance === "number") {
+        const unit = (c.measureUnit || "km").toLowerCase();
+        distanceMiles = unit.startsWith("mi") ? c.distance : c.distance * 0.621371;
+      } else {
+        const cLat = Number(c.latitude ?? c.lat ?? c.Latitude);
+        const cLng = Number(c.longitude ?? c.lng ?? c.lon ?? c.Longitude);
+        if (Number.isFinite(cLat) && Number.isFinite(cLng)) {
+          distanceMiles = haversineMiles(lat, lng, cLat, cLng);
+        }
+      }
+      if (distanceMiles == null) return null;
       return { ...c, distanceMiles };
     })
     .filter(Boolean)
