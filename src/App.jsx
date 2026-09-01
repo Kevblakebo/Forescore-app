@@ -2120,9 +2120,11 @@ export default function GolfScorecard() {
           myPuttsTotal += Number(entry.putts);
         }
         if (entry && entry.strokes != null && entry.strokes !== "") {
-          girHoles++;
-          if (entry.gir) girHits++;
-          if (parH === 4 || parH === 5) {
+          if (r.cfg && r.cfg.trackGir) {
+            girHoles++;
+            if (entry.gir) girHits++;
+          }
+          if (r.cfg && r.cfg.trackFir && (parH === 4 || parH === 5)) {
             firHoles++;
             if (entry.fir) firHits++;
           }
@@ -2616,9 +2618,11 @@ export default function GolfScorecard() {
           }
           if (entry && entry.putts != null && entry.putts !== "") myPuttsTotal += Number(entry.putts);
           if (entry && entry.strokes != null && entry.strokes !== "") {
-            groupGirHoles++;
-            if (entry.gir) groupGirHits++;
-            if (parH === 4 || parH === 5) {
+            if (r.cfg && r.cfg.trackGir) {
+              groupGirHoles++;
+              if (entry.gir) groupGirHits++;
+            }
+            if (r.cfg && r.cfg.trackFir && (parH === 4 || parH === 5)) {
               groupFirHoles++;
               if (entry.fir) groupFirHits++;
             }
@@ -2766,9 +2770,11 @@ export default function GolfScorecard() {
             }
             if (entry && entry.putts != null && entry.putts !== "") myPuttsTotal += Number(entry.putts);
             if (entry && entry.strokes != null && entry.strokes !== "") {
-              groupGirHoles++;
-              if (entry.gir) groupGirHits++;
-              if (parH === 4 || parH === 5) {
+              if (r.cfg && r.cfg.trackGir) {
+                groupGirHoles++;
+                if (entry.gir) groupGirHits++;
+              }
+              if (r.cfg && r.cfg.trackFir && (parH === 4 || parH === 5)) {
                 groupFirHoles++;
                 if (entry.fir) groupFirHits++;
               }
@@ -3631,6 +3637,8 @@ export default function GolfScorecard() {
             {["dstreet", "ponto", "teamputts"].includes(round.game) && (
               <div><b>Ties carry over to next hole:</b> {cfg.tiesCarryOver ? "Yes" : "No"}</div>
             )}
+            <div><b>Track Greens in Regulation (GIR):</b> {cfg.trackGir ? "Yes" : "No"}</div>
+            <div><b>Track Fairways in Regulation (FIR):</b> {cfg.trackFir ? "Yes" : "No"}</div>
           </div>
           <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 14 }} onClick={() => setGameDetailsOpen(false)}>
             Close
@@ -9491,6 +9499,50 @@ function computeRoundScoring(round) {
                   </div>
                 </div>
               )}
+              <div className="gsc-field" style={{ marginTop: 10 }}>
+                <div className="gsc-label">Track Greens in Regulation (GIR)?</div>
+                <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 6 }}>
+                  Adds a GIR checkbox for each player, each hole, and counts toward leaderboard stats.
+                </div>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button
+                    className="gsc-btn"
+                    style={{ flex: 1, background: !activeCfg.trackGir ? "#A42E2D" : "transparent", color: !activeCfg.trackGir ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
+                    onClick={() => setActiveCfg({ ...activeCfg, trackGir: false })}
+                  >
+                    No
+                  </button>
+                  <button
+                    className="gsc-btn"
+                    style={{ flex: 1, background: activeCfg.trackGir ? "#A42E2D" : "transparent", color: activeCfg.trackGir ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
+                    onClick={() => setActiveCfg({ ...activeCfg, trackGir: true })}
+                  >
+                    Yes
+                  </button>
+                </div>
+              </div>
+              <div className="gsc-field" style={{ marginTop: 10 }}>
+                <div className="gsc-label">Track Fairways in Regulation (FIR)?</div>
+                <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 6 }}>
+                  Adds a FIR checkbox for each player on par-4/par-5 holes, and counts toward leaderboard stats.
+                </div>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button
+                    className="gsc-btn"
+                    style={{ flex: 1, background: !activeCfg.trackFir ? "#A42E2D" : "transparent", color: !activeCfg.trackFir ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
+                    onClick={() => setActiveCfg({ ...activeCfg, trackFir: false })}
+                  >
+                    No
+                  </button>
+                  <button
+                    className="gsc-btn"
+                    style={{ flex: 1, background: activeCfg.trackFir ? "#A42E2D" : "transparent", color: activeCfg.trackFir ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
+                    onClick={() => setActiveCfg({ ...activeCfg, trackFir: true })}
+                  >
+                    Yes
+                  </button>
+                </div>
+              </div>
               {g.tracksDrives && (
                 <div className="gsc-field" style={{ marginTop: 10 }}>
                   <div className="gsc-label">Minimum drives per player</div>
@@ -10107,6 +10159,50 @@ function computeRoundScoring(round) {
                 </div>
               </div>
             )}
+            <div className="gsc-field">
+              <div className="gsc-label">Track Greens in Regulation (GIR)?</div>
+              <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 6 }}>
+                Adds a GIR checkbox for each player, each hole, and counts toward leaderboard stats.
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button
+                  className="gsc-btn"
+                  style={{ flex: 1, background: !cfg.trackGir ? "#A42E2D" : "transparent", color: !cfg.trackGir ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
+                  onClick={() => setCfg({ ...cfg, trackGir: false })}
+                >
+                  No
+                </button>
+                <button
+                  className="gsc-btn"
+                  style={{ flex: 1, background: cfg.trackGir ? "#A42E2D" : "transparent", color: cfg.trackGir ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
+                  onClick={() => setCfg({ ...cfg, trackGir: true })}
+                >
+                  Yes
+                </button>
+              </div>
+            </div>
+            <div className="gsc-field">
+              <div className="gsc-label">Track Fairways in Regulation (FIR)?</div>
+              <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 6 }}>
+                Adds a FIR checkbox for each player on par-4/par-5 holes, and counts toward leaderboard stats.
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button
+                  className="gsc-btn"
+                  style={{ flex: 1, background: !cfg.trackFir ? "#A42E2D" : "transparent", color: !cfg.trackFir ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
+                  onClick={() => setCfg({ ...cfg, trackFir: false })}
+                >
+                  No
+                </button>
+                <button
+                  className="gsc-btn"
+                  style={{ flex: 1, background: cfg.trackFir ? "#A42E2D" : "transparent", color: cfg.trackFir ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
+                  onClick={() => setCfg({ ...cfg, trackFir: true })}
+                >
+                  Yes
+                </button>
+              </div>
+            </div>
           </div>
           )}
 
@@ -11836,18 +11932,22 @@ function computeRoundScoring(round) {
                         </div>
                       );
                     })()}
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 10, marginTop: 6 }}>
-                      <label style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "#6b6b63", whiteSpace: "nowrap" }}>
-                        <input type="checkbox" checked={!!e.gir} onChange={(ev) => updateHoleEntry(i, "gir", ev.target.checked)} />
-                        GIR
-                      </label>
-                      {(parH === 4 || parH === 5) && (
-                        <label style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "#6b6b63", whiteSpace: "nowrap" }}>
-                          <input type="checkbox" checked={!!e.fir} onChange={(ev) => updateHoleEntry(i, "fir", ev.target.checked)} />
-                          FIR
-                        </label>
-                      )}
-                    </div>
+                    {(round.cfg.trackGir || (round.cfg.trackFir && (parH === 4 || parH === 5))) && (
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 10, marginTop: 6 }}>
+                        {round.cfg.trackGir && (
+                          <label style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "#6b6b63", whiteSpace: "nowrap" }}>
+                            <input type="checkbox" checked={!!e.gir} onChange={(ev) => updateHoleEntry(i, "gir", ev.target.checked)} />
+                            GIR
+                          </label>
+                        )}
+                        {round.cfg.trackFir && (parH === 4 || parH === 5) && (
+                          <label style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "#6b6b63", whiteSpace: "nowrap" }}>
+                            <input type="checkbox" checked={!!e.fir} onChange={(ev) => updateHoleEntry(i, "fir", ev.target.checked)} />
+                            FIR
+                          </label>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               );
