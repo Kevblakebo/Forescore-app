@@ -4501,23 +4501,24 @@ export default function GolfScorecard() {
       const res = await fetch("/api/ai-recap", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ game: g.name, players, winners: players.filter((p) => p.isWinner).map((p) => p.name) }),
+        body: JSON.stringify({
+          roundId: finishedRound.id,
+          game: g.name,
+          players,
+          winners: players.filter((p) => p.isWinner).map((p) => p.name),
+        }),
       });
       const data = await res.json().catch(() => null);
       if (res.ok && data && data.recap) {
         setAiRecap(data.recap);
-        // Best-effort, same reasoning as everything else saved after a
-        // round finishes - the person waiting on this already has their
-        // recap on screen regardless of whether these saves succeed, so
-        // this doesn't block or need to be awaited before updating the
-        // UI. Written to both the shared round (so every player who
-        // opens this round sees the same recap, not just whoever
-        // happened to generate it) and the personal finished-rounds
-        // archive (so it's still there later from "Finished rounds"
-        // too), matching archiveAndExitRound's own dual-save pattern.
-        storageSet(`golfround:${finishedRound.id}`, JSON.stringify({ ...finishedRound, aiRecap: data.recap }), true).then((r) => {
-          if (!r.ok) console.warn("Couldn't save AI recap to shared round:", r.error);
-        });
+        // Best-effort - the person waiting on this already has their
+        // recap on screen regardless of whether this save succeeds.
+        // Only the personal, device-local finished-rounds archive needs
+        // writing here - the shared round itself is already saved
+        // server-side by the endpoint that generated this, which
+        // enforces "only once per round" against that same shared copy
+        // directly, so this can't create a second, duplicate write path
+        // for it.
         storageSet(`${FINISHED_PREFIX}${finishedRound.id}`, JSON.stringify({ ...finishedRound, aiRecap: data.recap }), false).then((r) => {
           if (!r.ok) console.warn("Couldn't save AI recap to finished-round archive:", r.error);
         });
@@ -11520,10 +11521,10 @@ function computeRoundScoring(round) {
           {(aiRecapLoading || aiRecap) && (
             <div className="gsc-card">
               <div className="gsc-label" style={{ marginBottom: 8 }}>{"\u{1F3AC}"} The Recap</div>
-              {aiRecap ? (
-                <div style={{ fontSize: 14, color: "#4b4b45", lineHeight: 1.6 }}>{aiRecap}</div>
-              ) : (
+              {aiRecapLoading ? (
                 <div style={{ fontSize: 13, color: "#8a8a80", fontStyle: "italic" }}>Writing the recap...</div>
+              ) : (
+                <div style={{ fontSize: 14, color: "#4b4b45", lineHeight: 1.6 }}>{aiRecap}</div>
               )}
             </div>
           )}
@@ -11995,23 +11996,30 @@ function computeRoundScoring(round) {
               <button className="gsc-btn gsc-btn-outline" disabled={holeIdx === 17} onClick={() => setHoleIdx((h) => h + 1)}>Next</button>
             </div>
 
-            {round.finished && (
+            {round.finished && (aiRecapLoading || aiRecap || round.aiRecap) && (
               <div className="gsc-card">
                 <div className="gsc-label" style={{ marginBottom: 8 }}>{"\u{1F3AC}"} The Recap</div>
-                {aiRecapLoading && <div style={{ fontSize: 13, color: "#8a8a80", fontStyle: "italic" }}>Writing the recap...</div>}
-                {!aiRecapLoading && aiRecap && <div style={{ fontSize: 14, color: "#4b4b45", lineHeight: 1.6, marginBottom: 8 }}>{aiRecap}</div>}
-                {!aiRecapLoading && (
-                  <button
-                    className="gsc-link"
-                    style={{ fontSize: 12 }}
-                    onClick={() => {
-                      const computedForRecap = computeRoundScoring(round);
-                      generateAiRecap(round, computedForRecap, determineWinners(round, computedForRecap));
-                    }}
-                  >
-                    {aiRecap ? "Regenerate recap" : "Generate recap"}
-                  </button>
+                {aiRecapLoading ? (
+                  <div style={{ fontSize: 13, color: "#8a8a80", fontStyle: "italic" }}>Writing the recap...</div>
+                ) : (
+                  <div style={{ fontSize: 14, color: "#4b4b45", lineHeight: 1.6 }}>{aiRecap || round.aiRecap}</div>
                 )}
+              </div>
+            )}
+            {round.finished && !aiRecapLoading && !aiRecap && !round.aiRecap && (
+              <div className="gsc-card">
+                <div className="gsc-label" style={{ marginBottom: 8 }}>{"\u{1F3AC}"} The Recap</div>
+                <div style={{ fontSize: 13, color: "#8a8a80", marginBottom: 8 }}>This round doesn't have one yet.</div>
+                <button
+                  className="gsc-link"
+                  style={{ fontSize: 12 }}
+                  onClick={() => {
+                    const computedForRecap = computeRoundScoring(round);
+                    generateAiRecap(round, computedForRecap, determineWinners(round, computedForRecap));
+                  }}
+                >
+                  Generate recap
+                </button>
               </div>
             )}
 
