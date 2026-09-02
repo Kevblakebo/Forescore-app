@@ -282,14 +282,14 @@ export function useSideGames({
 const money = (n) => "$" + (Math.round(n * 100) / 100).toFixed(2).replace(/\.00$/, "");
 const initials = (name) => name.slice(0, 1).toUpperCase();
 
-export default function SideGames({ roundId = "demo-round", players = DEFAULT_PLAYERS, storage }) {
+export default function SideGames({ roundId = "demo-round", players = DEFAULT_PLAYERS, storage, initialHole = 3 }) {
   const store = useSideGames({ roundId, players, storage });
   const {
     ready, status, games, pars, records, setPar, saveHole, removeRecord,
     toggleSettled, addCustomGame, resetRound, carryFor, byWinner, net, totals,
   } = store;
 
-  const [hole, setHole] = useState(3);
+  const [hole, setHole] = useState(initialHole);
   const [view, setView] = useState("hole");
   const [draft, setDraft] = useState({});
   const [newGame, setNewGame] = useState("");
