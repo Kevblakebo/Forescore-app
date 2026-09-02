@@ -1460,6 +1460,7 @@ export default function GolfScorecard() {
   const [holeImage, setHoleImage] = useState(null);
   const [holeImageLoading, setHoleImageLoading] = useState(false);
   const [holeImageErr, setHoleImageErr] = useState("");
+  const [sideGamesVenmoByUserId, setSideGamesVenmoByUserId] = useState({});
   const gpsWatchIdRef = useRef(null);
 
   function startGPSWatch() {
@@ -4227,14 +4228,16 @@ export default function GolfScorecard() {
   // (players aren't necessarily linked to accounts), so this maps to
   // that shape: a linked player's real user_id where available, falling
   // back to a stable, index-based id otherwise (safe since player order
-  // within a round never changes). Venmo isn't currently tracked
-  // per-player on a round, so it starts blank - Side Games already
-  // makes this field editable per-game, so this isn't a blocker.
-  function mapPlayersForSideGames(players) {
+  // within a round never changes). Venmo comes from each linked
+  // player's own saved profile (fetched separately, see the
+  // sideGamesVenmoByUserId effect below) - unlinked players simply
+  // won't have one prefilled, which Side Games already handles fine
+  // since that field stays editable per game either way.
+  function mapPlayersForSideGames(players, venmoByUserId) {
     return (players || []).map((p, i) => ({
       id: p.user_id || `slot-${i}`,
       name: p.name || `Player ${i + 1}`,
-      venmo: "",
+      venmo: (p.user_id && venmoByUserId && venmoByUserId[p.user_id]) || "",
     }));
   }
 
@@ -6618,6 +6621,25 @@ export default function GolfScorecard() {
     }
     return () => stopGPSWatch();
   }, [screen]);
+
+  useEffect(() => {
+    if (screen !== "sideGames" || !round) return;
+    const userIds = round.players.map((p) => p.user_id).filter(Boolean);
+    if (userIds.length === 0) return;
+    let alive = true;
+    (async () => {
+      const { data } = await withJwtRetry(() => supabase.from("profiles").select("id, venmo").in("id", userIds));
+      if (!alive) return;
+      const map = {};
+      (data || []).forEach((p) => {
+        if (p.venmo) map[p.id] = p.venmo;
+      });
+      setSideGamesVenmoByUserId(map);
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [screen, round && round.id]);
 
 
   const game = round ? GAMES[round.game] : gameKey ? GAMES[gameKey] : null;
@@ -11843,9 +11865,6 @@ function computeRoundScoring(round) {
               <button className="gsc-link" style={{ color: "#F3EFE0", fontSize: 11, textDecoration: "underline" }} onClick={() => setGameDetailsOpen(true)}>
                 Game Details
               </button>
-              <button className="gsc-link" style={{ color: "#F3EFE0", fontSize: 11, textDecoration: "underline" }} onClick={() => goToScreen("sideGames")}>
-                Side Games
-              </button>
               {canEditThisRound && (
                 <button className="gsc-link" style={{ color: "#F3EFE0", fontSize: 11, textDecoration: "underline" }} onClick={() => openEditFoursome(round.id, round)}>
                   Edit Players
@@ -11862,6 +11881,11 @@ function computeRoundScoring(round) {
                 </div>
               )}
             </div>
+          }
+          belowLogo={
+            <button className="gsc-btn gsc-btn-outline" style={{ fontSize: 12, padding: "6px 14px" }} onClick={() => goToScreen("sideGames")}>
+              {"\u{1F3B2}"} Side Games
+            </button>
           }
         />
         {session && !claimSlotDismissed && !round.players.some((p) => p.user_id === session.user.id) && round.players.some((p) => !p.user_id) && (
@@ -12790,14 +12814,8 @@ function computeRoundScoring(round) {
     return (
       <div className="gsc">
         <style>{STYLE}</style>
-        <div style={{ background: "#1B4332", padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <button className="gsc-link" style={{ color: "#F3EFE0", fontSize: 14 }} onClick={() => goBack("card")}>
-            {"\u2039"} Back
-          </button>
-          <div style={{ color: "#F3EFE0", fontWeight: 700, fontSize: 16 }}>Side Games</div>
-          <div style={{ width: 50 }} />
-        </div>
-        <SideGames roundId={round.id} players={mapPlayersForSideGames(round.players)} storage={sideGamesStorage} />
+        <Header title="Side Games" sub={round.name} onBack={() => goBack("card")} />
+        <SideGames roundId={round.id} players={mapPlayersForSideGames(round.players, sideGamesVenmoByUserId)} storage={sideGamesStorage} />
       </div>
     );
   }
