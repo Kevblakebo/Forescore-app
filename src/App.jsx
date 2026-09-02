@@ -12823,7 +12823,15 @@ function computeRoundScoring(round) {
       <div className="gsc">
         <style>{STYLE}</style>
         <Header title="Side Games" sub={round.name} onBack={() => goBack("card")} />
-        <SideGames roundId={round.id} players={mapPlayersForSideGames(round.players, sideGamesVenmoByUserId)} storage={sideGamesStorage} initialHole={holeIdx + 1} />
+        <SideGames
+          roundId={round.id}
+          players={mapPlayersForSideGames(round.players, sideGamesVenmoByUserId)}
+          storage={sideGamesStorage}
+          initialHole={holeIdx + 1}
+          yardage={round.yardage}
+          strokeIndex={round.strokeIndex}
+          teeName={round.cfg.teeName}
+        />
       </div>
     );
   }
