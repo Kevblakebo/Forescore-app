@@ -4495,6 +4495,11 @@ export default function GolfScorecard() {
           eagles,
           holesInOne,
           mulligans,
+          // A mulligan forgives a stroke from the final score, so
+          // undoing its benefit means adding that stroke back, not
+          // subtracting it - computed here directly, correctly, rather
+          // than left for the model to work out on its own.
+          strokesWithoutMulligans: mulligans > 0 ? computedForFinish.playerTotalScore[i] + mulligans : null,
           isWinner: winners.some((w) => w.idx === i),
         };
       });
