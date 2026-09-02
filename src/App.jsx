@@ -1455,6 +1455,10 @@ export default function GolfScorecard() {
   const [gpsStatus, setGpsStatus] = useState("idle"); // "idle" | "locating" | "active" | "denied" | "unsupported" | "error" | "skipped"
   const [gpsExplained, setGpsExplained] = useState(false);
   const [gpsExplainerOpen, setGpsExplainerOpen] = useState(false);
+  const [holeImageOpen, setHoleImageOpen] = useState(false);
+  const [holeImage, setHoleImage] = useState(null);
+  const [holeImageLoading, setHoleImageLoading] = useState(false);
+  const [holeImageErr, setHoleImageErr] = useState("");
   const gpsWatchIdRef = useRef(null);
 
   function startGPSWatch() {
@@ -4835,6 +4839,36 @@ export default function GolfScorecard() {
     );
   }
 
+  // Session-gated the same way distance-to-green already is - averages
+  // whatever green points are available (front/center/back, or fewer)
+  // into one center coordinate, since which specific point is which
+  // doesn't matter for framing a satellite image, only for the
+  // distance-to-green feature's own front/center/back labeling.
+  async function fetchHoleImage() {
+    if (!session) return;
+    const greenPoints = round && round.holeGPS && round.holeGPS[holeIdx];
+    if (!greenPoints || greenPoints.length === 0) {
+      setHoleImageErr("No GPS data available for this hole.");
+      return;
+    }
+    setHoleImageLoading(true);
+    setHoleImageErr("");
+    try {
+      const lat = greenPoints.reduce((sum, p) => sum + p.lat, 0) / greenPoints.length;
+      const lng = greenPoints.reduce((sum, p) => sum + p.lng, 0) / greenPoints.length;
+      const res = await fetch(`/api/hole-image?lat=${lat}&lng=${lng}`);
+      const data = await res.json().catch(() => null);
+      if (res.ok && data && data.image) {
+        setHoleImage(data.image);
+      } else {
+        setHoleImageErr((data && data.error) || "Couldn't load the hole image right now.");
+      }
+    } catch (e) {
+      setHoleImageErr("Couldn't load the hole image right now.");
+    }
+    setHoleImageLoading(false);
+  }
+
   // Filters the raw coordinate dump down to just the green points (poi 1 -
   // golfapi.io also returns tee markers and hazards we don't need for
   // this), and converts from their 1-indexed holes to this app's existing
@@ -6507,6 +6541,9 @@ export default function GolfScorecard() {
 
   useEffect(() => {
     setScoringAvatarPickerFor(null);
+    setHoleImageOpen(false);
+    setHoleImage(null);
+    setHoleImageErr("");
   }, [holeIdx]);
 
   useEffect(() => {
@@ -11902,6 +11939,37 @@ function computeRoundScoring(round) {
                     </div>
                   );
                 })()}
+                {session && round.holeGPS && round.holeGPS[holeIdx] && round.holeGPS[holeIdx].length > 0 && (
+                  <div style={{ marginTop: 8 }}>
+                    {!holeImageOpen ? (
+                      <button
+                        className="gsc-link"
+                        style={{ fontSize: 12 }}
+                        onClick={() => {
+                          setHoleImageOpen(true);
+                          if (!holeImage) fetchHoleImage();
+                        }}
+                      >
+                        {"\u{1F6F0}\u{FE0F}"} View hole from above
+                      </button>
+                    ) : (
+                      <div>
+                        {holeImageLoading && <div style={{ fontSize: 12, color: "#8a8a80" }}>Loading...</div>}
+                        {holeImageErr && <div style={{ fontSize: 12, color: "#A42E2D" }}>{holeImageErr}</div>}
+                        {holeImage && (
+                          <img
+                            src={holeImage}
+                            alt={`Satellite view of hole ${holeIdx + 1}`}
+                            style={{ width: "100%", maxWidth: 300, borderRadius: 10, marginTop: 4, display: "block" }}
+                          />
+                        )}
+                        <button className="gsc-link" style={{ fontSize: 11, marginTop: 4 }} onClick={() => setHoleImageOpen(false)}>
+                          Hide
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
                 {round.game === "seabluffe" && (
                   <div style={{ fontSize: 12, color: "#B08D57", fontWeight: 700, marginTop: 4 }}>
                     {round.players[teamsThisHole[0][0]].name}+{round.players[teamsThisHole[0][1]].name} vs {round.players[teamsThisHole[1][0]].name}+{round.players[teamsThisHole[1][1]].name}
