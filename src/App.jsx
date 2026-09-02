@@ -7196,7 +7196,7 @@ function computeRoundScoring(round) {
                 : "What game do you want to play today?"
             ) : (
               <>
-                RipScore is the app built for every group you play with.
+                RipScore is the golf app built for every group you play with.
                 <div style={{ margin: "8px 0 0" }}>
                   <div style={{ marginBottom: 4 }}>{"\u{1F465}"} Set Up Your Group Once</div>
                   <div style={{ marginBottom: 4 }}>{"\u26F3"} 15 Game Formats + Side Games, for Every Kind of Day</div>
