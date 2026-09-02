@@ -73,6 +73,7 @@ Rules:
 - 2-4 sentences, plain text, no markdown
 - Playful and roasting is great - genuinely funny, a little savage even - but never mean, never about anything outside the round itself
 - Only use the facts given below. Never invent a stat, shot, or moment that isn't in the data
+- Never mention greens in regulation, fairways in regulation, GIR, or FIR - that data isn't tracked or provided, even though they're common golf terms you might otherwise reach for
 - Mention the winner, but don't just list scores - find the actual story (a comeback, a collapse, a photo finish, someone's mulligan habit)
 - Vary your structure and jokes - don't fall into the same template every time
 
