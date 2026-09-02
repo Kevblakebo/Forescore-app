@@ -97,7 +97,10 @@ Write the recap.`;
       }),
     });
     if (!upstream.ok) {
-      return res.status(upstream.status).json({ error: `AI recap service returned ${upstream.status}` });
+      const errBody = await upstream.json().catch(() => null);
+      const detail = errBody && errBody.error && errBody.error.message ? errBody.error.message : null;
+      console.error("Anthropic API error:", upstream.status, detail || "(no detail)");
+      return res.status(upstream.status).json({ error: detail || `AI recap service returned ${upstream.status}` });
     }
     const data = await upstream.json();
     recapText = (data.content || []).map((block) => block.text || "").join("").trim();
