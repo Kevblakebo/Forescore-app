@@ -1404,6 +1404,8 @@ export default function GolfScorecard() {
   const [wheelRotation, setWheelRotation] = useState(0);
   const [wheelResult, setWheelResult] = useState(null);
   const [earnedMoments, setEarnedMoments] = useState([]);
+  const [aiRecap, setAiRecap] = useState(null);
+  const [aiRecapLoading, setAiRecapLoading] = useState(false);
   const [headToHeadModalData, setHeadToHeadModalData] = useState(null);
   const [headToHeadModalLoading, setHeadToHeadModalLoading] = useState(false);
   const [statsLoading, setStatsLoading] = useState(false);
@@ -4453,6 +4455,61 @@ export default function GolfScorecard() {
     setDeleteTournamentConfirm(null);
   }
 
+  // Gathers what actually happened for every player in the round (not
+  // just the logged-in person, unlike detectMoments which is scoped to
+  // personal firsts) and asks the AI recap endpoint for a short, funny
+  // summary. Best-effort and non-blocking - called alongside
+  // detectMoments right after a round finishes, never holds up
+  // navigating to the celebration screen, and simply doesn't populate
+  // anything if it fails for any reason.
+  async function generateAiRecap(finishedRound, computedForFinish, winners) {
+    if (!computedForFinish) return;
+    setAiRecapLoading(true);
+    try {
+      const g = GAMES[finishedRound.game];
+      const players = finishedRound.players.map((p, i) => {
+        let birdies = 0, eagles = 0, holesInOne = 0;
+        for (let h = 0; h < 18; h++) {
+          const entry = finishedRound.scores && finishedRound.scores[h] ? finishedRound.scores[h][i] : null;
+          const parH = finishedRound.par ? finishedRound.par[h] : null;
+          if (entry && entry.strokes != null && entry.strokes !== "") {
+            const sv = Number(entry.strokes);
+            if (sv === 1) holesInOne++;
+            else if (parH != null) {
+              const diff = sv - parH;
+              if (diff <= -2) eagles++;
+              else if (diff === -1) birdies++;
+            }
+          }
+        }
+        const mulligans = (computedForFinish.mulligansUsed[i] || []).reduce((a, b) => a + b, 0);
+        return {
+          name: p.name,
+          strokes: computedForFinish.playerTotalScore[i],
+          putts: g.hasPutts && finishedRound.cfg.trackPutts !== false ? computedForFinish.playerTotalPutts[i] : null,
+          birdies,
+          eagles,
+          holesInOne,
+          mulligans,
+          isWinner: winners.some((w) => w.idx === i),
+        };
+      });
+      const res = await fetch("/api/ai-recap", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ game: g.name, players, winners: players.filter((p) => p.isWinner).map((p) => p.name) }),
+      });
+      const data = await res.json().catch(() => null);
+      if (res.ok && data && data.recap) {
+        setAiRecap(data.recap);
+      }
+    } catch (e) {
+      // Silently ignore - this is a bonus, never worth surfacing an
+      // error over or holding anything else up for.
+    }
+    setAiRecapLoading(false);
+  }
+
   async function archiveAndExitRound(r) {
     // Move the round into a personal "finished" archive BEFORE clearing the
     // resume pointer, so exiting never destroys data. Both writes have to
@@ -4530,6 +4587,7 @@ export default function GolfScorecard() {
       createGroupFromRound(finishedRound, finishedRound.createGroupName || finishedRound.name);
     }
     detectMoments(finishedRound).then(setEarnedMoments);
+    generateAiRecap(finishedRound, computedForFinish, determineWinners(finishedRound, computedForFinish));
     if (supabase) {
       // Best-effort, same as everything else here - if this fails (e.g.
       // no connection at this exact moment), the hourly scheduled run
@@ -4552,6 +4610,8 @@ export default function GolfScorecard() {
   function finishCelebrationAndGoHome() {
     setRound(null);
     setEarnedMoments([]);
+    setAiRecap(null);
+    setAiRecapLoading(false);
     setScreen("home");
   }
 
@@ -11401,6 +11461,17 @@ function computeRoundScoring(round) {
                   </div>
                 );
               })}
+            </div>
+          )}
+
+          {(aiRecapLoading || aiRecap) && (
+            <div className="gsc-card">
+              <div className="gsc-label" style={{ marginBottom: 8 }}>{"\u{1F3AC}"} The Recap</div>
+              {aiRecap ? (
+                <div style={{ fontSize: 14, color: "#4b4b45", lineHeight: 1.6 }}>{aiRecap}</div>
+              ) : (
+                <div style={{ fontSize: 13, color: "#8a8a80", fontStyle: "italic" }}>Writing the recap...</div>
+              )}
             </div>
           )}
 
