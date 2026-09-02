@@ -966,6 +966,61 @@ function playBirdieSound() {
   }
 }
 
+function playEagleSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const now = ctx.currentTime;
+    // A single, longer, piercing descending screech - the classic raptor
+    // "keeeeer" cry, opposite in shape and character from the birdie's
+    // quick upward tweet: one sustained sweep from high to low, with a
+    // subtle, fast wobble layered on top of the pitch for a rougher,
+    // slightly raspy edge instead of a clean, pure tone.
+    const start = now;
+    const duration = 0.55;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sawtooth";
+    osc.frequency.setValueAtTime(3800, start);
+    osc.frequency.exponentialRampToValueAtTime(1700, start + duration);
+
+    // Fast vibrato on top of the main descending sweep, for the raspy,
+    // slightly warbling texture real raptor calls have rather than a
+    // clean, synthetic-sounding slide.
+    const vibrato = ctx.createOscillator();
+    const vibratoGain = ctx.createGain();
+    vibrato.frequency.setValueAtTime(38, start);
+    vibratoGain.gain.setValueAtTime(90, start);
+    vibrato.connect(vibratoGain);
+    vibratoGain.connect(osc.frequency);
+
+    // A gentle low-pass filter that also sweeps down, keeping the tail
+    // end of the cry from sounding too harsh/buzzy as the sawtooth wave
+    // continues into lower, naturally brighter-sounding territory.
+    const filter = ctx.createBiquadFilter();
+    filter.type = "lowpass";
+    filter.frequency.setValueAtTime(5000, start);
+    filter.frequency.exponentialRampToValueAtTime(2200, start + duration);
+    filter.Q.value = 1;
+
+    gain.gain.setValueAtTime(0.0001, start);
+    gain.gain.linearRampToValueAtTime(0.22, start + 0.04);
+    gain.gain.setValueAtTime(0.22, start + duration - 0.18);
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(ctx.destination);
+
+    vibrato.start(start);
+    osc.start(start);
+    vibrato.stop(start + duration + 0.05);
+    osc.stop(start + duration + 0.05);
+    setTimeout(() => ctx.close(), Math.round((duration + 0.6) * 1000));
+  } catch (e) {
+    // Silently ignore - sound is a nice-to-have, never worth surfacing an error over.
+  }
+}
+
 function playFireworksSound() {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -6186,6 +6241,8 @@ export default function GolfScorecard() {
       accoladeTimerRef.current = setTimeout(() => setAccolade(null), next.big ? 3200 : 2000);
       if (next.text === "BIRDIE!") {
         playBirdieSound();
+      } else if (next.text === "EAGLE!") {
+        playEagleSound();
       } else if (next.text === "HOLE IN ONE!!!") {
         playFireworksSound();
         setInPlayFireworks(true);
