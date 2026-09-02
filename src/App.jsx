@@ -6190,6 +6190,7 @@ export default function GolfScorecard() {
       if (diff <= -2) return { emoji: "\u{1F985}", text: "EAGLE!", big: true };
       if (diff === -1) return { emoji: "\u{1F426}", text: "BIRDIE!", big: false };
       if (diff === 0) return { emoji: "\u{1F44D}", text: "Nice par!", big: false };
+      if (diff >= parH) return { emoji: "\u{1F4AA}", text: "Keep Grinding!", big: false };
       return null;
     }
     if (field === "putts") {
