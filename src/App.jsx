@@ -11996,33 +11996,6 @@ function computeRoundScoring(round) {
               <button className="gsc-btn gsc-btn-outline" disabled={holeIdx === 17} onClick={() => setHoleIdx((h) => h + 1)}>Next</button>
             </div>
 
-            {round.finished && (aiRecapLoading || aiRecap || round.aiRecap) && (
-              <div className="gsc-card">
-                <div className="gsc-label" style={{ marginBottom: 8 }}>{"\u{1F3AC}"} The Recap</div>
-                {aiRecapLoading ? (
-                  <div style={{ fontSize: 13, color: "#8a8a80", fontStyle: "italic" }}>Writing the recap...</div>
-                ) : (
-                  <div style={{ fontSize: 14, color: "#4b4b45", lineHeight: 1.6 }}>{aiRecap || round.aiRecap}</div>
-                )}
-              </div>
-            )}
-            {round.finished && !aiRecapLoading && !aiRecap && !round.aiRecap && (
-              <div className="gsc-card">
-                <div className="gsc-label" style={{ marginBottom: 8 }}>{"\u{1F3AC}"} The Recap</div>
-                <div style={{ fontSize: 13, color: "#8a8a80", marginBottom: 8 }}>This round doesn't have one yet.</div>
-                <button
-                  className="gsc-link"
-                  style={{ fontSize: 12 }}
-                  onClick={() => {
-                    const computedForRecap = computeRoundScoring(round);
-                    generateAiRecap(round, computedForRecap, determineWinners(round, computedForRecap));
-                  }}
-                >
-                  Generate recap
-                </button>
-              </div>
-            )}
-
             {!canEditThisRound && (
               <div style={{ background: "#F8F1E4", border: "1px solid #B08D57", borderRadius: 10, padding: "10px 12px", marginBottom: 10, fontSize: 12, color: "#8a6a2f", textAlign: "center" }}>
                 {"\u{1F441}\u{FE0F}"} View only - only the tournament organizer or this foursome's captain can enter or change scores.
