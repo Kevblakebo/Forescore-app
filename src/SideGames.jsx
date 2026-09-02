@@ -494,7 +494,7 @@ export default function SideGames({ roundId = "demo-round", players = DEFAULT_PL
             </div>
           </div>
 
-          <button className="primary wide" style={{ background: "#A42E2D" }} onClick={() => saveHole(hole, draft)}>
+          <button className="primary wide" style={{ background: "#A42E2D", color: "#fff" }} onClick={() => saveHole(hole, draft)}>
             Save side games
           </button>
         </>
@@ -593,7 +593,7 @@ const CSS = `
 .empty{background:var(--card);border-radius:18px;padding:34px 22px;text-align:center;box-shadow:0 1px 2px rgba(28,61,43,.06)}
 .empty p{margin:0 0 18px;color:var(--mute);font-size:15px}
 
-.primary{background:var(--green6);color:#fff;padding:14px 22px;border-radius:13px;font-size:15.5px;font-weight:600}
+button.primary{background:var(--green6);color:#fff;padding:14px 22px;border-radius:13px;font-size:15.5px;font-weight:600}
 .primary.wide{display:block;width:100%;margin-top:14px}
 
 .stack{display:flex;flex-direction:column;gap:12px}
