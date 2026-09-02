@@ -99,8 +99,6 @@ const LEADERBOARD_CATEGORIES = {
   pars: { label: "Pars", lowerIsBetter: false, valueOf: (r) => r.pars, format: (v) => String(v) },
   eagles: { label: "Eagles", lowerIsBetter: false, valueOf: (r) => r.eagles, format: (v) => String(v) },
   holes_in_one: { label: "Holes-in-One", lowerIsBetter: false, valueOf: (r) => r.holes_in_one, format: (v) => String(v) },
-  gir_pct: { label: "Green in Reg", lowerIsBetter: false, valueOf: (r) => (r.gir_holes > 0 ? (r.gir_hits / r.gir_holes) * 100 : null), format: (v) => `${Math.round(v)}%` },
-  fir_pct: { label: "Fairways Hit", lowerIsBetter: false, valueOf: (r) => (r.fir_holes > 0 ? (r.fir_hits / r.fir_holes) * 100 : null), format: (v) => `${Math.round(v)}%` },
 };
 
 const GAMES = {
@@ -3629,7 +3627,10 @@ export default function GolfScorecard() {
           <div className="gsc-modal-title">Game Details</div>
           <div style={{ fontSize: 13, color: "#4b4b45", lineHeight: 1.9 }}>
             <div><b>Max score over par per hole:</b> {cfg.doubleParMax ? "Double par" : cfg.maxOver != null ? `+${cfg.maxOver}` : "No limit set"}</div>
-            <div><b>Max putts per hole:</b> {cfg.maxPutts != null ? cfg.maxPutts : "No limit set"}</div>
+            {GAMES[round.game] && GAMES[round.game].hasPutts && (
+              <div><b>Track putts:</b> {cfg.trackPutts !== false ? "Yes" : "No"}</div>
+            )}
+            <div><b>Max putts per hole:</b> {cfg.trackPutts === false ? "N/A (putts not tracked)" : cfg.maxPutts != null ? cfg.maxPutts : "No limit set"}</div>
             <div><b>Mulligans per player:</b> {cfg.mulliganSegment ? cfg.mulliganSegment : "None set (tracked freely)"}</div>
             <div><b>Earn a bonus mulligan:</b> {cfg.mulliganChallenge ? cfg.mulliganChallenge : "Not set"}</div>
             <div><b>Prize / stakes:</b> {cfg.prize ? cfg.prize : "Not set"}</div>
@@ -3638,8 +3639,6 @@ export default function GolfScorecard() {
             {["dstreet", "ponto", "teamputts"].includes(round.game) && (
               <div><b>Ties carry over to next hole:</b> {cfg.tiesCarryOver ? "Yes" : "No"}</div>
             )}
-            <div><b>Track Greens in Regulation (GIR):</b> {cfg.trackGir ? "Yes" : "No"}</div>
-            <div><b>Track Fairways in Regulation (FIR):</b> {cfg.trackFir ? "Yes" : "No"}</div>
           </div>
           <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 14 }} onClick={() => setGameDetailsOpen(false)}>
             Close
@@ -6686,7 +6685,7 @@ function computeRoundScoring(round) {
       const sums = teamRes.map((t) => t.scoreSum);
       awardLowest(sums, "score").forEach((v, i) => (ptsAwarded[i].score = v));
     }
-    if (!g.tracksPontoBangoBongo && !g.tracksWolf && !g.tracksVegas && !g.tracksStableford && g.hasPutts && !g.totalScoring) {
+    if (!g.tracksPontoBangoBongo && !g.tracksWolf && !g.tracksVegas && !g.tracksStableford && g.hasPutts && !g.totalScoring && round.cfg.trackPutts !== false) {
       const sums = teamRes.map((t) => t.puttSum);
       awardLowest(sums, "putt").forEach((v, i) => (ptsAwarded[i].putt = v));
     }
@@ -6697,7 +6696,7 @@ function computeRoundScoring(round) {
       if (teamPointsByTeamIdx) teamPointsByTeamIdx[ti] += pts;
     });
 
-    holeResults.push({ teamsThisHole, teamRes, ptsAwarded, complete: teamRes.every((t) => (!g.hasScore || t.scoreSum != null) && (!g.hasPutts || t.puttSum != null)) });
+    holeResults.push({ teamsThisHole, teamRes, ptsAwarded, complete: teamRes.every((t) => (!g.hasScore || t.scoreSum != null) && (!g.hasPutts || round.cfg.trackPutts === false || t.puttSum != null)) });
   }
 
   // mulligan usage per player per segment
@@ -9502,7 +9501,31 @@ function computeRoundScoring(round) {
                   </label>
                 </div>
               )}
-              {g.hasPutts && (
+              {g.hasPutts && !["individualputts", "teamputts"].includes(wizardAnswers.resolvedGameKey) && (
+                <div className="gsc-field" style={{ marginTop: 10 }}>
+                  <div className="gsc-label">Track putts?</div>
+                  <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 6 }}>
+                    This game is more fun with putting included - turn off only if your group would rather skip it.
+                  </div>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button
+                      className="gsc-btn"
+                      style={{ flex: 1, background: activeCfg.trackPutts !== false ? "#A42E2D" : "transparent", color: activeCfg.trackPutts !== false ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
+                      onClick={() => setActiveCfg({ ...activeCfg, trackPutts: true })}
+                    >
+                      Yes
+                    </button>
+                    <button
+                      className="gsc-btn"
+                      style={{ flex: 1, background: activeCfg.trackPutts === false ? "#A42E2D" : "transparent", color: activeCfg.trackPutts === false ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
+                      onClick={() => setActiveCfg({ ...activeCfg, trackPutts: false })}
+                    >
+                      No
+                    </button>
+                  </div>
+                </div>
+              )}
+              {g.hasPutts && activeCfg.trackPutts !== false && (
                 <div className="gsc-field" style={{ marginTop: 10 }}>
                   <div className="gsc-label">Max putts per hole</div>
                   <input className="gsc-input" type="number" min="0" placeholder="No max" value={activeCfg.maxPutts} onChange={(e) => setActiveCfg({ ...activeCfg, maxPutts: cleanNumericText(e.target.value) })} />
@@ -9572,50 +9595,6 @@ function computeRoundScoring(round) {
                   </div>
                 </div>
               )}
-              <div className="gsc-field" style={{ marginTop: 10 }}>
-                <div className="gsc-label">Track Greens in Regulation (GIR)?</div>
-                <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 6 }}>
-                  Adds a GIR checkbox for each player, each hole, and counts toward leaderboard stats.
-                </div>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <button
-                    className="gsc-btn"
-                    style={{ flex: 1, background: !activeCfg.trackGir ? "#A42E2D" : "transparent", color: !activeCfg.trackGir ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
-                    onClick={() => setActiveCfg({ ...activeCfg, trackGir: false })}
-                  >
-                    No
-                  </button>
-                  <button
-                    className="gsc-btn"
-                    style={{ flex: 1, background: activeCfg.trackGir ? "#A42E2D" : "transparent", color: activeCfg.trackGir ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
-                    onClick={() => setActiveCfg({ ...activeCfg, trackGir: true })}
-                  >
-                    Yes
-                  </button>
-                </div>
-              </div>
-              <div className="gsc-field" style={{ marginTop: 10 }}>
-                <div className="gsc-label">Track Fairways in Regulation (FIR)?</div>
-                <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 6 }}>
-                  Adds a FIR checkbox for each player on par-4/par-5 holes, and counts toward leaderboard stats.
-                </div>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <button
-                    className="gsc-btn"
-                    style={{ flex: 1, background: !activeCfg.trackFir ? "#A42E2D" : "transparent", color: !activeCfg.trackFir ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
-                    onClick={() => setActiveCfg({ ...activeCfg, trackFir: false })}
-                  >
-                    No
-                  </button>
-                  <button
-                    className="gsc-btn"
-                    style={{ flex: 1, background: activeCfg.trackFir ? "#A42E2D" : "transparent", color: activeCfg.trackFir ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
-                    onClick={() => setActiveCfg({ ...activeCfg, trackFir: true })}
-                  >
-                    Yes
-                  </button>
-                </div>
-              </div>
               {g.tracksDrives && (
                 <div className="gsc-field" style={{ marginTop: 10 }}>
                   <div className="gsc-label">Minimum drives per player</div>
@@ -10147,6 +10126,31 @@ function computeRoundScoring(round) {
                 </label>
               </div>
             )}
+            {g.hasPutts && !["individualputts", "teamputts"].includes(gameKey) && (
+              <div className="gsc-field">
+                <div className="gsc-label">Track putts?</div>
+                <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 6 }}>
+                  This game is more fun with putting included - turn off only if your group would rather skip it.
+                </div>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button
+                    className="gsc-btn"
+                    style={{ flex: 1, background: cfg.trackPutts !== false ? "#A42E2D" : "transparent", color: cfg.trackPutts !== false ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
+                    onClick={() => setCfg({ ...cfg, trackPutts: true })}
+                  >
+                    Yes
+                  </button>
+                  <button
+                    className="gsc-btn"
+                    style={{ flex: 1, background: cfg.trackPutts === false ? "#A42E2D" : "transparent", color: cfg.trackPutts === false ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
+                    onClick={() => setCfg({ ...cfg, trackPutts: false })}
+                  >
+                    No
+                  </button>
+                </div>
+              </div>
+            )}
+            {cfg.trackPutts !== false && (
             <div className="gsc-field">
               <div className="gsc-label">Max putts per hole</div>
               <input
@@ -10163,6 +10167,7 @@ function computeRoundScoring(round) {
                 }}
               />
             </div>
+            )}
             {g.rotates !== undefined && g.hasScore && (
               <div className="gsc-field">
                 <div className="gsc-label">{gameKey === "seabluffe" ? `Mulligans per player, per ${mulliganWindow(gameKey)} holes` : "Mulligans per player"}</div>
@@ -10251,50 +10256,6 @@ function computeRoundScoring(round) {
                 </div>
               </div>
             )}
-            <div className="gsc-field">
-              <div className="gsc-label">Track Greens in Regulation (GIR)?</div>
-              <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 6 }}>
-                Adds a GIR checkbox for each player, each hole, and counts toward leaderboard stats.
-              </div>
-              <div style={{ display: "flex", gap: 8 }}>
-                <button
-                  className="gsc-btn"
-                  style={{ flex: 1, background: !cfg.trackGir ? "#A42E2D" : "transparent", color: !cfg.trackGir ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
-                  onClick={() => setCfg({ ...cfg, trackGir: false })}
-                >
-                  No
-                </button>
-                <button
-                  className="gsc-btn"
-                  style={{ flex: 1, background: cfg.trackGir ? "#A42E2D" : "transparent", color: cfg.trackGir ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
-                  onClick={() => setCfg({ ...cfg, trackGir: true })}
-                >
-                  Yes
-                </button>
-              </div>
-            </div>
-            <div className="gsc-field">
-              <div className="gsc-label">Track Fairways in Regulation (FIR)?</div>
-              <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 6 }}>
-                Adds a FIR checkbox for each player on par-4/par-5 holes, and counts toward leaderboard stats.
-              </div>
-              <div style={{ display: "flex", gap: 8 }}>
-                <button
-                  className="gsc-btn"
-                  style={{ flex: 1, background: !cfg.trackFir ? "#A42E2D" : "transparent", color: !cfg.trackFir ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
-                  onClick={() => setCfg({ ...cfg, trackFir: false })}
-                >
-                  No
-                </button>
-                <button
-                  className="gsc-btn"
-                  style={{ flex: 1, background: cfg.trackFir ? "#A42E2D" : "transparent", color: cfg.trackFir ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
-                  onClick={() => setCfg({ ...cfg, trackFir: true })}
-                >
-                  Yes
-                </button>
-              </div>
-            </div>
           </div>
           )}
 
@@ -10753,6 +10714,30 @@ function computeRoundScoring(round) {
               </div>
             )}
             {tg.hasPutts && (
+              <div className="gsc-field">
+                <div className="gsc-label">Track putts?</div>
+                <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 6 }}>
+                  This game is more fun with putting included - turn off only if your group would rather skip it.
+                </div>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button
+                    className="gsc-btn"
+                    style={{ flex: 1, background: tournamentCfg.trackPutts !== false ? "#A42E2D" : "transparent", color: tournamentCfg.trackPutts !== false ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
+                    onClick={() => setTournamentCfg({ ...tournamentCfg, trackPutts: true })}
+                  >
+                    Yes
+                  </button>
+                  <button
+                    className="gsc-btn"
+                    style={{ flex: 1, background: tournamentCfg.trackPutts === false ? "#A42E2D" : "transparent", color: tournamentCfg.trackPutts === false ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
+                    onClick={() => setTournamentCfg({ ...tournamentCfg, trackPutts: false })}
+                  >
+                    No
+                  </button>
+                </div>
+              </div>
+            )}
+            {tg.hasPutts && tournamentCfg.trackPutts !== false && (
               <div className="gsc-field">
                 <div className="gsc-label">Max putts per hole</div>
                 <input
@@ -12004,7 +11989,7 @@ function computeRoundScoring(round) {
                         })()}
                       </div>
                     )}
-                    {g.hasPutts && (
+                    {g.hasPutts && round.cfg.trackPutts !== false && (
                       <div>
                         <div style={{ fontSize: 11, color: "#6b6b63", marginBottom: 3, textAlign: "center" }}>PUTTS</div>
                         <div className="gsc-stepper">
@@ -12043,22 +12028,6 @@ function computeRoundScoring(round) {
                         </div>
                       );
                     })()}
-                    {(round.cfg.trackGir || (round.cfg.trackFir && (parH === 4 || parH === 5))) && (
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 10, marginTop: 6 }}>
-                        {round.cfg.trackGir && (
-                          <label style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "#6b6b63", whiteSpace: "nowrap" }}>
-                            <input type="checkbox" checked={!!e.gir} onChange={(ev) => updateHoleEntry(i, "gir", ev.target.checked)} />
-                            GIR
-                          </label>
-                        )}
-                        {round.cfg.trackFir && (parH === 4 || parH === 5) && (
-                          <label style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "#6b6b63", whiteSpace: "nowrap" }}>
-                            <input type="checkbox" checked={!!e.fir} onChange={(ev) => updateHoleEntry(i, "fir", ev.target.checked)} />
-                            FIR
-                          </label>
-                        )}
-                      </div>
-                    )}
                   </div>
                 </div>
               );
@@ -12173,7 +12142,7 @@ function computeRoundScoring(round) {
                   <div key={ti} style={{ fontSize: 12, marginTop: 4 }}>
                     <b>{label}</b>{" "}
                     {g.hasScore && <span>{g.oneTeamScore ? "team strokes" : g.bestBall ? "best strokes" : g.singleTeam ? "combined strokes" : "score"} {r.scoreSum ?? "-"} </span>}
-                    {g.hasPutts && <span>{g.bestBall ? "best putts" : g.singleTeam ? "combined putts" : "putts"} {r.puttSum ?? "-"} </span>}
+                    {g.hasPutts && round.cfg.trackPutts !== false && <span>{g.bestBall ? "best putts" : g.singleTeam ? "combined putts" : "putts"} {r.puttSum ?? "-"} </span>}
                     {(pts.score > 0 || pts.putt > 0) && <span className="gsc-chip gsc-lead">+{pts.score + pts.putt} pt</span>}
                   </div>
                 );
@@ -12198,7 +12167,7 @@ function computeRoundScoring(round) {
               <div className="gsc-label" style={{ marginBottom: 8 }}>Foursome {g.oneTeamScore ? "Team" : g.bestBall ? "Best-Ball" : "Combined"} Totals</div>
               <div style={{ fontSize: 13, color: "#4b4b45", lineHeight: 1.6 }}>
                 {g.oneTeamScore ? "Team" : g.bestBall ? "Best-ball" : "Combined"} strokes: <b>{foursomeTotals.totalStrokes}</b> (thru {foursomeTotals.strokeHoles} holes)
-                {g.hasPutts && (
+                {g.hasPutts && round.cfg.trackPutts !== false && (
                   <>
                     <br />
                     {g.bestBall ? "Best-ball" : "Combined"} putts: <b>{foursomeTotals.totalPutts}</b> (thru {foursomeTotals.puttHoles} holes)
@@ -12385,8 +12354,8 @@ function computeRoundScoring(round) {
                           return (
                             <td key={i}>
                               {g.hasScore ? (e.strokes === "" || e.strokes == null ? "-" : e.strokes) : ""}
-                              {g.hasScore && g.hasPutts ? "/" : ""}
-                              {g.hasPutts ? (e.putts === "" || e.putts == null ? "-" : e.putts) : ""}
+                              {g.hasScore && g.hasPutts && round.cfg.trackPutts !== false ? "/" : ""}
+                              {g.hasPutts && round.cfg.trackPutts !== false ? (e.putts === "" || e.putts == null ? "-" : e.putts) : ""}
                             </td>
                           );
                         })}
@@ -12399,8 +12368,8 @@ function computeRoundScoring(round) {
                             return (
                               <td key={i}>
                                 {g.hasScore ? (t.sCount ? t.sSum : "-") : ""}
-                                {g.hasScore && g.hasPutts ? "/" : ""}
-                                {g.hasPutts ? (t.pCount ? t.pSum : "-") : ""}
+                                {g.hasScore && g.hasPutts && round.cfg.trackPutts !== false ? "/" : ""}
+                                {g.hasPutts && round.cfg.trackPutts !== false ? (t.pCount ? t.pSum : "-") : ""}
                               </td>
                             );
                           })}
@@ -12414,8 +12383,8 @@ function computeRoundScoring(round) {
                             return (
                               <td key={i}>
                                 {g.hasScore ? (t.sCount ? t.sSum : "-") : ""}
-                                {g.hasScore && g.hasPutts ? "/" : ""}
-                                {g.hasPutts ? (t.pCount ? t.pSum : "-") : ""}
+                                {g.hasScore && g.hasPutts && round.cfg.trackPutts !== false ? "/" : ""}
+                                {g.hasPutts && round.cfg.trackPutts !== false ? (t.pCount ? t.pSum : "-") : ""}
                               </td>
                             );
                           })}
@@ -12435,8 +12404,8 @@ function computeRoundScoring(round) {
                       return (
                         <td key={i}>
                           {g.hasScore ? (t.sCount ? t.sSum : "-") : ""}
-                          {g.hasScore && g.hasPutts ? "/" : ""}
-                          {g.hasPutts ? (t.pCount ? t.pSum : "-") : ""}
+                          {g.hasScore && g.hasPutts && round.cfg.trackPutts !== false ? "/" : ""}
+                          {g.hasPutts && round.cfg.trackPutts !== false ? (t.pCount ? t.pSum : "-") : ""}
                         </td>
                       );
                     })}
