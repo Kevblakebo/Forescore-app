@@ -7295,7 +7295,7 @@ function computeRoundScoring(round) {
                 <div style={{ fontSize: 11, color: "#8a8a80", textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 700, marginBottom: 6 }}>Join Existing Group</div>
                 <div className="gsc-row">
                   <input className="gsc-input gsc-mono" placeholder="GROUP CODE" value={joinGroupCode} onChange={(e) => setJoinGroupCode(e.target.value.toUpperCase())} />
-                  <button className="gsc-btn gsc-btn-outline" style={{ flex: "0 0 auto" }} disabled={joinGroupBusy || !joinGroupCode.trim()} onClick={joinGroup}>
+                  <button className="gsc-btn gsc-btn-primary" style={{ flex: "0 0 auto" }} disabled={joinGroupBusy || !joinGroupCode.trim()} onClick={joinGroup}>
                     {joinGroupBusy ? "Joining..." : "Join"}
                   </button>
                 </div>
