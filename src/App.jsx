@@ -11336,7 +11336,7 @@ function computeRoundScoring(round) {
                         <span style={{ fontSize: 17 }}>{p.score}str/{p.putts}put</span>
                       ) : (
                         <>
-                          {p.points} pts <span style={{ fontWeight: 700, color: "#6b6b63" }}>({p.score}str/{p.putts}putt/{formatRelPar(p.relPar)})</span>
+                          {p.points} pts <span style={{ fontWeight: 700, color: "#6b6b63" }}>({p.score}str{g.hasPutts && round.cfg.trackPutts !== false ? `/${p.putts}putt` : ""}/{formatRelPar(p.relPar)})</span>
                         </>
                       )}
                     </div>
@@ -12286,7 +12286,7 @@ function computeRoundScoring(round) {
                   {g.rankByTeamTotal ? (
                     <div style={{ fontWeight: 700, fontSize: 17, whiteSpace: "nowrap" }}>
                       {p.score}str{round.cfg.netScoring && <> (net {p.netScore})</>}
-                      <div style={{ fontWeight: 700, fontSize: 13, color: "#6b6b63" }}>({p.individualScore}str/{p.individualPutts}putt/{formatRelPar(p.relPar)})</div>
+                      <div style={{ fontWeight: 700, fontSize: 13, color: "#6b6b63" }}>({p.individualScore}str{g.hasPutts && round.cfg.trackPutts !== false ? `/${p.individualPutts}putt` : ""}/{formatRelPar(p.relPar)})</div>
                     </div>
                   ) : g.rankByPutts ? (
                     <div style={{ fontWeight: 700, fontSize: 17, whiteSpace: "nowrap" }}>
@@ -12298,7 +12298,7 @@ function computeRoundScoring(round) {
                     </div>
                   ) : (
                     <div style={{ fontWeight: 700, color: "#6b6b63", whiteSpace: "nowrap" }}>
-                      ({p.score}str{round.cfg.netScoring && <> / net {p.netScore}</>}/{p.putts}putt/{formatRelPar(p.relPar)})
+                      ({p.score}str{round.cfg.netScoring && <> / net {p.netScore}</>}{g.hasPutts && round.cfg.trackPutts !== false ? `/${p.putts}putt` : ""}/{formatRelPar(p.relPar)})
                     </div>
                   )}
                 </div>
