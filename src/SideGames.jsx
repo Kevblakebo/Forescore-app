@@ -291,7 +291,6 @@ export default function SideGames({ roundId = "demo-round", players = DEFAULT_PL
 
   const [hole, setHole] = useState(3);
   const [view, setView] = useState("hole");
-  const [sheetOpen, setSheetOpen] = useState(false);
   const [draft, setDraft] = useState({});
   const [newGame, setNewGame] = useState("");
   const [copied, setCopied] = useState(false);
@@ -299,7 +298,7 @@ export default function SideGames({ roundId = "demo-round", players = DEFAULT_PL
   const par = pars[hole - 1];
   const holeRecords = records.filter((r) => r.hole === hole);
 
-  function openSheet() {
+  useEffect(() => {
     const d = {};
     games.forEach((g) => {
       const existing = holeRecords.find((r) => r.gameId === g.id);
@@ -309,8 +308,16 @@ export default function SideGames({ roundId = "demo-round", players = DEFAULT_PL
         : { checked: false, gameName: g.name, prize: carry > 0 ? String(carry) : "", mode: "each", winnerId: "", venmo: "", note: "" };
     });
     setDraft(d);
-    setSheetOpen(true);
-  }
+    // Deliberately only re-initializes on an actual hole change, not
+    // on every games/customGames update - handleAddCustom already
+    // updates draft directly for a newly-added game, and re-running
+    // this on that same change would immediately clobber that,
+    // resetting the new game back to unchecked. A later hole change
+    // still correctly picks up any custom game added in the meantime,
+    // since the effect reads the latest `games` value when it runs
+    // regardless of what's listed as a dependency.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hole]);
 
   function setField(gameId, k, v) {
     setDraft((d) => {
@@ -386,48 +393,88 @@ export default function SideGames({ roundId = "demo-round", players = DEFAULT_PL
             })}
           </div>
 
-          {holeRecords.length === 0 ? (
-            <div className="empty">
-              <p>No side game on this hole yet.</p>
-              <button className="primary" onClick={openSheet}>Play a side game</button>
-            </div>
-          ) : (
-            <>
-              <div className="stack">
-                {holeRecords.map((r) => {
-                  const winner = players.find((p) => p.id === r.winnerId);
-                  return (
-                    <div className="rec" key={r.id}>
-                      <div className="recTop">
-                        <span className="recName">{r.gameName}</span>
-                        <span className="recPrize">{r.prize ? money(parseFloat(r.prize)) : "—"}</span>
+          <div className="stack">
+            {games.map((g) => {
+              const row = draft[g.id] || {};
+              const eligible = g.pars.includes(par);
+              const carried = carryFor(g.id, hole);
+              const carry = carried.reduce((s, r) => s + (parseFloat(r.prize) || 0), 0);
+              const existing = holeRecords.find((r) => r.gameId === g.id);
+              return (
+                <div className={`gwrap${row.checked ? " open" : ""}`} key={g.id}>
+                  <button className="grow" onClick={() => eligible && setField(g.id, "checked", !row.checked)} disabled={!eligible}>
+                    <span className={row.checked ? "box on" : "box"}>{row.checked ? "✓" : ""}</span>
+                    <span className="gtext">
+                      <span className="gname">{g.name}</span>
+                      <span className="grule">{eligible ? g.rule : `Not played on a par ${par}.`}</span>
+                    </span>
+                  </button>
+
+                  {row.checked && (
+                    <div className="fields">
+                      {carry > 0 && (
+                        <div className="carry">
+                          {money(carry)} riding from hole{carried.length > 1 ? "s" : ""} {carried.map((r) => r.hole).join(", ")}
+                        </div>
+                      )}
+
+                      <label className="lab">Prize</label>
+                      <div className="prizeRow">
+                        <div className="dollar">
+                          <span>$</span>
+                          <input inputMode="decimal" placeholder="0" value={row.prize} onChange={(e) => setField(g.id, "prize", e.target.value)} />
+                        </div>
+                        <div className="seg">
+                          <button className={row.mode !== "pot" ? "segb on" : "segb"} onClick={() => setField(g.id, "mode", "each")}>Each pays</button>
+                          <button className={row.mode === "pot" ? "segb on" : "segb"} onClick={() => setField(g.id, "mode", "pot")}>Total pot</button>
+                        </div>
                       </div>
-                      <div className="recRow">
-                        {r.winnerId === "push" ? (
-                          <span className="push">Push — carries to the next hole</span>
-                        ) : winner ? (
-                          <>
-                            <span className="av">{initials(winner.name)}</span>
-                            <span className="win">{winner.name} won</span>
-                            {r.venmo && <span className="venmo">{r.venmo}</span>}
-                          </>
-                        ) : <span className="pending">Winner not set</span>}
-                      </div>
-                      {r.note && <div className="note">{r.note}</div>}
-                      <div className="recActions">
-                        <button className={r.settled ? "chip on" : "chip"} onClick={() => toggleSettled(r.id)}>
-                          {r.settled ? "Paid" : "Mark paid"}
+
+                      <label className="lab">Winner</label>
+                      <div className="pills">
+                        {players.map((p) => (
+                          <button key={p.id} className={row.winnerId === p.id ? "pill on" : "pill"} onClick={() => setField(g.id, "winnerId", p.id)}>{p.name}</button>
+                        ))}
+                        <button className={row.winnerId === "push" ? "pill push on" : "pill push"} onClick={() => setField(g.id, "winnerId", "push")}>
+                          No winner — carry over
                         </button>
-                        <button className="chip" onClick={openSheet}>Edit</button>
-                        <button className="chip danger" onClick={() => removeRecord(r.id)}>Remove</button>
                       </div>
+
+                      {row.winnerId && row.winnerId !== "push" && (
+                        <>
+                          <label className="lab">Settle at</label>
+                          <input className="text" placeholder="@venmo-handle" value={row.venmo || ""} onChange={(e) => setField(g.id, "venmo", e.target.value)} />
+                        </>
+                      )}
+
+                      <label className="lab">Note</label>
+                      <input className="text" placeholder="Six feet, back pin" value={row.note || ""} onChange={(e) => setField(g.id, "note", e.target.value)} />
+
+                      {existing && (
+                        <div className="recActions">
+                          <button className={existing.settled ? "chip on" : "chip"} onClick={() => toggleSettled(existing.id)}>
+                            {existing.settled ? "Paid" : "Mark paid"}
+                          </button>
+                          <button className="chip danger" onClick={() => removeRecord(existing.id)}>Remove</button>
+                        </div>
+                      )}
                     </div>
-                  );
-                })}
-              </div>
-              <button className="primary wide" onClick={openSheet}>Edit side games</button>
-            </>
-          )}
+                  )}
+                </div>
+              );
+            })}
+
+            <div className="addGame">
+              <input className="text" placeholder="Add your own game" value={newGame}
+                onChange={(e) => setNewGame(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleAddCustom()} />
+              <button className="addBtn" onClick={handleAddCustom}>Add</button>
+            </div>
+          </div>
+
+          <button className="primary wide" onClick={() => saveHole(hole, draft)}>
+            Save side games
+          </button>
         </>
       )}
 
@@ -486,96 +533,6 @@ export default function SideGames({ roundId = "demo-round", players = DEFAULT_PL
               {status === "saving" ? "Saving…" : status === "saved" ? "Saved to this round" : status === "error" ? "Couldn't save — changes are in this session only" : ""}
             </span>
             <button className="chip danger" onClick={resetRound}>Clear round</button>
-          </div>
-        </div>
-      )}
-
-      {sheetOpen && (
-        <div className="scrim" onClick={() => setSheetOpen(false)}>
-          <div className="sheet" onClick={(e) => e.stopPropagation()}>
-            <div className="grab" />
-            <div className="sheetHead">
-              <div>
-                <div className="sheetTitle">Side games</div>
-                <div className="sheetSub">Hole {hole} · Par {par}</div>
-              </div>
-              <button className="x" onClick={() => setSheetOpen(false)} aria-label="Close">✕</button>
-            </div>
-
-            <div className="sheetBody">
-              {games.map((g) => {
-                const row = draft[g.id] || {};
-                const eligible = g.pars.includes(par);
-                const carried = carryFor(g.id, hole);
-                const carry = carried.reduce((s, r) => s + (parseFloat(r.prize) || 0), 0);
-                return (
-                  <div className={`gwrap${row.checked ? " open" : ""}`} key={g.id}>
-                    <button className="grow" onClick={() => eligible && setField(g.id, "checked", !row.checked)} disabled={!eligible}>
-                      <span className={row.checked ? "box on" : "box"}>{row.checked ? "✓" : ""}</span>
-                      <span className="gtext">
-                        <span className="gname">{g.name}</span>
-                        <span className="grule">{eligible ? g.rule : `Not played on a par ${par}.`}</span>
-                      </span>
-                    </button>
-
-                    {row.checked && (
-                      <div className="fields">
-                        {carry > 0 && (
-                          <div className="carry">
-                            {money(carry)} riding from hole{carried.length > 1 ? "s" : ""} {carried.map((r) => r.hole).join(", ")}
-                          </div>
-                        )}
-
-                        <label className="lab">Prize</label>
-                        <div className="prizeRow">
-                          <div className="dollar">
-                            <span>$</span>
-                            <input inputMode="decimal" placeholder="0" value={row.prize} onChange={(e) => setField(g.id, "prize", e.target.value)} />
-                          </div>
-                          <div className="seg">
-                            <button className={row.mode !== "pot" ? "segb on" : "segb"} onClick={() => setField(g.id, "mode", "each")}>Each pays</button>
-                            <button className={row.mode === "pot" ? "segb on" : "segb"} onClick={() => setField(g.id, "mode", "pot")}>Total pot</button>
-                          </div>
-                        </div>
-
-                        <label className="lab">Winner</label>
-                        <div className="pills">
-                          {players.map((p) => (
-                            <button key={p.id} className={row.winnerId === p.id ? "pill on" : "pill"} onClick={() => setField(g.id, "winnerId", p.id)}>{p.name}</button>
-                          ))}
-                          <button className={row.winnerId === "push" ? "pill push on" : "pill push"} onClick={() => setField(g.id, "winnerId", "push")}>
-                            No winner — carry over
-                          </button>
-                        </div>
-
-                        {row.winnerId && row.winnerId !== "push" && (
-                          <>
-                            <label className="lab">Settle at</label>
-                            <input className="text" placeholder="@venmo-handle" value={row.venmo || ""} onChange={(e) => setField(g.id, "venmo", e.target.value)} />
-                          </>
-                        )}
-
-                        <label className="lab">Note</label>
-                        <input className="text" placeholder="Six feet, back pin" value={row.note || ""} onChange={(e) => setField(g.id, "note", e.target.value)} />
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-
-              <div className="addGame">
-                <input className="text" placeholder="Add your own game" value={newGame}
-                  onChange={(e) => setNewGame(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleAddCustom()} />
-                <button className="addBtn" onClick={handleAddCustom}>Add</button>
-              </div>
-            </div>
-
-            <div className="sheetFoot">
-              <button className="primary wide" onClick={() => { saveHole(hole, draft); setSheetOpen(false); }}>
-                Save side games
-              </button>
-            </div>
           </div>
         </div>
       )}
@@ -655,17 +612,6 @@ const CSS = `
 .save{font-size:12.5px;color:var(--mute)}
 .save.error{color:var(--red)}
 
-.scrim{position:fixed;inset:0;background:rgba(24,32,26,.42);display:flex;align-items:flex-end;justify-content:center;z-index:50}
-.sheet{background:var(--cream);width:100%;max-width:520px;max-height:90vh;border-radius:22px 22px 0 0;display:flex;flex-direction:column}
-.grab{width:38px;height:4px;border-radius:4px;background:#CFCBBB;margin:9px auto 4px}
-.sheetHead{display:flex;justify-content:space-between;align-items:flex-start;padding:8px 18px 12px}
-.sheetTitle{font-size:19px;font-weight:700;color:var(--green)}
-.sheetSub{font-size:13px;color:var(--mute);margin-top:2px}
-.x{font-size:15px;color:var(--mute);padding:4px 6px}
-.sheetBody{overflow-y:auto;padding:0 14px 8px;flex:1}
-.sheetFoot{padding:12px 14px calc(14px + env(safe-area-inset-bottom));border-top:1px solid var(--rule);background:var(--cream)}
-.sheetFoot .primary{margin-top:0}
-
 .gwrap{background:var(--card);border-radius:14px;margin-bottom:9px;overflow:hidden}
 .gwrap.open{box-shadow:0 0 0 1.5px var(--green6)}
 .grow{display:flex;gap:12px;align-items:flex-start;width:100%;text-align:left;padding:14px}
@@ -694,9 +640,4 @@ const CSS = `
 .text{width:100%;border:1px solid var(--rule);border-radius:10px;padding:11px 12px;font-size:15px;background:#FBFAF6;outline:none}
 .addGame{display:flex;gap:8px;margin:14px 0 4px}
 .addBtn{padding:0 18px;border-radius:10px;background:#E3EAE2;color:var(--green6);font-size:14px;font-weight:600}
-
-@media (prefers-reduced-motion:no-preference){
-  .sheet{animation:up .22s ease-out}
-  @keyframes up{from{transform:translateY(14px)}to{transform:none}}
-}
 `;
