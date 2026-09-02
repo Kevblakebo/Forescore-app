@@ -59,7 +59,7 @@ export const DEFAULT_GAMES = [
   { id: "greenie", name: "Greenies", rule: "Closest to the pin on a par 3, only if you make par or better.", pars: [3] },
   { id: "sandy", name: "Sandies", rule: "Save par after hitting a bunker.", pars: [3, 4, 5] },
   { id: "barkie", name: "Barkies", rule: "Make par after hitting a tree.", pars: [3, 4, 5] },
-  { id: "arnie", name: "Arnies", rule: "Par without ever being on the fairway.", pars: [3, 4, 5] },
+  { id: "arnie", name: "Arnies", rule: "Par without ever being on the fairway (named after Arnold Palmer).", pars: [3, 4, 5] },
   { id: "polie", name: "Polies", rule: "Make par after hitting the flagstick.", pars: [3, 4, 5] },
 ];
 
@@ -294,6 +294,7 @@ export default function SideGames({ roundId = "demo-round", players = DEFAULT_PL
   const [draft, setDraft] = useState({});
   const [newGame, setNewGame] = useState("");
   const [copied, setCopied] = useState(false);
+  const [rulesOpen, setRulesOpen] = useState(false);
 
   const par = pars[hole - 1];
   const holeRecords = records.filter((r) => r.hole === hole);
@@ -365,12 +366,33 @@ export default function SideGames({ roundId = "demo-round", players = DEFAULT_PL
     <div className="sg">
       <style>{CSS}</style>
 
+      <button className="rulesLink" onClick={() => setRulesOpen(true)}>{"\u{1F4D6}"} Side Game Rules</button>
+
       <div className="tabs">
         <button className={view === "hole" ? "tab on" : "tab"} onClick={() => setView("hole")}>By hole</button>
         <button className={view === "settle" ? "tab on" : "tab"} onClick={() => setView("settle")}>
           Settle up{totals.open > 0 && <span className="dot" />}
         </button>
       </div>
+
+      {rulesOpen && (
+        <div className="rulesScrim" onClick={() => setRulesOpen(false)}>
+          <div className="rulesCard" onClick={(e) => e.stopPropagation()}>
+            <div className="rulesHead">
+              <span className="rulesTitle">Side Games</span>
+              <button className="rulesClose" onClick={() => setRulesOpen(false)} aria-label="Close">✕</button>
+            </div>
+            <div className="rulesBody">
+              {DEFAULT_GAMES.map((g) => (
+                <div key={g.id} className="ruleItem">
+                  <div className="ruleName">{g.name}</div>
+                  <div className="ruleText">{"\u2022"} {g.rule}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {view === "hole" && (
         <>
@@ -472,7 +494,7 @@ export default function SideGames({ roundId = "demo-round", players = DEFAULT_PL
             </div>
           </div>
 
-          <button className="primary wide" onClick={() => saveHole(hole, draft)}>
+          <button className="primary wide" style={{ background: "#A42E2D" }} onClick={() => saveHole(hole, draft)}>
             Save side games
           </button>
         </>
@@ -640,4 +662,16 @@ const CSS = `
 .text{width:100%;border:1px solid var(--rule);border-radius:10px;padding:11px 12px;font-size:15px;background:#FBFAF6;outline:none}
 .addGame{display:flex;gap:8px;margin:14px 0 4px}
 .addBtn{padding:0 18px;border-radius:10px;background:#E3EAE2;color:var(--green6);font-size:14px;font-weight:600}
+
+.rulesLink{display:block;font-size:13px;font-weight:600;color:var(--green6);margin-bottom:12px;text-decoration:underline}
+.rulesScrim{position:fixed;inset:0;background:rgba(24,32,26,.42);display:flex;align-items:center;justify-content:center;z-index:50;padding:20px}
+.rulesCard{background:var(--cream);width:100%;max-width:420px;max-height:80vh;border-radius:18px;display:flex;flex-direction:column;overflow:hidden}
+.rulesHead{display:flex;justify-content:space-between;align-items:center;padding:16px 18px 10px}
+.rulesTitle{font-size:18px;font-weight:700;color:var(--green)}
+.rulesClose{font-size:15px;color:var(--mute);padding:4px 6px}
+.rulesBody{overflow-y:auto;padding:0 18px 18px}
+.ruleItem{padding:10px 0;border-bottom:1px solid var(--rule)}
+.ruleItem:last-child{border-bottom:none}
+.ruleName{font-size:14.5px;font-weight:700;color:var(--green);margin-bottom:2px}
+.ruleText{font-size:13px;color:var(--mute);line-height:1.5}
 `;
