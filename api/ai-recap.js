@@ -83,13 +83,21 @@ Write the recap.`;
 
   let recapText;
   try {
+    const workspaceId = process.env.ANTHROPIC_WORKSPACE_ID;
+    const headers = {
+      "Content-Type": "application/json",
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
+    };
+    // Only newer, identity-linked API keys (tied to a person's own
+    // login rather than already scoped to one workspace) require this
+    // - harmless to omit for a traditional key, so this is only added
+    // when actually configured.
+    if (workspaceId) headers["anthropic-workspace-id"] = workspaceId;
+
     const upstream = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-      },
+      headers,
       body: JSON.stringify({
         model: "claude-haiku-4-5-20251001",
         max_tokens: 300,
