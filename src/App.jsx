@@ -7290,6 +7290,18 @@ function computeRoundScoring(round) {
               </div>
               <GroupsIcon size={20} color="#8FA998" />
             </div>
+            {session && (
+              <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid #eee6cf" }} onClick={(e) => e.stopPropagation()}>
+                <div style={{ fontSize: 11, color: "#8a8a80", textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 700, marginBottom: 6 }}>Join Existing Group</div>
+                <div className="gsc-row">
+                  <input className="gsc-input gsc-mono" placeholder="GROUP CODE" value={joinGroupCode} onChange={(e) => setJoinGroupCode(e.target.value.toUpperCase())} />
+                  <button className="gsc-btn gsc-btn-outline" style={{ flex: "0 0 auto" }} disabled={joinGroupBusy || !joinGroupCode.trim()} onClick={joinGroup}>
+                    {joinGroupBusy ? "Joining..." : "Join"}
+                  </button>
+                </div>
+                {joinGroupErr && <div style={{ color: "#A42E2D", fontSize: 12, marginTop: 6 }}>{joinGroupErr}</div>}
+              </div>
+            )}
           </div>
 
           <div className="gsc-card gsc-game-card" onClick={() => goToScreen("profileTab")}>
