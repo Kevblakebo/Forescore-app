@@ -11882,11 +11882,6 @@ function computeRoundScoring(round) {
               )}
             </div>
           }
-          belowLogo={
-            <button className="gsc-btn gsc-btn-outline" style={{ fontSize: 12, padding: "6px 14px" }} onClick={() => goToScreen("sideGames")}>
-              {"\u{1F3B2}"} Side Games
-            </button>
-          }
         />
         {session && !claimSlotDismissed && !round.players.some((p) => p.user_id === session.user.id) && round.players.some((p) => !p.user_id) && (
           <div className="gsc-body" style={{ paddingBottom: 0 }}>
@@ -12038,8 +12033,19 @@ function computeRoundScoring(round) {
                     </div>
                   );
                 })()}
+                {round.game === "seabluffe" && (
+                  <div style={{ fontSize: 12, color: "#B08D57", fontWeight: 700, marginTop: 4 }}>
+                    {round.players[teamsThisHole[0][0]].name}+{round.players[teamsThisHole[0][1]].name} vs {round.players[teamsThisHole[1][0]].name}+{round.players[teamsThisHole[1][1]].name}
+                  </div>
+                )}
+              </div>
+              <button className="gsc-btn gsc-btn-outline" disabled={holeIdx === 17} onClick={() => setHoleIdx((h) => h + 1)}>Next</button>
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10, marginBottom: 10 }}>
+              <div style={{ flex: 1 }}>
                 {session && round.holeGPS && round.holeGPS[holeIdx] && round.holeGPS[holeIdx].length > 0 && (
-                  <div style={{ marginTop: 8 }}>
+                  <div>
                     {!holeImageOpen ? (
                       <button
                         className="gsc-link"
@@ -12069,13 +12075,15 @@ function computeRoundScoring(round) {
                     )}
                   </div>
                 )}
-                {round.game === "seabluffe" && (
-                  <div style={{ fontSize: 12, color: "#B08D57", fontWeight: 700, marginTop: 4 }}>
-                    {round.players[teamsThisHole[0][0]].name}+{round.players[teamsThisHole[0][1]].name} vs {round.players[teamsThisHole[1][0]].name}+{round.players[teamsThisHole[1][1]].name}
-                  </div>
-                )}
               </div>
-              <button className="gsc-btn gsc-btn-outline" disabled={holeIdx === 17} onClick={() => setHoleIdx((h) => h + 1)}>Next</button>
+              <div style={{ flex: "0 0 auto" }}>
+                <div
+                  onClick={() => goToScreen("sideGames")}
+                  style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "#EBF0EC", color: "#1B4332", fontWeight: 700, fontSize: 13, padding: "5px 12px", borderRadius: 20, cursor: "pointer" }}
+                >
+                  {"\u{1F3B2}"} Side Games
+                </div>
+              </div>
             </div>
 
             {!canEditThisRound && (
@@ -12815,7 +12823,7 @@ function computeRoundScoring(round) {
       <div className="gsc">
         <style>{STYLE}</style>
         <Header title="Side Games" sub={round.name} onBack={() => goBack("card")} />
-        <SideGames roundId={round.id} players={mapPlayersForSideGames(round.players, sideGamesVenmoByUserId)} storage={sideGamesStorage} />
+        <SideGames roundId={round.id} players={mapPlayersForSideGames(round.players, sideGamesVenmoByUserId)} storage={sideGamesStorage} initialHole={holeIdx + 1} />
       </div>
     );
   }
