@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Home as HomeIcon, Flag as FlagIcon, Trophy as TrophyIcon, User as UserIcon, Users as GroupsIcon, Lock, Library as LibraryIcon, ShoppingBag } from "lucide-react";
 import { supabase } from "./storage-polyfill.js";
+import SideGames, { remoteAdapter as sideGamesRemoteAdapter } from "./SideGames.jsx";
 
 /* ---------- design tokens ----------
    Palette: fairway (#1B4332) deep green, paper (#F3EFE0) cream, ink (#2B2B28),
@@ -4221,6 +4222,43 @@ export default function GolfScorecard() {
   // filled (that's allowed on purpose), so isRoundFullyComplete alone can
   // say "not complete" about a round the person already finished and put
   // away - this is the check that actually matches how the app treats it.
+  // Side Games (SideGames.jsx) expects each player as {id, name, venmo} -
+  // this app's own round.players never has a stable "id" field at all
+  // (players aren't necessarily linked to accounts), so this maps to
+  // that shape: a linked player's real user_id where available, falling
+  // back to a stable, index-based id otherwise (safe since player order
+  // within a round never changes). Venmo isn't currently tracked
+  // per-player on a round, so it starts blank - Side Games already
+  // makes this field editable per-game, so this isn't a blocker.
+  function mapPlayersForSideGames(players) {
+    return (players || []).map((p, i) => ({
+      id: p.user_id || `slot-${i}`,
+      name: p.name || `Player ${i + 1}`,
+      venmo: "",
+    }));
+  }
+
+  // Reuses this app's own, already-configured Supabase client (no
+  // separate client/import needed) via SideGames.jsx's own remoteAdapter
+  // helper - same open-access reasoning as every other round-scoped
+  // table in this app (see create-side-games-table.sql).
+  const sideGamesStorage = useMemo(
+    () =>
+      sideGamesRemoteAdapter({
+        load: async (key) => {
+          const { data } = await supabase.from("side_games").select("data").eq("round_id", key).maybeSingle();
+          return data && data.data ? data.data : null;
+        },
+        save: async (key, value) => {
+          await supabase.from("side_games").upsert(
+            { round_id: key, data: JSON.parse(value), updated_at: new Date().toISOString() },
+            { onConflict: "round_id" }
+          );
+        },
+      }),
+    []
+  );
+
   function isRoundDone(r, finishedList) {
     if (!r) return false;
     if (r.finished) return true;
@@ -11805,6 +11843,9 @@ function computeRoundScoring(round) {
               <button className="gsc-link" style={{ color: "#F3EFE0", fontSize: 11, textDecoration: "underline" }} onClick={() => setGameDetailsOpen(true)}>
                 Game Details
               </button>
+              <button className="gsc-link" style={{ color: "#F3EFE0", fontSize: 11, textDecoration: "underline" }} onClick={() => goToScreen("sideGames")}>
+                Side Games
+              </button>
               {canEditThisRound && (
                 <button className="gsc-link" style={{ color: "#F3EFE0", fontSize: 11, textDecoration: "underline" }} onClick={() => openEditFoursome(round.id, round)}>
                   Edit Players
@@ -12741,6 +12782,22 @@ function computeRoundScoring(round) {
         {EditFoursomeModal()}
         {GameDetailsModal()}
         {GPSExplainerModal()}
+      </div>
+    );
+  }
+
+  if (screen === "sideGames" && round) {
+    return (
+      <div className="gsc">
+        <style>{STYLE}</style>
+        <div style={{ background: "#1B4332", padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <button className="gsc-link" style={{ color: "#F3EFE0", fontSize: 14 }} onClick={() => goBack("card")}>
+            {"\u2039"} Back
+          </button>
+          <div style={{ color: "#F3EFE0", fontWeight: 700, fontSize: 16 }}>Side Games</div>
+          <div style={{ width: 50 }} />
+        </div>
+        <SideGames roundId={round.id} players={mapPlayersForSideGames(round.players)} storage={sideGamesStorage} />
       </div>
     );
   }
