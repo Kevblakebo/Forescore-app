@@ -6623,6 +6623,12 @@ export default function GolfScorecard() {
   }, [screen]);
 
   useEffect(() => {
+    if (screen === "sideGames" && !session) {
+      goBack("card");
+    }
+  }, [screen, session]);
+
+  useEffect(() => {
     if (screen !== "sideGames" || !round) return;
     const userIds = round.players.map((p) => p.user_id).filter(Boolean);
     if (userIds.length === 0) return;
@@ -7193,7 +7199,7 @@ function computeRoundScoring(round) {
                 RipScore is the app built for every group you play with.
                 <div style={{ margin: "8px 0 0" }}>
                   <div style={{ marginBottom: 4 }}>{"\u{1F465}"} Set Up Your Group Once</div>
-                  <div style={{ marginBottom: 4 }}>{"\u26F3"} 15 Game Formats, for Every Kind of Day</div>
+                  <div style={{ marginBottom: 4 }}>{"\u26F3"} 15 Game Formats + Side Games, for Every Kind of Day</div>
                   <div style={{ marginBottom: 4 }}>{"\u{1F4CD}"} Live Distance to the Green GPS</div>
                   <div style={{ marginBottom: 4 }}>{"\u{1F3CC}\u{FE0F}"} Optional Handicapping, Done Right</div>
                   <div style={{ marginBottom: 4 }}>{"\u{1F4CA}"} A Leaderboard Just for Your Group</div>
@@ -7235,7 +7241,7 @@ function computeRoundScoring(round) {
           </div>
           {!session && (
             <div style={{ fontSize: 12, color: "#8a8a80", margin: "-8px 0 16px" }}>
-              No account needed to play, create one anytime to access premium features including GPS, course info, stats, groups, leaderboards, and prior saved rounds.
+              No account needed to play, create one anytime to access premium features including GPS, Side Games, course info, stats, groups, leaderboards, and prior saved rounds.
               <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 10 }} onClick={() => { setAuthErr(""); goToScreen("login"); }}>
                 Log In or Create Account
               </button>
@@ -8587,7 +8593,7 @@ function computeRoundScoring(round) {
                 Save your regular playing partners as a group. Next time you play, fill in everyone's name, avatar, and handicap with one tap - no retyping names round after round.
               </p>
 
-              <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>{"\u26F3"} 15 Game Formats, for Every Kind of Day</p>
+              <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>{"\u26F3"} 15 Game Formats + Side Games, for Every Kind of Day</p>
               <p style={{ margin: "0 0 14px" }}>
                 Skins, Wolf, Vegas, Stableford, Bingo Bango Bongo, Best Ball, Round Robin, and more - for individuals, teams, and full multi-foursome tournaments. Pick a format, and RipScore keeps score, tracks mulligans, and shows exactly who's winning, hole by hole.
               </p>
@@ -12077,12 +12083,14 @@ function computeRoundScoring(round) {
                 )}
               </div>
               <div style={{ flex: "0 0 auto" }}>
-                <div
-                  onClick={() => goToScreen("sideGames")}
-                  style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "#EBF0EC", color: "#1B4332", fontWeight: 700, fontSize: 13, padding: "5px 12px", borderRadius: 20, cursor: "pointer" }}
-                >
-                  {"\u{1F3B2}"} Side Games
-                </div>
+                {session && (
+                  <div
+                    onClick={() => goToScreen("sideGames")}
+                    style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "#EBF0EC", color: "#1B4332", fontWeight: 700, fontSize: 13, padding: "5px 12px", borderRadius: 20, cursor: "pointer" }}
+                  >
+                    {"\u{1F3B2}"} Side Games
+                  </div>
+                )}
               </div>
             </div>
 
@@ -12818,7 +12826,7 @@ function computeRoundScoring(round) {
     );
   }
 
-  if (screen === "sideGames" && round) {
+  if (screen === "sideGames" && session && round) {
     return (
       <div className="gsc">
         <style>{STYLE}</style>
