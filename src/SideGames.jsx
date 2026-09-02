@@ -282,7 +282,7 @@ export function useSideGames({
 const money = (n) => "$" + (Math.round(n * 100) / 100).toFixed(2).replace(/\.00$/, "");
 const initials = (name) => name.slice(0, 1).toUpperCase();
 
-export default function SideGames({ roundId = "demo-round", players = DEFAULT_PLAYERS, storage, initialHole = 3 }) {
+export default function SideGames({ roundId = "demo-round", players = DEFAULT_PLAYERS, storage, initialHole = 3, yardage, strokeIndex, teeName }) {
   const store = useSideGames({ roundId, players, storage });
   const {
     ready, status, games, pars, records, setPar, saveHole, removeRecord,
@@ -294,6 +294,7 @@ export default function SideGames({ roundId = "demo-round", players = DEFAULT_PL
   const [draft, setDraft] = useState({});
   const [newGame, setNewGame] = useState("");
   const [copied, setCopied] = useState(false);
+  const [savedHole, setSavedHole] = useState(null);
 
   const par = pars[hole - 1];
   const holeRecords = records.filter((r) => r.hole === hole);
@@ -379,6 +380,19 @@ export default function SideGames({ roundId = "demo-round", players = DEFAULT_PL
             <div className="holeinfo">
               <div className="holenum">Hole {hole}</div>
               <button className="par" onClick={() => setPar(hole, par === 5 ? 3 : par + 1)} title="Tap to change par">Par {par}</button>
+              {(() => {
+                const yd = (yardage || [])[hole - 1];
+                const si = (strokeIndex || [])[hole - 1];
+                if (yd == null && si == null) return null;
+                return (
+                  <div className="holemeta">
+                    {yd != null && `${yd} yds`}
+                    {yd != null && si != null && " \u00B7 "}
+                    {si != null && `HCP ${si}`}
+                  </div>
+                );
+              })()}
+              {teeName && <div className="holetee">{teeName} tees</div>}
             </div>
             <button className="arrow" onClick={() => setHole((h) => Math.min(18, h + 1))} disabled={hole === 18} aria-label="Next hole">›</button>
           </div>
@@ -472,9 +486,16 @@ export default function SideGames({ roundId = "demo-round", players = DEFAULT_PL
             </div>
           </div>
 
-          <button className="primary wide" style={{ background: "#A42E2D", color: "#fff" }} onClick={() => saveHole(hole, draft)}>
+          <button className="primary wide" style={{ background: "#A42E2D", color: "#fff" }} onClick={() => { saveHole(hole, draft); setSavedHole(hole); }}>
             Save side games
           </button>
+          {savedHole === hole && (
+            <div style={{ textAlign: "center", marginTop: 8 }}>
+              <span className={`save ${status}`}>
+                {status === "saving" ? "Saving…" : status === "saved" ? "\u2713 Saved to this round" : status === "error" ? "Couldn't save — changes are in this session only" : ""}
+              </span>
+            </div>
+          )}
         </>
       )}
 
@@ -561,6 +582,8 @@ const CSS = `
 .holeinfo{text-align:center}
 .holenum{font-size:26px;font-weight:700;color:var(--green);letter-spacing:-.02em}
 .par{font-size:13px;color:var(--mute);padding:2px 8px;border-radius:20px;border:1px solid var(--rule);margin-top:4px}
+.holemeta{font-size:12px;color:var(--mute);font-weight:600;margin-top:2px}
+.holetee{font-size:11px;color:#8a8a80;margin-top:2px}
 
 .strip{display:flex;gap:5px;overflow-x:auto;padding:2px 0 14px;scrollbar-width:none}
 .strip::-webkit-scrollbar{display:none}
@@ -610,6 +633,7 @@ button.primary{background:var(--green6);color:#fff;padding:14px 22px;border-radi
 .oweAmt{font-variant-numeric:tabular-nums;font-weight:600}
 .footRow{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:20px}
 .save{font-size:12.5px;color:var(--mute)}
+.save.saved{color:var(--green6);font-weight:700}
 .save.error{color:var(--red)}
 
 .gwrap{background:var(--card);border-radius:14px;margin-bottom:9px;overflow:hidden}
