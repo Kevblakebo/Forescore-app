@@ -905,7 +905,7 @@ const AVATAR_OPTIONS = [
   "\u{1F42F}", "\u{1F988}",
   "\u{1F40A}", "\u{1F986}", "\u{1F43A}", "\u{1F989}", "\u{1F409}", "\u{1F451}", "\u{1F3A9}", "\u{1F340}", "\u{1F334}", "\u{1F3B2}", "\u{1F947}", "\u{1F9CA}",
   "\u26CF\u{FE0F}", "\u26F3", "\u{1F355}", "\u{1F426}", "\u{1F37A}", "\u2600\u{FE0F}",
-  "\u{1F42C}", "\u{1F428}", "\u{1F98A}", "\u{1F98B}", "\u{1F308}", "\u{1F996}",
+  "\u{1F42C}", "\u{1F428}", "\u{1F98A}", "\u{1F98B}", "\u{1F308}", "\u{1F996}", "\u26F7\u{FE0F}",
 ];
 const TEAM_CLASS = ["gsc-teamA", "gsc-teamB", "gsc-teamC", "gsc-teamD"];
 
@@ -7667,7 +7667,7 @@ function computeRoundScoring(round) {
               <UserIcon size={28} color="#8FA998" style={{ marginBottom: 10 }} />
               <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 6 }}>You're not logged in</div>
               <div style={{ fontSize: 13, color: "#6b6b63", lineHeight: 1.5, marginBottom: 16 }}>
-                Log in to save your defaults (avatar, name, handicap, Venmo, home course) and unlock GPS, course info, stats, groups, leaderboards, and prior saved rounds. Logging in is always optional - you can keep playing instantly with just a round or tournament code. Your round will only be added to your personal history if you're logged in when you play it.
+                Log in to save your defaults (avatar, name, handicap, Venmo, home course) and unlock GPS, Side Games, course info, stats, groups, leaderboards, and prior saved rounds. Logging in is always optional - you can keep playing instantly with just a round or tournament code. Your round will only be added to your personal history if you're logged in when you play it.
               </div>
               <button className="gsc-btn gsc-btn-primary" style={{ width: "100%" }} onClick={() => { setAuthErr(""); goToScreen("login"); }}>
                 Log In
