@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Home as HomeIcon, Flag as FlagIcon, Trophy as TrophyIcon, User as UserIcon, Users as GroupsIcon, Lock, Library as LibraryIcon, ShoppingBag } from "lucide-react";
 import { supabase } from "./storage-polyfill.js";
-import SideGames, { remoteAdapter as sideGamesRemoteAdapter } from "./SideGames.jsx";
+import SideGames, { remoteAdapter as sideGamesRemoteAdapter, DEFAULT_GAMES as SIDE_GAME_LIST } from "./SideGames.jsx";
 
 /* ---------- design tokens ----------
    Palette: fairway (#1B4332) deep green, paper (#F3EFE0) cream, ink (#2B2B28),
@@ -7605,6 +7605,19 @@ function computeRoundScoring(round) {
                 </div>
               );
             })}
+          </div>
+
+          <div className="gsc-card">
+            <div className="gsc-label" style={{ marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Side Games</div>
+            <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 12 }}>
+              Played alongside any round above - hole-by-hole bets like Closest to the Pin or Sandies. Open Side Games from within an active round's scoring screen once it's started.
+            </div>
+            {SIDE_GAME_LIST.map((g) => (
+              <div key={g.id} className="gsc-card" style={{ marginBottom: 8, opacity: 0.75, cursor: "default" }}>
+                <div className="gsc-game-title">{g.name}</div>
+                <div style={{ fontSize: 13, marginTop: 6, color: "#4b4b45" }}>{g.rule}</div>
+              </div>
+            ))}
           </div>
 
           <div style={{ fontSize: 12, color: "#8a8a80", textAlign: "center", marginTop: 4 }}>
