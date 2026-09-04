@@ -682,7 +682,7 @@ const VIBE_GAME_MAP = {
     maxStrategy: "moonlightwolf",
     // Every Nassau-eligible team format - deliberately not narrowed by
     // team/individual first, since all 4 are already team formats.
-    nassau: ["ponto", "beachside", "teamputts", "teamstrokes"],
+    nassau: ["teamstrokes", "ponto", "beachside", "teamputts"],
   },
   tournament: {
     simple: "tourneygg",
