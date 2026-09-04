@@ -9292,6 +9292,11 @@ function computeRoundScoring(round) {
                 Skins, Wolf, Vegas, Stableford, Bingo Bango Bongo, Best Ball, Round Robin, and more - for individuals, teams, and full multi-foursome tournaments. Pick a format, and RipScore keeps score, tracks mulligans, and shows exactly who's winning, hole by hole.
               </p>
 
+              <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>{"\u{1F3B2}"} Side Games, Right From the Scorecard</p>
+              <p style={{ margin: "0 0 14px" }}>
+                Closest to the Pin, Sandies, Barkies, Greenies, and more - run alongside whatever format you're already playing. Track who's owed what hole by hole, and settle up automatically at the end of the round.
+              </p>
+
               <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>{"\u{1F517}"} No App Required for Your Group</p>
               <p style={{ margin: "0 0 14px" }}>
                 Start a round and share a simple code. Anyone can join instantly from a browser - no download, no account required to play. Everyone sees the same live scorecard update in real time.
@@ -9302,6 +9307,11 @@ function computeRoundScoring(round) {
                 Log in to unlock GPS distance-to-green for front, center, and back of every hole, pulled from real course data.
               </p>
 
+              <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>{"\u{1F6F0}\u{FE0F}"} See the Hole From Above</p>
+              <p style={{ margin: "0 0 14px" }}>
+                Log in to pull up a satellite view of any hole, right from the scoring screen - a real look at the fairway and green before you commit to a shot.
+              </p>
+
               <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>{"\u{1F3CC}\u{FE0F}"} Optional Handicapping, Done Right</p>
               <p style={{ margin: "0 0 14px" }}>
                 Turn on net scoring and RipScore calculates each player's strokes per hole automatically, based on real handicaps - fair games for mixed-skill groups, without anyone doing math.
@@ -9310,6 +9320,11 @@ function computeRoundScoring(round) {
               <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>{"\u{1F4CA}"} A Leaderboard Just for Your Group</p>
               <p style={{ margin: "0 0 14px" }}>
                 Every group gets its own shared leaderboard - separate from the general public rankings - so you can see who's actually been winning all season, not just today.
+              </p>
+
+              <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>{"\u{1F3AC}"} A Recap Written for Your Round</p>
+              <p style={{ margin: "0 0 14px" }}>
+                Finish a round and get a short, funny, AI-written recap of what actually happened - the comeback, the collapse, the photo finish - built entirely from your group's real scores, not a generic template.
               </p>
 
               <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>{"\u{1F4B5}"} Settle Up Without the Argument</p>
