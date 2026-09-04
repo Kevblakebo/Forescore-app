@@ -117,7 +117,7 @@
   <header>
     <div class="logo">⛳ RipScore Golf</div>
     <h1>Privacy Policy</h1>
-    <div class="updated">Last updated: August 25, 2026</div>
+    <div class="updated">Last updated: September 4, 2026</div>
   </header>
 
   <p>This Privacy Policy explains what information RipScore Golf ("RipScore," "we," "us") collects, how we use it, and the choices you have. RipScore is a golf scoring and side-game app. We built it to be used with as little friction as possible &mdash; most of the app works instantly with just a round or tournament code, with no account required.</p>
@@ -138,6 +138,18 @@
   <div class="callout">
     <span class="tag">Optional, and gated behind login</span>
     <p style="margin-bottom:0;">RipScore's distance-to-green feature uses your device's location, with your device's own permission prompt, only while you're actively using it during a round. Your live location is used on your device to calculate distance to the green and is <strong>not stored on our servers or shared with anyone</strong>. This feature is entirely optional &mdash; the app works fully without it.</p>
+  </div>
+
+  <h3>AI-generated round recaps</h3>
+  <div class="callout">
+    <span class="tag">Automatic, once a round finishes</span>
+    <p style="margin-bottom:0;">When a round finishes, RipScore generates a short, personalized recap of the round using an AI service (Anthropic). To do this, we send the information already gathered for that round &mdash; player names, scores, and similar round details &mdash; to Anthropic for the sole purpose of generating this text. This information is not used by Anthropic to train their models.</p>
+  </div>
+
+  <h3>Satellite hole images</h3>
+  <div class="callout">
+    <span class="tag">Optional, and gated behind login</span>
+    <p style="margin-bottom:0;">If you choose to view a satellite image of the hole you're playing, RipScore sends that hole's coordinates to Google Maps to retrieve the image. This is entirely optional and only happens if you tap to view it.</p>
   </div>
 
   <h3>Information visible to other players</h3>
@@ -165,6 +177,8 @@
     <li><strong>Supabase</strong> &mdash; hosts our database and handles account sign-in.</li>
     <li><strong>Resend</strong> &mdash; sends account-related emails (like signup confirmation).</li>
     <li><strong>golfapi.io</strong> &mdash; provides golf course data (par, yardage, GPS coordinates for courses). We send course search terms to this service, not your personal account information.</li>
+    <li><strong>Anthropic</strong> &mdash; generates the AI-written recap after a round finishes, using that round's game data.</li>
+    <li><strong>Google Maps</strong> &mdash; provides the satellite hole image, if you choose to view one, using that hole's coordinates.</li>
     <li><strong>Vercel</strong> &mdash; hosts the RipScore website and app.</li>
   </ul>
   <p>Each of these providers has its own privacy practices governing the infrastructure they provide to us.</p>
