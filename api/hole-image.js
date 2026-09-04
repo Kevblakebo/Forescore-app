@@ -19,6 +19,20 @@ import { createClient } from "@supabase/supabase-js";
 const BUCKET_DECIMALS = 4;
 
 export default async function handler(req, res) {
+  // CORS headers - required so this endpoint can be called from the
+  // Capacitor iOS app, which serves the app from its own internal
+  // address rather than the real ripscoregolf.com domain. Requests
+  // from the same-origin website were never affected by this at all
+  // (same-origin requests are never subject to CORS restrictions to
+  // begin with), so this is purely additive - it only ever grants
+  // access that wasn't being checked before, never removes any.
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  if (req.method === "OPTIONS") {
+    return res.status(200).end();
+  }
+
   const apiKey = process.env.GOOGLE_MAPS_API_KEY;
   if (!apiKey) {
     return res.status(500).json({ error: "Server is missing GOOGLE_MAPS_API_KEY" });
