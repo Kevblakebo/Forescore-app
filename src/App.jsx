@@ -10801,6 +10801,9 @@ function computeNassauResults(round, computed) {
                   )}
                 </div>
               ))}
+              <div style={{ fontSize: 11, color: "red", padding: 8, background: "#fee" }}>
+                DEBUG: resolvedGameKey="{String(wizardAnswers.resolvedGameKey)}" players.length={players.length} eligible={String(nassauEligible(wizardAnswers.resolvedGameKey, players.length))}
+              </div>
               {nassauEligible(wizardAnswers.resolvedGameKey, players.length) && (
                 <div className="gsc-field" style={{ marginTop: 10 }}>
                   <div className="gsc-label">Scoring method</div>
@@ -12463,6 +12466,53 @@ function computeNassauResults(round, computed) {
               })}
             </div>
           )}
+
+          {round.cfg.nassau && (() => {
+            const nassau = computeNassauResults(round, computed);
+            if (!nassau) return null;
+            const sideLabel = (side) => (round.teams[side] || []).map((i) => (round.players[i] && round.players[i].name) || "?").join(" & ");
+            const parseAmt = (v) => {
+              const n = parseFloat(v);
+              return isNaN(n) ? 0 : n;
+            };
+            const segments = [
+              { label: "Front 9", seg: nassau.front, prize: parseAmt(round.cfg.nassauFrontPrize) },
+              { label: "Back 9", seg: nassau.back, prize: parseAmt(round.cfg.nassauBackPrize) },
+              { label: "Overall 18", seg: nassau.overall, prize: parseAmt(round.cfg.nassauOverallPrize) },
+            ];
+            let net = 0;
+            segments.forEach(({ seg, prize }) => {
+              if (seg.winner === 0) net += prize;
+              else if (seg.winner === 1) net -= prize;
+            });
+            return (
+              <div className="gsc-card">
+                <div className="gsc-label" style={{ marginBottom: 10 }}>Nassau - Final Results</div>
+                {segments.map(({ label, seg, prize }) => (
+                  <div key={label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid #eee6cf" }}>
+                    <div style={{ fontWeight: 700 }}>{label}</div>
+                    <div style={{ textAlign: "right" }}>
+                      {seg.winner == null ? (
+                        <div style={{ color: "#8a8a80" }}>Push - no winner</div>
+                      ) : (
+                        <div style={{ fontWeight: 700, color: "#1B4332" }}>{"\u{1F3C6}"} {sideLabel(seg.winner)}</div>
+                      )}
+                      {prize > 0 && <div style={{ fontSize: 12, color: "#B08D57" }}>${prize}</div>}
+                    </div>
+                  </div>
+                ))}
+                <div style={{ marginTop: 10, padding: "10px 0 0", fontSize: 15 }}>
+                  {net === 0 ? (
+                    <div style={{ fontWeight: 700, color: "#6b6b63" }}>All even - nobody owes anybody.</div>
+                  ) : (
+                    <div style={{ fontWeight: 700, color: "#1B4332" }}>
+                      {sideLabel(net > 0 ? 1 : 0)} owes {sideLabel(net > 0 ? 0 : 1)} <span className="gsc-mono">${Math.abs(net)}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
 
           {(aiRecapLoading || aiRecap) && (
             <div className="gsc-card">
