@@ -663,8 +663,8 @@ const WHY_PLAY = {
 // Maps a "what matters most" vibe answer to actual game(s), grouped by
 // player-count bucket. Three possible shapes for each entry:
 //  - a single string: fully resolved, no further question needed
-//  - an array of 2 keys: still a tie between two close options, needs
-//    a short follow-up question showing just those two
+//  - an array of keys (2 or more): still open between several close
+//    options, needs a short follow-up question showing just those
 //  - an object with team/individual keys: at 4 players, several vibes
 //    have both a team and an individual version, so this needs one
 //    more small question before it resolves to either a single game
@@ -680,6 +680,9 @@ const VIBE_GAME_MAP = {
     mixedSkill: { team: ["seabluffe", "beachside"], individual: ["pontobango", "stableford"] },
     highDrama: { team: ["ponto", "vegas"], individual: "dstreet" },
     maxStrategy: "moonlightwolf",
+    // Every Nassau-eligible team format - deliberately not narrowed by
+    // team/individual first, since all 4 are already team formats.
+    nassau: ["ponto", "beachside", "teamputts", "teamstrokes"],
   },
   tournament: {
     simple: "tourneygg",
@@ -1145,8 +1148,14 @@ function haversineYards(lat1, lon1, lat2, lon2) {
 // only qualify with exactly 2; everything else (tournament-only
 // formats, and Seabluffe/Wolf's rotating partners, which don't have
 // two fixed, consistent sides for a whole-round bet) never qualifies.
-const NASSAU_ALWAYS_TWO_SIDED = ["ponto", "vegas", "beachside", "teamputts", "teamstrokes"];
-const NASSAU_INDIVIDUAL_GAMES = ["dstreet", "swami", "pontobango", "individualputts", "stableford"];
+// Nassau is only offered for these 4 team formats (Team Skins, Team
+// Best Ball, Team Putts, Team Strokes) - all structurally always
+// exactly 2 teams. Individual formats deliberately don't support
+// Nassau at all, even at exactly 2 players - this was tried and found
+// too confusing in practice, so it was removed rather than left as a
+// conditional, easy-to-miss option.
+const NASSAU_ALWAYS_TWO_SIDED = ["ponto", "beachside", "teamputts", "teamstrokes"];
+const NASSAU_INDIVIDUAL_GAMES = [];
 function nassauEligible(gameKey, playerCount) {
   if (NASSAU_ALWAYS_TWO_SIDED.includes(gameKey)) return true;
   if (NASSAU_INDIVIDUAL_GAMES.includes(gameKey)) return playerCount === 2;
@@ -5836,7 +5845,8 @@ export default function GolfScorecard() {
       case "field_course":
         return "field_limits";
       case "field_limits":
-        return answers.isTournament ? "field_foursomeCount" : "field_prize";
+        if (answers.isTournament) return "field_foursomeCount";
+        return cfg.nassau ? "field_venmo" : "field_prize";
       case "field_foursomeCount":
         return "field_prize";
       case "field_prize":
@@ -5887,7 +5897,7 @@ export default function GolfScorecard() {
         setTournamentFoursomeCount(Math.max(2, Math.ceil((Number(nextAnswers.playerCount) || 8) / 4)));
       } else {
         setGameKey(key);
-        setCfg(withProfileVenmo({ ...GAMES[key].defaults }));
+        setCfg(withProfileVenmo({ ...GAMES[key].defaults, ...(nextAnswers.wantsNassau ? { nassau: true } : {}) }));
         const count = key === "swami" || key === "dstreet" || key === "pontobango" || key === "individualputts" || key === "stableford" ? Math.max(1, Math.min(4, Number(nextAnswers.playerCount) || 4)) : 4;
         setPlayers((p) => {
           const base = [...p];
@@ -8256,7 +8266,6 @@ function computeNassauResults(round, computed) {
                     {g.name}
                   </div>
                   <div className="gsc-tag">{g.tag}</div>
-                  {gameSupportsNassau(key) && <div style={{ fontSize: 11, color: "#B08D57", fontWeight: 700, marginTop: 4 }}>*Nassau Avail</div>}
                   <div className="gsc-no-select" style={{ fontSize: 13, marginTop: 8, color: "#4b4b45" }}>{g.desc}</div>
                   {WHY_PLAY[key] && (
                     <button
@@ -8374,7 +8383,7 @@ function computeNassauResults(round, computed) {
           <div className="gsc-card">
             <div className="gsc-label" style={{ marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Nassau</div>
             <div style={{ fontSize: 13, color: "#4b4b45" }}>
-              Nassau isn't its own game - it's a scoring method you can turn on for any format marked *Nassau Avail above, as long as the round comes down to exactly 2 players or 2 teams. Instead of one winner for the whole round, it splits things into three separate bets: front 9, back 9, and overall 18 - each with its own winner and its own wager, so a rough front 9 doesn't have to spoil the whole day. Turn it on from the "Set your game limits and scoring" step during setup.
+              Nassau isn't its own game - it's a scoring method you can turn on for the team formats marked *Nassau Avail above, all of which are 4-player, 2 vs 2 formats. Instead of one winner for the whole round, it splits things into three separate bets: front 9, back 9, and overall 18 - each with its own winner and its own wager, so a rough front 9 doesn't have to spoil the whole day. Turn it on from the "Set your game limits and scoring" step during setup.
             </div>
           </div>
 
@@ -10206,7 +10215,7 @@ function computeNassauResults(round, computed) {
               const isTourn = vibePlayerCountBucket(wizardAnswers.playerCount) === "tournament";
               const pickVibe = (vibeKey) => {
                 const r = resolveVibeEntry(wizardAnswers.playerCount, vibeKey, undefined);
-                wizardGoNext("vibe", { vibe: vibeKey, resolvedGameKey: r.resolved || null, isTournament: !!r.resolved && isTourn });
+                wizardGoNext("vibe", { vibe: vibeKey, resolvedGameKey: r.resolved || null, isTournament: !!r.resolved && isTourn, wantsNassau: vibeKey === "nassau" });
               };
               return (
                 <div className="gsc-card">
@@ -10218,6 +10227,9 @@ function computeNassauResults(round, computed) {
                   </OptionButton>
                   {Number(wizardAnswers.playerCount) === 4 && (
                     <OptionButton onClick={() => pickVibe("maxStrategy")}>Maximum strategy - constant partner decisions (Wolf)</OptionButton>
+                  )}
+                  {Number(wizardAnswers.playerCount) === 4 && (
+                    <OptionButton onClick={() => pickVibe("nassau")}>Playing a Nassau scoring format - front 9, back 9, and overall, each its own bet</OptionButton>
                   )}
                   <button
                     className="gsc-btn gsc-btn-outline"
@@ -10263,7 +10275,7 @@ function computeNassauResults(round, computed) {
               const isTourn = vibePlayerCountBucket(wizardAnswers.playerCount) === "tournament";
               return (
                 <div className="gsc-card">
-                  <div className="gsc-label" style={{ marginBottom: 10, fontSize: 16 }}>Two good fits - which sounds more like your group?</div>
+                  <div className="gsc-label" style={{ marginBottom: 10, fontSize: 16 }}>{candidates.length} good fits - which sounds more like your group?</div>
                   {candidates.map((key) => (
                     <div
                       key={key}
@@ -11302,10 +11314,12 @@ function computeNassauResults(round, computed) {
                 </div>
               </div>
             )}
-            <div className="gsc-field">
-              <div className="gsc-label">Prize / stakes</div>
-              <input className="gsc-input" value={cfg.prize} onChange={(e) => setCfg({ ...cfg, prize: e.target.value })} />
-            </div>
+            {!cfg.nassau && (
+              <div className="gsc-field">
+                <div className="gsc-label">Prize / stakes</div>
+                <input className="gsc-input" value={cfg.prize} onChange={(e) => setCfg({ ...cfg, prize: e.target.value })} />
+              </div>
+            )}
             {nassauEligible(gameKey, players.length) && (
               <div className="gsc-field">
                 <div className="gsc-label">Scoring method</div>
