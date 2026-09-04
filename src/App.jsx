@@ -5385,6 +5385,12 @@ export default function GolfScorecard() {
     // single cell across all 18 holes to be filled in - that stricter check
     // used to silently skip the celebration over one missed entry, with no
     // indication why.
+    if (r.cfg.nassau) {
+      const nassau = computeNassauResults(r, computedForFinish);
+      if (nassau && nassau.overall.complete && nassau.overall.winner != null) {
+        triggerNassauCelebration("Overall 18", nassauSideLabel(nassau, nassau.overall.winner, r));
+      }
+    }
     goToScreen("roundComplete");
   }
 
@@ -7730,6 +7736,64 @@ function computeNassauResults(round, computed) {
 }
 
   const computed = useMemo(() => computeRoundScoring(round), [round]);
+
+  // Fires a Nassau segment celebration through the same accolade banner
+  // and fireworks already used for eagles, aces, etc. - reused rather
+  // than duplicated, so this looks and sounds consistent with every
+  // other celebration in the app.
+  const nassauFrontCelebratedRef = useRef(false);
+  const nassauBackCelebratedRef = useRef(false);
+  // Own, independent ref rather than reusing prevHoleIdxRef above -
+  // that one gets mutated by the accolade effect declared earlier in
+  // the component, which (since effects run in declaration order)
+  // would already update it to the new value before this effect ever
+  // gets a chance to read the old one.
+  const nassauPrevHoleIdxRef = useRef(holeIdx);
+  function triggerNassauCelebration(segmentLabel, winnerLabel) {
+    setAccoladeQueue((q) => [...q, { emoji: "\u{1F3C6}\u{1F389}", text: `${segmentLabel} won!`, big: true, player: winnerLabel, key: `nassau-${segmentLabel}-${Date.now()}` }]);
+    playFireworksSound();
+    setInPlayFireworks(true);
+    if (inPlayFireworksTimerRef.current) clearTimeout(inPlayFireworksTimerRef.current);
+    inPlayFireworksTimerRef.current = setTimeout(() => setInPlayFireworks(false), 4700);
+  }
+  function nassauSideLabel(nassau, side, r) {
+    return (r.teams[side] || []).map((i) => (r.players[i] && r.players[i].name) || "?").join(" & ");
+  }
+  // Resets both "already celebrated" flags whenever the actual round
+  // changes, so reopening a different round doesn't inherit a stale
+  // flag from whatever round was open before it.
+  useEffect(() => {
+    nassauFrontCelebratedRef.current = false;
+    nassauBackCelebratedRef.current = false;
+  }, [round && round.id]);
+  // Front 9 - fires once, the moment the player leaves hole 9 (index 8),
+  // matching the same "check the hole you just left" pattern already
+  // used for eagle/birdie/ace accolades above.
+  useEffect(() => {
+    if (!round || !round.cfg.nassau || nassauFrontCelebratedRef.current) return;
+    if (nassauPrevHoleIdxRef.current === 8 && holeIdx !== 8) {
+      const nassau = computeNassauResults(round, computed);
+      if (nassau && nassau.front.complete && nassau.front.winner != null) {
+        nassauFrontCelebratedRef.current = true;
+        triggerNassauCelebration("Front 9", nassauSideLabel(nassau, nassau.front.winner, round));
+      }
+    }
+    nassauPrevHoleIdxRef.current = holeIdx;
+  }, [holeIdx]);
+  // Back 9 - hole 18 has nowhere further to navigate to, so this
+  // watches hole 18's own completion status directly instead of a
+  // hole-index change, firing once the moment it flips to complete.
+  useEffect(() => {
+    if (!round || !round.cfg.nassau || nassauBackCelebratedRef.current) return;
+    const hole18Complete = computed && computed.holeResults && computed.holeResults[17] && computed.holeResults[17].complete;
+    if (hole18Complete) {
+      const nassau = computeNassauResults(round, computed);
+      if (nassau && nassau.back.complete && nassau.back.winner != null) {
+        nassauBackCelebratedRef.current = true;
+        triggerNassauCelebration("Back 9", nassauSideLabel(nassau, nassau.back.winner, round));
+      }
+    }
+  }, [computed && computed.holeResults && computed.holeResults[17] && computed.holeResults[17].complete]);
 
   // RipScore is built for phones only - this gate runs after every hook
   // above has already executed (Rules of Hooks requires hooks to run
@@ -12407,6 +12471,13 @@ function computeNassauResults(round, computed) {
         <style>{STYLE}</style>
         <div style={{ position: "relative", background: "#1B4332", padding: "28px 18px 22px", overflow: "hidden" }}>
           <Fireworks />
+          {accolade && (
+            <div key={accolade.key} className="gsc-accolade">
+              <div style={{ fontSize: accolade.big ? 32 : 22 }}>{accolade.emoji}</div>
+              <div style={{ fontWeight: 800, fontSize: accolade.big ? 20 : 15, marginTop: 2 }}>{accolade.text}</div>
+              <div style={{ fontSize: 12, opacity: 0.8, marginTop: 2 }}>{accolade.player}</div>
+            </div>
+          )}
           <div style={{ position: "relative", textAlign: "center" }}>
             <img src={LOGO_DATA_URI} alt="RipScore logo" style={{ width: 66, height: "auto", marginBottom: 10 }} />
             <div className="gsc-display" style={{ fontSize: 24, fontWeight: 700, color: "#F3EFE0" }}>Round Complete!</div>
