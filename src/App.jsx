@@ -1139,6 +1139,20 @@ function haversineYards(lat1, lon1, lat2, lon2) {
 // Wolf (dynamic per-hole teams) could work correctly in the
 // engine but still crash on the card screen, which had its own simpler
 // copy that never learned about it.
+// Nassau requires a round to resolve to exactly 2 sides. The 5
+// paired-team games are always structurally exactly 2 teams; the 5
+// individual games resolve to however many players are entered, so
+// only qualify with exactly 2; everything else (tournament-only
+// formats, and Seabluffe/Wolf's rotating partners, which don't have
+// two fixed, consistent sides for a whole-round bet) never qualifies.
+const NASSAU_ALWAYS_TWO_SIDED = ["ponto", "vegas", "beachside", "teamputts", "teamstrokes"];
+const NASSAU_INDIVIDUAL_GAMES = ["dstreet", "swami", "pontobango", "individualputts", "stableford"];
+function nassauEligible(gameKey, playerCount) {
+  if (NASSAU_ALWAYS_TWO_SIDED.includes(gameKey)) return true;
+  if (NASSAU_INDIVIDUAL_GAMES.includes(gameKey)) return playerCount === 2;
+  return false;
+}
+
 function computeTeamsForHole(round, h, hs) {
   if (round.game === "seabluffe") {
     return SEABLUFFE_PAIRINGS[Math.floor(h / 6)];
@@ -4378,6 +4392,11 @@ export default function GolfScorecard() {
             <div><b>Mulligans per player:</b> {cfg.mulliganSegment ? cfg.mulliganSegment : "None set (tracked freely)"}</div>
             <div><b>Earn a bonus mulligan:</b> {cfg.mulliganChallenge ? cfg.mulliganChallenge : "Not set"}</div>
             <div><b>Prize / stakes:</b> {cfg.prize ? cfg.prize : "Not set"}</div>
+            {cfg.nassau && (
+              <div>
+                <b>Scoring method:</b> Nassau (front ${cfg.nassauFrontPrize || "0"}, back ${cfg.nassauBackPrize || "0"}, overall ${cfg.nassauOverallPrize || "0"})
+              </div>
+            )}
             <div><b>Venmo handle for settling up:</b> {cfg.venmo ? cfg.venmo : "Not set"}</div>
             <div><b>Use per-hole handicapping:</b> {cfg.netScoring ? "Yes" : "No"}</div>
             {["dstreet", "ponto", "teamputts"].includes(round.game) && (
@@ -7639,6 +7658,61 @@ function computeRoundScoring(round) {
   return { playerPoints, playerTotalScore, playerTotalNetScore, playerTotalPutts, playerParPlayed, teamPointsByTeamIdx, holeResults, mulligansUsed, netScoringOn, allocatedStrokes, strokesOffForHole, carryPools };
 }
 
+// Nassau is a scoring lens applied on top of whatever format is already
+// selected, not a separate game format itself - a genuinely head-to-head
+// bet (front 9 / back 9 / overall 18, each its own contest), so it's
+// only ever offered when a round resolves to exactly 2 sides (2
+// individual players, or 2 teams). Deliberately built as an additive
+// layer on top of computeRoundScoring's own output, reusing whichever
+// method that format already uses to decide a winner, rather than
+// touching or duplicating that core scoring logic itself.
+function computeNassauResults(round, computed) {
+  if (!round || !round.cfg.nassau) return null;
+  if (!round.teams || round.teams.length !== 2) return null;
+  const g = GAMES[round.game];
+  const holeResults = computed && computed.holeResults;
+  if (!holeResults || holeResults.length === 0) return null;
+
+  // totalScoring games (Team Strokes, Swami) and puttsOnlyScoring games
+  // (Team Putts, Individual Putts) decide their winner by lowest total
+  // strokes/putts at the end, not hole-by-hole points - so Nassau
+  // segments for these compare summed strokes/putts instead, same
+  // "lower wins" rule those formats already use everywhere else.
+  const usePuttsMetric = !!g.puttsOnlyScoring;
+  const useStrokesMetric = !!g.totalScoring && !usePuttsMetric;
+  const lowerIsBetter = useStrokesMetric || usePuttsMetric;
+
+  function segment(startH, endH) {
+    let t0 = 0, t1 = 0, holesPlayed = 0;
+    const segmentLength = endH - startH + 1;
+    for (let h = startH; h <= endH; h++) {
+      const hr = holeResults[h];
+      if (!hr || !hr.complete) continue;
+      holesPlayed++;
+      if (lowerIsBetter) {
+        const metric = usePuttsMetric ? "puttSum" : "scoreSum";
+        t0 += (hr.teamRes[0] && hr.teamRes[0][metric]) || 0;
+        t1 += (hr.teamRes[1] && hr.teamRes[1][metric]) || 0;
+      } else {
+        t0 += (hr.ptsAwarded[0].score || 0) + (hr.ptsAwarded[0].putt || 0);
+        t1 += (hr.ptsAwarded[1].score || 0) + (hr.ptsAwarded[1].putt || 0);
+      }
+    }
+    let winner = null; // 0, 1, or null (tied, or nothing complete yet)
+    if (holesPlayed > 0 && t0 !== t1) {
+      winner = lowerIsBetter ? (t0 < t1 ? 0 : 1) : (t0 > t1 ? 0 : 1);
+    }
+    return { t0, t1, winner, complete: holesPlayed === segmentLength, holesPlayed };
+  }
+
+  return {
+    lowerIsBetter,
+    front: segment(0, 8),
+    back: segment(9, 17),
+    overall: segment(0, 17),
+  };
+}
+
   const computed = useMemo(() => computeRoundScoring(round), [round]);
 
   // RipScore is built for phones only - this gate runs after every hook
@@ -10727,6 +10801,46 @@ function computeRoundScoring(round) {
                   )}
                 </div>
               ))}
+              {nassauEligible(wizardAnswers.resolvedGameKey, players.length) && (
+                <div className="gsc-field" style={{ marginTop: 10 }}>
+                  <div className="gsc-label">Scoring method</div>
+                  <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 6 }}>
+                    Nassau splits the round into three separate bets: front 9, back 9, and overall 18 - each its own winner.
+                  </div>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button
+                      className="gsc-btn"
+                      style={{ flex: 1, background: !activeCfg.nassau ? "#A42E2D" : "transparent", color: !activeCfg.nassau ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
+                      onClick={() => setActiveCfg({ ...activeCfg, nassau: false })}
+                    >
+                      Overall
+                    </button>
+                    <button
+                      className="gsc-btn"
+                      style={{ flex: 1, background: activeCfg.nassau ? "#A42E2D" : "transparent", color: activeCfg.nassau ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
+                      onClick={() => setActiveCfg({ ...activeCfg, nassau: true })}
+                    >
+                      Nassau
+                    </button>
+                  </div>
+                  {activeCfg.nassau && (
+                    <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 8 }}>
+                      <div>
+                        <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 4 }}>Front 9 wager</div>
+                        <input className="gsc-input" placeholder="$5" value={activeCfg.nassauFrontPrize || ""} onChange={(e) => setActiveCfg({ ...activeCfg, nassauFrontPrize: e.target.value })} />
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 4 }}>Back 9 wager</div>
+                        <input className="gsc-input" placeholder="$5" value={activeCfg.nassauBackPrize || ""} onChange={(e) => setActiveCfg({ ...activeCfg, nassauBackPrize: e.target.value })} />
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 4 }}>Overall 18 wager</div>
+                        <input className="gsc-input" placeholder="$5" value={activeCfg.nassauOverallPrize || ""} onChange={(e) => setActiveCfg({ ...activeCfg, nassauOverallPrize: e.target.value })} />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
               <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 14 }} onClick={() => wizardGoNext("field_players", {})}>
                 Continue
               </button>
@@ -11168,6 +11282,46 @@ function computeRoundScoring(round) {
               <div className="gsc-label">Prize / stakes</div>
               <input className="gsc-input" value={cfg.prize} onChange={(e) => setCfg({ ...cfg, prize: e.target.value })} />
             </div>
+            {nassauEligible(gameKey, players.length) && (
+              <div className="gsc-field">
+                <div className="gsc-label">Scoring method</div>
+                <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 6 }}>
+                  Nassau splits the round into three separate bets: front 9, back 9, and overall 18 - each its own winner.
+                </div>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button
+                    className="gsc-btn"
+                    style={{ flex: 1, background: !cfg.nassau ? "#A42E2D" : "transparent", color: !cfg.nassau ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
+                    onClick={() => setCfg({ ...cfg, nassau: false })}
+                  >
+                    Overall
+                  </button>
+                  <button
+                    className="gsc-btn"
+                    style={{ flex: 1, background: cfg.nassau ? "#A42E2D" : "transparent", color: cfg.nassau ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
+                    onClick={() => setCfg({ ...cfg, nassau: true })}
+                  >
+                    Nassau
+                  </button>
+                </div>
+                {cfg.nassau && (
+                  <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 8 }}>
+                    <div>
+                      <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 4 }}>Front 9 wager</div>
+                      <input className="gsc-input" placeholder="$5" value={cfg.nassauFrontPrize || ""} onChange={(e) => setCfg({ ...cfg, nassauFrontPrize: e.target.value })} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 4 }}>Back 9 wager</div>
+                      <input className="gsc-input" placeholder="$5" value={cfg.nassauBackPrize || ""} onChange={(e) => setCfg({ ...cfg, nassauBackPrize: e.target.value })} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 4 }}>Overall 18 wager</div>
+                      <input className="gsc-input" placeholder="$5" value={cfg.nassauOverallPrize || ""} onChange={(e) => setCfg({ ...cfg, nassauOverallPrize: e.target.value })} />
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
             <div className="gsc-field">
               <div className="gsc-label">Venmo handle for settling up (optional)</div>
               <input className="gsc-input" placeholder="@your-venmo" value={cfg.venmo || ""} onChange={(e) => setCfg({ ...cfg, venmo: e.target.value })} />
@@ -13337,6 +13491,39 @@ function computeRoundScoring(round) {
             </div>
           </div>
           )}
+
+          {round.cfg.nassau && (() => {
+            const nassau = computeNassauResults(round, computed);
+            if (!nassau) return null;
+            const sideLabel = (side) => (round.teams[side] || []).map((i) => (round.players[i] && round.players[i].name) || "?").join(" & ");
+            const segmentRow = (label, seg, prizeKey) => {
+              const prize = round.cfg[prizeKey];
+              return (
+                <div style={{ padding: "8px 0", borderBottom: "1px solid #eee6cf" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div style={{ fontWeight: 700, fontSize: 13 }}>{label}</div>
+                    {prize && <div style={{ fontSize: 12, color: "#B08D57" }}>${prize}</div>}
+                  </div>
+                  <div style={{ fontSize: 13, marginTop: 2 }}>
+                    {seg.winner == null ? (
+                      <span style={{ color: "#8a8a80" }}>{seg.holesPlayed === 0 ? "Not started" : "Tied"}</span>
+                    ) : (
+                      <span style={{ fontWeight: 700, color: "#1B4332" }}>{sideLabel(seg.winner)} {seg.complete ? "won" : "leading"}</span>
+                    )}
+                    {!seg.complete && seg.holesPlayed > 0 && <span style={{ color: "#8a8a80", marginLeft: 4 }}>(thru {seg.holesPlayed})</span>}
+                  </div>
+                </div>
+              );
+            };
+            return (
+              <div className="gsc-card" style={{ marginTop: 10 }}>
+                <div className="gsc-label" style={{ marginBottom: 8, fontSize: 15, color: "#1B4332", fontWeight: 800 }}>Nassau</div>
+                {segmentRow("Front 9", nassau.front, "nassauFrontPrize")}
+                {segmentRow("Back 9", nassau.back, "nassauBackPrize")}
+                {segmentRow("Overall 18", nassau.overall, "nassauOverallPrize")}
+              </div>
+            );
+          })()}
 
           <button className="gsc-link" onClick={() => setShowGrid((s) => !s)}>{showGrid ? "Hide" : "Show"} full 18-hole scorecard</button>
           {showGrid && (() => {
