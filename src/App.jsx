@@ -1152,6 +1152,12 @@ function nassauEligible(gameKey, playerCount) {
   if (NASSAU_INDIVIDUAL_GAMES.includes(gameKey)) return playerCount === 2;
   return false;
 }
+// For static game listings (homepage, Games tab) where no specific
+// player count is known yet - just "can this format ever use Nassau,"
+// not "does it right now."
+function gameSupportsNassau(gameKey) {
+  return NASSAU_ALWAYS_TWO_SIDED.includes(gameKey) || NASSAU_INDIVIDUAL_GAMES.includes(gameKey);
+}
 
 function computeTeamsForHole(round, h, hs) {
   if (round.game === "seabluffe") {
@@ -8082,6 +8088,7 @@ function computeNassauResults(round, computed) {
                     </button>
                     <div style={{ fontSize: 26, marginBottom: 6 }}>{emoji}</div>
                     <div style={{ fontSize: 11.5, fontWeight: 700, color: "#fff", lineHeight: 1.3 }}>{GAMES[key].name}</div>
+                    {gameSupportsNassau(key) && <div style={{ fontSize: 9.5, color: "rgba(255,255,255,0.85)", marginTop: 2 }}>*Nassau Avail</div>}
                   </div>
                 );
               })}
@@ -8249,6 +8256,7 @@ function computeNassauResults(round, computed) {
                     {g.name}
                   </div>
                   <div className="gsc-tag">{g.tag}</div>
+                  {gameSupportsNassau(key) && <div style={{ fontSize: 11, color: "#B08D57", fontWeight: 700, marginTop: 4 }}>*Nassau Avail</div>}
                   <div className="gsc-no-select" style={{ fontSize: 13, marginTop: 8, color: "#4b4b45" }}>{g.desc}</div>
                   {WHY_PLAY[key] && (
                     <button
@@ -8290,6 +8298,7 @@ function computeNassauResults(round, computed) {
                     {g.name}
                   </div>
                   <div className="gsc-tag">{g.tag}</div>
+                  {gameSupportsNassau(key) && <div style={{ fontSize: 11, color: "#B08D57", fontWeight: 700, marginTop: 4 }}>*Nassau Avail</div>}
                   <div className="gsc-no-select" style={{ fontSize: 13, marginTop: 8, color: "#4b4b45" }}>{g.desc}</div>
                   {WHY_PLAY[key] && (
                     <button
@@ -8360,6 +8369,13 @@ function computeNassauResults(round, computed) {
                 </div>
               );
             })}
+          </div>
+
+          <div className="gsc-card">
+            <div className="gsc-label" style={{ marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Nassau</div>
+            <div style={{ fontSize: 13, color: "#4b4b45" }}>
+              Nassau isn't its own game - it's a scoring method you can turn on for any format marked *Nassau Avail above, as long as the round comes down to exactly 2 players or 2 teams. Instead of one winner for the whole round, it splits things into three separate bets: front 9, back 9, and overall 18 - each with its own winner and its own wager, so a rough front 9 doesn't have to spoil the whole day. Turn it on from the "Set your game limits and scoring" step during setup.
+            </div>
           </div>
 
           <div className="gsc-card">
@@ -9425,13 +9441,21 @@ function computeNassauResults(round, computed) {
           <div className="gsc-card gsc-no-select">
             <div style={{ fontSize: 13, color: "#4b4b45", lineHeight: 1.6 }}>
               {Object.keys(GAME_TILE_STYLE).map((key, i) => (
-                <div key={key} style={{ marginBottom: i === Object.keys(GAME_TILE_STYLE).length - 1 ? 0 : 20 }}>
+                <div key={key} style={{ marginBottom: 20 }}>
                   <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px", fontSize: 14 }}>
                     {GAME_TILE_STYLE[key].emoji} {GAMES[key].name}
                   </p>
                   <p style={{ margin: 0 }}>{WHY_PLAY[key]}</p>
                 </div>
               ))}
+              <div style={{ marginBottom: 0 }}>
+                <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px", fontSize: 14 }}>
+                  {"\u26F3"} Nassau
+                </p>
+                <p style={{ margin: 0 }}>
+                  Nassau's whole appeal is built into its structure - by splitting the round into three separate bets instead of one, a bad front 9 doesn't have to ruin the day, since the back 9 and the overall match are still fully in play. That built-in "second chance" is exactly why it's stayed the standard wager in casual and club golf for generations - it keeps every single hole meaningful, right up through the 18th, instead of a round quietly turning into a formality once someone gets too far ahead too early.
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -10515,7 +10539,7 @@ function computeNassauResults(round, computed) {
 
           {wizardStepId === "field_limits" && g && (
             <div className="gsc-card">
-              <div className="gsc-label" style={{ marginBottom: 10, fontSize: 16 }}>Set your game limits (optional)</div>
+              <div className="gsc-label" style={{ marginBottom: 10, fontSize: 16 }}>Set your game limits and scoring (optional)</div>
               {g.hasScore && (
                 <div className="gsc-field">
                   <div className="gsc-label">Max strokes over par per hole</div>
@@ -10585,6 +10609,46 @@ function computeNassauResults(round, computed) {
                   If set, anyone can award a player an extra mulligan on the scoring screen once they've done this.
                 </div>
               </div>
+              {nassauEligible(wizardAnswers.resolvedGameKey, players.length) && (
+                <div className="gsc-field" style={{ marginTop: 10 }}>
+                  <div className="gsc-label">Scoring method</div>
+                  <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 6 }}>
+                    Nassau splits the round into three separate bets: front 9, back 9, and overall 18 - each its own winner.
+                  </div>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button
+                      className="gsc-btn"
+                      style={{ flex: 1, background: !activeCfg.nassau ? "#A42E2D" : "transparent", color: !activeCfg.nassau ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
+                      onClick={() => setActiveCfg({ ...activeCfg, nassau: false })}
+                    >
+                      Overall
+                    </button>
+                    <button
+                      className="gsc-btn"
+                      style={{ flex: 1, background: activeCfg.nassau ? "#A42E2D" : "transparent", color: activeCfg.nassau ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
+                      onClick={() => setActiveCfg({ ...activeCfg, nassau: true })}
+                    >
+                      Nassau
+                    </button>
+                  </div>
+                  {activeCfg.nassau && (
+                    <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 8 }}>
+                      <div>
+                        <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 4 }}>Front 9 wager</div>
+                        <input className="gsc-input" placeholder="$5" value={activeCfg.nassauFrontPrize || ""} onChange={(e) => setActiveCfg({ ...activeCfg, nassauFrontPrize: e.target.value })} />
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 4 }}>Back 9 wager</div>
+                        <input className="gsc-input" placeholder="$5" value={activeCfg.nassauBackPrize || ""} onChange={(e) => setActiveCfg({ ...activeCfg, nassauBackPrize: e.target.value })} />
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 4 }}>Overall 18 wager</div>
+                        <input className="gsc-input" placeholder="$5" value={activeCfg.nassauOverallPrize || ""} onChange={(e) => setActiveCfg({ ...activeCfg, nassauOverallPrize: e.target.value })} />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
               {wizardAnswers.resolvedGameKey !== "avoscramble" && (
                 <div className="gsc-field" style={{ marginTop: 10 }}>
                   <div className="gsc-label">Use per-hole handicapping (net scoring)?</div>
@@ -10801,49 +10865,6 @@ function computeNassauResults(round, computed) {
                   )}
                 </div>
               ))}
-              <div style={{ fontSize: 11, color: "red", padding: 8, background: "#fee" }}>
-                DEBUG: resolvedGameKey="{String(wizardAnswers.resolvedGameKey)}" players.length={players.length} eligible={String(nassauEligible(wizardAnswers.resolvedGameKey, players.length))}
-              </div>
-              {nassauEligible(wizardAnswers.resolvedGameKey, players.length) && (
-                <div className="gsc-field" style={{ marginTop: 10 }}>
-                  <div className="gsc-label">Scoring method</div>
-                  <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 6 }}>
-                    Nassau splits the round into three separate bets: front 9, back 9, and overall 18 - each its own winner.
-                  </div>
-                  <div style={{ display: "flex", gap: 8 }}>
-                    <button
-                      className="gsc-btn"
-                      style={{ flex: 1, background: !activeCfg.nassau ? "#A42E2D" : "transparent", color: !activeCfg.nassau ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
-                      onClick={() => setActiveCfg({ ...activeCfg, nassau: false })}
-                    >
-                      Overall
-                    </button>
-                    <button
-                      className="gsc-btn"
-                      style={{ flex: 1, background: activeCfg.nassau ? "#A42E2D" : "transparent", color: activeCfg.nassau ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
-                      onClick={() => setActiveCfg({ ...activeCfg, nassau: true })}
-                    >
-                      Nassau
-                    </button>
-                  </div>
-                  {activeCfg.nassau && (
-                    <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 8 }}>
-                      <div>
-                        <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 4 }}>Front 9 wager</div>
-                        <input className="gsc-input" placeholder="$5" value={activeCfg.nassauFrontPrize || ""} onChange={(e) => setActiveCfg({ ...activeCfg, nassauFrontPrize: e.target.value })} />
-                      </div>
-                      <div>
-                        <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 4 }}>Back 9 wager</div>
-                        <input className="gsc-input" placeholder="$5" value={activeCfg.nassauBackPrize || ""} onChange={(e) => setActiveCfg({ ...activeCfg, nassauBackPrize: e.target.value })} />
-                      </div>
-                      <div>
-                        <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 4 }}>Overall 18 wager</div>
-                        <input className="gsc-input" placeholder="$5" value={activeCfg.nassauOverallPrize || ""} onChange={(e) => setActiveCfg({ ...activeCfg, nassauOverallPrize: e.target.value })} />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
               <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 14 }} onClick={() => wizardGoNext("field_players", {})}>
                 Continue
               </button>
