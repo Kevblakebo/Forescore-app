@@ -2177,6 +2177,8 @@ export default function GolfScorecard() {
   const [createGroupName, setCreateGroupName] = useState("");
   const [createGroupAvatar, setCreateGroupAvatar] = useState("");
   const [createGroupAvatarPickerOpen, setCreateGroupAvatarPickerOpen] = useState(false);
+  const [justCreatedGroupCode, setJustCreatedGroupCode] = useState("");
+  const [copiedGroupCode, setCopiedGroupCode] = useState(false);
   const [editGroupAvatarPickerOpen, setEditGroupAvatarPickerOpen] = useState(false);
   const [deleteGroupConfirming, setDeleteGroupConfirming] = useState(false);
   const [leaveGroupConfirming, setLeaveGroupConfirming] = useState(false);
@@ -3095,6 +3097,7 @@ export default function GolfScorecard() {
     }
     setCreateGroupBusy(true);
     setGroupsErr("");
+    setJustCreatedGroupCode("");
     const code = genCode();
     const { error: groupErr } = await supabase.from("groups").insert({ id: code, name, avatar: createGroupAvatar, created_by: session.user.id });
     if (groupErr) {
@@ -3121,6 +3124,7 @@ export default function GolfScorecard() {
     setCreateGroupName("");
     setCreateGroupAvatar("");
     setCreateGroupAvatarPickerOpen(false);
+    setJustCreatedGroupCode(code);
     loadMyGroups();
   }
 
@@ -7238,6 +7242,16 @@ export default function GolfScorecard() {
   useEffect(() => {
     latestRoundRef.current = round;
   }, [round]);
+  // Which exact (hole, player, field, value) combinations have already
+  // shown their celebration once - keyed on the actual value too, so if
+  // someone genuinely corrects a score to something different, that new
+  // result still gets its own accolade, but toggling back to a value
+  // already celebrated (including just navigating back and forth
+  // without changing anything at all) doesn't keep re-showing it.
+  const shownAccoladesRef = useRef(new Set());
+  useEffect(() => {
+    shownAccoladesRef.current = new Set();
+  }, [round && round.id]);
   const accoladeTimerRef = useRef(null);
 
   // Figures out whether a just-entered stroke/putt count deserves a fun
@@ -7280,12 +7294,24 @@ export default function GolfScorecard() {
         const entry = holeScores[i] || {};
         const playerName = isOneTeamScore ? "Team" : p.name || `Player ${LETTERS[i]}`;
         if (entry.strokes != null && entry.strokes !== "") {
-          const acc = getAccolade("strokes", Number(entry.strokes), prevParH);
-          if (acc) newAccolades.push({ ...acc, player: playerName, key: `${Date.now()}-${i}-s` });
+          const shownKey = `${prevIdx}-${i}-strokes-${entry.strokes}`;
+          if (!shownAccoladesRef.current.has(shownKey)) {
+            const acc = getAccolade("strokes", Number(entry.strokes), prevParH);
+            if (acc) {
+              newAccolades.push({ ...acc, player: playerName, key: `${Date.now()}-${i}-s` });
+              shownAccoladesRef.current.add(shownKey);
+            }
+          }
         }
         if (entry.putts != null && entry.putts !== "") {
-          const acc = getAccolade("putts", Number(entry.putts), prevParH);
-          if (acc) newAccolades.push({ ...acc, player: playerName, key: `${Date.now()}-${i}-p` });
+          const shownKey = `${prevIdx}-${i}-putts-${entry.putts}`;
+          if (!shownAccoladesRef.current.has(shownKey)) {
+            const acc = getAccolade("putts", Number(entry.putts), prevParH);
+            if (acc) {
+              newAccolades.push({ ...acc, player: playerName, key: `${Date.now()}-${i}-p` });
+              shownAccoladesRef.current.add(shownKey);
+            }
+          }
         }
       });
       if (newAccolades.length > 0) setAccoladeQueue((q) => [...q, ...newAccolades]);
@@ -8365,6 +8391,25 @@ function computeNassauResults(round, computed, maxHole = 17) {
                   {createGroupBusy ? "Creating..." : "Create"}
                 </button>
               </div>
+              {justCreatedGroupCode && (
+                <div style={{ background: "#EBF0EC", borderRadius: 8, padding: "10px 12px", marginBottom: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div>
+                    <div style={{ fontSize: 11, color: "#3F6B54", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px" }}>Group created! Share this code</div>
+                    <div className="gsc-mono" style={{ fontSize: 20, fontWeight: 800, color: "#1B4332", letterSpacing: "1px" }}>{justCreatedGroupCode}</div>
+                  </div>
+                  <button
+                    className="gsc-btn gsc-btn-outline"
+                    style={{ flex: "0 0 auto" }}
+                    onClick={() => {
+                      navigator.clipboard.writeText(justCreatedGroupCode).catch(() => {});
+                      setCopiedGroupCode(true);
+                      setTimeout(() => setCopiedGroupCode(false), 1500);
+                    }}
+                  >
+                    {copiedGroupCode ? "Copied!" : "Copy"}
+                  </button>
+                </div>
+              )}
               {createGroupAvatarPickerOpen && (
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 8, padding: "4px 0 10px" }}>
                   {AVATAR_OPTIONS.map((emoji) => (
@@ -9544,6 +9589,25 @@ function computeNassauResults(round, computed, maxHole = 17) {
                       {createGroupBusy ? "Creating..." : "Create"}
                     </button>
                   </div>
+                  {justCreatedGroupCode && (
+                    <div style={{ background: "#EBF0EC", borderRadius: 8, padding: "10px 12px", marginBottom: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <div>
+                        <div style={{ fontSize: 11, color: "#3F6B54", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px" }}>Group created! Share this code</div>
+                        <div className="gsc-mono" style={{ fontSize: 20, fontWeight: 800, color: "#1B4332", letterSpacing: "1px" }}>{justCreatedGroupCode}</div>
+                      </div>
+                      <button
+                        className="gsc-btn gsc-btn-outline"
+                        style={{ flex: "0 0 auto" }}
+                        onClick={() => {
+                          navigator.clipboard.writeText(justCreatedGroupCode).catch(() => {});
+                          setCopiedGroupCode(true);
+                          setTimeout(() => setCopiedGroupCode(false), 1500);
+                        }}
+                      >
+                        {copiedGroupCode ? "Copied!" : "Copy"}
+                      </button>
+                    </div>
+                  )}
                   {createGroupAvatarPickerOpen && (
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 8, padding: "4px 0 10px" }}>
                       {AVATAR_OPTIONS.map((emoji) => (
@@ -14079,7 +14143,7 @@ function computeNassauResults(round, computed, maxHole = 17) {
                       return (
                         <tr key={i} style={{ background: i % 2 === 1 ? "#FAF8F1" : undefined }}>
                           <td style={{ textAlign: "left", fontWeight: 700 }}>
-                            {p.avatar ? <span style={{ fontSize: 13 }}>{p.avatar}</span> : null} {(p.name || "").trim() || "-"}
+                            {(p.name || "").trim().slice(0, 3) || "-"}
                           </td>
                           <td style={{ fontWeight: 700 }}>{totalCell(t)}</td>
                           {g.hasScore && <td>{t.sCount ? formatRelPar(t.relPar) : "-"}</td>}
