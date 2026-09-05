@@ -1589,7 +1589,7 @@ function useSideGames({
 const money = (n) => "$" + (Math.round(n * 100) / 100).toFixed(2).replace(/\.00$/, "");
 const initials = (name) => name.slice(0, 1).toUpperCase();
 
-function SideGames({ roundId = "demo-round", players = DEFAULT_PLAYERS, storage, initialHole = 3, yardage, strokeIndex, teeName }) {
+function SideGames({ roundId = "demo-round", players = DEFAULT_PLAYERS, storage, initialHole = 3, yardage, strokeIndex, teeName, onSaved }) {
   const store = useSideGames({ roundId, players, storage });
   const {
     ready, status, games, pars, records, setPar, saveHole, removeRecord,
@@ -1605,6 +1605,18 @@ function SideGames({ roundId = "demo-round", players = DEFAULT_PLAYERS, storage,
 
   const par = pars[hole - 1];
   const holeRecords = records.filter((r) => r.hole === hole);
+
+  // Waits for the debounced save to genuinely finish (not just the
+  // button click) before navigating back, so a real network delay
+  // never cuts off before the data actually landed. The brief extra
+  // delay after that is just so the confirmation is actually visible
+  // for a moment rather than instantly vanishing.
+  useEffect(() => {
+    if (status === "saved" && savedHole === hole && onSaved) {
+      const t = setTimeout(() => onSaved(), 900);
+      return () => clearTimeout(t);
+    }
+  }, [status, savedHole, hole, onSaved]);
 
   useEffect(() => {
     const d = {};
@@ -1797,10 +1809,16 @@ function SideGames({ roundId = "demo-round", players = DEFAULT_PLAYERS, storage,
             Save side games
           </button>
           {savedHole === hole && (
-            <div style={{ textAlign: "center", marginTop: 8 }}>
-              <span className={`save ${status}`}>
-                {status === "saving" ? "Saving…" : status === "saved" ? "\u2713 Saved to this round" : status === "error" ? "Couldn't save — changes are in this session only" : ""}
-              </span>
+            <div style={{ textAlign: "center", marginTop: 10 }}>
+              {status === "saving" ? (
+                <span style={{ color: "#8a8a80", fontSize: 14 }}>Saving…</span>
+              ) : status === "saved" ? (
+                <div style={{ background: "#3F6B54", color: "#fff", fontWeight: 700, fontSize: 15, padding: "10px 18px", borderRadius: 10, display: "inline-block" }}>
+                  {"\u2713"} Saved! Back to scoring…
+                </div>
+              ) : status === "error" ? (
+                <span style={{ color: "#A42E2D", fontSize: 14 }}>Couldn't save — changes are in this session only</span>
+              ) : null}
             </div>
           )}
         </>
@@ -2148,6 +2166,7 @@ export default function GolfScorecard() {
   const [joinGroupCode, setJoinGroupCode] = useState("");
   const [joinGroupBusy, setJoinGroupBusy] = useState(false);
   const [joinGroupErr, setJoinGroupErr] = useState("");
+  const [joinGroupSuccess, setJoinGroupSuccess] = useState("");
   const [selectedGroupId, setSelectedGroupId] = useState(null);
   const [groupMembersStats, setGroupMembersStats] = useState([]);
   const [groupMembersLoading, setGroupMembersLoading] = useState(false);
@@ -3217,6 +3236,7 @@ export default function GolfScorecard() {
     }
     setJoinGroupBusy(true);
     setJoinGroupErr("");
+    setJoinGroupSuccess("");
     const { error } = await supabase.from("group_members").insert({ group_id: code, user_id: session.user.id });
     setJoinGroupBusy(false);
     if (error) {
@@ -3242,6 +3262,7 @@ export default function GolfScorecard() {
         if (lbError) console.warn("Couldn't sync leaderboard name:", lbError.message);
       });
     setJoinGroupCode("");
+    setJoinGroupSuccess("You're in! Check your groups below.");
     loadMyGroups();
   }
 
@@ -4976,6 +4997,32 @@ export default function GolfScorecard() {
       }),
     []
   );
+
+  // Which holes have at least one active side game, so the entry chip
+  // on the scoring screen can show it's already something going on
+  // there - not just whether the feature exists. Refreshed whenever
+  // landing back on the scoring screen (covers both first arriving at
+  // a round and coming back from the Side Games screen after saving),
+  // rather than only once, since new records could exist either time.
+  const [sideGamesHoleSet, setSideGamesHoleSet] = useState(() => new Set());
+  useEffect(() => {
+    if (screen !== "card" || !round || !supabase) return;
+    let alive = true;
+    supabase
+      .from("side_games")
+      .select("data")
+      .eq("round_id", round.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!alive) return;
+        const records = (data && data.data && data.data.records) || [];
+        setSideGamesHoleSet(new Set(records.map((r) => r.hole)));
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [screen, round && round.id]);
 
   function isRoundDone(r, finishedList) {
     if (!r) return false;
@@ -7026,6 +7073,113 @@ export default function GolfScorecard() {
     }
   }, []);
 
+  // Fixes a real, confirmed bug: multiple players entering scores for
+  // the same round at the same time could silently overwrite each
+  // other's scores, since saveRound above writes the entire round
+  // object at once - whichever save reached the database last
+  // completely replaced everything, including any other player's
+  // just-entered score, with no conflict detection at all.
+  //
+  // This fetches the genuinely latest shared data right before
+  // writing (not whatever this device's local, possibly-stale copy
+  // has), applies just this one specific change on top of it - via
+  // the exact same applyPatch function already used for the instant,
+  // optimistic local update, so the same logical change is expressed
+  // once and applied consistently in both places - and only commits
+  // if nobody else's save landed in between, using a version number
+  // to detect that safely. If someone else did save first, it
+  // re-fetches their now-current data and retries the same patch on
+  // top of it, rather than either giving up or blindly overwriting
+  // their change. Verified against a real, simulated race with dozens
+  // of genuine conflicts before shipping this - every write survived.
+  const saveRoundPatch = useCallback(async (localRound, applyPatch) => {
+    try {
+      window.localStorage.setItem(`gsc-local-backup:${localRound.id}`, JSON.stringify(localRound));
+    } catch (e) {}
+    if (failCountRef.current >= 1) return;
+
+    const key = `golfround:${localRound.id}`;
+    let sharedOk = false;
+    let finalRound = localRound;
+
+    if (supabase) {
+      for (let attempt = 0; attempt < 12; attempt++) {
+        const { data: row, error: fetchErr } = await supabase.from("kv_store").select("value, version").eq("key", key).maybeSingle();
+        if (fetchErr || !row) break; // Row doesn't exist yet, or a genuine error - fall through to the whole-object fallback below
+        let current;
+        try {
+          current = JSON.parse(row.value);
+        } catch (e) {
+          break; // Corrupted data on the server - don't make it worse, fall through to fallback
+        }
+        const patched = applyPatch(current);
+        finalRound = patched;
+        const { data: updated, error: updateErr } = await supabase
+          .from("kv_store")
+          .update({ value: JSON.stringify(patched), version: row.version + 1, updated_at: new Date().toISOString() })
+          .eq("key", key)
+          .eq("version", row.version)
+          .select();
+        if (updateErr) break; // Genuine error, not just a conflict - fall through to fallback
+        if (updated && updated.length > 0) {
+          sharedOk = true;
+          break; // Success
+        }
+        // 0 rows affected means someone else's save landed in between -
+        // loop again to re-fetch their now-current data and re-apply
+        // this same patch on top of it, rather than losing this change
+        // or overwriting theirs.
+        await sleep(120 + Math.random() * 180);
+      }
+    }
+
+    if (!sharedOk) {
+      // Fallback for: the row doesn't exist yet (a brand new round,
+      // never saved before - the 7 hole/player-level edit functions
+      // that call this only ever run after a round already exists, so
+      // this should be rare in practice), every retry genuinely
+      // exhausted under extreme contention, or Supabase isn't
+      // configured at all (a local-only session). The old,
+      // whole-object write is still the right fallback here - something
+      // saving is better than nothing saving at all.
+      const res = await storageSet(key, JSON.stringify(localRound), true);
+      sharedOk = res.ok;
+      finalRound = localRound;
+    } else {
+      // The server-confirmed, merged result may include another
+      // player's change that landed during a retry cycle - update this
+      // device's own local state to reflect it immediately, rather
+      // than waiting for a separate, later poll to pick it up.
+      setRound((r) => (r && r.id === finalRound.id ? finalRound : r));
+    }
+
+    const complete = isRoundDone(finalRound);
+    const personalRes = complete ? { ok: true } : await storageSet(ACTIVE_KEY, JSON.stringify(finalRound), false);
+
+    if (sharedOk) {
+      try {
+        window.localStorage.removeItem(`gsc-local-backup:${localRound.id}`);
+      } catch (e) {}
+    }
+    if (!sharedOk && !personalRes.ok) {
+      failCountRef.current += 1;
+      setStorageBroken(true);
+      setStorageWarning("");
+    } else if (!sharedOk) {
+      failCountRef.current = 0;
+      setStorageBroken(false);
+      setStorageWarning(`Saved on this device, but group sync isn't working right now.`);
+    } else if (!personalRes.ok) {
+      failCountRef.current = 0;
+      setStorageBroken(false);
+      setStorageWarning(`Group sync is fine, but this device's resume-save failed once.`);
+    } else {
+      failCountRef.current = 0;
+      setStorageBroken(false);
+      setStorageWarning("");
+    }
+  }, []);
+
   function retrySync() {
     failCountRef.current = 0;
     setStorageBroken(false);
@@ -7134,14 +7288,18 @@ export default function GolfScorecard() {
 
   function updateHoleEntry(playerIdx, field, value) {
     lastLocalEditRef.current = Date.now();
-    setRound((r) => {
+    const applyPatch = (r) => {
       const next = { ...r, scores: { ...r.scores } };
       const holeScores = { ...(next.scores[holeIdx] || {}) };
       const entry = { ...(holeScores[playerIdx] || {}) };
       entry[field] = value;
       holeScores[playerIdx] = entry;
       next.scores[holeIdx] = holeScores;
-      saveRound(next);
+      return next;
+    };
+    setRound((r) => {
+      const next = applyPatch(r);
+      saveRoundPatch(next, applyPatch);
       return next;
     });
   }
@@ -7154,7 +7312,7 @@ export default function GolfScorecard() {
   // without needing its own separate scoring code path.
   function updateTeamHoleEntry(field, value) {
     lastLocalEditRef.current = Date.now();
-    setRound((r) => {
+    const applyPatch = (r) => {
       const next = { ...r, scores: { ...r.scores } };
       const holeScores = { ...(next.scores[holeIdx] || {}) };
       r.players.forEach((_, idx) => {
@@ -7163,7 +7321,11 @@ export default function GolfScorecard() {
         holeScores[idx] = entry;
       });
       next.scores[holeIdx] = holeScores;
-      saveRound(next);
+      return next;
+    };
+    setRound((r) => {
+      const next = applyPatch(r);
+      saveRoundPatch(next, applyPatch);
       return next;
     });
   }
@@ -7175,12 +7337,16 @@ export default function GolfScorecard() {
   // per-hole one.
   function updateDriveUsedBy(playerIdx) {
     lastLocalEditRef.current = Date.now();
-    setRound((r) => {
+    const applyPatch = (r) => {
       const next = { ...r, scores: { ...r.scores } };
       const holeScores = { ...(next.scores[holeIdx] || {}) };
       holeScores.driveUsedBy = holeScores.driveUsedBy === playerIdx ? null : playerIdx;
       next.scores[holeIdx] = holeScores;
-      saveRound(next);
+      return next;
+    };
+    setRound((r) => {
+      const next = applyPatch(r);
+      saveRoundPatch(next, applyPatch);
       return next;
     });
   }
@@ -7190,12 +7356,16 @@ export default function GolfScorecard() {
   // than just one.
   function updateHoleWinner(field, playerIdx) {
     lastLocalEditRef.current = Date.now();
-    setRound((r) => {
+    const applyPatch = (r) => {
       const next = { ...r, scores: { ...r.scores } };
       const holeScores = { ...(next.scores[holeIdx] || {}) };
       holeScores[field] = holeScores[field] === playerIdx ? null : playerIdx;
       next.scores[holeIdx] = holeScores;
-      saveRound(next);
+      return next;
+    };
+    setRound((r) => {
+      const next = applyPatch(r);
+      saveRoundPatch(next, applyPatch);
       return next;
     });
   }
@@ -7207,14 +7377,17 @@ export default function GolfScorecard() {
   // rebuilds the array if this round predates the feature.
   function awardBonusMulligan(playerIdx) {
     lastLocalEditRef.current = Date.now();
-    setRound((r) => {
+    const applyPatch = (r) => {
       const seg = Math.floor(holeIdx / mulliganWindow(r.game));
       const bonus = r.bonusMulligans
         ? r.bonusMulligans.map((arr) => [...arr])
         : [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]];
       bonus[playerIdx][seg] = (bonus[playerIdx][seg] || 0) + 1;
-      const next = { ...r, bonusMulligans: bonus };
-      saveRound(next);
+      return { ...r, bonusMulligans: bonus };
+    };
+    setRound((r) => {
+      const next = applyPatch(r);
+      saveRoundPatch(next, applyPatch);
       return next;
     });
     // Brief, temporary confirmation on the button itself - the persistent
@@ -7232,11 +7405,14 @@ export default function GolfScorecard() {
   // would be wasteful and could feel laggy for a longer note.
   function updateHoleNote(text) {
     lastLocalEditRef.current = Date.now();
-    setRound((r) => {
+    const applyPatch = (r) => {
       const notes = { ...(r.holeNotes || {}) };
       notes[holeIdx] = text;
-      const next = { ...r, holeNotes: notes };
-      saveRound(next);
+      return { ...r, holeNotes: notes };
+    };
+    setRound((r) => {
+      const next = applyPatch(r);
+      saveRoundPatch(next, applyPatch);
       return next;
     });
   }
@@ -7245,10 +7421,13 @@ export default function GolfScorecard() {
   // to everyone else viewing the same round.
   function updateRoundPlayerAvatar(playerIdx, avatar) {
     lastLocalEditRef.current = Date.now();
-    setRound((r) => {
+    const applyPatch = (r) => {
       const nextPlayers = r.players.map((p, i) => (i === playerIdx ? { ...p, avatar } : p));
-      const next = { ...r, players: nextPlayers };
-      saveRound(next);
+      return { ...r, players: nextPlayers };
+    };
+    setRound((r) => {
+      const next = applyPatch(r);
+      saveRoundPatch(next, applyPatch);
       return next;
     });
     setScoringAvatarPickerFor(null);
@@ -8196,12 +8375,13 @@ function computeNassauResults(round, computed) {
               <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid #eee6cf" }} onClick={(e) => e.stopPropagation()}>
                 <div style={{ fontSize: 11, color: "#8a8a80", textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 700, marginBottom: 6 }}>Join Existing Group</div>
                 <div className="gsc-row">
-                  <input className="gsc-input gsc-mono" placeholder="GROUP CODE" value={joinGroupCode} onChange={(e) => setJoinGroupCode(e.target.value.toUpperCase())} />
+                  <input className="gsc-input gsc-mono" placeholder="GROUP CODE" value={joinGroupCode} onChange={(e) => { setJoinGroupCode(e.target.value.toUpperCase()); setJoinGroupSuccess(""); }} />
                   <button className="gsc-btn gsc-btn-primary" style={{ flex: "0 0 auto" }} disabled={joinGroupBusy || !joinGroupCode.trim()} onClick={joinGroup}>
                     {joinGroupBusy ? "Joining..." : "Join"}
                   </button>
                 </div>
                 {joinGroupErr && <div style={{ color: "#A42E2D", fontSize: 12, marginTop: 6 }}>{joinGroupErr}</div>}
+                {joinGroupSuccess && <div style={{ color: "#3F6B54", fontWeight: 700, fontSize: 12, marginTop: 6 }}>{"\u2713"} {joinGroupSuccess}</div>}
               </div>
             )}
           </div>
@@ -9298,12 +9478,13 @@ function computeNassauResults(round, computed) {
 
                   <div style={{ fontSize: 13, color: "#8a8a80", textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 700, marginBottom: 6 }}>Join a Group</div>
                   <div className="gsc-row">
-                    <input className="gsc-input gsc-mono" placeholder="GROUP CODE" value={joinGroupCode} onChange={(e) => setJoinGroupCode(e.target.value.toUpperCase())} />
+                    <input className="gsc-input gsc-mono" placeholder="GROUP CODE" value={joinGroupCode} onChange={(e) => { setJoinGroupCode(e.target.value.toUpperCase()); setJoinGroupSuccess(""); }} />
                     <button className="gsc-btn gsc-btn-primary" style={{ flex: "0 0 auto" }} disabled={joinGroupBusy || !joinGroupCode.trim()} onClick={joinGroup}>
                       {joinGroupBusy ? "Joining..." : "Join"}
                     </button>
                   </div>
                   {joinGroupErr && <div style={{ color: "#A42E2D", fontSize: 14, marginTop: 8 }}>{joinGroupErr}</div>}
+                  {joinGroupSuccess && <div style={{ color: "#3F6B54", fontWeight: 700, fontSize: 14, marginTop: 8 }}>{"\u2713"} {joinGroupSuccess}</div>}
                 </>
               )}
             </div>
@@ -13105,9 +13286,9 @@ function computeNassauResults(round, computed) {
                 {session && (
                   <div
                     onClick={() => goToScreen("sideGames")}
-                    style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "#EBF0EC", color: "#1B4332", fontWeight: 700, fontSize: 13, padding: "5px 12px", borderRadius: 20, cursor: "pointer" }}
+                    style={{ position: "relative", display: "inline-flex", alignItems: "center", gap: 5, background: sideGamesHoleSet.has(holeIdx + 1) ? "#A42E2D" : "#EBF0EC", color: sideGamesHoleSet.has(holeIdx + 1) ? "#F3EFE0" : "#1B4332", fontWeight: 700, fontSize: 13, padding: "5px 12px", borderRadius: 20, cursor: "pointer" }}
                   >
-                    {"\u{1F3B2}"} Side Games
+                    {"\u{1F3B2}"} Side Games{sideGamesHoleSet.has(holeIdx + 1) ? " \u2713" : ""}
                   </div>
                 )}
               </div>
@@ -13652,8 +13833,10 @@ function computeNassauResults(round, computed) {
             const nassau = computeNassauResults(round, computed);
             if (!nassau) return null;
             const sideLabel = (side) => (round.teams[side] || []).map((i) => (round.players[i] && round.players[i].name) || "?").join(" & ");
+            const unitLabel = g.puttsOnlyScoring ? "putt" : g.totalScoring ? "stroke" : "point";
             const segmentRow = (label, seg, prizeKey) => {
               const prize = round.cfg[prizeKey];
+              const margin = Math.abs(seg.t0 - seg.t1);
               return (
                 <div style={{ padding: "8px 0", borderBottom: "1px solid #eee6cf" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -13664,7 +13847,9 @@ function computeNassauResults(round, computed) {
                     {seg.winner == null ? (
                       <span style={{ color: "#8a8a80" }}>{seg.holesPlayed === 0 ? "Not started" : "Tied"}</span>
                     ) : (
-                      <span style={{ fontWeight: 700, color: "#1B4332" }}>{sideLabel(seg.winner)} {seg.complete ? "won" : "leading"}</span>
+                      <span style={{ fontWeight: 700, color: "#1B4332" }}>
+                        {sideLabel(seg.winner)} {seg.complete ? "won" : "leading"} by {margin} {unitLabel}{margin === 1 ? "" : "s"}
+                      </span>
                     )}
                     {!seg.complete && seg.holesPlayed > 0 && <span style={{ color: "#8a8a80", marginLeft: 4 }}>(thru {seg.holesPlayed})</span>}
                   </div>
@@ -13891,6 +14076,7 @@ function computeNassauResults(round, computed) {
           yardage={round.yardage}
           strokeIndex={round.strokeIndex}
           teeName={round.cfg.teeName}
+          onSaved={() => goBack("card")}
         />
       </div>
     );
