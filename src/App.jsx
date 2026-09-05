@@ -7896,7 +7896,12 @@ function computeRoundScoring(round) {
 // layer on top of computeRoundScoring's own output, reusing whichever
 // method that format already uses to decide a winner, rather than
 // touching or duplicating that core scoring logic itself.
-function computeNassauResults(round, computed) {
+// maxHole (optional, defaults to 17 - the full round) caps how far into
+// each segment this looks, letting the same logic answer "what's the
+// full result so far" (the default) or "what was the state as of this
+// specific hole" (when navigating back to review an earlier hole,
+// where the segment isn't necessarily fully played through yet).
+function computeNassauResults(round, computed, maxHole = 17) {
   if (!round || !round.cfg.nassau) return null;
   if (!round.teams || round.teams.length !== 2) return null;
   const g = GAMES[round.game];
@@ -7912,7 +7917,9 @@ function computeNassauResults(round, computed) {
   const useStrokesMetric = !!g.totalScoring && !usePuttsMetric;
   const lowerIsBetter = useStrokesMetric || usePuttsMetric;
 
-  function segment(startH, endH) {
+  function segment(startH, rawEndH) {
+    const endH = Math.min(rawEndH, maxHole);
+    if (endH < startH) return { t0: 0, t1: 0, winner: null, complete: false, holesPlayed: 0 };
     let t0 = 0, t1 = 0, holesPlayed = 0;
     const segmentLength = endH - startH + 1;
     for (let h = startH; h <= endH; h++) {
@@ -8234,7 +8241,12 @@ function computeNassauResults(round, computed) {
           ))}
           <div style={{ fontSize: 13, color: "#4b4b45", lineHeight: 1.55, margin: "0 0 16px" }}>
             {session ? (
-              "Join an existing round or start a new round below"
+              <>
+                {profile && profile.name ? `Welcome ${profile.name}, what game do you want to play today?` : "What game do you want to play today?"}
+                <div style={{ marginTop: 8 }}>
+                  Join an existing group, join an existing round, or start a new round below:
+                </div>
+              </>
             ) : (
               <>
                 RipScore is the golf app built for every group you play with.
@@ -8251,34 +8263,38 @@ function computeNassauResults(round, computed) {
                 </div>
               </>
             )}
-            <div style={{ marginTop: 16, marginBottom: 4 }}>To join an existing round or start a new round:</div>
-            {[
-              "Enter your game code or start a new round below",
-              "Set up your round detail and share your code",
-              "Enter the strokes for you or your group as you play",
-            ].map((step, i) => (
-              <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, margin: "8px 0" }}>
-                <div
-                  style={{
-                    flex: "0 0 auto",
-                    width: 22,
-                    height: 22,
-                    borderRadius: "50%",
-                    background: "#1B4332",
-                    color: "#F3EFE0",
-                    fontSize: 12,
-                    fontWeight: 700,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  {i + 1}
-                </div>
-                <div>{step}</div>
-              </div>
-            ))}
-            <div style={{ marginTop: 12 }}>You're all set, next hole... the 19th!</div>
+            {!session && (
+              <>
+                <div style={{ marginTop: 16, marginBottom: 4 }}>To join an existing round or start a new round:</div>
+                {[
+                  "Enter your game code or start a new round below",
+                  "Set up your round detail and share your code",
+                  "Enter the strokes for you or your group as you play",
+                ].map((step, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, margin: "8px 0" }}>
+                    <div
+                      style={{
+                        flex: "0 0 auto",
+                        width: 22,
+                        height: 22,
+                        borderRadius: "50%",
+                        background: "#1B4332",
+                        color: "#F3EFE0",
+                        fontSize: 12,
+                        fontWeight: 700,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      {i + 1}
+                    </div>
+                    <div>{step}</div>
+                  </div>
+                ))}
+                <div style={{ marginTop: 12 }}>You're all set, next hole... the 19th!</div>
+              </>
+            )}
           </div>
           {!session && (
             <div style={{ fontSize: 12, color: "#8a8a80", margin: "-8px 0 16px" }}>
@@ -8322,6 +8338,20 @@ function computeNassauResults(round, computed) {
             </div>
           )}
 
+          {session && (
+            <div className="gsc-card">
+              <div className="gsc-label" style={{ marginBottom: 6, fontSize: 17 }}>Join Existing Group</div>
+              <div className="gsc-row">
+                <input className="gsc-input gsc-mono" placeholder="ENTER GROUP CODE HERE" value={joinGroupCode} onChange={(e) => { setJoinGroupCode(e.target.value.toUpperCase()); setJoinGroupSuccess(""); }} />
+                <button className="gsc-btn gsc-btn-primary" style={{ flex: "0 0 auto" }} disabled={joinGroupBusy || !joinGroupCode.trim()} onClick={joinGroup}>
+                  {joinGroupBusy ? "Joining..." : "Join"}
+                </button>
+              </div>
+              {joinGroupErr && <div style={{ color: "#A42E2D", fontSize: 13, marginTop: 8 }}>{joinGroupErr}</div>}
+              {joinGroupSuccess && <div style={{ color: "#3F6B54", fontWeight: 700, fontSize: 13, marginTop: 8 }}>{"\u2713"} {joinGroupSuccess}</div>}
+            </div>
+          )}
+
           <div className="gsc-card">
             <div className="gsc-label" style={{ marginBottom: 6, fontSize: 17 }}>Join Existing Round</div>
             <div className="gsc-row">
@@ -8346,20 +8376,6 @@ function computeNassauResults(round, computed) {
               </div>
             )}
           </div>
-
-          {session && (
-            <div className="gsc-card">
-              <div className="gsc-label" style={{ marginBottom: 6, fontSize: 17 }}>Join Existing Group</div>
-              <div className="gsc-row">
-                <input className="gsc-input gsc-mono" placeholder="ENTER GROUP CODE HERE" value={joinGroupCode} onChange={(e) => { setJoinGroupCode(e.target.value.toUpperCase()); setJoinGroupSuccess(""); }} />
-                <button className="gsc-btn gsc-btn-primary" style={{ flex: "0 0 auto" }} disabled={joinGroupBusy || !joinGroupCode.trim()} onClick={joinGroup}>
-                  {joinGroupBusy ? "Joining..." : "Join"}
-                </button>
-              </div>
-              {joinGroupErr && <div style={{ color: "#A42E2D", fontSize: 13, marginTop: 8 }}>{joinGroupErr}</div>}
-              {joinGroupSuccess && <div style={{ color: "#3F6B54", fontWeight: 700, fontSize: 13, marginTop: 8 }}>{"\u2713"} {joinGroupSuccess}</div>}
-            </div>
-          )}
 
           <div className="gsc-card">
             <div className="gsc-label" style={{ marginBottom: 2, fontSize: 17 }}>Start a New Round</div>
@@ -12744,44 +12760,6 @@ function computeNassauResults(round, computed) {
             </div>
           )}
 
-          {!g.singleTeam && (
-            <div className="gsc-card">
-              <div className="gsc-label" style={{ marginBottom: 10 }}>Final Standings</div>
-              {ranks.map((p, idx) => {
-                const isWinner = winners.some((w) => w.idx === p.idx);
-                return (
-                  <div
-                    key={p.idx}
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      padding: "10px 0",
-                      borderBottom: idx === ranks.length - 1 ? "none" : "1px solid #eee6cf",
-                    }}
-                  >
-                    <div style={{ fontWeight: 700 }}>
-                      {isWinner && <span style={{ marginRight: 6 }}>&#127942;</span>}
-                      {p.avatar && <span style={{ marginRight: 4 }}>{p.avatar}</span>}
-                      {p.name}
-                    </div>
-                    <div className="gsc-mono" style={{ fontWeight: 700 }}>
-                      {g.rankByPutts ? (
-                        <span style={{ fontSize: 17 }}>{p.putts}put/{p.score}str</span>
-                      ) : g.totalScoring ? (
-                        <span style={{ fontSize: 17 }}>{p.score}str/{p.putts}put</span>
-                      ) : (
-                        <>
-                          {p.points} pts <span style={{ fontWeight: 700, color: "#6b6b63" }}>({p.score}str{g.hasPutts && round.cfg.trackPutts !== false ? `/${p.putts}putt` : ""}/{formatRelPar(p.relPar)})</span>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
           {round.cfg.nassau && (() => {
             const nassau = computeNassauResults(round, computed);
             if (!nassau) return null;
@@ -12828,6 +12806,44 @@ function computeNassauResults(round, computed) {
               </div>
             );
           })()}
+
+          {!g.singleTeam && (
+            <div className="gsc-card">
+              <div className="gsc-label" style={{ marginBottom: 10 }}>Final Standings</div>
+              {ranks.map((p, idx) => {
+                const isWinner = winners.some((w) => w.idx === p.idx);
+                return (
+                  <div
+                    key={p.idx}
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      padding: "10px 0",
+                      borderBottom: idx === ranks.length - 1 ? "none" : "1px solid #eee6cf",
+                    }}
+                  >
+                    <div style={{ fontWeight: 700 }}>
+                      {!round.cfg.nassau && isWinner && <span style={{ marginRight: 6 }}>&#127942;</span>}
+                      {p.avatar && <span style={{ marginRight: 4 }}>{p.avatar}</span>}
+                      {p.name}
+                    </div>
+                    <div className="gsc-mono" style={{ fontWeight: 700 }}>
+                      {g.rankByPutts ? (
+                        <span style={{ fontSize: 17 }}>{p.putts}put/{p.score}str</span>
+                      ) : g.totalScoring ? (
+                        <span style={{ fontSize: 17 }}>{p.score}str/{p.putts}put</span>
+                      ) : (
+                        <>
+                          {p.points} pts <span style={{ fontWeight: 700, color: "#6b6b63" }}>({p.score}str{g.hasPutts && round.cfg.trackPutts !== false ? `/${p.putts}putt` : ""}/{formatRelPar(p.relPar)})</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
 
           {(aiRecapLoading || aiRecap) && (
             <div className="gsc-card">
@@ -13227,6 +13243,21 @@ function computeNassauResults(round, computed) {
                     {round.cfg.teeName} tees
                   </div>
                 )}
+                {round.cfg.nassau && (() => {
+                  const nassauThru = computeNassauResults(round, computed, holeIdx);
+                  if (!nassauThru) return null;
+                  const sideLabel = (side) => (round.teams[side] || []).map((i) => (round.players[i] && round.players[i].name) || "?").join(" & ");
+                  const unitLabel = g.puttsOnlyScoring ? "putt" : g.totalScoring ? "stroke" : "point";
+                  const seg = holeIdx <= 8 ? nassauThru.front : nassauThru.back;
+                  const segName = holeIdx <= 8 ? "Front 9" : "Back 9";
+                  if (seg.holesPlayed === 0) return null;
+                  const margin = Math.abs(seg.t0 - seg.t1);
+                  return (
+                    <div style={{ fontSize: 12, color: "#1B4332", fontWeight: 700, marginTop: 4, background: "#F8F1E4", borderRadius: 6, padding: "4px 8px", display: "inline-block" }}>
+                      {segName} thru hole {holeIdx + 1}: {seg.winner == null ? "Tied" : `${sideLabel(seg.winner)} up ${margin} ${unitLabel}${margin === 1 ? "" : "s"}`}
+                    </div>
+                  );
+                })()}
                 {session && round.holeGPS && round.holeGPS[holeIdx] && round.holeGPS[holeIdx].length > 0 && (() => {
                   const greenPoints = round.holeGPS[holeIdx];
                   let content = null;
@@ -13753,6 +13784,48 @@ function computeNassauResults(round, computed) {
             />
           </div>
 
+          {round.cfg.nassau && (() => {
+            const nassau = computeNassauResults(round, computed);
+            if (!nassau) return null;
+            const sideLabel = (side) => (round.teams[side] || []).map((i) => (round.players[i] && round.players[i].name) || "?").join(" & ");
+            const unitLabel = g.puttsOnlyScoring ? "putt" : g.totalScoring ? "stroke" : "point";
+            const segmentRow = (label, seg, prizeKey) => {
+              const prize = round.cfg[prizeKey];
+              const margin = Math.abs(seg.t0 - seg.t1);
+              return (
+                <div style={{ padding: "8px 0", borderBottom: "1px solid #eee6cf" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div style={{ fontWeight: 700, fontSize: 13 }}>{label}</div>
+                    {prize && <div style={{ fontSize: 12, color: "#B08D57" }}>${prize}</div>}
+                  </div>
+                  <div style={{ fontSize: 13, marginTop: 2 }}>
+                    {seg.winner == null ? (
+                      <span style={{ color: "#8a8a80" }}>{seg.holesPlayed === 0 ? "Not started" : "Tied"}</span>
+                    ) : (
+                      <span style={{ fontWeight: 700, color: "#1B4332" }}>
+                        {sideLabel(seg.winner)} {seg.complete ? "won" : "leading"} by {margin} {unitLabel}{margin === 1 ? "" : "s"}
+                      </span>
+                    )}
+                    {!seg.complete && seg.holesPlayed > 0 && <span style={{ color: "#8a8a80", marginLeft: 4 }}>(thru {seg.holesPlayed})</span>}
+                  </div>
+                  {seg.complete && seg.winner != null && (
+                    <div style={{ marginTop: 3 }}>
+                      <span className="gsc-chip gsc-lead">WINNER</span>
+                    </div>
+                  )}
+                </div>
+              );
+            };
+            return (
+              <div className="gsc-card" style={{ marginTop: 10 }}>
+                <div className="gsc-label" style={{ marginBottom: 8, fontSize: 15, color: "#1B4332", fontWeight: 800 }}>Nassau Standings</div>
+                {segmentRow("Front 9", nassau.front, "nassauFrontPrize")}
+                {segmentRow("Back 9", nassau.back, "nassauBackPrize")}
+                {segmentRow("Overall 18", nassau.overall, "nassauOverallPrize")}
+              </div>
+            );
+          })()}
+
           {g.oneTeamScore && round.tournamentId ? (
             <div className="gsc-card">
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
@@ -13802,7 +13875,7 @@ function computeNassauResults(round, computed) {
                     {p.avatar && <span style={{ marginRight: 4 }}>{p.avatar}</span>}
                     {p.name}
                   </div>
-                  {(g.rankByTeamTotal
+                  {!round.cfg.nassau && (g.rankByTeamTotal
                     ? holeIdx === 17 && hr.complete && ranks.length > 0 && round.teams && round.teams.find((t) => t.includes(ranks[0].idx))?.includes(p.idx)
                     : g.totalScoring && holeIdx === 17 && hr.complete && idx === 0
                   ) && (
@@ -13810,12 +13883,12 @@ function computeNassauResults(round, computed) {
                       <span className="gsc-chip gsc-lead">WINNER</span>
                     </div>
                   )}
-                  {!g.singleTeam && !g.totalScoring && holeIdx === 17 && hr.complete && idx < Math.floor(ranks.length / 2) && (
+                  {!round.cfg.nassau && !g.singleTeam && !g.totalScoring && holeIdx === 17 && hr.complete && idx < Math.floor(ranks.length / 2) && (
                     <div style={{ marginTop: 3 }}>
                       <span className="gsc-chip gsc-lead">WIN</span>
                     </div>
                   )}
-                  {!g.singleTeam && !g.totalScoring && holeIdx === 17 && hr.complete && idx >= Math.ceil(ranks.length / 2) && (
+                  {!round.cfg.nassau && !g.singleTeam && !g.totalScoring && holeIdx === 17 && hr.complete && idx >= Math.ceil(ranks.length / 2) && (
                     <div style={{ marginTop: 3 }}>
                       <span className="gsc-chip gsc-loss">LOSS</span>
                     </div>
@@ -13856,43 +13929,6 @@ function computeNassauResults(round, computed) {
             </div>
           </div>
           )}
-
-          {round.cfg.nassau && (() => {
-            const nassau = computeNassauResults(round, computed);
-            if (!nassau) return null;
-            const sideLabel = (side) => (round.teams[side] || []).map((i) => (round.players[i] && round.players[i].name) || "?").join(" & ");
-            const unitLabel = g.puttsOnlyScoring ? "putt" : g.totalScoring ? "stroke" : "point";
-            const segmentRow = (label, seg, prizeKey) => {
-              const prize = round.cfg[prizeKey];
-              const margin = Math.abs(seg.t0 - seg.t1);
-              return (
-                <div style={{ padding: "8px 0", borderBottom: "1px solid #eee6cf" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <div style={{ fontWeight: 700, fontSize: 13 }}>{label}</div>
-                    {prize && <div style={{ fontSize: 12, color: "#B08D57" }}>${prize}</div>}
-                  </div>
-                  <div style={{ fontSize: 13, marginTop: 2 }}>
-                    {seg.winner == null ? (
-                      <span style={{ color: "#8a8a80" }}>{seg.holesPlayed === 0 ? "Not started" : "Tied"}</span>
-                    ) : (
-                      <span style={{ fontWeight: 700, color: "#1B4332" }}>
-                        {sideLabel(seg.winner)} {seg.complete ? "won" : "leading"} by {margin} {unitLabel}{margin === 1 ? "" : "s"}
-                      </span>
-                    )}
-                    {!seg.complete && seg.holesPlayed > 0 && <span style={{ color: "#8a8a80", marginLeft: 4 }}>(thru {seg.holesPlayed})</span>}
-                  </div>
-                </div>
-              );
-            };
-            return (
-              <div className="gsc-card" style={{ marginTop: 10 }}>
-                <div className="gsc-label" style={{ marginBottom: 8, fontSize: 15, color: "#1B4332", fontWeight: 800 }}>Nassau</div>
-                {segmentRow("Front 9", nassau.front, "nassauFrontPrize")}
-                {segmentRow("Back 9", nassau.back, "nassauBackPrize")}
-                {segmentRow("Overall 18", nassau.overall, "nassauOverallPrize")}
-              </div>
-            );
-          })()}
 
           <button className="gsc-link" onClick={() => setShowGrid((s) => !s)}>{showGrid ? "Hide" : "Show"} full 18-hole scorecard</button>
           {showGrid && (() => {
