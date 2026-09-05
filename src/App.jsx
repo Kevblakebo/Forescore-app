@@ -14074,24 +14074,24 @@ function computeNassauResults(round, computed, maxHole = 17) {
                     <tr style={{ background: "#EBF0EC" }}>
                       <td style={{ textAlign: "left", fontWeight: 700 }}>Par</td>
                       {Array.from({ length: 9 }).map((_, i) => (
-                        <td key={i}>{round.par[startH + i]}</td>
+                        <td key={i} style={{ fontWeight: 700 }}>{round.par[startH + i]}</td>
                       ))}
-                      <td>{round.par.slice(startH, startH + 9).reduce((s, p) => s + (p || 0), 0)}</td>
+                      <td style={{ fontWeight: 700 }}>{round.par.slice(startH, startH + 9).reduce((s, p) => s + (p || 0), 0)}</td>
                     </tr>
                     {hasYardageCol && (
                       <tr style={{ background: "#EBF0EC" }}>
                         <td style={{ textAlign: "left", fontWeight: 700 }}>Yds</td>
                         {Array.from({ length: 9 }).map((_, i) => (
-                          <td key={i}>{round.yardage[startH + i] != null ? round.yardage[startH + i] : "-"}</td>
+                          <td key={i} style={{ fontWeight: 700 }}>{round.yardage[startH + i] != null ? round.yardage[startH + i] : "-"}</td>
                         ))}
-                        <td>{round.yardage.slice(startH, startH + 9).reduce((s, y) => s + (y || 0), 0)}</td>
+                        <td style={{ fontWeight: 700 }}>{round.yardage.slice(startH, startH + 9).reduce((s, y) => s + (y || 0), 0)}</td>
                       </tr>
                     )}
                     {hasStrokeIndexCol && (
                       <tr style={{ background: "#EBF0EC" }}>
                         <td style={{ textAlign: "left", fontWeight: 700 }}>HCP</td>
                         {Array.from({ length: 9 }).map((_, i) => (
-                          <td key={i}>{round.strokeIndex[startH + i] != null ? round.strokeIndex[startH + i] : "-"}</td>
+                          <td key={i} style={{ fontWeight: 700 }}>{round.strokeIndex[startH + i] != null ? round.strokeIndex[startH + i] : "-"}</td>
                         ))}
                         <td></td>
                       </tr>
