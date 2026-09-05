@@ -955,8 +955,10 @@ function playBirdieSound() {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
     const now = ctx.currentTime;
-    // Two quick overlapping upward pitch-sweeps - the classic bird "tweet-tweet".
-    [0, 0.13].forEach((startOffset) => {
+    // Two quick overlapping upward pitch-sweeps - the classic bird
+    // "tweet-tweet" - repeated a second time after a clear gap, so it
+    // reads as two distinct chirps rather than one quick sound.
+    [0, 0.13, 0.5, 0.63].forEach((startOffset) => {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.type = "sine";
@@ -972,7 +974,7 @@ function playBirdieSound() {
       osc.start(start);
       osc.stop(start + 0.15);
     });
-    setTimeout(() => ctx.close(), 600);
+    setTimeout(() => ctx.close(), 1000);
   } catch (e) {
     // Silently ignore - sound is a nice-to-have, never worth surfacing an error over.
   }
@@ -1589,7 +1591,7 @@ function useSideGames({
 const money = (n) => "$" + (Math.round(n * 100) / 100).toFixed(2).replace(/\.00$/, "");
 const initials = (name) => name.slice(0, 1).toUpperCase();
 
-function SideGames({ roundId = "demo-round", players = DEFAULT_PLAYERS, storage, initialHole = 3, yardage, strokeIndex, teeName, onSaved }) {
+function SideGames({ roundId = "demo-round", players = DEFAULT_PLAYERS, storage, initialHole = 3, yardage, strokeIndex, teeName, roundPars, onSaved }) {
   const store = useSideGames({ roundId, players, storage });
   const {
     ready, status, games, pars, records, setPar, saveHole, removeRecord,
@@ -1603,7 +1605,17 @@ function SideGames({ roundId = "demo-round", players = DEFAULT_PLAYERS, storage,
   const [copied, setCopied] = useState(false);
   const [savedHole, setSavedHole] = useState(null);
 
-  const par = pars[hole - 1];
+  // Always prefers the real, authoritative course par (from the round
+  // itself) over Side Games' own, separately-persisted pars, whenever
+  // it's actually known - re-checked fresh every time, not just once,
+  // so this also corrects an already-affected round the next time this
+  // screen opens, not only brand new ones. The independent pars state
+  // (with its own "tap to change" override) still exists specifically
+  // for the case where the round's own par genuinely isn't known at
+  // all, e.g. a casual, unmatched course.
+  const roundParsValid = Array.isArray(roundPars) && roundPars.length === 18 && roundPars.every((p) => p != null && p !== "" && !isNaN(Number(p)));
+  const effectivePars = roundParsValid ? roundPars.map(Number) : pars;
+  const par = effectivePars[hole - 1];
   const holeRecords = records.filter((r) => r.hole === hole);
 
   // Waits for the debounced save to genuinely finish (not just the
@@ -1698,7 +1710,11 @@ function SideGames({ roundId = "demo-round", players = DEFAULT_PLAYERS, storage,
             <button className="arrow" onClick={() => setHole((h) => Math.max(1, h - 1))} disabled={hole === 1} aria-label="Previous hole">‹</button>
             <div className="holeinfo">
               <div className="holenum">Hole {hole}</div>
-              <button className="par" onClick={() => setPar(hole, par === 5 ? 3 : par + 1)} title="Tap to change par">Par {par}</button>
+              {roundParsValid ? (
+                <div className="par" title="Set from the round's own course data">Par {par}</div>
+              ) : (
+                <button className="par" onClick={() => setPar(hole, par === 5 ? 3 : par + 1)} title="Tap to change par">Par {par}</button>
+              )}
               {(() => {
                 const yd = (yardage || [])[hole - 1];
                 const si = (strokeIndex || [])[hole - 1];
@@ -3389,7 +3405,7 @@ export default function GolfScorecard() {
         if (!r || !r.players || !GAMES[r.game]) continue;
         const myIdx = r.players.findIndex((p) => p.user_id === session.user.id);
         if (myIdx === -1) continue;
-        const playedWithGroup = r.players.some((p, i) => i !== myIdx && p.user_id && memberSet.has(p.user_id));
+        const playedWithGroup = r.players.filter((p, i) => i !== myIdx && p.user_id && memberSet.has(p.user_id)).length >= 2;
         if (!playedWithGroup) continue;
 
         let holesPlayed = 0, myStrokesTotal = 0, myPuttsTotal = 0;
@@ -3535,7 +3551,7 @@ export default function GolfScorecard() {
         for (const { r, code } of parsedRounds) {
           const myIdx = r.players.findIndex((p) => p.user_id === session.user.id);
           if (myIdx === -1) continue;
-          const playedWithGroup = r.players.some((p, i) => i !== myIdx && p.user_id && memberSet.has(p.user_id));
+          const playedWithGroup = r.players.filter((p, i) => i !== myIdx && p.user_id && memberSet.has(p.user_id)).length >= 2;
           if (!playedWithGroup) continue;
 
           let holesPlayed = 0, myStrokesTotal = 0, myPuttsTotal = 0;
@@ -3865,13 +3881,20 @@ export default function GolfScorecard() {
         continue;
       }
       if (r.finished) continue;
-      // Slot 0 is always the actual person who ran setup for this round
-      // (set directly from their own session at creation time) - this is
-      // a definitive, authoritative check for "did I start this myself,"
-      // unlike comparing against local activeRound state, which is
-      // restored asynchronously and might not have loaded yet at the
-      // exact moment this runs.
-      if (r.players && r.players[0] && r.players[0].user_id === session.user.id) continue;
+      // Excludes this round if the current user is linked to ANY player
+      // slot, not just slot 0. Slot 0 alone only ever covers "did I
+      // create this round myself" - someone who instead joined an
+      // existing round (claiming slot 1, 2, or 3) would otherwise never
+      // get excluded here at all, leaving the round stuck showing as
+      // "joinable" on their homepage indefinitely even after they'd
+      // already joined it.
+      if (r.players && r.players.some((p) => p.user_id === session.user.id)) continue;
+      // Also excludes it if it's already this device's own active
+      // round - covers the moment right after tapping "Join round" but
+      // before formally claiming a specific name tile, where it would
+      // otherwise show up as both "continue your round" and "ready to
+      // join" for the exact same round at the same time.
+      if (activeRound && activeRound.id === link.round_code) continue;
       const organizer = r.players && r.players[0];
       found.push({ code: link.round_code, round: r, organizerName: (organizer && organizer.name) || "Someone" });
       if (found.length >= 3) break;
@@ -4038,7 +4061,7 @@ export default function GolfScorecard() {
           const milestones = [5, 10, 25, 50, 100, 250, 500];
           for (const gs of groupStatsRows || []) {
             const memberSet = new Set(membersByGroup[gs.group_id] || []);
-            const playedWithGroup = finishedRound.players.some((p, i) => i !== myIdx && p.user_id && memberSet.has(p.user_id));
+            const playedWithGroup = finishedRound.players.filter((p, i) => i !== myIdx && p.user_id && memberSet.has(p.user_id)).length >= 2;
             if (!playedWithGroup) continue;
             const newCount = (gs.rounds_played || 0) + 1;
             if (milestones.includes(newCount)) {
@@ -14076,6 +14099,7 @@ function computeNassauResults(round, computed) {
           yardage={round.yardage}
           strokeIndex={round.strokeIndex}
           teeName={round.cfg.teeName}
+          roundPars={round.par}
           onSaved={() => goBack("card")}
         />
       </div>
