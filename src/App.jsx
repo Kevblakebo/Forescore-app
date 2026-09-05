@@ -76,7 +76,7 @@ const STYLE = `
   table.gsc-grid th { background:#1B4332; color:#F3EFE0; position:sticky; top:0; }
   table.gsc-grid-horizontal { table-layout:fixed; min-width:360px; font-size:10.5px; }
   table.gsc-grid-horizontal th, table.gsc-grid-horizontal td { padding:5px 2px; }
-  table.gsc-grid-horizontal th:first-child, table.gsc-grid-horizontal td:first-child { width:15%; text-align:left; padding-left:5px; }
+  table.gsc-grid-horizontal th:first-child, table.gsc-grid-horizontal td:first-child { width:4.5ch; text-align:left; padding-left:5px; }
   table.gsc-grid-horizontal th:not(:first-child), table.gsc-grid-horizontal td:not(:first-child) { width:8.5%; }
   table.gsc-grid-horizontal th:last-child, table.gsc-grid-horizontal td:last-child { background:#F0EEE3; font-weight:700; }
   table.gsc-grid-horizontal th:last-child { background:#3F6B54; }
@@ -13942,7 +13942,7 @@ function computeNassauResults(round, computed) {
                         {Array.from({ length: 9 }).map((_, i) => (
                           <td key={i}>{round.yardage[startH + i] != null ? round.yardage[startH + i] : "-"}</td>
                         ))}
-                        <td></td>
+                        <td>{round.yardage.slice(startH, startH + 9).reduce((s, y) => s + (y || 0), 0)}</td>
                       </tr>
                     )}
                     {hasStrokeIndexCol && (
