@@ -8242,9 +8242,15 @@ function computeNassauResults(round, computed, maxHole = 17) {
           <div style={{ fontSize: 13, color: "#4b4b45", lineHeight: 1.55, margin: "0 0 16px" }}>
             {session ? (
               <>
-                {profile && profile.name ? `Welcome ${profile.name}, what game do you want to play today?` : "What game do you want to play today?"}
+                {profile && profile.name ? (
+                  <>
+                    Welcome {profile.avatar && <span style={{ fontSize: 15 }}>{profile.avatar}</span>} {profile.name}, what game do you want to play today?
+                  </>
+                ) : (
+                  "What game do you want to play today?"
+                )}
                 <div style={{ marginTop: 8 }}>
-                  Join an existing group, join an existing round, or start a new round below:
+                  Create a new group or join an existing group, join an existing round, or start a new round below:
                 </div>
               </>
             ) : (
@@ -8340,6 +8346,42 @@ function computeNassauResults(round, computed, maxHole = 17) {
 
           {session && (
             <div className="gsc-card">
+              <div className="gsc-label" style={{ marginBottom: 6, fontSize: 17 }}>Create a New Group</div>
+              {groupsErr && <div style={{ color: "#A42E2D", fontSize: 13, marginBottom: 8 }}>{groupsErr}</div>}
+              <div className="gsc-row" style={{ marginBottom: 8, alignItems: "center" }}>
+                <button
+                  onClick={() => setCreateGroupAvatarPickerOpen((v) => !v)}
+                  style={{ width: 40, height: 40, borderRadius: "50%", border: "1.5px solid #d8d2bd", background: "#fff", fontSize: 20, cursor: "pointer", flex: "0 0 auto", position: "relative" }}
+                >
+                  {createGroupAvatar || "\u{1F465}"}
+                  {!createGroupAvatar && (
+                    <span style={{ position: "absolute", bottom: -2, right: -2, width: 14, height: 14, borderRadius: "50%", background: "#A42E2D", color: "#fff", fontSize: 11, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", border: "1.5px solid #F3EFE0" }}>
+                      +
+                    </span>
+                  )}
+                </button>
+                <input className="gsc-input" placeholder="Group name" value={createGroupName} onChange={(e) => setCreateGroupName(e.target.value)} />
+                <button className="gsc-btn gsc-btn-primary" style={{ flex: "0 0 auto" }} disabled={createGroupBusy || !createGroupName.trim()} onClick={createGroup}>
+                  {createGroupBusy ? "Creating..." : "Create"}
+                </button>
+              </div>
+              {createGroupAvatarPickerOpen && (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8, padding: "4px 0 10px" }}>
+                  {AVATAR_OPTIONS.map((emoji) => (
+                    <button
+                      key={emoji}
+                      onClick={() => {
+                        setCreateGroupAvatar(createGroupAvatar === emoji ? "" : emoji);
+                        setCreateGroupAvatarPickerOpen(false);
+                      }}
+                      style={{ width: 32, height: 32, borderRadius: "50%", border: createGroupAvatar === emoji ? "2px solid #A42E2D" : "1.5px solid #d8d2bd", background: "#fff", fontSize: 18, cursor: "pointer" }}
+                    >
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
+              )}
+              <div style={{ marginBottom: 14 }} />
               <div className="gsc-label" style={{ marginBottom: 6, fontSize: 17 }}>Join Existing Group</div>
               <div className="gsc-row">
                 <input className="gsc-input gsc-mono" placeholder="ENTER GROUP CODE HERE" value={joinGroupCode} onChange={(e) => { setJoinGroupCode(e.target.value.toUpperCase()); setJoinGroupSuccess(""); }} />
