@@ -14105,7 +14105,7 @@ function computeNassauResults(round, computed, maxHole = 17) {
                           const h = startH + i;
                           const e = (round.scores[h] || {})[pi] || {};
                           return (
-                            <td key={i} onClick={() => setHoleIdx(h)} style={{ cursor: "pointer" }}>
+                            <td key={i} onClick={() => setHoleIdx(h)} style={{ cursor: "pointer", fontWeight: 700 }}>
                               {scoreCell(e)}
                             </td>
                           );
@@ -14146,10 +14146,10 @@ function computeNassauResults(round, computed, maxHole = 17) {
                             {(p.name || "").trim().slice(0, 3) || "-"}
                           </td>
                           <td style={{ fontWeight: 700 }}>{totalCell(t)}</td>
-                          {g.hasScore && <td>{t.sCount ? formatRelPar(t.relPar) : "-"}</td>}
-                          {!g.totalScoring && <td>{computed.playerPoints[i]}</td>}
-                          <td>{hcpNum != null ? Math.round(hcpNum) : "-"}</td>
-                          <td>{net != null ? net : "-"}</td>
+                          {g.hasScore && <td style={{ fontWeight: 700 }}>{t.sCount ? formatRelPar(t.relPar) : "-"}</td>}
+                          {!g.totalScoring && <td style={{ fontWeight: 700 }}>{computed.playerPoints[i]}</td>}
+                          <td style={{ fontWeight: 700 }}>{hcpNum != null ? Math.round(hcpNum) : "-"}</td>
+                          <td style={{ fontWeight: 700 }}>{net != null ? net : "-"}</td>
                         </tr>
                       );
                     })}
