@@ -74,6 +74,12 @@ const STYLE = `
   table.gsc-grid { width:100%; border-collapse:collapse; font-size:11px; font-family: "Courier New", Courier, monospace; }
   table.gsc-grid th, table.gsc-grid td { border:1px solid #e5e0cd; padding:4px 3px; text-align:center; }
   table.gsc-grid th { background:#1B4332; color:#F3EFE0; position:sticky; top:0; }
+  table.gsc-grid-horizontal { table-layout:fixed; min-width:360px; font-size:10.5px; }
+  table.gsc-grid-horizontal th, table.gsc-grid-horizontal td { padding:5px 2px; }
+  table.gsc-grid-horizontal th:first-child, table.gsc-grid-horizontal td:first-child { width:15%; text-align:left; padding-left:5px; }
+  table.gsc-grid-horizontal th:not(:first-child), table.gsc-grid-horizontal td:not(:first-child) { width:8.5%; }
+  table.gsc-grid-horizontal th:last-child, table.gsc-grid-horizontal td:last-child { background:#F0EEE3; font-weight:700; }
+  table.gsc-grid-horizontal th:last-child { background:#3F6B54; }
   .gsc-link { color:#1B4332; text-decoration:underline; font-weight:600; cursor:pointer; background:none; border:none; padding:0; font-size:inherit; }
   .gsc-empty { text-align:center; padding:40px 16px; color:#6b6b63; }
   .gsc-code { font-family: "Courier New", Courier, monospace; font-weight:800; letter-spacing:2px; background:rgba(243,239,224,0.15); padding:4px 10px; border-radius:6px; }
@@ -8228,9 +8234,7 @@ function computeNassauResults(round, computed) {
           ))}
           <div style={{ fontSize: 13, color: "#4b4b45", lineHeight: 1.55, margin: "0 0 16px" }}>
             {session ? (
-              profile && profile.name
-                ? `Welcome ${profile.name}, what game do you want to play?`
-                : "What game do you want to play today?"
+              "Join an existing round or start a new round below"
             ) : (
               <>
                 RipScore is the golf app built for every group you play with.
@@ -8319,7 +8323,7 @@ function computeNassauResults(round, computed) {
           )}
 
           <div className="gsc-card">
-            <div className="gsc-label" style={{ marginBottom: 6, fontSize: 17 }}>Join an Existing Round</div>
+            <div className="gsc-label" style={{ marginBottom: 6, fontSize: 17 }}>Join Existing Round</div>
             <div className="gsc-row">
               <input className="gsc-input gsc-mono" id="join-code-home" name="join-code-home" autoComplete="off" placeholder="ENTER GAME CODE HERE" value={joinCode} onChange={(e) => setJoinCode(e.target.value.toUpperCase())} maxLength={6} />
               <button className="gsc-btn gsc-btn-primary" style={{ flex: "0 0 auto" }} disabled={busy || !joinCode} onClick={() => joinRoundOrTournament(joinCode)}>
@@ -8342,6 +8346,20 @@ function computeNassauResults(round, computed) {
               </div>
             )}
           </div>
+
+          {session && (
+            <div className="gsc-card">
+              <div className="gsc-label" style={{ marginBottom: 6, fontSize: 17 }}>Join Existing Group</div>
+              <div className="gsc-row">
+                <input className="gsc-input gsc-mono" placeholder="ENTER GROUP CODE HERE" value={joinGroupCode} onChange={(e) => { setJoinGroupCode(e.target.value.toUpperCase()); setJoinGroupSuccess(""); }} />
+                <button className="gsc-btn gsc-btn-primary" style={{ flex: "0 0 auto" }} disabled={joinGroupBusy || !joinGroupCode.trim()} onClick={joinGroup}>
+                  {joinGroupBusy ? "Joining..." : "Join"}
+                </button>
+              </div>
+              {joinGroupErr && <div style={{ color: "#A42E2D", fontSize: 13, marginTop: 8 }}>{joinGroupErr}</div>}
+              {joinGroupSuccess && <div style={{ color: "#3F6B54", fontWeight: 700, fontSize: 13, marginTop: 8 }}>{"\u2713"} {joinGroupSuccess}</div>}
+            </div>
+          )}
 
           <div className="gsc-card">
             <div className="gsc-label" style={{ marginBottom: 2, fontSize: 17 }}>Start a New Round</div>
@@ -8394,19 +8412,6 @@ function computeNassauResults(round, computed) {
               </div>
               <GroupsIcon size={20} color="#8FA998" />
             </div>
-            {session && (
-              <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid #eee6cf" }} onClick={(e) => e.stopPropagation()}>
-                <div style={{ fontSize: 11, color: "#8a8a80", textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 700, marginBottom: 6 }}>Join Existing Group</div>
-                <div className="gsc-row">
-                  <input className="gsc-input gsc-mono" placeholder="GROUP CODE" value={joinGroupCode} onChange={(e) => { setJoinGroupCode(e.target.value.toUpperCase()); setJoinGroupSuccess(""); }} />
-                  <button className="gsc-btn gsc-btn-primary" style={{ flex: "0 0 auto" }} disabled={joinGroupBusy || !joinGroupCode.trim()} onClick={joinGroup}>
-                    {joinGroupBusy ? "Joining..." : "Join"}
-                  </button>
-                </div>
-                {joinGroupErr && <div style={{ color: "#A42E2D", fontSize: 12, marginTop: 6 }}>{joinGroupErr}</div>}
-                {joinGroupSuccess && <div style={{ color: "#3F6B54", fontWeight: 700, fontSize: 12, marginTop: 6 }}>{"\u2713"} {joinGroupSuccess}</div>}
-              </div>
-            )}
           </div>
 
           <div className="gsc-card gsc-game-card" onClick={() => goToScreen("profileTab")}>
@@ -8481,7 +8486,7 @@ function computeNassauResults(round, computed) {
           )}
 
           <div className="gsc-card">
-            <div className="gsc-label" style={{ marginBottom: 6, fontSize: 17 }}>Join an Existing Round</div>
+            <div className="gsc-label" style={{ marginBottom: 6, fontSize: 17 }}>Join Existing Round</div>
             <div className="gsc-row" style={{ marginTop: 6 }}>
               <input className="gsc-input gsc-mono" id="round-join-code" name="round-join-code" autoComplete="off" placeholder="ENTER GAME CODE HERE" value={joinCode} onChange={(e) => setJoinCode(e.target.value.toUpperCase())} maxLength={6} />
               <button className="gsc-btn gsc-btn-primary" style={{ flex: "0 0 auto" }} disabled={busy || !joinCode} onClick={() => joinRoundOrTournament(joinCode)}>
@@ -13893,134 +13898,130 @@ function computeNassauResults(round, computed) {
           {showGrid && (() => {
             const hasYardageCol = round.yardage && round.yardage.some((y) => y != null);
             const hasStrokeIndexCol = round.strokeIndex && round.strokeIndex.some((s) => s != null);
-            const labelColSpan = 2 + (hasYardageCol ? 1 : 0) + (hasStrokeIndexCol ? 1 : 0);
-            return (
-            <div className="gsc-card" style={{ overflowX: "auto", marginTop: 10 }}>
-              <table className="gsc-grid">
-                <thead>
-                  <tr>
-                    <th>Hole</th>
-                    <th>Par</th>
-                    {hasYardageCol && <th>Yds</th>}
-                    {hasStrokeIndexCol && <th>HCP</th>}
-                    {round.players.map((p, i) => (
-                      <th key={i} style={{ minWidth: 56 }}>
-                        {p.avatar && <span style={{ fontSize: 14 }}>{p.avatar}</span>}
-                        <div style={{ fontSize: 9, fontWeight: 700, textTransform: "none", opacity: 0.9, marginTop: 1, whiteSpace: "normal", lineHeight: 1.2 }}>
-                          {(p.name || "").trim()}
-                        </div>
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {Array.from({ length: 18 }).map((_, h) => (
-                    <React.Fragment key={h}>
-                      <tr onClick={() => setHoleIdx(h)} style={{ cursor: "pointer", background: h === holeIdx ? "#F0EEE3" : undefined }}>
-                        <td>{h + 1}</td>
-                        <td>{round.par[h]}</td>
-                        {hasYardageCol && <td>{round.yardage[h] != null ? round.yardage[h] : "-"}</td>}
-                        {hasStrokeIndexCol && <td>{round.strokeIndex[h] != null ? round.strokeIndex[h] : "-"}</td>}
-                        {round.players.map((_, i) => {
-                          const e = (round.scores[h] || {})[i] || {};
+            const scoreCell = (e) => (
+              <>
+                {g.hasScore ? (e.strokes === "" || e.strokes == null ? "-" : e.strokes) : ""}
+                {g.hasScore && g.hasPutts && round.cfg.trackPutts !== false ? "/" : ""}
+                {g.hasPutts && round.cfg.trackPutts !== false ? (e.putts === "" || e.putts == null ? "-" : e.putts) : ""}
+              </>
+            );
+            const totalCell = (t) => (
+              <>
+                {g.hasScore ? (t.sCount ? t.sSum : "-") : ""}
+                {g.hasScore && g.hasPutts && round.cfg.trackPutts !== false ? "/" : ""}
+                {g.hasPutts && round.cfg.trackPutts !== false ? (t.pCount ? t.pSum : "-") : ""}
+              </>
+            );
+            // One 9-hole section of a traditional, horizontal scorecard -
+            // holes as columns instead of rows, matching a real
+            // scorecard's layout. Called once for the front 9 (with the
+            // "OUT" total) and once for the back 9 (with the "IN" total).
+            const nineHoleTable = (startH, totals, totalLabel) => (
+              <div className="gsc-card" style={{ overflowX: "auto", marginTop: 10 }}>
+                <table className="gsc-grid gsc-grid-horizontal">
+                  <thead>
+                    <tr>
+                      <th style={{ textAlign: "left" }}>Hole</th>
+                      {Array.from({ length: 9 }).map((_, i) => (
+                        <th key={i}>{startH + i + 1}</th>
+                      ))}
+                      <th>{totalLabel}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td style={{ textAlign: "left" }}>Par</td>
+                      {Array.from({ length: 9 }).map((_, i) => (
+                        <td key={i}>{round.par[startH + i]}</td>
+                      ))}
+                      <td>{round.par.slice(startH, startH + 9).reduce((s, p) => s + (p || 0), 0)}</td>
+                    </tr>
+                    {hasYardageCol && (
+                      <tr>
+                        <td style={{ textAlign: "left" }}>Yds</td>
+                        {Array.from({ length: 9 }).map((_, i) => (
+                          <td key={i}>{round.yardage[startH + i] != null ? round.yardage[startH + i] : "-"}</td>
+                        ))}
+                        <td>{round.yardage.slice(startH, startH + 9).reduce((s, y) => s + (y || 0), 0)}</td>
+                      </tr>
+                    )}
+                    {hasStrokeIndexCol && (
+                      <tr>
+                        <td style={{ textAlign: "left" }}>HCP</td>
+                        {Array.from({ length: 9 }).map((_, i) => (
+                          <td key={i}>{round.strokeIndex[startH + i] != null ? round.strokeIndex[startH + i] : "-"}</td>
+                        ))}
+                        <td></td>
+                      </tr>
+                    )}
+                    {round.players.map((p, pi) => (
+                      <tr key={pi} style={{ background: pi % 2 === 1 ? "#FAF8F1" : undefined }}>
+                        <td style={{ textAlign: "left", fontWeight: 700 }}>
+                          {p.avatar ? <span style={{ fontSize: 13 }}>{p.avatar}</span> : (p.name || "").trim().slice(0, 3) || "-"}
+                        </td>
+                        {Array.from({ length: 9 }).map((_, i) => {
+                          const h = startH + i;
+                          const e = (round.scores[h] || {})[pi] || {};
                           return (
-                            <td key={i}>
-                              {g.hasScore ? (e.strokes === "" || e.strokes == null ? "-" : e.strokes) : ""}
-                              {g.hasScore && g.hasPutts && round.cfg.trackPutts !== false ? "/" : ""}
-                              {g.hasPutts && round.cfg.trackPutts !== false ? (e.putts === "" || e.putts == null ? "-" : e.putts) : ""}
+                            <td key={i} onClick={() => setHoleIdx(h)} style={{ cursor: "pointer", background: h === holeIdx ? "#F0EEE3" : undefined }}>
+                              {scoreCell(e)}
                             </td>
                           );
                         })}
+                        <td style={{ fontWeight: 700 }}>{totalCell(totals[pi])}</td>
                       </tr>
-                      {h === 8 && (
-                        <tr style={{ fontWeight: 700, background: "#EFEAD9" }}>
-                          <td colSpan={labelColSpan}>OUT</td>
-                          {round.players.map((_, i) => {
-                            const t = frontNineTotals[i];
-                            return (
-                              <td key={i}>
-                                {g.hasScore ? (t.sCount ? t.sSum : "-") : ""}
-                                {g.hasScore && g.hasPutts && round.cfg.trackPutts !== false ? "/" : ""}
-                                {g.hasPutts && round.cfg.trackPutts !== false ? (t.pCount ? t.pSum : "-") : ""}
-                              </td>
-                            );
-                          })}
-                        </tr>
-                      )}
-                      {h === 17 && (
-                        <tr style={{ fontWeight: 700, background: "#EFEAD9" }}>
-                          <td colSpan={labelColSpan}>IN</td>
-                          {round.players.map((_, i) => {
-                            const t = backNineTotals[i];
-                            return (
-                              <td key={i}>
-                                {g.hasScore ? (t.sCount ? t.sSum : "-") : ""}
-                                {g.hasScore && g.hasPutts && round.cfg.trackPutts !== false ? "/" : ""}
-                                {g.hasPutts && round.cfg.trackPutts !== false ? (t.pCount ? t.pSum : "-") : ""}
-                              </td>
-                            );
-                          })}
-                        </tr>
-                      )}
-                    </React.Fragment>
-                  ))}
-                </tbody>
-                <tfoot>
-                  <tr>
-                    <td colSpan={2 + round.players.length} style={{ padding: 0, height: 10, background: "#fff", border: "none" }}></td>
-                  </tr>
-                  <tr style={{ fontWeight: 700, background: "#F0EEE3" }}>
-                    <td colSpan={labelColSpan}>Total</td>
-                    {round.players.map((_, i) => {
-                      const t = gridTotals[i];
-                      return (
-                        <td key={i}>
-                          {g.hasScore ? (t.sCount ? t.sSum : "-") : ""}
-                          {g.hasScore && g.hasPutts && round.cfg.trackPutts !== false ? "/" : ""}
-                          {g.hasPutts && round.cfg.trackPutts !== false ? (t.pCount ? t.pSum : "-") : ""}
-                        </td>
-                      );
-                    })}
-                  </tr>
-                  {g.hasScore && (
-                    <tr style={{ fontWeight: 700, background: "#F8F1E4" }}>
-                      <td colSpan={labelColSpan}>+/- Par</td>
-                      {round.players.map((_, i) => {
-                        const t = gridTotals[i];
-                        return <td key={i}>{t.sCount ? formatRelPar(t.relPar) : "-"}</td>;
-                      })}
-                    </tr>
-                  )}
-                  {!g.totalScoring && (
-                    <tr style={{ fontWeight: 700, background: "#EBF0EC" }}>
-                      <td colSpan={labelColSpan}>Points</td>
-                      {round.players.map((_, i) => (
-                        <td key={i}>{computed.playerPoints[i]}</td>
-                      ))}
-                    </tr>
-                  )}
-                  <tr>
-                    <td colSpan={2 + round.players.length} style={{ padding: 0, height: 10, background: "#fff", border: "none" }}></td>
-                  </tr>
-                  <tr style={{ fontWeight: 700, background: "#F0EEE3" }}>
-                    <td colSpan={labelColSpan}>Handicap</td>
-                    {round.players.map((p, i) => (
-                      <td key={i}>{p.hcp !== "" && p.hcp != null ? p.hcp : "-"}</td>
                     ))}
-                  </tr>
-                  <tr style={{ fontWeight: 700, background: "#F8F1E4" }}>
-                    <td colSpan={labelColSpan}>Net Strokes</td>
+                  </tbody>
+                </table>
+              </div>
+            );
+            // Round-level stats (total, +/- par, points, handicap, net)
+            // are per-player, not per-hole, so rather than force them
+            // awkwardly into the hole grid's columns, this is its own
+            // small, naturally-structured table: one row per player,
+            // one column per stat.
+            const roundSummaryTable = (
+              <div className="gsc-card" style={{ overflowX: "auto", marginTop: 10 }}>
+                <table className="gsc-grid gsc-grid-horizontal">
+                  <thead>
+                    <tr>
+                      <th style={{ textAlign: "left" }}>Round Total</th>
+                      <th>Total</th>
+                      {g.hasScore && <th>+/- Par</th>}
+                      {!g.totalScoring && <th>Pts</th>}
+                      <th>Hcp</th>
+                      <th>Net</th>
+                    </tr>
+                  </thead>
+                  <tbody>
                     {round.players.map((p, i) => {
                       const t = gridTotals[i];
                       const hcpNum = p.hcp !== "" && p.hcp != null && !isNaN(Number(p.hcp)) ? Number(p.hcp) : null;
                       const net = g.hasScore && t.sCount && hcpNum != null ? t.sSum - hcpNum : null;
-                      return <td key={i}>{net != null ? net : "-"}</td>;
+                      return (
+                        <tr key={i} style={{ background: i % 2 === 1 ? "#FAF8F1" : undefined }}>
+                          <td style={{ textAlign: "left", fontWeight: 700 }}>
+                            {p.avatar ? <span style={{ fontSize: 13 }}>{p.avatar}</span> : null} {(p.name || "").trim() || "-"}
+                          </td>
+                          <td style={{ fontWeight: 700 }}>{totalCell(t)}</td>
+                          {g.hasScore && <td>{t.sCount ? formatRelPar(t.relPar) : "-"}</td>}
+                          {!g.totalScoring && <td>{computed.playerPoints[i]}</td>}
+                          <td>{p.hcp !== "" && p.hcp != null ? p.hcp : "-"}</td>
+                          <td>{net != null ? net : "-"}</td>
+                        </tr>
+                      );
                     })}
-                  </tr>
-                </tfoot>
-              </table>
-              <div style={{ fontSize: 11, color: "#6b6b63", marginTop: 6 }}>Cell shows strokes/putts. Tap a row to jump to that hole. Total, +/- Par, and Net Strokes only count holes played so far. Net Strokes = Total strokes minus Handicap.</div>
-            </div>
+                  </tbody>
+                </table>
+              </div>
+            );
+            return (
+              <>
+                {nineHoleTable(0, frontNineTotals, "OUT")}
+                {nineHoleTable(9, backNineTotals, "IN")}
+                {roundSummaryTable}
+                <div style={{ fontSize: 11, color: "#6b6b63", marginTop: 6 }}>Cell shows strokes/putts. Tap a cell to jump to that hole. Totals, +/- Par, and Net only count holes played so far. Net = Total strokes minus Handicap.</div>
+              </>
             );
           })()}
 
