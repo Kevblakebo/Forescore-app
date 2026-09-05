@@ -13929,25 +13929,25 @@ function computeNassauResults(round, computed) {
                     </tr>
                   </thead>
                   <tbody>
-                    <tr>
-                      <td style={{ textAlign: "left" }}>Par</td>
+                    <tr style={{ background: "#EBF0EC" }}>
+                      <td style={{ textAlign: "left", fontWeight: 700 }}>Par</td>
                       {Array.from({ length: 9 }).map((_, i) => (
                         <td key={i}>{round.par[startH + i]}</td>
                       ))}
                       <td>{round.par.slice(startH, startH + 9).reduce((s, p) => s + (p || 0), 0)}</td>
                     </tr>
                     {hasYardageCol && (
-                      <tr>
-                        <td style={{ textAlign: "left" }}>Yds</td>
+                      <tr style={{ background: "#EBF0EC" }}>
+                        <td style={{ textAlign: "left", fontWeight: 700 }}>Yds</td>
                         {Array.from({ length: 9 }).map((_, i) => (
                           <td key={i}>{round.yardage[startH + i] != null ? round.yardage[startH + i] : "-"}</td>
                         ))}
-                        <td>{round.yardage.slice(startH, startH + 9).reduce((s, y) => s + (y || 0), 0)}</td>
+                        <td></td>
                       </tr>
                     )}
                     {hasStrokeIndexCol && (
-                      <tr>
-                        <td style={{ textAlign: "left" }}>HCP</td>
+                      <tr style={{ background: "#EBF0EC" }}>
+                        <td style={{ textAlign: "left", fontWeight: 700 }}>HCP</td>
                         {Array.from({ length: 9 }).map((_, i) => (
                           <td key={i}>{round.strokeIndex[startH + i] != null ? round.strokeIndex[startH + i] : "-"}</td>
                         ))}
@@ -13957,13 +13957,13 @@ function computeNassauResults(round, computed) {
                     {round.players.map((p, pi) => (
                       <tr key={pi} style={{ background: pi % 2 === 1 ? "#FAF8F1" : undefined }}>
                         <td style={{ textAlign: "left", fontWeight: 700 }}>
-                          {p.avatar ? <span style={{ fontSize: 13 }}>{p.avatar}</span> : (p.name || "").trim().slice(0, 3) || "-"}
+                          {(p.name || "").trim().slice(0, 3) || "-"}
                         </td>
                         {Array.from({ length: 9 }).map((_, i) => {
                           const h = startH + i;
                           const e = (round.scores[h] || {})[pi] || {};
                           return (
-                            <td key={i} onClick={() => setHoleIdx(h)} style={{ cursor: "pointer", background: h === holeIdx ? "#F0EEE3" : undefined }}>
+                            <td key={i} onClick={() => setHoleIdx(h)} style={{ cursor: "pointer" }}>
                               {scoreCell(e)}
                             </td>
                           );
@@ -13997,7 +13997,7 @@ function computeNassauResults(round, computed) {
                     {round.players.map((p, i) => {
                       const t = gridTotals[i];
                       const hcpNum = p.hcp !== "" && p.hcp != null && !isNaN(Number(p.hcp)) ? Number(p.hcp) : null;
-                      const net = g.hasScore && t.sCount && hcpNum != null ? t.sSum - hcpNum : null;
+                      const net = g.hasScore && t.sCount && hcpNum != null ? Math.round(t.sSum - hcpNum) : null;
                       return (
                         <tr key={i} style={{ background: i % 2 === 1 ? "#FAF8F1" : undefined }}>
                           <td style={{ textAlign: "left", fontWeight: 700 }}>
@@ -14006,7 +14006,7 @@ function computeNassauResults(round, computed) {
                           <td style={{ fontWeight: 700 }}>{totalCell(t)}</td>
                           {g.hasScore && <td>{t.sCount ? formatRelPar(t.relPar) : "-"}</td>}
                           {!g.totalScoring && <td>{computed.playerPoints[i]}</td>}
-                          <td>{p.hcp !== "" && p.hcp != null ? p.hcp : "-"}</td>
+                          <td>{hcpNum != null ? Math.round(hcpNum) : "-"}</td>
                           <td>{net != null ? net : "-"}</td>
                         </tr>
                       );
