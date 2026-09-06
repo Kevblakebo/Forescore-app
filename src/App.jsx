@@ -9098,7 +9098,7 @@ function computeNassauResults(round, computed, maxHole = 17) {
                   style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "7px 0", borderBottom: i === stats.recent.length - 1 ? "none" : "1px solid #eee6cf", cursor: "pointer" }}
                 >
                   <div style={{ fontSize: 13, color: "#1B4332", fontWeight: 600 }}>
-                    {r.name}
+                    {stripDateFromTitle(r.name)}
                     {r.tournamentId && <span style={{ fontSize: 10, color: "#B08D57", marginLeft: 6, fontWeight: 700 }}>TOURNAMENT</span>}
                     {!r.complete && <span style={{ fontSize: 10, color: "#8a8a80", marginLeft: 6, fontWeight: 400 }}>(in progress)</span>}
                     {r.complete && r.holesPlayed < 18 && (
