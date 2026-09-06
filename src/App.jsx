@@ -7937,6 +7937,20 @@ function formatDatesInText(text) {
   return text.replace(/\b(\d{4})-(\d{2})-(\d{2})\b/g, (_, y, m, d) => `${Number(m)}-${Number(d)}-${y}`);
 }
 
+// Removes a YYYY-MM-DD date entirely from a title string, along with any
+// leftover trailing separator (space or dash). Used specifically where a
+// subtitle right below already shows the date on its own, so the title
+// doesn't need to repeat it - a custom round name never contains a date
+// pattern in the first place, so this only affects the auto-generated
+// "Game Name YYYY-MM-DD" case, leaving custom names untouched.
+function stripDateFromTitle(text) {
+  if (!text) return text;
+  return text
+    .replace(/\s*\b\d{4}-\d{2}-\d{2}\b\s*/g, " ")
+    .replace(/\s*-\s*$/, "")
+    .trim();
+}
+
 function computeNassauResults(round, computed, maxHole = 17) {
   if (!round || !round.cfg.nassau) return null;
   if (!round.teams || round.teams.length !== 2) return null;
@@ -13199,7 +13213,7 @@ function computeNassauResults(round, computed, maxHole = 17) {
           </div>
         )}
         <Header
-          title={formatDatesInText(round.name)}
+          title={stripDateFromTitle(round.name)}
           sub={formatDatesInText(`${g.name} - ${round.date}${round.course ? " - " + round.course : ""}`)}
           onBack={requestLeaveRound}
           backExtra={
