@@ -8835,7 +8835,7 @@ function computeNassauResults(round, computed, maxHole = 17) {
               <UserIcon size={28} color="#8FA998" style={{ marginBottom: 10 }} />
               <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 6 }}>You're not logged in</div>
               <div style={{ fontSize: 13, color: "#6b6b63", lineHeight: 1.5, marginBottom: 16 }}>
-                Log in to save your defaults (avatar, name, handicap, Venmo, home course) and unlock GPS, Side Games, course info, stats, groups, leaderboards, and prior saved rounds. Logging in is always optional - you can keep playing instantly with just a round or tournament code. Your round will only be added to your personal history if you're logged in when you play it.
+                Log in to save your defaults (avatar, name, handicap, Venmo, home course) and unlock GPS, Side Games, course info, stats, groups, leaderboards, GHIN link, and prior saved rounds. Logging in is always optional - you can keep playing instantly with just a round or tournament code. Your round will only be added to your personal history if you're logged in when you play it.
               </div>
               <button className="gsc-btn gsc-btn-primary" style={{ width: "100%" }} onClick={() => { setAuthErr(""); goToScreen("login"); }}>
                 Log In
@@ -9206,15 +9206,17 @@ function computeNassauResults(round, computed, maxHole = 17) {
             </div>
           )}
 
-          <div className="gsc-card">
-            <div className="gsc-label" style={{ marginBottom: 6 }}>Post to GHIN</div>
-            <div style={{ fontSize: 13, color: "#4b4b45" }}>
-              Head to GHIN.com to post your score toward your official handicap.
+          {session && (
+            <div className="gsc-card">
+              <div className="gsc-label" style={{ marginBottom: 6 }}>Post to GHIN</div>
+              <div style={{ fontSize: 13, color: "#4b4b45" }}>
+                Head to GHIN.com to post your score toward your official handicap.
+              </div>
+              <a href="https://www.ghin.com" target="_blank" rel="noreferrer" className="gsc-link" style={{ marginTop: 8, fontSize: 12, display: "inline-block" }}>
+                Open GHIN.com {"\u2197"}
+              </a>
             </div>
-            <a href="https://www.ghin.com" target="_blank" rel="noreferrer" className="gsc-link" style={{ marginTop: 8, fontSize: 12, display: "inline-block" }}>
-              Open GHIN.com {"\u2197"}
-            </a>
-          </div>
+          )}
         </div>
         <BottomNav />
         {DeleteHistoryConfirmModal()}
@@ -9233,7 +9235,7 @@ function computeNassauResults(round, computed, maxHole = 17) {
               <GroupsIcon size={28} color="#8FA998" style={{ marginBottom: 10 }} />
               <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 6 }}>You're not logged in</div>
               <div style={{ fontSize: 13, color: "#6b6b63", lineHeight: 1.5, marginBottom: 16 }}>
-                Log in or create a free account to start or join a group with your regular playing partners, and see a shared leaderboard just between you.
+                Log in or create an account to start or join a group or create a new group with your regular playing partners, and see a shared leaderboard, and prior saved rounds, just between your groups.
               </div>
               <button className="gsc-btn gsc-btn-primary" style={{ width: "100%" }} onClick={() => { setAuthErr(""); goToScreen("login"); }}>
                 Log In
@@ -12993,15 +12995,17 @@ function computeNassauResults(round, computed, maxHole = 17) {
             </div>
           )}
 
-          <a
-            href="https://www.ghin.com"
-            target="_blank"
-            rel="noreferrer"
-            className="gsc-btn gsc-btn-outline"
-            style={{ width: "100%", marginTop: 4, display: "block", textAlign: "center", textDecoration: "none", boxSizing: "border-box" }}
-          >
-            Post this score to GHIN {"\u2197"}
-          </a>
+          {session && (
+            <a
+              href="https://www.ghin.com"
+              target="_blank"
+              rel="noreferrer"
+              className="gsc-btn gsc-btn-outline"
+              style={{ width: "100%", marginTop: 4, display: "block", textAlign: "center", textDecoration: "none", boxSizing: "border-box" }}
+            >
+              Post this score to GHIN {"\u2197"}
+            </a>
+          )}
 
           <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 10 }} onClick={finishCelebrationAndGoHome}>
             Continue to Home
