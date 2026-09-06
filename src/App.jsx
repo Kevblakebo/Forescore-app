@@ -7927,6 +7927,16 @@ function computeRoundScoring(round) {
 // full result so far" (the default) or "what was the state as of this
 // specific hole" (when navigating back to review an earlier hole,
 // where the segment isn't necessarily fully played through yet).
+// Reformats any YYYY-MM-DD date found within a string to M-D-YYYY (no
+// leading zeros). round.name is saved with the date baked directly into
+// the string at round-creation time (e.g. "Team Skins 2026-09-06"), so
+// this runs at display time - fixing the format for existing, already-
+// saved rounds too, not just newly created ones.
+function formatDatesInText(text) {
+  if (!text) return text;
+  return text.replace(/\b(\d{4})-(\d{2})-(\d{2})\b/g, (_, y, m, d) => `${Number(m)}-${Number(d)}-${y}`);
+}
+
 function computeNassauResults(round, computed, maxHole = 17) {
   if (!round || !round.cfg.nassau) return null;
   if (!round.teams || round.teams.length !== 2) return null;
@@ -13189,8 +13199,8 @@ function computeNassauResults(round, computed, maxHole = 17) {
           </div>
         )}
         <Header
-          title={round.name}
-          sub={`${g.name} - ${round.date}${round.course ? " - " + round.course : ""}`}
+          title={formatDatesInText(round.name)}
+          sub={formatDatesInText(`${g.name} - ${round.date}${round.course ? " - " + round.course : ""}`)}
           onBack={requestLeaveRound}
           backExtra={
             <button
