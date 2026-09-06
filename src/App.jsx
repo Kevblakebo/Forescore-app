@@ -9235,7 +9235,7 @@ function computeNassauResults(round, computed, maxHole = 17) {
               <GroupsIcon size={28} color="#8FA998" style={{ marginBottom: 10 }} />
               <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 6 }}>You're not logged in</div>
               <div style={{ fontSize: 13, color: "#6b6b63", lineHeight: 1.5, marginBottom: 16 }}>
-                Log in or create an account to start or join a group or create a new group with your regular playing partners, and see a shared leaderboard, and prior saved rounds, just between your groups.
+                Log in or create an account to start a new group or join an existing group with your regular playing partners. See your shared leaderboards, yearly recaps, and prior saved rounds, just between your groups.
               </div>
               <button className="gsc-btn gsc-btn-primary" style={{ width: "100%" }} onClick={() => { setAuthErr(""); goToScreen("login"); }}>
                 Log In
