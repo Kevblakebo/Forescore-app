@@ -8270,10 +8270,10 @@ function computeNassauResults(round, computed, maxHole = 17) {
               <>
                 {profile && profile.name ? (
                   <>
-                    Welcome {profile.avatar && <span style={{ fontSize: 15 }}>{profile.avatar}</span>} {profile.name}, what game do you want to play today?
+                    Welcome back {profile.avatar && <span style={{ fontSize: 15 }}>{profile.avatar}</span>} {profile.name}, what would you like to do today?
                   </>
                 ) : (
-                  "What game do you want to play today?"
+                  "Welcome back, what would you like to do today?"
                 )}
                 <div style={{ marginTop: 8 }}>
                   Create a new group or join an existing group, join an existing round, or start a new round below:
