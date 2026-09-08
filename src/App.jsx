@@ -2502,6 +2502,10 @@ export default function GolfScorecard() {
   }, [holeIdx]);
   const [showGrid, setShowGrid] = useState(false);
   const [confirmLeaveOpen, setConfirmLeaveOpen] = useState(false);
+  // Holds { targetIdx, missing: [{ name, strokes, putts }] } while the
+  // "some scores weren't entered" confirmation is showing for a forward
+  // hole change - null the rest of the time.
+  const [pendingHoleChange, setPendingHoleChange] = useState(null);
   const [navMenuOpen, setNavMenuOpen] = useState(false);
   // Where to navigate once "Leave this round?" is confirmed, when that
   // confirmation was triggered by picking a destination from the new
@@ -7568,8 +7572,57 @@ export default function GolfScorecard() {
     });
   }
 
-  // Used by "one team score" games (like Scramble Tournament) where there's
-  // only a single shared number per hole, not 4 individual player entries.
+  // Central point for every way the current hole can change forward
+  // (both Next buttons, and tapping a later hole's pip) - checks whether
+  // anyone's missing an actual entered score on the hole being left, and
+  // if so, holds the navigation and surfaces a confirmation instead of
+  // silently moving on. Going backward to review or edit an earlier hole
+  // never triggers this at all.
+  function requestHoleChange(targetIdx) {
+    if (targetIdx <= holeIdx || !round) {
+      setHoleIdx(targetIdx);
+      return;
+    }
+    const parH = round.par[holeIdx] ?? 4;
+    const defaultStrokes = parH - 1;
+    const defaultPutts = 1;
+    const holeScores = round.scores[holeIdx] || {};
+    const missing = [];
+    round.players.forEach((p, i) => {
+      const entry = holeScores[i] || {};
+      const missingStrokes = !!g.hasScore && (entry.strokes == null || entry.strokes === "");
+      const missingPutts = !!g.hasPutts && round.cfg.trackPutts !== false && (entry.putts == null || entry.putts === "");
+      if (missingStrokes || missingPutts) {
+        missing.push({ playerIdx: i, name: p.name || `Player ${LETTERS[i]}`, missingStrokes, missingPutts });
+      }
+    });
+    if (missing.length === 0) {
+      setHoleIdx(targetIdx);
+      return;
+    }
+    setPendingHoleChange({ targetIdx, missing, defaultStrokes, defaultPutts });
+  }
+
+  // "OK, continue" on the confirmation - actually writes the default
+  // into any still-missing field for each affected player, then
+  // completes the navigation that was on hold.
+  function confirmHoleChangeWithDefaults() {
+    if (!pendingHoleChange) return;
+    const { targetIdx, missing, defaultStrokes, defaultPutts } = pendingHoleChange;
+    missing.forEach(({ playerIdx, missingStrokes, missingPutts }) => {
+      if (missingStrokes) updateHoleEntry(playerIdx, "strokes", defaultStrokes);
+      if (missingPutts) updateHoleEntry(playerIdx, "putts", defaultPutts);
+    });
+    setPendingHoleChange(null);
+    setHoleIdx(targetIdx);
+  }
+
+  // "Go back" - stays on the current hole, nothing is captured, so
+  // the real scores can actually be entered.
+  function cancelHoleChange() {
+    setPendingHoleChange(null);
+  }
+
   // Writes the same value to all 4 players' slots in one atomic update, so
   // the existing engine (which already knows how to take the minimum of 4
   // entries via bestBall) correctly treats it as a single team score
@@ -13195,7 +13248,39 @@ function computeOceans11Results(round, computed) {
   // sync with it over time.
   function determineWinners(roundArg, computedArg) {
     const r = roundArg || round;
-    const ranks = playerRank(r, computedArg);
+    const c = computedArg || computed;
+    // Oceans 11 decides its own winner independently of the round's
+    // regular, full-18-hole ranking - whoever has the lowest total
+    // across their own selected 11 holes wins, not whoever has the
+    // lowest total for the whole round.
+    if (r && r.cfg.oceans11) {
+      const oceans11 = computeOceans11Results(r, c);
+      if (oceans11 && oceans11.rows.length > 0) {
+        const contenders = oceans11.rows.filter((row) => row.holesSelected > 0);
+        if (contenders.length > 0) {
+          const bestTotal = contenders[0].total;
+          return contenders
+            .filter((row) => row.total === bestTotal)
+            .map((row) => ({ ...r.players[row.playerIdx], idx: row.playerIdx }));
+        }
+      }
+      return [];
+    }
+    // Nassau (team games) decides its own overall winner independently
+    // too - whichever team wins the "Overall 18" segment, not whichever
+    // team ranks first by the regular scoring/points logic. Front and
+    // back 9 are their own separate bets, tracked on their own Nassau
+    // Standings card - Overall 18 is the one segment that represents
+    // the whole round, so that's the one used here.
+    if (r && r.cfg.nassau && r.teams && r.teams.length === 2) {
+      const nassau = computeNassauResults(r, c);
+      if (nassau && nassau.overall.winner != null) {
+        const winningTeam = r.teams[nassau.overall.winner] || [];
+        return winningTeam.map((playerIdx) => ({ ...r.players[playerIdx], idx: playerIdx }));
+      }
+      return [];
+    }
+    const ranks = playerRank(r, c);
     const g = GAMES[r.game];
     let winners = [];
     const isTwoVsTwoGame = r.game === "seabluffe" || r.game === "ponto" || r.game === "vegas" || r.game === "beachside" || r.game === "teamputts" || r.game === "teamstrokes";
@@ -13263,7 +13348,37 @@ function computeOceans11Results(round, computed) {
                   {winners.map((w) => `${w.avatar ? w.avatar + " " : ""}${w.name}`).join(" & ")}
                 </div>
                 <div style={{ fontSize: 13, color: "#6b6b63", marginTop: 4 }}>
-                  {g.rankByPutts
+                  {round.cfg.oceans11 ? (() => {
+                    const oceans11 = computeOceans11Results(round, computed);
+                    const winnerIdx = winners[0].idx;
+                    const o11Row = oceans11 && oceans11.rows.find((row) => row.playerIdx === winnerIdx);
+                    const regularScore = computed.playerTotalScore[winnerIdx];
+                    const regularNet = computed.playerTotalNetScore[winnerIdx];
+                    const netLabel = round.cfg.netScoring ? "Net" : "";
+                    return (
+                      <>
+                        Oceans 11: {netLabel} {o11Row ? o11Row.total : "-"} ({o11Row ? o11Row.holesSelected : 0}/11 holes)
+                        <br />
+                        Full round: {regularScore} strokes{round.cfg.netScoring ? ` (net ${regularNet})` : ""}
+                      </>
+                    );
+                  })() : round.cfg.nassau && round.teams && round.teams.length === 2 ? (() => {
+                    const nassau = computeNassauResults(round, computed);
+                    const unitLabel = g.puttsOnlyScoring ? "putt" : g.totalScoring ? "stroke" : "point";
+                    const margin = nassau ? Math.abs(nassau.overall.t0 - nassau.overall.t1) : 0;
+                    const winningTeamIdx = nassau ? nassau.overall.winner : null;
+                    const teamRegular = (round.teams[winningTeamIdx] || []).reduce(
+                      (sum, idx) => sum + (round.cfg.netScoring ? computed.playerTotalNetScore[idx] : computed.playerTotalScore[idx]),
+                      0
+                    );
+                    return (
+                      <>
+                        Nassau Overall: won by {margin} {unitLabel}{margin === 1 ? "" : "s"}
+                        <br />
+                        Full round: {teamRegular} {round.cfg.netScoring ? "net " : ""}strokes
+                      </>
+                    );
+                  })() : g.rankByPutts
                     ? `${winners[0].putts} putts (${winners[0].score} strokes${round.cfg.netScoring ? `, net ${winners[0].netScore}` : ""})`
                     : g.totalScoring
                     ? `${winners[0].score} strokes${round.cfg.netScoring ? ` (net ${winners[0].netScore})` : ""} (${winners[0].putts} putts)`
@@ -13742,7 +13857,7 @@ function computeOceans11Results(round, computed) {
         </div>
         <div className="gsc-hole-strip" ref={holeStripRef}>
           {Array.from({ length: 18 }).map((_, i) => (
-            <div key={i} className={`gsc-hole-pip ${i === holeIdx ? "active" : ""} ${computed.holeResults[i].complete ? "done" : ""}`} onClick={() => setHoleIdx(i)}>
+            <div key={i} className={`gsc-hole-pip ${i === holeIdx ? "active" : ""} ${computed.holeResults[i].complete ? "done" : ""}`} onClick={() => requestHoleChange(i)}>
               {i + 1}
             </div>
           ))}
@@ -13750,7 +13865,7 @@ function computeOceans11Results(round, computed) {
         <div className="gsc-body">
           <div className="gsc-card">
             <div className="gsc-hole-nav">
-              <button className="gsc-btn gsc-btn-outline" disabled={holeIdx === 0} onClick={() => setHoleIdx((h) => h - 1)}>Prev</button>
+              <button className="gsc-btn gsc-btn-outline" disabled={holeIdx === 0} onClick={() => requestHoleChange(holeIdx - 1)}>Prev</button>
               <div style={{ textAlign: "center" }}>
                 <div className="gsc-hole-big">Hole {holeIdx + 1}</div>
                 <div className="gsc-par-badge">Par {parH}{round.cfg.doubleParMax ? ` - max ${parH * 2}` : round.cfg.maxOver != null ? ` - max ${parH + round.cfg.maxOver}` : ""}</div>
@@ -13832,7 +13947,7 @@ function computeOceans11Results(round, computed) {
                   </div>
                 )}
               </div>
-              <button className="gsc-btn gsc-btn-outline" disabled={holeIdx === 17} onClick={() => setHoleIdx((h) => h + 1)}>Next</button>
+              <button className="gsc-btn gsc-btn-outline" disabled={holeIdx === 17} onClick={() => requestHoleChange(holeIdx + 1)}>Next</button>
             </div>
 
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10, marginBottom: 10 }}>
@@ -14046,11 +14161,11 @@ function computeOceans11Results(round, computed) {
                       <div>
                         <div style={{ fontSize: 11, color: "#6b6b63", marginBottom: 3, textAlign: "center" }}>TOTAL STROKES</div>
                         <div className="gsc-stepper">
-                          <button onClick={() => updateHoleEntryStep(i, "strokes", -1, 1, round.par[holeIdx])}>-</button>
+                          <button onClick={() => updateHoleEntryStep(i, "strokes", -1, 1, round.par[holeIdx] - 1)}>-</button>
                           <div className="gsc-stepper-val" style={e.strokes === "" || e.strokes == null ? { opacity: 0.4 } : undefined}>
-                            {e.strokes === "" || e.strokes == null ? round.par[holeIdx] : e.strokes}
+                            {e.strokes === "" || e.strokes == null ? round.par[holeIdx] - 1 : e.strokes}
                           </div>
-                          <button onClick={() => updateHoleEntryStep(i, "strokes", 1, 1, round.par[holeIdx])}>+</button>
+                          <button onClick={() => updateHoleEntryStep(i, "strokes", 1, 1, round.par[holeIdx] - 1)}>+</button>
                         </div>
                         {round.cfg.netScoring && e.strokes !== "" && e.strokes != null && (() => {
                           const strokesOff = computed.strokesOffForHole(i, holeIdx);
@@ -14085,11 +14200,11 @@ function computeOceans11Results(round, computed) {
                       <div>
                         <div style={{ fontSize: 11, color: "#6b6b63", marginBottom: 3, textAlign: "center" }}>PUTTS</div>
                         <div className="gsc-stepper">
-                          <button onClick={() => updateHoleEntryStep(i, "putts", -1, 0, 2)}>-</button>
+                          <button onClick={() => updateHoleEntryStep(i, "putts", -1, 0, 1)}>-</button>
                           <div className="gsc-stepper-val" style={e.putts === "" || e.putts == null ? { opacity: 0.4 } : undefined}>
-                            {e.putts === "" || e.putts == null ? 2 : e.putts}
+                            {e.putts === "" || e.putts == null ? 1 : e.putts}
                           </div>
-                          <button onClick={() => updateHoleEntryStep(i, "putts", 1, 0, 2)}>+</button>
+                          <button onClick={() => updateHoleEntryStep(i, "putts", 1, 0, 1)}>+</button>
                         </div>
                       </div>
                     )}
@@ -14270,7 +14385,7 @@ function computeOceans11Results(round, computed) {
                 className="gsc-btn gsc-btn-primary"
                 disabled={holeIdx === 17}
                 onClick={() => {
-                  setHoleIdx((h) => h + 1);
+                  requestHoleChange(holeIdx + 1);
                   window.scrollTo(0, 0);
                 }}
               >
@@ -14652,6 +14767,30 @@ function computeOceans11Results(round, computed) {
               <div className="gsc-modal-row">
                 <button className="gsc-btn gsc-btn-outline" onClick={cancelLeaveRound}>No, stay</button>
                 <button className="gsc-btn gsc-btn-primary" onClick={confirmLeaveRound}>Yes, leave</button>
+              </div>
+            </div>
+          </div>
+        )}
+        {pendingHoleChange && (
+          <div className="gsc-modal-backdrop" onClick={cancelHoleChange}>
+            <div className="gsc-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="gsc-modal-title">Some scores weren't entered</div>
+              <div className="gsc-modal-body">
+                <div style={{ marginBottom: 8 }}>
+                  For Hole {holeIdx + 1}, these players will be given the default (Strokes: {pendingHoleChange.defaultStrokes}, Putts: {pendingHoleChange.defaultPutts}) for whatever wasn't entered:
+                </div>
+                {pendingHoleChange.missing.map((m) => (
+                  <div key={m.playerIdx} style={{ fontSize: 13, marginBottom: 2 }}>
+                    <b>{m.name}</b>
+                    {m.missingStrokes && ` - Strokes: ${pendingHoleChange.defaultStrokes}`}
+                    {m.missingStrokes && m.missingPutts && ","}
+                    {m.missingPutts && ` Putts: ${pendingHoleChange.defaultPutts}`}
+                  </div>
+                ))}
+              </div>
+              <div className="gsc-modal-row">
+                <button className="gsc-btn gsc-btn-outline" onClick={cancelHoleChange}>Go back</button>
+                <button className="gsc-btn gsc-btn-primary" onClick={confirmHoleChangeWithDefaults}>OK, continue</button>
               </div>
             </div>
           </div>
