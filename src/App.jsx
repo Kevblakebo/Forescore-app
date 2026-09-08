@@ -7535,6 +7535,39 @@ export default function GolfScorecard() {
     });
   }
 
+  // Same idea as updateHoleEntry, but for +/- stepper buttons
+  // specifically. A plain onClick reading a value captured at the last
+  // render (e.g. `(Number(e.strokes) || 0) + 1`) and passing the
+  // already-computed result to updateHoleEntry silently loses clicks
+  // when someone taps quickly - if two clicks land before React
+  // re-renders between them, both still see the same stale starting
+  // value and compute the same result, so one click's worth of change
+  // just vanishes. Computing the delta from inside the state updater
+  // itself instead guarantees every click reads the truly current
+  // value, no matter how fast they're tapped.
+  function updateHoleEntryStep(playerIdx, field, delta, minValue, defaultValue = 0) {
+    lastLocalEditRef.current = Date.now();
+    const applyPatch = (r) => {
+      const currentEntry = ((r.scores[holeIdx] || {})[playerIdx]) || {};
+      const current = currentEntry[field];
+      const n = current === "" || current == null ? defaultValue : Number(current);
+      const raw = n + delta;
+      const value = raw < minValue ? "" : raw;
+      const next = { ...r, scores: { ...r.scores } };
+      const holeScores = { ...(next.scores[holeIdx] || {}) };
+      const entry = { ...(holeScores[playerIdx] || {}) };
+      entry[field] = value;
+      holeScores[playerIdx] = entry;
+      next.scores[holeIdx] = holeScores;
+      return next;
+    };
+    setRound((r) => {
+      const next = applyPatch(r);
+      saveRoundPatch(next, applyPatch);
+      return next;
+    });
+  }
+
   // Used by "one team score" games (like Scramble Tournament) where there's
   // only a single shared number per hole, not 4 individual player entries.
   // Writes the same value to all 4 players' slots in one atomic update, so
@@ -14013,18 +14046,11 @@ function computeOceans11Results(round, computed) {
                       <div>
                         <div style={{ fontSize: 11, color: "#6b6b63", marginBottom: 3, textAlign: "center" }}>TOTAL STROKES</div>
                         <div className="gsc-stepper">
-                          <button
-                            disabled={e.strokes === "" || e.strokes == null}
-                            onClick={() => {
-                              if (e.strokes === "" || e.strokes == null) return;
-                              const n = Number(e.strokes);
-                              updateHoleEntry(i, "strokes", n <= 1 ? "" : n - 1);
-                            }}
-                          >
-                            -
-                          </button>
-                          <div className="gsc-stepper-val">{e.strokes === "" || e.strokes == null ? "-" : e.strokes}</div>
-                          <button onClick={() => updateHoleEntry(i, "strokes", (Number(e.strokes) || 0) + 1)}>+</button>
+                          <button onClick={() => updateHoleEntryStep(i, "strokes", -1, 1, round.par[holeIdx])}>-</button>
+                          <div className="gsc-stepper-val" style={e.strokes === "" || e.strokes == null ? { opacity: 0.4 } : undefined}>
+                            {e.strokes === "" || e.strokes == null ? round.par[holeIdx] : e.strokes}
+                          </div>
+                          <button onClick={() => updateHoleEntryStep(i, "strokes", 1, 1, round.par[holeIdx])}>+</button>
                         </div>
                         {round.cfg.netScoring && e.strokes !== "" && e.strokes != null && (() => {
                           const strokesOff = computed.strokesOffForHole(i, holeIdx);
@@ -14059,18 +14085,11 @@ function computeOceans11Results(round, computed) {
                       <div>
                         <div style={{ fontSize: 11, color: "#6b6b63", marginBottom: 3, textAlign: "center" }}>PUTTS</div>
                         <div className="gsc-stepper">
-                          <button
-                            disabled={e.putts === "" || e.putts == null}
-                            onClick={() => {
-                              if (e.putts === "" || e.putts == null) return;
-                              const n = Number(e.putts);
-                              updateHoleEntry(i, "putts", n <= 0 ? "" : n - 1);
-                            }}
-                          >
-                            -
-                          </button>
-                          <div className="gsc-stepper-val">{e.putts === "" || e.putts == null ? "-" : e.putts}</div>
-                          <button onClick={() => updateHoleEntry(i, "putts", (Number(e.putts) || 0) + 1)}>+</button>
+                          <button onClick={() => updateHoleEntryStep(i, "putts", -1, 0, 2)}>-</button>
+                          <div className="gsc-stepper-val" style={e.putts === "" || e.putts == null ? { opacity: 0.4 } : undefined}>
+                            {e.putts === "" || e.putts == null ? 2 : e.putts}
+                          </div>
+                          <button onClick={() => updateHoleEntryStep(i, "putts", 1, 0, 2)}>+</button>
                         </div>
                       </div>
                     )}
