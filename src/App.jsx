@@ -2431,6 +2431,13 @@ export default function GolfScorecard() {
   const [holeNoteDraft, setHoleNoteDraft] = useState("");
   const [showGrid, setShowGrid] = useState(false);
   const [confirmLeaveOpen, setConfirmLeaveOpen] = useState(false);
+  const [navMenuOpen, setNavMenuOpen] = useState(false);
+  // Where to navigate once "Leave this round?" is confirmed, when that
+  // confirmation was triggered by picking a destination from the new
+  // logo nav menu while mid-round - null means "use the normal default"
+  // (home, or the tournament board), preserving the existing Back-button
+  // behavior exactly when this isn't set.
+  const [pendingNavTarget, setPendingNavTarget] = useState(null);
   const [confirmFinishOpen, setConfirmFinishOpen] = useState(false);
   const [viewingRoundFromStats, setViewingRoundFromStats] = useState(false);
   const [rulesOpenFor, setRulesOpenFor] = useState(null);
@@ -2978,7 +2985,14 @@ export default function GolfScorecard() {
         }
       }
 
-      recent.push({ code: ur.round_code, name: r.name, date: r.date, game: r.game, complete: !!r.finished || holesPlayed === 18, holesPlayed, tournamentId: ur.tournament_id || null });
+      // "Finished Games" should only ever show rounds that were actually
+      // finished (Finish & Exit pressed) - not every round in the user's
+      // history. An in-progress round belongs only on the homepage's
+      // "Continue round" card, even if every hole happens to already be
+      // filled in but the person hasn't explicitly finished yet.
+      if (r.finished) {
+        recent.push({ code: ur.round_code, name: r.name, date: r.date, game: r.game, complete: true, holesPlayed, tournamentId: ur.tournament_id || null });
+      }
     }
 
     setStatsLoading(false);
@@ -5116,6 +5130,17 @@ export default function GolfScorecard() {
   }
   function confirmLeaveRound() {
     setConfirmLeaveOpen(false);
+    if (pendingNavTarget) {
+      const target = pendingNavTarget;
+      setPendingNavTarget(null);
+      if (target === "logout") {
+        signOutUser();
+        setScreen("home");
+      } else {
+        goToScreen(target);
+      }
+      return;
+    }
     if (round && round.tournamentId) {
       openTournamentBoard(round.tournamentId);
     } else {
@@ -5124,6 +5149,31 @@ export default function GolfScorecard() {
   }
   function cancelLeaveRound() {
     setConfirmLeaveOpen(false);
+    setPendingNavTarget(null);
+  }
+
+  // Central handler for every item in the new logo nav menu (Home, Games,
+  // Groups, Profile, Library, Log In/Out). If there's a genuinely active,
+  // in-progress round on the scoring screen, this reuses the exact same
+  // "Leave this round?" confirmation already used by that screen's own
+  // Back button - the round is already continuously auto-saved regardless,
+  // this is purely about not silently yanking someone out of an active
+  // round without asking. Once confirmed (or if there was nothing to
+  // confirm), navigates to the actual requested destination.
+  function handleNavMenuSelect(target) {
+    setNavMenuOpen(false);
+    const midActiveRound = screen === "card" && round && !viewingRoundFromStats;
+    if (midActiveRound) {
+      setPendingNavTarget(target);
+      requestLeaveRound();
+      return;
+    }
+    if (target === "logout") {
+      signOutUser();
+      setScreen("home");
+    } else {
+      goToScreen(target);
+    }
   }
 
   // Best-effort guard for real navigation/close events while a round is
@@ -7126,6 +7176,16 @@ export default function GolfScorecard() {
   // their change. Verified against a real, simulated race with dozens
   // of genuine conflicts before shipping this - every write survived.
   const saveRoundPatch = useCallback(async (localRound, applyPatch) => {
+    // Snapshot which edit triggered this specific call, at the moment it
+    // starts (before any awaiting). Rapid taps (e.g. mashing the + button)
+    // each fire their own independent, unawaited saveRoundPatch call, and
+    // network timing means they can resolve out of order - an earlier
+    // tap's slow response finishing after a later tap's fast one would
+    // otherwise overwrite local state with its own, now-stale result,
+    // visibly reverting a change the person just made. This timestamp
+    // lets the local-state update below apply only from whichever call
+    // is actually the most recent edit, once it resolves.
+    const callStartedAt = lastLocalEditRef.current;
     try {
       window.localStorage.setItem(`gsc-local-backup:${localRound.id}`, JSON.stringify(localRound));
     } catch (e) {}
@@ -7182,8 +7242,13 @@ export default function GolfScorecard() {
       // The server-confirmed, merged result may include another
       // player's change that landed during a retry cycle - update this
       // device's own local state to reflect it immediately, rather
-      // than waiting for a separate, later poll to pick it up.
-      setRound((r) => (r && r.id === finalRound.id ? finalRound : r));
+      // than waiting for a separate, later poll to pick it up. Only do
+      // this from whichever call is actually the most recent edit -
+      // otherwise a slow-resolving earlier tap could overwrite a faster,
+      // newer tap's already-applied change with its own stale result.
+      if (lastLocalEditRef.current === callStartedAt) {
+        setRound((r) => (r && r.id === finalRound.id ? finalRound : r));
+      }
     }
 
     const complete = isRoundDone(finalRound);
@@ -8163,11 +8228,87 @@ function computeNassauResults(round, computed, maxHole = 17) {
             {sub && <div className="gsc-sub" style={{ whiteSpace: "normal", wordBreak: "break-word" }}>{sub}</div>}
           </div>
           {right}
-          <img
-            src={LOGO_DATA_URI}
-            alt="RipScore logo"
-            style={{ width: 70, height: "auto", objectFit: "contain", flexShrink: 0, alignSelf: "flex-start", marginRight: 0, marginTop: -2 }}
-          />
+          <div style={{ position: "relative", flexShrink: 0 }}>
+            <button
+              onClick={() => setNavMenuOpen((v) => !v)}
+              aria-label="Open menu"
+              style={{ background: "none", border: "none", padding: 0, cursor: "pointer", display: "block" }}
+            >
+              <img
+                src={LOGO_DATA_URI}
+                alt="RipScore logo"
+                style={{ width: 70, height: "auto", objectFit: "contain", alignSelf: "flex-start", marginRight: 0, marginTop: -2, pointerEvents: "none" }}
+              />
+            </button>
+            {navMenuOpen && (
+              <>
+                <div
+                  onClick={() => setNavMenuOpen(false)}
+                  style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.25)" }}
+                />
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "100%",
+                    right: 0,
+                    marginTop: 6,
+                    zIndex: 201,
+                    background: "#F3EFE0",
+                    borderRadius: 12,
+                    boxShadow: "0 6px 20px rgba(0,0,0,0.25)",
+                    minWidth: 190,
+                    overflow: "hidden",
+                  }}
+                >
+                  {NAV_ITEMS.map((item) => {
+                    const Icon = item.icon;
+                    const active = screen === item.key;
+                    return (
+                      <button
+                        key={item.key}
+                        onClick={() => handleNavMenuSelect(item.key)}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 10,
+                          width: "100%",
+                          padding: "12px 16px",
+                          border: "none",
+                          borderBottom: "1px solid rgba(27,67,50,0.1)",
+                          background: active ? "rgba(27,67,50,0.08)" : "none",
+                          color: "#1B4332",
+                          fontSize: 15,
+                          fontWeight: active ? 700 : 500,
+                          textAlign: "left",
+                          cursor: "pointer",
+                        }}
+                      >
+                        <Icon />
+                        {item.label}
+                      </button>
+                    );
+                  })}
+                  <button
+                    onClick={() => handleNavMenuSelect(session ? "logout" : "login")}
+                    style={{
+                      display: "block",
+                      width: "100%",
+                      padding: "12px 16px",
+                      border: "none",
+                      background: "none",
+                      color: "#A42E2D",
+                      fontSize: 15,
+                      fontWeight: 600,
+                      textAlign: "left",
+                      cursor: "pointer",
+                    }}
+                  >
+                    {session ? "Log Out" : "Log In"}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
         {belowLogo && <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 6 }}>{belowLogo}</div>}
       </div>
@@ -9100,8 +9241,7 @@ function computeNassauResults(round, computed, maxHole = 17) {
                   <div style={{ fontSize: 13, color: "#1B4332", fontWeight: 600 }}>
                     {stripDateFromTitle(r.name)}
                     {r.tournamentId && <span style={{ fontSize: 10, color: "#B08D57", marginLeft: 6, fontWeight: 700 }}>TOURNAMENT</span>}
-                    {!r.complete && <span style={{ fontSize: 10, color: "#8a8a80", marginLeft: 6, fontWeight: 400 }}>(in progress)</span>}
-                    {r.complete && r.holesPlayed < 18 && (
+                    {r.holesPlayed < 18 && (
                       <span style={{ fontSize: 10, color: "#8a8a80", marginLeft: 6, fontWeight: 400 }}>({r.holesPlayed} holes)</span>
                     )}
                   </div>
