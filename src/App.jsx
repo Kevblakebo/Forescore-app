@@ -14019,7 +14019,7 @@ function computeNassauResults(round, computed, maxHole = 17) {
             </div>
           )}
 
-          <button className="gsc-link" style={{ fontSize: 16 }} onClick={() => setShowGrid((s) => !s)}>{showGrid ? "Hide" : "Show"} full 18-hole scorecard</button>
+          <button className="gsc-link" style={{ fontSize: 19, display: "block", marginBottom: 14 }} onClick={() => setShowGrid((s) => !s)}>{showGrid ? "Hide" : "Show"} full 18-hole scorecard</button>
           {showGrid && (() => {
             const hasYardageCol = round.yardage && round.yardage.some((y) => y != null);
             const hasStrokeIndexCol = round.strokeIndex && round.strokeIndex.some((s) => s != null);
