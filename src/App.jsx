@@ -2428,7 +2428,6 @@ export default function GolfScorecard() {
     const activePip = holeStripRef.current.querySelector(".gsc-hole-pip.active");
     if (activePip) activePip.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
   }, [holeIdx]);
-  const [holeNoteDraft, setHoleNoteDraft] = useState("");
   const [showGrid, setShowGrid] = useState(false);
   const [confirmLeaveOpen, setConfirmLeaveOpen] = useState(false);
   const [navMenuOpen, setNavMenuOpen] = useState(false);
@@ -4857,10 +4856,6 @@ export default function GolfScorecard() {
     setClaimSlotDismissed(false);
     setClaimSlotErr("");
   }, [round && round.id]);
-
-  useEffect(() => {
-    setHoleNoteDraft((round && round.holeNotes && round.holeNotes[holeIdx]) || "");
-  }, [holeIdx, round && round.id]);
 
   useEffect(() => {
     setEditGroupAvatarPickerOpen(false);
@@ -7516,23 +7511,6 @@ export default function GolfScorecard() {
     setTimeout(() => {
       setMulliganAwardedFlash((cur) => (cur === playerIdx ? null : cur));
     }, 1500);
-  }
-
-  // Saves the free-form note for the current hole - called on blur, not on
-  // every keystroke, since firing a real network save per character typed
-  // would be wasteful and could feel laggy for a longer note.
-  function updateHoleNote(text) {
-    lastLocalEditRef.current = Date.now();
-    const applyPatch = (r) => {
-      const notes = { ...(r.holeNotes || {}) };
-      notes[holeIdx] = text;
-      return { ...r, holeNotes: notes };
-    };
-    setRound((r) => {
-      const next = applyPatch(r);
-      saveRoundPatch(next, applyPatch);
-      return next;
-    });
   }
 
   // screen, not just during initial setup. Saves immediately so it syncs
@@ -14041,7 +14019,7 @@ function computeNassauResults(round, computed, maxHole = 17) {
             </div>
           )}
 
-          <button className="gsc-link" onClick={() => setShowGrid((s) => !s)}>{showGrid ? "Hide" : "Show"} full 18-hole scorecard</button>
+          <button className="gsc-link" style={{ fontSize: 16 }} onClick={() => setShowGrid((s) => !s)}>{showGrid ? "Hide" : "Show"} full 18-hole scorecard</button>
           {showGrid && (() => {
             const hasYardageCol = round.yardage && round.yardage.some((y) => y != null);
             const hasStrokeIndexCol = round.strokeIndex && round.strokeIndex.some((s) => s != null);
@@ -14171,22 +14149,6 @@ function computeNassauResults(round, computed, maxHole = 17) {
               </>
             );
           })()}
-
-          <div className="gsc-card">
-            <div className="gsc-label" style={{ marginBottom: 8 }}>Notes</div>
-            <textarea
-              className="gsc-input"
-              style={{ width: "100%", minHeight: 60, resize: "vertical", fontFamily: "inherit" }}
-              placeholder="Optional - add any notes for this hole"
-              value={holeNoteDraft}
-              onChange={(e) => setHoleNoteDraft(e.target.value)}
-              onBlur={() => {
-                if (holeNoteDraft !== ((round.holeNotes && round.holeNotes[holeIdx]) || "")) {
-                  updateHoleNote(holeNoteDraft);
-                }
-              }}
-            />
-          </div>
 
           {round.cfg.nassau && (() => {
             const nassau = computeNassauResults(round, computed);
