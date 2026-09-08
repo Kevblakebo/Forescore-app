@@ -14777,7 +14777,7 @@ function computeOceans11Results(round, computed) {
               <div className="gsc-modal-title">Some scores weren't entered</div>
               <div className="gsc-modal-body">
                 <div style={{ marginBottom: 8 }}>
-                  For Hole {holeIdx + 1}, these players will be given the default (Strokes: {pendingHoleChange.defaultStrokes}, Putts: {pendingHoleChange.defaultPutts}) for whatever wasn't entered:
+                  For Hole {holeIdx + 1}, these players will be given the default for whatever wasn't entered:
                 </div>
                 {pendingHoleChange.missing.map((m) => (
                   <div key={m.playerIdx} style={{ fontSize: 13, marginBottom: 2 }}>
