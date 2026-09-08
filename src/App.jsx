@@ -718,15 +718,23 @@ const VIBE_GAME_MAP = {
     simple: ["swami", "individualputts"],
     mixedSkill: ["pontobango", "stableford"],
     highDrama: "dstreet",
+    // Every Nassau/Oceans-11-eligible individual format - same list used
+    // at 4 players for the "every player for themselves" branch below.
+    maxStrategy: ["swami", "dstreet", "individualputts"],
   },
   "4": {
     simple: { team: ["teamstrokes", "teamputts"], individual: ["swami", "individualputts"] },
     mixedSkill: { team: ["seabluffe", "beachside"], individual: ["pontobango", "stableford"] },
     highDrama: { team: ["ponto", "vegas"], individual: "dstreet" },
-    maxStrategy: "moonlightwolf",
-    // Every Nassau-eligible team format - deliberately not narrowed by
-    // team/individual first, since all 4 are already team formats.
-    nassau: ["teamstrokes", "ponto", "beachside", "teamputts"],
+    // Combines what used to be two separate vibes ("maximum strategy"
+    // and "playing a Nassau format") into one, branching three ways
+    // instead of two - team, individual, or Wolf's own team/lone-wolf
+    // mix, decided per hole rather than up front.
+    maxStrategy: {
+      team: ["teamstrokes", "ponto", "beachside", "teamputts"],
+      individual: ["swami", "dstreet", "individualputts"],
+      mixed: "moonlightwolf",
+    },
   },
   tournament: {
     simple: "tourneygg",
@@ -11154,7 +11162,7 @@ function computeIndividualNassauResults(round, computed) {
               const isTourn = vibePlayerCountBucket(wizardAnswers.playerCount) === "tournament";
               const pickVibe = (vibeKey) => {
                 const r = resolveVibeEntry(wizardAnswers.playerCount, vibeKey, undefined);
-                wizardGoNext("vibe", { vibe: vibeKey, resolvedGameKey: r.resolved || null, isTournament: !!r.resolved && isTourn, wantsNassau: vibeKey === "nassau" });
+                wizardGoNext("vibe", { vibe: vibeKey, resolvedGameKey: r.resolved || null, isTournament: !!r.resolved && isTourn, wantsNassau: vibeKey === "maxStrategy" });
               };
               return (
                 <div className="gsc-card">
@@ -11164,11 +11172,11 @@ function computeIndividualNassauResults(round, computed) {
                   <OptionButton onClick={() => pickVibe("highDrama")}>
                     High stakes - lots of drama, every hole can swing{isTourn ? " (closest fit: Best Ball Tournament)" : ""}
                   </OptionButton>
-                  {Number(wizardAnswers.playerCount) === 4 && (
-                    <OptionButton onClick={() => pickVibe("maxStrategy")}>Maximum strategy - constant partner decisions (Wolf)</OptionButton>
+                  {(Number(wizardAnswers.playerCount) === 2 || Number(wizardAnswers.playerCount) === 3) && (
+                    <OptionButton onClick={() => pickVibe("maxStrategy")}>Maximum strategy - scoring formats like Nassau and Oceans 11</OptionButton>
                   )}
                   {Number(wizardAnswers.playerCount) === 4 && (
-                    <OptionButton onClick={() => pickVibe("nassau")}>Playing a Nassau scoring format - front 9, back 9, and overall, each its own bet</OptionButton>
+                    <OptionButton onClick={() => pickVibe("maxStrategy")}>Maximum strategy - partner decisions and scoring formats</OptionButton>
                   )}
                   <button
                     className="gsc-btn gsc-btn-outline"
@@ -11187,7 +11195,9 @@ function computeIndividualNassauResults(round, computed) {
 
           {wizardStepId === "roundMode" && (
             <div className="gsc-card">
-              <div className="gsc-label" style={{ marginBottom: 10, fontSize: 16 }}>Team up, or every player for themselves?</div>
+              <div className="gsc-label" style={{ marginBottom: 10, fontSize: 16 }}>
+                {wizardAnswers.vibe === "maxStrategy" ? "Do you want to team up, every player for themselves, or somewhere in between?" : "Team up, or every player for themselves?"}
+              </div>
               <OptionButton
                 onClick={() => {
                   const r = resolveVibeEntry(wizardAnswers.playerCount, wizardAnswers.vibe, "team");
@@ -11204,6 +11214,16 @@ function computeIndividualNassauResults(round, computed) {
               >
                 Individually - every player for themselves
               </OptionButton>
+              {wizardAnswers.vibe === "maxStrategy" && (
+                <OptionButton
+                  onClick={() => {
+                    const r = resolveVibeEntry(wizardAnswers.playerCount, wizardAnswers.vibe, "mixed");
+                    wizardGoNext("roundMode", { roundMode: "mixed", resolvedGameKey: r.resolved || null, wantsNassau: false });
+                  }}
+                >
+                  Somewhere in between - decide per hole (Wolf)
+                </OptionButton>
+              )}
             </div>
           )}
 
