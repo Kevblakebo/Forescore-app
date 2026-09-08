@@ -2915,6 +2915,11 @@ export default function GolfScorecard() {
 
       const myIdx = r.players.findIndex((p) => p.user_id === session.user.id);
       if (myIdx === -1) continue;
+      // Only genuinely finished rounds (Finish & Exit actually pressed)
+      // count toward Stats or the Finished Games list - an in-progress
+      // round, even one where every hole happens to already be filled
+      // in, belongs only on the homepage's "Continue round" card.
+      if (!r.finished) continue;
 
       let holesPlayed = 0;
       let myStrokesTotal = 0;
@@ -2957,11 +2962,7 @@ export default function GolfScorecard() {
       if (holesPlayed === 0) continue; // created but never actually played - don't count it
       roundsPlayed++;
 
-      if (r.finished || holesPlayed === 18) {
-        // Only fully-completed (or explicitly finished) rounds count toward
-        // averages and wins - a 4-hole partial round that was never
-        // actually finished would otherwise drag the average way down and
-        // can't fairly be scored a win or loss anyway.
+      {
         // A finished round short of 18 holes (someone playing just 9, or
         // stopping at 14) still deserves to count - but its raw total is
         // naturally lower just because there were fewer holes, not because
@@ -2985,14 +2986,7 @@ export default function GolfScorecard() {
         }
       }
 
-      // "Finished Games" should only ever show rounds that were actually
-      // finished (Finish & Exit pressed) - not every round in the user's
-      // history. An in-progress round belongs only on the homepage's
-      // "Continue round" card, even if every hole happens to already be
-      // filled in but the person hasn't explicitly finished yet.
-      if (r.finished) {
-        recent.push({ code: ur.round_code, name: r.name, date: r.date, game: r.game, complete: true, holesPlayed, tournamentId: ur.tournament_id || null });
-      }
+      recent.push({ code: ur.round_code, name: r.name, date: r.date, game: r.game, complete: true, holesPlayed, tournamentId: ur.tournament_id || null });
     }
 
     setStatsLoading(false);
@@ -4168,6 +4162,10 @@ export default function GolfScorecard() {
     setDeleteHistoryConfirm(null);
     loadStats(); // refresh so the list and every stat reflect the removal
     setGroupRounds((prev) => prev.filter((r) => r.code !== deleteHistoryConfirm.code));
+    // Best-effort: also refresh the server-side leaderboard stats now,
+    // rather than leaving the Public/group leaderboards stale until the
+    // next hourly scheduled run picks up this deletion.
+    supabase.functions.invoke("refresh-all-stats").catch((e) => console.warn("Post-delete stats refresh failed (hourly schedule will catch it):", e));
   }
 
   // Builds a fresh set of 4 empty player slots - if someone's logged in
