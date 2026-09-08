@@ -74,7 +74,7 @@ const STYLE = `
   table.gsc-grid { width:100%; border-collapse:collapse; font-size:11px; font-family: "Courier New", Courier, monospace; }
   table.gsc-grid th, table.gsc-grid td { border:1px solid #e5e0cd; padding:4px 3px; text-align:center; }
   table.gsc-grid th { background:#1B4332; color:#F3EFE0; position:sticky; top:0; }
-  table.gsc-grid-horizontal { table-layout:fixed; min-width:360px; font-size:10.5px; }
+  table.gsc-grid-horizontal { table-layout:fixed; width:100%; min-width:360px; font-size:10.5px; }
   table.gsc-grid-horizontal th, table.gsc-grid-horizontal td { padding:5px 2px; }
   table.gsc-grid-horizontal th:first-child, table.gsc-grid-horizontal td:first-child { width:4.5ch; text-align:left; padding-left:5px; }
   table.gsc-grid-horizontal th:not(:first-child), table.gsc-grid-horizontal td:not(:first-child) { width:8.5%; }
@@ -14088,7 +14088,7 @@ function computeNassauResults(round, computed, maxHole = 17) {
                           const h = startH + i;
                           const e = (round.scores[h] || {})[pi] || {};
                           return (
-                            <td key={i} onClick={() => setHoleIdx(h)} style={{ cursor: "pointer", fontWeight: 700 }}>
+                            <td key={i} style={{ fontWeight: 700 }}>
                               {scoreCell(e)}
                             </td>
                           );
@@ -14145,7 +14145,7 @@ function computeNassauResults(round, computed, maxHole = 17) {
                 {nineHoleTable(0, frontNineTotals, "OUT")}
                 {nineHoleTable(9, backNineTotals, "IN")}
                 {roundSummaryTable}
-                <div style={{ fontSize: 11, color: "#6b6b63", marginTop: 6 }}>Cell shows strokes/putts. Tap a cell to jump to that hole. Totals, +/- Par, and Net only count holes played so far. Net = Total strokes minus Handicap.</div>
+                <div style={{ fontSize: 11, color: "#6b6b63", marginTop: 6 }}>Cell shows strokes/putts. Totals, +/- Par, and Net only count holes played so far. Net = Total strokes minus Handicap.</div>
               </>
             );
           })()}
