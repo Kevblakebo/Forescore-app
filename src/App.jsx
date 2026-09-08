@@ -116,6 +116,44 @@ const LEADERBOARD_CATEGORIES = {
   holes_in_one: { label: "Holes-in-One", lowerIsBetter: false, valueOf: (r) => r.holes_in_one, format: (v) => String(v) },
 };
 
+// ============================================================
+// SUBSCRIPTIONS MASTER SWITCH
+// Set to true only when actually ready to launch this to real users.
+// While false, none of the subscription/paywall UI is reachable at all
+// - no nav entries, no screen, nothing - regardless of what else is in
+// this file. Safe to upload and deploy with this false; it has zero
+// effect on the current, live app or its testers until deliberately
+// flipped on.
+// ============================================================
+const SUBSCRIPTIONS_ENABLED = false;
+
+// Detects whether this is running inside one of the native app wrappers,
+// as opposed to the plain website. iOS and Android use two completely
+// different technologies here, so this needs two different checks:
+// - iOS goes through Capacitor, which injects a global `Capacitor`
+//   object at runtime (not imported here at all, just read directly,
+//   since @capacitor/core isn't a formal dependency of this file).
+// - Android is a TWA (Trusted Web Activity), a different, Google-specific
+//   technology that just loads this live website directly - Capacitor
+//   plays no part in it at all. The standard, Google-documented way to
+//   detect this is checking document.referrer for the android-app://
+//   scheme a TWA launches with.
+// Wrapped in try/catch since referrer/Capacitor access can behave
+// unpredictably across embedded contexts - always fail safe to "web."
+function isRunningInNativeApp() {
+  try {
+    if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) return true;
+    if (document.referrer && document.referrer.startsWith("android-app://")) return true;
+  } catch (e) {}
+  return false;
+}
+// Subscriptions currently only work on the web - Apple and Google both
+// require in-app digital subscriptions to go through their own payment
+// systems (StoreKit, Play Billing) rather than Stripe directly, so this
+// stays fully hidden inside the native apps until those are built too,
+// even once SUBSCRIPTIONS_ENABLED is switched on for the website.
+const SUBSCRIPTIONS_AVAILABLE_HERE = SUBSCRIPTIONS_ENABLED && !isRunningInNativeApp();
+
 const GAMES = {
   teamstrokes: {
     name: "Team Strokes",
@@ -2127,6 +2165,9 @@ export default function GolfScorecard() {
   const [newPasswordConfirm, setNewPasswordConfirm] = useState("");
 
   const [profile, setProfile] = useState(null); // { name, handicap, venmo, home_course } once loaded
+  const [subscription, setSubscription] = useState(null); // { status, plan, trial_ends_at, current_period_end } once loaded
+  const [justSubscribed, setJustSubscribed] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState("yearly");
   const [profileForm, setProfileForm] = useState({ name: "", handicap: "", venmo: "", home_course: "", leaderboard_opt_in: false, avatar: "" });
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileSaving, setProfileSaving] = useState(false);
@@ -2347,11 +2388,30 @@ export default function GolfScorecard() {
   useEffect(() => {
     if (session && session.user) {
       loadProfile(session.user.id);
+      loadSubscription(session.user.id);
     } else {
       setProfile(null);
       setProfileForm({ name: "", handicap: "", venmo: "", home_course: "", leaderboard_opt_in: false, avatar: "" });
+      setSubscription(null);
     }
   }, [session && session.user && session.user.id]);
+
+  // Detects returning from Stripe Checkout (see startCheckout above) via
+  // the query param it redirects back with, shows a confirmation, cleans
+  // the param off the URL so it doesn't linger on refresh or get shared
+  // in a link, and re-fetches subscription status right away rather than
+  // waiting for the next natural reload.
+  useEffect(() => {
+    if (!SUBSCRIPTIONS_AVAILABLE_HERE) return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("subscribed") === "1") {
+      setJustSubscribed(true);
+      if (session && session.user) loadSubscription(session.user.id);
+      window.history.replaceState({}, "", window.location.pathname);
+    } else if (params.get("subscribe_canceled") === "1") {
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, []);
 
   useEffect(() => {
     if (screen === "profileTab" && session && session.user) {
@@ -2785,6 +2845,47 @@ export default function GolfScorecard() {
       setProfile(null);
       setProfileForm({ name: "", handicap: "", venmo: "", home_course: "", leaderboard_opt_in: false, avatar: "" });
     }
+  }
+
+  // Fetches the logged-in user's own subscription row. RLS only allows
+  // reading your own row (never writing it directly - only the
+  // server-side Stripe webhook can do that), same protection pattern as
+  // everything else account-related in this app.
+  async function loadSubscription(userId) {
+    if (!SUBSCRIPTIONS_AVAILABLE_HERE || !supabase || !userId) return;
+    const { data, error } = await withJwtRetry(() => supabase.from("subscriptions").select("*").eq("user_id", userId).maybeSingle());
+    if (error) {
+      console.warn("Couldn't load subscription status:", error.message);
+      return;
+    }
+    setSubscription(data || null);
+  }
+
+  const [checkoutBusy, setCheckoutBusy] = useState(false);
+  const [checkoutErr, setCheckoutErr] = useState("");
+
+  // Starts a real Stripe Checkout session for the chosen plan and sends
+  // the browser there. Success/cancel both return to this same page,
+  // distinguished by a query param this app checks for on load (see the
+  // effect below) - there's no separate page to build for either case.
+  async function startCheckout(plan) {
+    if (!session || !supabase) return;
+    setCheckoutBusy(true);
+    setCheckoutErr("");
+    const baseUrl = window.location.origin + window.location.pathname;
+    const { data, error } = await supabase.functions.invoke("create-checkout-session", {
+      body: {
+        plan,
+        successUrl: baseUrl + "?subscribed=1",
+        cancelUrl: baseUrl + "?subscribe_canceled=1",
+      },
+    });
+    setCheckoutBusy(false);
+    if (error || !data || !data.url) {
+      setCheckoutErr("Couldn't start checkout. Please try again in a moment.");
+      return;
+    }
+    window.location.href = data.url;
   }
 
   async function saveProfile() {
@@ -8264,6 +8365,29 @@ function computeNassauResults(round, computed, maxHole = 17) {
                       </button>
                     );
                   })}
+                  {SUBSCRIPTIONS_AVAILABLE_HERE && session && (
+                    <button
+                      onClick={() => handleNavMenuSelect("subscribe")}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 10,
+                        width: "100%",
+                        padding: "12px 16px",
+                        border: "none",
+                        borderBottom: "1px solid rgba(27,67,50,0.1)",
+                        background: screen === "subscribe" ? "rgba(27,67,50,0.08)" : "none",
+                        color: "#1B4332",
+                        fontSize: 15,
+                        fontWeight: screen === "subscribe" ? 700 : 500,
+                        textAlign: "left",
+                        cursor: "pointer",
+                      }}
+                    >
+                      <span>{"\u2B50"}</span>
+                      RipScore Premium
+                    </button>
+                  )}
                   <button
                     onClick={() => handleNavMenuSelect(session ? "logout" : "login")}
                     style={{
@@ -8989,6 +9113,19 @@ function computeNassauResults(round, computed, maxHole = 17) {
             <div className="gsc-card">
               <div className="gsc-label" style={{ marginBottom: 4 }}>Account</div>
               <div style={{ fontSize: 13, color: "#6b6b63", marginBottom: 14 }}>{session.user.email}</div>
+
+              {SUBSCRIPTIONS_AVAILABLE_HERE && (
+                <button
+                  className="gsc-btn gsc-btn-outline"
+                  style={{ width: "100%", marginBottom: 14, display: "flex", justifyContent: "space-between", alignItems: "center" }}
+                  onClick={() => goToScreen("subscribe")}
+                >
+                  <span>{"\u2B50"} RipScore Premium</span>
+                  <span style={{ fontSize: 12, color: "#3F6B54", fontWeight: 700 }}>
+                    {subscription && (subscription.status === "trialing" || subscription.status === "active") ? "Active" : "Try free"}
+                  </span>
+                </button>
+              )}
 
               {profileLoading ? (
                 <div style={{ fontSize: 13, color: "#6b6b63" }}>Loading your profile...</div>
@@ -14375,6 +14512,96 @@ function computeNassauResults(round, computed, maxHole = 17) {
           roundPars={round.par}
           onSaved={() => goBack("card")}
         />
+      </div>
+    );
+  }
+
+  if (screen === "subscribe" && SUBSCRIPTIONS_AVAILABLE_HERE && session) {
+    const isActive = subscription && (subscription.status === "trialing" || subscription.status === "active");
+    const isPastDue = subscription && subscription.status === "past_due";
+    return (
+      <div className="gsc">
+        <style>{STYLE}</style>
+        <Header title="RipScore Premium" onBack={() => goBack("profileTab")} />
+
+        {justSubscribed && (
+          <div className="gsc-card" style={{ background: "#EBF0EC", border: "1px solid #1B4332", marginBottom: 12 }}>
+            <div style={{ fontWeight: 700, color: "#1B4332" }}>{"\u2713"} You're all set!</div>
+            <div style={{ fontSize: 13, color: "#4b4b45", marginTop: 4 }}>Your free trial has started. Enjoy full access to RipScore Premium.</div>
+          </div>
+        )}
+
+        {isActive ? (
+          <div className="gsc-card">
+            <div className="gsc-label" style={{ marginBottom: 6 }}>
+              {subscription.status === "trialing" ? "Your free trial is active" : "You're subscribed"}
+            </div>
+            <div style={{ fontSize: 13, color: "#4b4b45" }}>
+              Plan: <b>{subscription.plan === "yearly" ? "Yearly ($44.99/yr)" : "Monthly ($4.99/mo)"}</b>
+            </div>
+            {subscription.status === "trialing" && subscription.trial_ends_at && (
+              <div style={{ fontSize: 13, color: "#4b4b45", marginTop: 4 }}>
+                Trial ends {new Date(subscription.trial_ends_at).toLocaleDateString()}, then billing begins automatically.
+              </div>
+            )}
+            {subscription.status === "active" && subscription.current_period_end && (
+              <div style={{ fontSize: 13, color: "#4b4b45", marginTop: 4 }}>
+                Renews {new Date(subscription.current_period_end).toLocaleDateString()}.
+              </div>
+            )}
+          </div>
+        ) : (
+          <>
+            {isPastDue && (
+              <div className="gsc-card" style={{ background: "#FDECEC", border: "1px solid #A42E2D", marginBottom: 12 }}>
+                <div style={{ fontWeight: 700, color: "#A42E2D" }}>There's a problem with your payment</div>
+                <div style={{ fontSize: 13, color: "#4b4b45", marginTop: 4 }}>Update your payment method to keep Premium access. Subscribing again below will prompt you to fix this.</div>
+              </div>
+            )}
+            <div className="gsc-card">
+              <div className="gsc-label" style={{ marginBottom: 6 }}>Try RipScore Premium free for 7 days</div>
+              <div style={{ fontSize: 13, color: "#4b4b45", lineHeight: 1.55 }}>
+                Unlock GPS distance to the green, side games, course info, satellite hole view, stats, groups, and prior saved rounds.
+              </div>
+            </div>
+
+            <div className="gsc-card" style={{ marginTop: 10 }}>
+              <div
+                onClick={() => setSelectedPlan("yearly")}
+                style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 4px", borderRadius: 10, border: selectedPlan === "yearly" ? "2px solid #1B4332" : "1.5px solid #d8d2bd", marginBottom: 10, cursor: "pointer" }}
+              >
+                <div>
+                  <div style={{ fontWeight: 700, color: "#1B4332" }}>Yearly {"\u2013"} $44.99/yr</div>
+                  <div style={{ fontSize: 12, color: "#3F6B54", fontWeight: 700 }}>Save 25% vs monthly</div>
+                </div>
+                <div style={{ width: 20, height: 20, borderRadius: "50%", border: "2px solid #1B4332", background: selectedPlan === "yearly" ? "#1B4332" : "transparent" }} />
+              </div>
+              <div
+                onClick={() => setSelectedPlan("monthly")}
+                style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 4px", borderRadius: 10, border: selectedPlan === "monthly" ? "2px solid #1B4332" : "1.5px solid #d8d2bd", cursor: "pointer" }}
+              >
+                <div>
+                  <div style={{ fontWeight: 700, color: "#1B4332" }}>Monthly {"\u2013"} $4.99/mo</div>
+                </div>
+                <div style={{ width: 20, height: 20, borderRadius: "50%", border: "2px solid #1B4332", background: selectedPlan === "monthly" ? "#1B4332" : "transparent" }} />
+              </div>
+            </div>
+
+            {checkoutErr && <div style={{ color: "#A42E2D", fontSize: 13, marginTop: 10 }}>{checkoutErr}</div>}
+
+            <button
+              className="gsc-btn gsc-btn-primary"
+              style={{ width: "100%", marginTop: 14 }}
+              disabled={checkoutBusy}
+              onClick={() => startCheckout(selectedPlan)}
+            >
+              {checkoutBusy ? "Starting..." : "Start Free Trial"}
+            </button>
+            <div style={{ fontSize: 11, color: "#8a8a80", textAlign: "center", marginTop: 8 }}>
+              7 days free, then {selectedPlan === "yearly" ? "$44.99/yr" : "$4.99/mo"} until canceled. Cancel anytime.
+            </div>
+          </>
+        )}
       </div>
     );
   }
