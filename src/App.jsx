@@ -7578,7 +7578,7 @@ export default function GolfScorecard() {
   // if so, holds the navigation and surfaces a confirmation instead of
   // silently moving on. Going backward to review or edit an earlier hole
   // never triggers this at all.
-  function requestHoleChange(targetIdx) {
+  function requestHoleChange(targetIdx, game) {
     if (targetIdx <= holeIdx || !round) {
       setHoleIdx(targetIdx);
       return;
@@ -7590,8 +7590,8 @@ export default function GolfScorecard() {
     const missing = [];
     round.players.forEach((p, i) => {
       const entry = holeScores[i] || {};
-      const missingStrokes = !!g.hasScore && (entry.strokes == null || entry.strokes === "");
-      const missingPutts = !!g.hasPutts && round.cfg.trackPutts !== false && (entry.putts == null || entry.putts === "");
+      const missingStrokes = !!game.hasScore && (entry.strokes == null || entry.strokes === "");
+      const missingPutts = !!game.hasPutts && round.cfg.trackPutts !== false && (entry.putts == null || entry.putts === "");
       if (missingStrokes || missingPutts) {
         missing.push({ playerIdx: i, name: p.name || `Player ${LETTERS[i]}`, missingStrokes, missingPutts });
       }
@@ -13857,7 +13857,7 @@ function computeOceans11Results(round, computed) {
         </div>
         <div className="gsc-hole-strip" ref={holeStripRef}>
           {Array.from({ length: 18 }).map((_, i) => (
-            <div key={i} className={`gsc-hole-pip ${i === holeIdx ? "active" : ""} ${computed.holeResults[i].complete ? "done" : ""}`} onClick={() => requestHoleChange(i)}>
+            <div key={i} className={`gsc-hole-pip ${i === holeIdx ? "active" : ""} ${computed.holeResults[i].complete ? "done" : ""}`} onClick={() => requestHoleChange(i, g)}>
               {i + 1}
             </div>
           ))}
@@ -13865,7 +13865,7 @@ function computeOceans11Results(round, computed) {
         <div className="gsc-body">
           <div className="gsc-card">
             <div className="gsc-hole-nav">
-              <button className="gsc-btn gsc-btn-outline" disabled={holeIdx === 0} onClick={() => requestHoleChange(holeIdx - 1)}>Prev</button>
+              <button className="gsc-btn gsc-btn-outline" disabled={holeIdx === 0} onClick={() => requestHoleChange(holeIdx - 1, g)}>Prev</button>
               <div style={{ textAlign: "center" }}>
                 <div className="gsc-hole-big">Hole {holeIdx + 1}</div>
                 <div className="gsc-par-badge">Par {parH}{round.cfg.doubleParMax ? ` - max ${parH * 2}` : round.cfg.maxOver != null ? ` - max ${parH + round.cfg.maxOver}` : ""}</div>
@@ -13947,7 +13947,7 @@ function computeOceans11Results(round, computed) {
                   </div>
                 )}
               </div>
-              <button className="gsc-btn gsc-btn-outline" disabled={holeIdx === 17} onClick={() => requestHoleChange(holeIdx + 1)}>Next</button>
+              <button className="gsc-btn gsc-btn-outline" disabled={holeIdx === 17} onClick={() => requestHoleChange(holeIdx + 1, g)}>Next</button>
             </div>
 
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10, marginBottom: 10 }}>
@@ -14385,7 +14385,7 @@ function computeOceans11Results(round, computed) {
                 className="gsc-btn gsc-btn-primary"
                 disabled={holeIdx === 17}
                 onClick={() => {
-                  requestHoleChange(holeIdx + 1);
+                  requestHoleChange(holeIdx + 1, g);
                   window.scrollTo(0, 0);
                 }}
               >
