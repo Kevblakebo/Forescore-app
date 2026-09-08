@@ -10188,7 +10188,7 @@ function computeNassauResults(round, computed, maxHole = 17) {
           <div className="gsc-card">
             <div className="gsc-field">
               <div className="gsc-label">Email</div>
-              <input className="gsc-input" type="email" autoCapitalize="off" autoCorrect="off" value={authEmail} onChange={(e) => setAuthEmail(e.target.value)} />
+              <input className="gsc-input" type="email" autoComplete="email" autoCapitalize="off" autoCorrect="off" value={authEmail} onChange={(e) => setAuthEmail(e.target.value)} />
             </div>
             <div className="gsc-field" style={{ marginTop: 10 }}>
               <div className="gsc-label">Password</div>
@@ -10196,6 +10196,7 @@ function computeNassauResults(round, computed, maxHole = 17) {
                 <input
                   className="gsc-input"
                   type={showAuthPassword ? "text" : "password"}
+                  autoComplete="current-password"
                   style={{ paddingRight: 40 }}
                   value={authPassword}
                   onChange={(e) => setAuthPassword(e.target.value)}
@@ -10243,7 +10244,7 @@ function computeNassauResults(round, computed, maxHole = 17) {
             <div className="gsc-card">
               <div className="gsc-field">
                 <div className="gsc-label">Email</div>
-                <input className="gsc-input" type="email" autoCapitalize="off" autoCorrect="off" value={authEmail} onChange={(e) => setAuthEmail(e.target.value)} onKeyDown={(e) => e.key === "Enter" && sendPasswordReset()} />
+                <input className="gsc-input" type="email" autoComplete="email" autoCapitalize="off" autoCorrect="off" value={authEmail} onChange={(e) => setAuthEmail(e.target.value)} onKeyDown={(e) => e.key === "Enter" && sendPasswordReset()} />
               </div>
               {authErr && <div style={{ color: "#A42E2D", fontSize: 13, marginTop: 10 }}>{authErr}</div>}
               <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 14 }} disabled={authBusy} onClick={sendPasswordReset}>
@@ -10318,7 +10319,7 @@ function computeNassauResults(round, computed, maxHole = 17) {
           <div className="gsc-card">
             <div className="gsc-field">
               <div className="gsc-label">Email</div>
-              <input className="gsc-input" type="email" autoCapitalize="off" autoCorrect="off" value={authEmail} onChange={(e) => setAuthEmail(e.target.value)} />
+              <input className="gsc-input" type="email" autoComplete="email" autoCapitalize="off" autoCorrect="off" value={authEmail} onChange={(e) => setAuthEmail(e.target.value)} />
             </div>
             <div className="gsc-field" style={{ marginTop: 10 }}>
               <div className="gsc-label">Password</div>
@@ -14040,6 +14041,137 @@ function computeNassauResults(round, computed, maxHole = 17) {
             </div>
           )}
 
+          <button className="gsc-link" onClick={() => setShowGrid((s) => !s)}>{showGrid ? "Hide" : "Show"} full 18-hole scorecard</button>
+          {showGrid && (() => {
+            const hasYardageCol = round.yardage && round.yardage.some((y) => y != null);
+            const hasStrokeIndexCol = round.strokeIndex && round.strokeIndex.some((s) => s != null);
+            const scoreCell = (e) => (
+              <>
+                {g.hasScore ? (e.strokes === "" || e.strokes == null ? "-" : e.strokes) : ""}
+                {g.hasScore && g.hasPutts && round.cfg.trackPutts !== false ? "/" : ""}
+                {g.hasPutts && round.cfg.trackPutts !== false ? (e.putts === "" || e.putts == null ? "-" : e.putts) : ""}
+              </>
+            );
+            const totalCell = (t) => (
+              <>
+                {g.hasScore ? (t.sCount ? t.sSum : "-") : ""}
+                {g.hasScore && g.hasPutts && round.cfg.trackPutts !== false ? "/" : ""}
+                {g.hasPutts && round.cfg.trackPutts !== false ? (t.pCount ? t.pSum : "-") : ""}
+              </>
+            );
+            // One 9-hole section of a traditional, horizontal scorecard -
+            // holes as columns instead of rows, matching a real
+            // scorecard's layout. Called once for the front 9 (with the
+            // "OUT" total) and once for the back 9 (with the "IN" total).
+            const nineHoleTable = (startH, totals, totalLabel) => (
+              <div className="gsc-card" style={{ overflowX: "auto", marginTop: 10 }}>
+                <table className="gsc-grid gsc-grid-horizontal">
+                  <thead>
+                    <tr>
+                      <th style={{ textAlign: "left" }}>Hole</th>
+                      {Array.from({ length: 9 }).map((_, i) => (
+                        <th key={i}>{startH + i + 1}</th>
+                      ))}
+                      <th>{totalLabel}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr style={{ background: "#EBF0EC" }}>
+                      <td style={{ textAlign: "left", fontWeight: 700 }}>Par</td>
+                      {Array.from({ length: 9 }).map((_, i) => (
+                        <td key={i} style={{ fontWeight: 700 }}>{round.par[startH + i]}</td>
+                      ))}
+                      <td style={{ fontWeight: 700 }}>{round.par.slice(startH, startH + 9).reduce((s, p) => s + (p || 0), 0)}</td>
+                    </tr>
+                    {hasYardageCol && (
+                      <tr style={{ background: "#EBF0EC" }}>
+                        <td style={{ textAlign: "left", fontWeight: 700 }}>Yds</td>
+                        {Array.from({ length: 9 }).map((_, i) => (
+                          <td key={i} style={{ fontWeight: 700 }}>{round.yardage[startH + i] != null ? round.yardage[startH + i] : "-"}</td>
+                        ))}
+                        <td style={{ fontWeight: 700 }}>{round.yardage.slice(startH, startH + 9).reduce((s, y) => s + (y || 0), 0)}</td>
+                      </tr>
+                    )}
+                    {hasStrokeIndexCol && (
+                      <tr style={{ background: "#EBF0EC" }}>
+                        <td style={{ textAlign: "left", fontWeight: 700 }}>HCP</td>
+                        {Array.from({ length: 9 }).map((_, i) => (
+                          <td key={i} style={{ fontWeight: 700 }}>{round.strokeIndex[startH + i] != null ? round.strokeIndex[startH + i] : "-"}</td>
+                        ))}
+                        <td></td>
+                      </tr>
+                    )}
+                    {round.players.map((p, pi) => (
+                      <tr key={pi} style={{ background: pi % 2 === 1 ? "#FAF8F1" : undefined }}>
+                        <td style={{ textAlign: "left", fontWeight: 700 }}>
+                          {(p.name || "").trim().slice(0, 3) || "-"}
+                        </td>
+                        {Array.from({ length: 9 }).map((_, i) => {
+                          const h = startH + i;
+                          const e = (round.scores[h] || {})[pi] || {};
+                          return (
+                            <td key={i} onClick={() => setHoleIdx(h)} style={{ cursor: "pointer", fontWeight: 700 }}>
+                              {scoreCell(e)}
+                            </td>
+                          );
+                        })}
+                        <td style={{ fontWeight: 700 }}>{totalCell(totals[pi])}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            );
+            // Round-level stats (total, +/- par, points, handicap, net)
+            // are per-player, not per-hole, so rather than force them
+            // awkwardly into the hole grid's columns, this is its own
+            // small, naturally-structured table: one row per player,
+            // one column per stat.
+            const roundSummaryTable = (
+              <div className="gsc-card" style={{ overflowX: "auto", marginTop: 10 }}>
+                <table className="gsc-grid gsc-grid-horizontal">
+                  <thead>
+                    <tr>
+                      <th style={{ textAlign: "left" }}>Round Total</th>
+                      <th>Total</th>
+                      {g.hasScore && <th>+/- Par</th>}
+                      {!g.totalScoring && <th>Pts</th>}
+                      <th>Hcp</th>
+                      <th>Net</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {round.players.map((p, i) => {
+                      const t = gridTotals[i];
+                      const hcpNum = p.hcp !== "" && p.hcp != null && !isNaN(Number(p.hcp)) ? Number(p.hcp) : null;
+                      const net = g.hasScore && t.sCount && hcpNum != null ? Math.round(t.sSum - hcpNum) : null;
+                      return (
+                        <tr key={i} style={{ background: i % 2 === 1 ? "#FAF8F1" : undefined }}>
+                          <td style={{ textAlign: "left", fontWeight: 700 }}>
+                            {(p.name || "").trim().slice(0, 3) || "-"}
+                          </td>
+                          <td style={{ fontWeight: 700 }}>{totalCell(t)}</td>
+                          {g.hasScore && <td style={{ fontWeight: 700 }}>{t.sCount ? formatRelPar(t.relPar) : "-"}</td>}
+                          {!g.totalScoring && <td style={{ fontWeight: 700 }}>{computed.playerPoints[i]}</td>}
+                          <td style={{ fontWeight: 700 }}>{hcpNum != null ? Math.round(hcpNum) : "-"}</td>
+                          <td style={{ fontWeight: 700 }}>{net != null ? net : "-"}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            );
+            return (
+              <>
+                {nineHoleTable(0, frontNineTotals, "OUT")}
+                {nineHoleTable(9, backNineTotals, "IN")}
+                {roundSummaryTable}
+                <div style={{ fontSize: 11, color: "#6b6b63", marginTop: 6 }}>Cell shows strokes/putts. Tap a cell to jump to that hole. Totals, +/- Par, and Net only count holes played so far. Net = Total strokes minus Handicap.</div>
+              </>
+            );
+          })()}
+
           <div className="gsc-card">
             <div className="gsc-label" style={{ marginBottom: 8 }}>Notes</div>
             <textarea
@@ -14202,136 +14334,6 @@ function computeNassauResults(round, computed, maxHole = 17) {
           </div>
           )}
 
-          <button className="gsc-link" onClick={() => setShowGrid((s) => !s)}>{showGrid ? "Hide" : "Show"} full 18-hole scorecard</button>
-          {showGrid && (() => {
-            const hasYardageCol = round.yardage && round.yardage.some((y) => y != null);
-            const hasStrokeIndexCol = round.strokeIndex && round.strokeIndex.some((s) => s != null);
-            const scoreCell = (e) => (
-              <>
-                {g.hasScore ? (e.strokes === "" || e.strokes == null ? "-" : e.strokes) : ""}
-                {g.hasScore && g.hasPutts && round.cfg.trackPutts !== false ? "/" : ""}
-                {g.hasPutts && round.cfg.trackPutts !== false ? (e.putts === "" || e.putts == null ? "-" : e.putts) : ""}
-              </>
-            );
-            const totalCell = (t) => (
-              <>
-                {g.hasScore ? (t.sCount ? t.sSum : "-") : ""}
-                {g.hasScore && g.hasPutts && round.cfg.trackPutts !== false ? "/" : ""}
-                {g.hasPutts && round.cfg.trackPutts !== false ? (t.pCount ? t.pSum : "-") : ""}
-              </>
-            );
-            // One 9-hole section of a traditional, horizontal scorecard -
-            // holes as columns instead of rows, matching a real
-            // scorecard's layout. Called once for the front 9 (with the
-            // "OUT" total) and once for the back 9 (with the "IN" total).
-            const nineHoleTable = (startH, totals, totalLabel) => (
-              <div className="gsc-card" style={{ overflowX: "auto", marginTop: 10 }}>
-                <table className="gsc-grid gsc-grid-horizontal">
-                  <thead>
-                    <tr>
-                      <th style={{ textAlign: "left" }}>Hole</th>
-                      {Array.from({ length: 9 }).map((_, i) => (
-                        <th key={i}>{startH + i + 1}</th>
-                      ))}
-                      <th>{totalLabel}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr style={{ background: "#EBF0EC" }}>
-                      <td style={{ textAlign: "left", fontWeight: 700 }}>Par</td>
-                      {Array.from({ length: 9 }).map((_, i) => (
-                        <td key={i} style={{ fontWeight: 700 }}>{round.par[startH + i]}</td>
-                      ))}
-                      <td style={{ fontWeight: 700 }}>{round.par.slice(startH, startH + 9).reduce((s, p) => s + (p || 0), 0)}</td>
-                    </tr>
-                    {hasYardageCol && (
-                      <tr style={{ background: "#EBF0EC" }}>
-                        <td style={{ textAlign: "left", fontWeight: 700 }}>Yds</td>
-                        {Array.from({ length: 9 }).map((_, i) => (
-                          <td key={i} style={{ fontWeight: 700 }}>{round.yardage[startH + i] != null ? round.yardage[startH + i] : "-"}</td>
-                        ))}
-                        <td style={{ fontWeight: 700 }}>{round.yardage.slice(startH, startH + 9).reduce((s, y) => s + (y || 0), 0)}</td>
-                      </tr>
-                    )}
-                    {hasStrokeIndexCol && (
-                      <tr style={{ background: "#EBF0EC" }}>
-                        <td style={{ textAlign: "left", fontWeight: 700 }}>HCP</td>
-                        {Array.from({ length: 9 }).map((_, i) => (
-                          <td key={i} style={{ fontWeight: 700 }}>{round.strokeIndex[startH + i] != null ? round.strokeIndex[startH + i] : "-"}</td>
-                        ))}
-                        <td></td>
-                      </tr>
-                    )}
-                    {round.players.map((p, pi) => (
-                      <tr key={pi} style={{ background: pi % 2 === 1 ? "#FAF8F1" : undefined }}>
-                        <td style={{ textAlign: "left", fontWeight: 700 }}>
-                          {(p.name || "").trim().slice(0, 3) || "-"}
-                        </td>
-                        {Array.from({ length: 9 }).map((_, i) => {
-                          const h = startH + i;
-                          const e = (round.scores[h] || {})[pi] || {};
-                          return (
-                            <td key={i} onClick={() => setHoleIdx(h)} style={{ cursor: "pointer", fontWeight: 700 }}>
-                              {scoreCell(e)}
-                            </td>
-                          );
-                        })}
-                        <td style={{ fontWeight: 700 }}>{totalCell(totals[pi])}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            );
-            // Round-level stats (total, +/- par, points, handicap, net)
-            // are per-player, not per-hole, so rather than force them
-            // awkwardly into the hole grid's columns, this is its own
-            // small, naturally-structured table: one row per player,
-            // one column per stat.
-            const roundSummaryTable = (
-              <div className="gsc-card" style={{ overflowX: "auto", marginTop: 10 }}>
-                <table className="gsc-grid gsc-grid-horizontal">
-                  <thead>
-                    <tr>
-                      <th style={{ textAlign: "left" }}>Round Total</th>
-                      <th>Total</th>
-                      {g.hasScore && <th>+/- Par</th>}
-                      {!g.totalScoring && <th>Pts</th>}
-                      <th>Hcp</th>
-                      <th>Net</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {round.players.map((p, i) => {
-                      const t = gridTotals[i];
-                      const hcpNum = p.hcp !== "" && p.hcp != null && !isNaN(Number(p.hcp)) ? Number(p.hcp) : null;
-                      const net = g.hasScore && t.sCount && hcpNum != null ? Math.round(t.sSum - hcpNum) : null;
-                      return (
-                        <tr key={i} style={{ background: i % 2 === 1 ? "#FAF8F1" : undefined }}>
-                          <td style={{ textAlign: "left", fontWeight: 700 }}>
-                            {(p.name || "").trim().slice(0, 3) || "-"}
-                          </td>
-                          <td style={{ fontWeight: 700 }}>{totalCell(t)}</td>
-                          {g.hasScore && <td style={{ fontWeight: 700 }}>{t.sCount ? formatRelPar(t.relPar) : "-"}</td>}
-                          {!g.totalScoring && <td style={{ fontWeight: 700 }}>{computed.playerPoints[i]}</td>}
-                          <td style={{ fontWeight: 700 }}>{hcpNum != null ? Math.round(hcpNum) : "-"}</td>
-                          <td style={{ fontWeight: 700 }}>{net != null ? net : "-"}</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            );
-            return (
-              <>
-                {nineHoleTable(0, frontNineTotals, "OUT")}
-                {nineHoleTable(9, backNineTotals, "IN")}
-                {roundSummaryTable}
-                <div style={{ fontSize: 11, color: "#6b6b63", marginTop: 6 }}>Cell shows strokes/putts. Tap a cell to jump to that hole. Totals, +/- Par, and Net only count holes played so far. Net = Total strokes minus Handicap.</div>
-              </>
-            );
-          })()}
 
           <div style={{ fontSize: 12, color: "#8a8a80", textAlign: "center", marginTop: 16 }}>
             Share code <b className="gsc-mono">{round.id}</b> with your group so everyone can enter or view scores.
