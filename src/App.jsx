@@ -663,8 +663,8 @@ const GAMES = {
 // this is a refactor of already-existing colors, not a new palette.
 const GAME_TILE_STYLE = (() => {
   const order = [
-    "dstreet", "swami", "individualputts", "pontobango", "stableford",
-    "ponto", "teamstrokes", "teamputts", "beachside", "seabluffe", "moonlightwolf", "vegas",
+    "swami", "dstreet", "individualputts", "pontobango", "stableford",
+    "teamstrokes", "ponto", "teamputts", "beachside", "seabluffe", "moonlightwolf", "vegas",
     "avoscramble", "tourneybb", "tourneygg",
   ];
   const emoji = {
@@ -1211,7 +1211,7 @@ function nassauEligible(gameKey, playerCount) {
 // player count is known yet - just "can this format ever use Nassau,"
 // not "does it right now."
 function gameSupportsNassau(gameKey) {
-  return NASSAU_ALWAYS_TWO_SIDED.includes(gameKey) || NASSAU_INDIVIDUAL_GAMES.includes(gameKey);
+  return NASSAU_ALWAYS_TWO_SIDED.includes(gameKey) || NASSAU_INDIVIDUAL_GAMES.includes(gameKey) || gameKey === "swami" || gameKey === "dstreet" || gameKey === "individualputts";
 }
 
 // Oceans 11 - an alternate scoring method for Individual Strokes only,
@@ -1224,6 +1224,14 @@ function oceans11Eligible(gameKey, playerCount) {
 }
 function gameSupportsOceans11(gameKey) {
   return OCEANS11_GAMES.includes(gameKey);
+}
+
+// Individual Skins and Individual Putts get a simpler, 2-way version of
+// the same "scoring method" toggle - just Overall or Nassau, no Oceans
+// 11 option (that stays exclusive to Individual Strokes).
+const NASSAU_ONLY_INDIVIDUAL_GAMES = ["dstreet", "individualputts"];
+function nassauOnlyEligible(gameKey, playerCount) {
+  return NASSAU_ONLY_INDIVIDUAL_GAMES.includes(gameKey) && playerCount >= 2 && playerCount <= 4;
 }
 
 function computeTeamsForHole(round, h, hs) {
@@ -5630,10 +5638,20 @@ export default function GolfScorecard() {
     // single cell across all 18 holes to be filled in - that stricter check
     // used to silently skip the celebration over one missed entry, with no
     // indication why.
-    if (r.cfg.nassau) {
+    if (r.cfg.nassau && NASSAU_ALWAYS_TWO_SIDED.includes(r.game)) {
       const nassau = computeNassauResults(r, computedForFinish);
       if (nassau && nassau.overall.complete && nassau.overall.winner != null) {
         triggerNassauCelebration("Overall 18", nassauSideLabel(nassau, nassau.overall.winner, r));
+      }
+    }
+    if (r.cfg.nassau && INDIVIDUAL_NASSAU_GAMES.includes(r.game)) {
+      const indivNassau = computeIndividualNassauResults(r, computedForFinish);
+      if (indivNassau && indivNassau.overall.complete) {
+        const leader = indivNassau.overall.rows.find((row) => row.holesPlayed > 0);
+        if (leader) {
+          const tied = indivNassau.overall.rows.filter((row) => row.holesPlayed > 0 && row.total === leader.total);
+          triggerNassauCelebration("Overall 18", tied.map((row) => row.name).join(" & "));
+        }
       }
     }
     goToScreen("roundComplete");
@@ -6097,7 +6115,7 @@ export default function GolfScorecard() {
         return "field_limits";
       case "field_limits":
         if (answers.isTournament) return "field_foursomeCount";
-        return cfg.nassau ? "field_venmo" : "field_prize";
+        return (cfg.nassau && !["swami", "dstreet", "individualputts"].includes(answers.resolvedGameKey)) ? "field_venmo" : "field_prize";
       case "field_foursomeCount":
         return "field_prize";
       case "field_prize":
@@ -8198,6 +8216,7 @@ function stripDateFromTitle(text) {
 
 function computeNassauResults(round, computed, maxHole = 17) {
   if (!round || !round.cfg.nassau) return null;
+  if (!NASSAU_ALWAYS_TWO_SIDED.includes(round.game)) return null;
   if (!round.teams || round.teams.length !== 2) return null;
   const g = GAMES[round.game];
   const holeResults = computed && computed.holeResults;
@@ -8285,6 +8304,82 @@ function computeOceans11Results(round, computed) {
   return { rows, allComplete };
 }
 
+// Individual Nassau - for Individual Strokes, Individual Skins, and
+// Individual Putts. Genuinely different from computeNassauResults
+// above: instead of two teams compared head-to-head, every player is
+// independently ranked within each segment (front 9, back 9, overall
+// 18) - so up to three different players can each win their own
+// segment. Kept as its own separate function rather than folding into
+// the existing team-Nassau logic, since the shape of the result is
+// fundamentally different (N ranked players, not two totals compared).
+//
+// The three games score in genuinely different ways, so the metric
+// itself varies: net strokes for Individual Strokes (lowest wins),
+// putts for Individual Putts (lowest wins), and points for Individual
+// Skins (highest wins - reusing computed.holeResults[h].ptsAwarded
+// directly rather than re-deriving the point-awarding rules here,
+// since these games' "teams" are just each player as their own team of
+// one, so ptsAwarded[playerIdx] already applies cleanly).
+const INDIVIDUAL_NASSAU_GAMES = ["swami", "dstreet", "individualputts"];
+function computeIndividualNassauResults(round, computed) {
+  if (!round || !round.cfg.nassau || !INDIVIDUAL_NASSAU_GAMES.includes(round.game)) return null;
+  const holeResults = computed && computed.holeResults;
+  if (!holeResults || holeResults.length === 0) return null;
+
+  const usePointsMetric = round.game === "dstreet";
+  const usePuttsMetric = round.game === "individualputts";
+  const higherIsBetter = usePointsMetric;
+
+  function segment(startH, endH) {
+    const segmentLength = endH - startH + 1;
+    const rows = round.players.map((p, pi) => {
+      let total = 0;
+      let holesPlayed = 0;
+      for (let h = startH; h <= endH; h++) {
+        if (usePointsMetric) {
+          const hr = holeResults[h];
+          if (!hr || !hr.complete) continue;
+          const awarded = hr.ptsAwarded[pi];
+          total += (awarded ? (awarded.score || 0) + (awarded.putt || 0) : 0);
+          holesPlayed++;
+        } else if (usePuttsMetric) {
+          const e = (round.scores[h] || {})[pi];
+          if (!e || e.putts == null || e.putts === "") continue;
+          total += Math.min(Number(e.putts), round.cfg.maxPutts ?? 99);
+          holesPlayed++;
+        } else {
+          const e = (round.scores[h] || {})[pi];
+          if (!e || e.strokes == null || e.strokes === "") continue;
+          const parH = round.par[h] ?? 4;
+          const effectiveMaxOver = round.cfg.doubleParMax ? parH : round.cfg.maxOver;
+          const capped = Math.min(Number(e.strokes), parH + (effectiveMaxOver ?? 99));
+          total += capped - computed.strokesOffForHole(pi, h);
+          holesPlayed++;
+        }
+      }
+      return { playerIdx: pi, name: p.name, total, holesPlayed };
+    });
+    // Same as Oceans 11 - a player who hasn't played any holes in this
+    // segment yet doesn't have a meaningful total to compare, so they
+    // sort to the end rather than an untouched 0 looking like a lead.
+    rows.sort((a, b) => {
+      if (a.holesPlayed === 0 && b.holesPlayed === 0) return 0;
+      if (a.holesPlayed === 0) return 1;
+      if (b.holesPlayed === 0) return -1;
+      return higherIsBetter ? b.total - a.total : a.total - b.total;
+    });
+    const complete = rows.every((r) => r.holesPlayed === segmentLength);
+    return { rows, complete };
+  }
+
+  return {
+    higherIsBetter,
+    front: segment(0, 8),
+    back: segment(9, 17),
+    overall: segment(0, 17),
+  };
+}
+
   const computed = useMemo(() => computeRoundScoring(round), [round]);
 
   // Fires a Nassau segment celebration through the same accolade banner
@@ -8322,10 +8417,22 @@ function computeOceans11Results(round, computed) {
   useEffect(() => {
     if (!round || !round.cfg.nassau || nassauFrontCelebratedRef.current) return;
     if (nassauPrevHoleIdxRef.current === 8 && holeIdx !== 8) {
-      const nassau = computeNassauResults(round, computed);
-      if (nassau && nassau.front.complete && nassau.front.winner != null) {
-        nassauFrontCelebratedRef.current = true;
-        triggerNassauCelebration("Front 9", nassauSideLabel(nassau, nassau.front.winner, round));
+      if (NASSAU_ALWAYS_TWO_SIDED.includes(round.game)) {
+        const nassau = computeNassauResults(round, computed);
+        if (nassau && nassau.front.complete && nassau.front.winner != null) {
+          nassauFrontCelebratedRef.current = true;
+          triggerNassauCelebration("Front 9", nassauSideLabel(nassau, nassau.front.winner, round));
+        }
+      } else if (INDIVIDUAL_NASSAU_GAMES.includes(round.game)) {
+        const indivNassau = computeIndividualNassauResults(round, computed);
+        if (indivNassau && indivNassau.front.complete) {
+          const leader = indivNassau.front.rows.find((row) => row.holesPlayed > 0);
+          if (leader) {
+            const tied = indivNassau.front.rows.filter((row) => row.holesPlayed > 0 && row.total === leader.total);
+            nassauFrontCelebratedRef.current = true;
+            triggerNassauCelebration("Front 9", tied.map((row) => row.name).join(" & "));
+          }
+        }
       }
     }
     nassauPrevHoleIdxRef.current = holeIdx;
@@ -8337,10 +8444,22 @@ function computeOceans11Results(round, computed) {
     if (!round || !round.cfg.nassau || nassauBackCelebratedRef.current) return;
     const hole18Complete = computed && computed.holeResults && computed.holeResults[17] && computed.holeResults[17].complete;
     if (hole18Complete) {
-      const nassau = computeNassauResults(round, computed);
-      if (nassau && nassau.back.complete && nassau.back.winner != null) {
-        nassauBackCelebratedRef.current = true;
-        triggerNassauCelebration("Back 9", nassauSideLabel(nassau, nassau.back.winner, round));
+      if (NASSAU_ALWAYS_TWO_SIDED.includes(round.game)) {
+        const nassau = computeNassauResults(round, computed);
+        if (nassau && nassau.back.complete && nassau.back.winner != null) {
+          nassauBackCelebratedRef.current = true;
+          triggerNassauCelebration("Back 9", nassauSideLabel(nassau, nassau.back.winner, round));
+        }
+      } else if (INDIVIDUAL_NASSAU_GAMES.includes(round.game)) {
+        const indivNassau = computeIndividualNassauResults(round, computed);
+        if (indivNassau && indivNassau.back.complete) {
+          const leader = indivNassau.back.rows.find((row) => row.holesPlayed > 0);
+          if (leader) {
+            const tied = indivNassau.back.rows.filter((row) => row.holesPlayed > 0 && row.total === leader.total);
+            nassauBackCelebratedRef.current = true;
+            triggerNassauCelebration("Back 9", tied.map((row) => row.name).join(" & "));
+          }
+        }
       }
     }
   }, [computed && computed.holeResults && computed.holeResults[17] && computed.holeResults[17].complete]);
@@ -9037,7 +9156,7 @@ function computeOceans11Results(round, computed) {
 
             <div className="gsc-label" style={{ marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Individual Game Formats</div>
             <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>Up to 4 Players</div>
-            {["dstreet", "swami", "individualputts", "pontobango", "stableford"]
+            {["swami", "dstreet", "individualputts", "pontobango", "stableford"]
               .map((key) => [key, GAMES[key]])
               .map(([key, g]) => (
                 <div key={key} className="gsc-card gsc-game-card" style={{ marginBottom: 10 }} onClick={() => startNewRound(key)}>
@@ -9078,7 +9197,7 @@ function computeOceans11Results(round, computed) {
 
             <div className="gsc-label" style={{ marginTop: 14, marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Team Game Formats</div>
             <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>2 vs 2</div>
-            {["ponto", "teamstrokes", "teamputts", "beachside", "seabluffe", "moonlightwolf", "vegas"]
+            {["teamstrokes", "ponto", "teamputts", "beachside", "seabluffe", "moonlightwolf", "vegas"]
               .map((key) => [key, GAMES[key]])
               .map(([key, g]) => (
                 <div key={key} className="gsc-card gsc-game-card" style={{ marginBottom: 10 }} onClick={() => startNewRound(key)}>
@@ -11484,25 +11603,68 @@ function computeOceans11Results(round, computed) {
               {oceans11Eligible(wizardAnswers.resolvedGameKey, players.length) && (
                 <div className="gsc-field" style={{ marginTop: 10 }}>
                   <div className="gsc-label">Scoring method</div>
-                  <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 6 }}>
-                    Oceans 11: each player picks their own best 11 holes as they play - lowest total across those 11 wins. Once you take or pass a hole, that choice is locked in.
-                  </div>
                   <div style={{ display: "flex", gap: 8 }}>
                     <button
                       className="gsc-btn"
-                      style={{ flex: 1, background: !activeCfg.oceans11 ? "#A42E2D" : "transparent", color: !activeCfg.oceans11 ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
-                      onClick={() => setActiveCfg({ ...activeCfg, oceans11: false })}
+                      style={{ flex: 1, background: !activeCfg.oceans11 && !activeCfg.nassau ? "#A42E2D" : "transparent", color: !activeCfg.oceans11 && !activeCfg.nassau ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
+                      onClick={() => setActiveCfg({ ...activeCfg, oceans11: false, nassau: false })}
                     >
                       Overall
                     </button>
                     <button
                       className="gsc-btn"
                       style={{ flex: 1, background: activeCfg.oceans11 ? "#A42E2D" : "transparent", color: activeCfg.oceans11 ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
-                      onClick={() => setActiveCfg({ ...activeCfg, oceans11: true })}
+                      onClick={() => setActiveCfg({ ...activeCfg, oceans11: true, nassau: false })}
                     >
                       Oceans 11
                     </button>
+                    <button
+                      className="gsc-btn"
+                      style={{ flex: 1, background: activeCfg.nassau ? "#A42E2D" : "transparent", color: activeCfg.nassau ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
+                      onClick={() => setActiveCfg({ ...activeCfg, nassau: true, oceans11: false })}
+                    >
+                      Nassau
+                    </button>
                   </div>
+                  {!activeCfg.oceans11 && !activeCfg.nassau && (
+                    <div style={{ fontSize: 11, color: "#8a8a80", marginTop: 6 }}>Standard stroke play across the full round.</div>
+                  )}
+                  {activeCfg.oceans11 && (
+                    <div style={{ fontSize: 11, color: "#8a8a80", marginTop: 6 }}>
+                      Each player picks their own best 11 holes as they play - lowest total across those 11 wins. Once you take or pass a hole, that choice is locked in.
+                    </div>
+                  )}
+                  {activeCfg.nassau && (
+                    <div style={{ fontSize: 11, color: "#8a8a80", marginTop: 6 }}>
+                      Splits the round into three separate competitions: front 9, back 9, and overall 18 - each with its own winner, ranked individually rather than in teams.
+                    </div>
+                  )}
+                </div>
+              )}
+              {nassauOnlyEligible(wizardAnswers.resolvedGameKey, players.length) && (
+                <div className="gsc-field" style={{ marginTop: 10 }}>
+                  <div className="gsc-label">Scoring method</div>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button
+                      className="gsc-btn"
+                      style={{ flex: 1, background: !activeCfg.nassau ? "#A42E2D" : "transparent", color: !activeCfg.nassau ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
+                      onClick={() => setActiveCfg({ ...activeCfg, nassau: false })}
+                    >
+                      Overall
+                    </button>
+                    <button
+                      className="gsc-btn"
+                      style={{ flex: 1, background: activeCfg.nassau ? "#A42E2D" : "transparent", color: activeCfg.nassau ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
+                      onClick={() => setActiveCfg({ ...activeCfg, nassau: true })}
+                    >
+                      Nassau
+                    </button>
+                  </div>
+                  {activeCfg.nassau && (
+                    <div style={{ fontSize: 11, color: "#8a8a80", marginTop: 6 }}>
+                      Splits the round into three separate competitions: front 9, back 9, and overall 18 - each with its own winner, ranked individually rather than in teams.
+                    </div>
+                  )}
                 </div>
               )}
               {wizardAnswers.resolvedGameKey !== "avoscramble" && (
@@ -12158,7 +12320,7 @@ function computeOceans11Results(round, computed) {
                 </div>
               </div>
             )}
-            {!cfg.nassau && (
+            {(!cfg.nassau || gameKey === "swami" || gameKey === "dstreet" || gameKey === "individualputts") && (
               <div className="gsc-field">
                 <div className="gsc-label">Prize / stakes</div>
                 <input className="gsc-input" value={cfg.prize} onChange={(e) => setCfg({ ...cfg, prize: e.target.value })} />
@@ -12207,25 +12369,68 @@ function computeOceans11Results(round, computed) {
             {oceans11Eligible(gameKey, players.length) && (
               <div className="gsc-field">
                 <div className="gsc-label">Scoring method</div>
-                <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 6 }}>
-                  Oceans 11: each player picks their own best 11 holes as they play - lowest total across those 11 wins. Once you take or pass a hole, that choice is locked in.
-                </div>
                 <div style={{ display: "flex", gap: 8 }}>
                   <button
                     className="gsc-btn"
-                    style={{ flex: 1, background: !cfg.oceans11 ? "#A42E2D" : "transparent", color: !cfg.oceans11 ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
-                    onClick={() => setCfg({ ...cfg, oceans11: false })}
+                    style={{ flex: 1, background: !cfg.oceans11 && !cfg.nassau ? "#A42E2D" : "transparent", color: !cfg.oceans11 && !cfg.nassau ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
+                    onClick={() => setCfg({ ...cfg, oceans11: false, nassau: false })}
                   >
                     Overall
                   </button>
                   <button
                     className="gsc-btn"
                     style={{ flex: 1, background: cfg.oceans11 ? "#A42E2D" : "transparent", color: cfg.oceans11 ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
-                    onClick={() => setCfg({ ...cfg, oceans11: true })}
+                    onClick={() => setCfg({ ...cfg, oceans11: true, nassau: false })}
                   >
                     Oceans 11
                   </button>
+                  <button
+                    className="gsc-btn"
+                    style={{ flex: 1, background: cfg.nassau ? "#A42E2D" : "transparent", color: cfg.nassau ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
+                    onClick={() => setCfg({ ...cfg, nassau: true, oceans11: false })}
+                  >
+                    Nassau
+                  </button>
                 </div>
+                {!cfg.oceans11 && !cfg.nassau && (
+                  <div style={{ fontSize: 11, color: "#8a8a80", marginTop: 6 }}>Standard stroke play across the full round.</div>
+                )}
+                {cfg.oceans11 && (
+                  <div style={{ fontSize: 11, color: "#8a8a80", marginTop: 6 }}>
+                    Each player picks their own best 11 holes as they play - lowest total across those 11 wins. Once you take or pass a hole, that choice is locked in.
+                  </div>
+                )}
+                {cfg.nassau && (
+                  <div style={{ fontSize: 11, color: "#8a8a80", marginTop: 6 }}>
+                    Splits the round into three separate competitions: front 9, back 9, and overall 18 - each with its own winner, ranked individually rather than in teams.
+                  </div>
+                )}
+              </div>
+            )}
+            {nassauOnlyEligible(gameKey, players.length) && (
+              <div className="gsc-field">
+                <div className="gsc-label">Scoring method</div>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button
+                    className="gsc-btn"
+                    style={{ flex: 1, background: !cfg.nassau ? "#A42E2D" : "transparent", color: !cfg.nassau ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
+                    onClick={() => setCfg({ ...cfg, nassau: false })}
+                  >
+                    Overall
+                  </button>
+                  <button
+                    className="gsc-btn"
+                    style={{ flex: 1, background: cfg.nassau ? "#A42E2D" : "transparent", color: cfg.nassau ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
+                    onClick={() => setCfg({ ...cfg, nassau: true })}
+                  >
+                    Nassau
+                  </button>
+                </div>
+                {cfg.nassau && (
+                  <div style={{ fontSize: 11, color: "#8a8a80", marginTop: 6 }}>
+                    Splits the round into three separate competitions: front 9, back 9, and overall 18 - each with its own winner, ranked individually rather than in teams.
+                  </div>
+                )}
               </div>
             )}
             <div className="gsc-field">
@@ -13272,11 +13477,28 @@ function computeOceans11Results(round, computed) {
     // back 9 are their own separate bets, tracked on their own Nassau
     // Standings card - Overall 18 is the one segment that represents
     // the whole round, so that's the one used here.
-    if (r && r.cfg.nassau && r.teams && r.teams.length === 2) {
+    if (r && r.cfg.nassau && NASSAU_ALWAYS_TWO_SIDED.includes(r.game)) {
       const nassau = computeNassauResults(r, c);
       if (nassau && nassau.overall.winner != null) {
         const winningTeam = r.teams[nassau.overall.winner] || [];
         return winningTeam.map((playerIdx) => ({ ...r.players[playerIdx], idx: playerIdx }));
+      }
+      return [];
+    }
+    // Individual Nassau (Individual Strokes, Skins, or Putts) - same
+    // idea as team Nassau above, using the Overall 18 segment to decide
+    // the round's overall winner, but ranking all players individually
+    // rather than comparing two teams.
+    if (r && r.cfg.nassau && INDIVIDUAL_NASSAU_GAMES.includes(r.game)) {
+      const indivNassau = computeIndividualNassauResults(r, c);
+      if (indivNassau) {
+        const contenders = indivNassau.overall.rows.filter((row) => row.holesPlayed > 0);
+        if (contenders.length > 0) {
+          const bestTotal = contenders[0].total;
+          return contenders
+            .filter((row) => row.total === bestTotal)
+            .map((row) => ({ ...r.players[row.playerIdx], idx: row.playerIdx }));
+        }
       }
       return [];
     }
@@ -13362,7 +13584,7 @@ function computeOceans11Results(round, computed) {
                         Full round: {regularScore} strokes{round.cfg.netScoring ? ` (net ${regularNet})` : ""}
                       </>
                     );
-                  })() : round.cfg.nassau && round.teams && round.teams.length === 2 ? (() => {
+                  })() : round.cfg.nassau && NASSAU_ALWAYS_TWO_SIDED.includes(round.game) ? (() => {
                     const nassau = computeNassauResults(round, computed);
                     const unitLabel = g.puttsOnlyScoring ? "putt" : g.totalScoring ? "stroke" : "point";
                     const margin = nassau ? Math.abs(nassau.overall.t0 - nassau.overall.t1) : 0;
@@ -13376,6 +13598,23 @@ function computeOceans11Results(round, computed) {
                         Nassau Overall: won by {margin} {unitLabel}{margin === 1 ? "" : "s"}
                         <br />
                         Full round: {teamRegular} {round.cfg.netScoring ? "net " : ""}strokes
+                      </>
+                    );
+                  })() : round.cfg.nassau && INDIVIDUAL_NASSAU_GAMES.includes(round.game) ? (() => {
+                    const indivNassau = computeIndividualNassauResults(round, computed);
+                    const winnerIdx = winners[0].idx;
+                    const row = indivNassau && indivNassau.overall.rows.find((r) => r.playerIdx === winnerIdx);
+                    const overallUnit = round.game === "dstreet" ? "pts" : round.game === "individualputts" ? "putts" : `${round.cfg.netScoring ? "Net " : ""}strokes`;
+                    const regularLine = round.game === "individualputts"
+                      ? `${computed.playerTotalPutts[winnerIdx]} putts (${computed.playerTotalScore[winnerIdx]} strokes)`
+                      : round.game === "dstreet"
+                      ? `${computed.playerPoints[winnerIdx]} pts total (${computed.playerTotalScore[winnerIdx]} strokes / ${computed.playerTotalPutts[winnerIdx]} putts)`
+                      : `${computed.playerTotalScore[winnerIdx]} strokes${round.cfg.netScoring ? ` (net ${computed.playerTotalNetScore[winnerIdx]})` : ""}`;
+                    return (
+                      <>
+                        Nassau Overall: {row ? row.total : "-"} {overallUnit}
+                        <br />
+                        Full round: {regularLine}
                       </>
                     );
                   })() : g.rankByPutts
@@ -13444,6 +13683,39 @@ function computeOceans11Results(round, computed) {
                     </div>
                   )}
                 </div>
+              </div>
+            );
+          })()}
+
+          {round.cfg.nassau && INDIVIDUAL_NASSAU_GAMES.includes(round.game) && (() => {
+            const indivNassau = computeIndividualNassauResults(round, computed);
+            if (!indivNassau) return null;
+            const segments = [
+              { label: "Front 9", seg: indivNassau.front },
+              { label: "Back 9", seg: indivNassau.back },
+              { label: "Overall 18", seg: indivNassau.overall },
+            ];
+            return (
+              <div className="gsc-card">
+                <div className="gsc-label" style={{ marginBottom: 10 }}>Nassau - Final Results</div>
+                {segments.map(({ label, seg }) => {
+                  const leader = seg.rows.find((r) => r.holesPlayed > 0);
+                  const tiedLeaders = leader ? seg.rows.filter((r) => r.holesPlayed > 0 && r.total === leader.total) : [];
+                  return (
+                    <div key={label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid #eee6cf" }}>
+                      <div style={{ fontWeight: 700 }}>{label}</div>
+                      <div style={{ textAlign: "right" }}>
+                        {tiedLeaders.length === 0 ? (
+                          <div style={{ color: "#8a8a80" }}>Not played</div>
+                        ) : (
+                          <div style={{ fontWeight: 700, color: "#1B4332" }}>
+                            {"\u{1F3C6}"} {tiedLeaders.map((r) => r.name).join(" & ")}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             );
           })()}
@@ -14625,6 +14897,41 @@ function computeOceans11Results(round, computed) {
                     </div>
                   </div>
                 ))}
+              </div>
+            );
+          })()}
+
+          {round.cfg.nassau && INDIVIDUAL_NASSAU_GAMES.includes(round.game) && (() => {
+            const indivNassau = computeIndividualNassauResults(round, computed);
+            if (!indivNassau) return null;
+            const valueLabel = (total) =>
+              round.game === "dstreet" ? `${total} pts`
+              : round.game === "individualputts" ? `${total} putts`
+              : `${round.cfg.netScoring ? "Net " : ""}${total}`;
+            const segmentBlock = (label, seg) => (
+              <div style={{ marginBottom: 12 }}>
+                <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 4 }}>{label}</div>
+                {seg.rows.map((row, idx) => (
+                  <div key={row.playerIdx} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "5px 0", borderBottom: idx < seg.rows.length - 1 ? "1px solid #eee6cf" : "none" }}>
+                    <div>
+                      <div style={{ fontSize: 13 }}>{row.name || `Player ${idx + 1}`}</div>
+                      {seg.complete && idx === 0 && row.holesPlayed > 0 && (
+                        <span className="gsc-chip gsc-lead" style={{ marginTop: 2, display: "inline-block" }}>WINNER</span>
+                      )}
+                    </div>
+                    <div className="gsc-mono" style={{ fontWeight: 700, fontSize: 14, color: row.holesPlayed === 0 ? "#8a8a80" : "#1B4332" }}>
+                      {row.holesPlayed === 0 ? "-" : valueLabel(row.total)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            );
+            return (
+              <div className="gsc-card" style={{ marginTop: 10 }}>
+                <div className="gsc-label" style={{ marginBottom: 8, fontSize: 15, color: "#1B4332", fontWeight: 800 }}>Nassau Standings</div>
+                {segmentBlock("Front 9", indivNassau.front)}
+                {segmentBlock("Back 9", indivNassau.back)}
+                {segmentBlock("Overall 18", indivNassau.overall)}
               </div>
             );
           })()}
