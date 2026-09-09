@@ -11651,7 +11651,7 @@ function computeIndividualNassauResults(round, computed) {
                   )}
                   {activeCfg.oceans11 && (
                     <div style={{ fontSize: 11, color: "#8a8a80", marginTop: 6 }}>
-                      Each player picks their own best 11 holes as they play - lowest total across those 11 wins. Once you take or pass a hole, that choice is locked in.
+                      Each player picks their own best 11 holes as they play - lowest total across those 11 wins. Choices can be changed anytime as the round is played.
                     </div>
                   )}
                   {activeCfg.nassau && (
@@ -12417,7 +12417,7 @@ function computeIndividualNassauResults(round, computed) {
                 )}
                 {cfg.oceans11 && (
                   <div style={{ fontSize: 11, color: "#8a8a80", marginTop: 6 }}>
-                    Each player picks their own best 11 holes as they play - lowest total across those 11 wins. Once you take or pass a hole, that choice is locked in.
+                    Each player picks their own best 11 holes as they play - lowest total across those 11 wins. Choices can be changed anytime as the round is played.
                   </div>
                 )}
                 {cfg.nassau && (
@@ -14523,17 +14523,10 @@ function computeIndividualNassauResults(round, computed) {
                     {round.cfg.oceans11 && (() => {
                       const taken = !!e.oceans11;
                       let totalTaken = 0;
-                      let hasLaterScore = false;
                       for (let h = 0; h < 18; h++) {
                         const otherEntry = (round.scores[h] || {})[i];
                         if (otherEntry && otherEntry.oceans11) totalTaken++;
-                        if (h > holeIdx && otherEntry && otherEntry.strokes != null && otherEntry.strokes !== "") hasLaterScore = true;
                       }
-                      // Locked once taken (irreversible - "the catch"), or
-                      // once they've moved on to a later hole without
-                      // taking this one, since passing is just as
-                      // permanent as taking under these rules.
-                      const locked = taken || hasLaterScore;
                       const oceansLeft = Math.max(0, 11 - totalTaken);
                       return (
                         <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 6, flexWrap: "nowrap" }}>
@@ -14544,10 +14537,10 @@ function computeIndividualNassauResults(round, computed) {
                             <input
                               type="checkbox"
                               checked={taken}
-                              disabled={locked || (!taken && totalTaken >= 11)}
+                              disabled={!taken && totalTaken >= 11}
                               onChange={(ev) => updateHoleEntry(i, "oceans11", ev.target.checked)}
                             />
-                            {taken ? "TAKEN" : hasLaterScore ? "PASSED" : "TAKE"}
+                            {taken ? "TAKEN" : "TAKE"}
                           </label>
                         </div>
                       );
