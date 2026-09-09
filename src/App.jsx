@@ -9054,36 +9054,45 @@ function computeIndividualNassauResults(round, computed) {
             </button>
           </div>
 
-          <div className="gsc-card gsc-game-card" onClick={() => goToScreen("groupsTab")}>
+          <div className="gsc-card gsc-game-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }} onClick={() => goToScreen("groupsTab")}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <div>
-                <div style={{ fontWeight: 700, fontSize: 15 }}>Groups</div>
-                <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 2 }}>Play together, compete together</div>
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <span style={{ fontSize: 16 }}>{"\u{1F465}"}</span>
+                  <div style={{ fontWeight: 800, fontSize: 16, color: "#8a6a2f" }}>Groups</div>
+                </div>
+                <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 4 }}>Play together, compete together</div>
                 <div style={{ fontSize: 12, color: "#6b6b63" }}>Shared leaderboards with your regulars</div>
               </div>
-              <GroupsIcon size={20} color="#8FA998" />
+              <GroupsIcon size={20} color="#8a6a2f" />
             </div>
           </div>
 
-          <div className="gsc-card gsc-game-card" onClick={() => goToScreen("profileTab")}>
+          <div className="gsc-card gsc-game-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }} onClick={() => goToScreen("profileTab")}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <div>
-                <div style={{ fontWeight: 700, fontSize: 15 }}>Profile</div>
-                <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 2 }}>Saved defaults and account</div>
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <span style={{ fontSize: 16 }}>{"\u{1F464}"}</span>
+                  <div style={{ fontWeight: 800, fontSize: 16, color: "#8a6a2f" }}>Profile</div>
+                </div>
+                <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 4 }}>Saved defaults and account</div>
                 <div style={{ fontSize: 12, color: "#6b6b63" }}>Stats - your rounds, averages, and wins</div>
               </div>
-              <UserIcon size={20} color="#8FA998" />
+              <UserIcon size={20} color="#8a6a2f" />
             </div>
           </div>
 
-          <div className="gsc-card gsc-game-card" onClick={() => goToScreen("libraryTab")}>
+          <div className="gsc-card gsc-game-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }} onClick={() => goToScreen("libraryTab")}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <div>
-                <div style={{ fontWeight: 700, fontSize: 15 }}>Library</div>
-                <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 2 }}>Golf Games Library</div>
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <span style={{ fontSize: 16 }}>{"\u{1F4D6}"}</span>
+                  <div style={{ fontWeight: 800, fontSize: 16, color: "#8a6a2f" }}>Library</div>
+                </div>
+                <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 4 }}>Golf Games Library</div>
                 <div style={{ fontSize: 12, color: "#6b6b63" }}>About this App</div>
               </div>
-              <LibraryIcon size={20} color="#8FA998" />
+              <LibraryIcon size={20} color="#8a6a2f" />
             </div>
           </div>
         </div>
