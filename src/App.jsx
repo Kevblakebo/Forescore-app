@@ -9298,6 +9298,13 @@ function computeIndividualNassauResults(round, computed) {
           </div>
 
           <div className="gsc-card">
+            <div className="gsc-label" style={{ marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Oceans 11</div>
+            <div style={{ fontSize: 13, color: "#4b4b45" }}>
+              Oceans 11 isn't its own game either - it's a scoring method available for Individual Strokes, marked *Oceans 11 Avail above. Instead of counting all 18 holes, each player selects their own best 11 as they go, visible to the whole group - lowest total across just those 11 wins. Once a hole is taken as one of your 11, that choice is meant to stick; the option to change it is only there in case of a mistake, not to freely reconsider your strategy mid-round. Turn it on from the "Set your game limits and scoring" step during setup.
+            </div>
+          </div>
+
+          <div className="gsc-card">
             <div className="gsc-label" style={{ marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Side Games</div>
             <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 12 }}>
               Played alongside any round above - hole-by-hole bets like Closest to the Pin or Sandies. Open Side Games from within an active round's scoring screen once it's started.
