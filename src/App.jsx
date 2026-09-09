@@ -9020,8 +9020,6 @@ function computeIndividualNassauResults(round, computed) {
                     </button>
                     <div style={{ fontSize: 26, marginBottom: 6 }}>{emoji}</div>
                     <div style={{ fontSize: 11.5, fontWeight: 700, color: "#fff", lineHeight: 1.3 }}>{GAMES[key].name}</div>
-                    {gameSupportsNassau(key) && <div style={{ fontSize: 9.5, color: "rgba(255,255,255,0.85)", marginTop: 2 }}>*Nassau Avail</div>}
-                    {gameSupportsOceans11(key) && <div style={{ fontSize: 9.5, color: "rgba(255,255,255,0.85)", marginTop: 2 }}>*Oceans 11 Avail</div>}
                   </div>
                 );
               })}
