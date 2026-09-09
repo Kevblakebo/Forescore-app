@@ -6105,6 +6105,7 @@ export default function GolfScorecard() {
         if (Number(answers.playerCount) === 1) return "confirmGame";
         return "vibe";
       case "vibe": {
+        if (answers.resolvedGameKey) return "confirmGame";
         const r = resolveVibeEntry(answers.playerCount, answers.vibe, answers.roundMode);
         if (r.needsTeamOrIndividual) return "roundMode";
         if (r.candidates) return "vibeFollowup";
