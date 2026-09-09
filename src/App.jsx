@@ -6123,7 +6123,7 @@ export default function GolfScorecard() {
         return "field_limits";
       case "field_limits":
         if (answers.isTournament) return "field_foursomeCount";
-        return (cfg.nassau && !["swami", "dstreet", "individualputts"].includes(answers.resolvedGameKey)) ? "field_venmo" : "field_prize";
+        return cfg.nassau ? "field_venmo" : "field_prize";
       case "field_foursomeCount":
         return "field_prize";
       case "field_prize":
@@ -11655,8 +11655,22 @@ function computeIndividualNassauResults(round, computed) {
                     </div>
                   )}
                   {activeCfg.nassau && (
-                    <div style={{ fontSize: 11, color: "#8a8a80", marginTop: 6 }}>
-                      Splits the round into three separate competitions: front 9, back 9, and overall 18 - each with its own winner, ranked individually rather than in teams.
+                    <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 8 }}>
+                      <div style={{ fontSize: 11, color: "#8a8a80" }}>
+                        Splits the round into three separate competitions: front 9, back 9, and overall 18 - each with its own winner, ranked individually rather than in teams.
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 4 }}>Front 9 wager</div>
+                        <input className="gsc-input" placeholder="$5" value={activeCfg.nassauFrontPrize || ""} onChange={(e) => setActiveCfg({ ...activeCfg, nassauFrontPrize: e.target.value })} />
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 4 }}>Back 9 wager</div>
+                        <input className="gsc-input" placeholder="$5" value={activeCfg.nassauBackPrize || ""} onChange={(e) => setActiveCfg({ ...activeCfg, nassauBackPrize: e.target.value })} />
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 4 }}>Overall 18 wager</div>
+                        <input className="gsc-input" placeholder="$5" value={activeCfg.nassauOverallPrize || ""} onChange={(e) => setActiveCfg({ ...activeCfg, nassauOverallPrize: e.target.value })} />
+                      </div>
                     </div>
                   )}
                 </div>
@@ -11681,8 +11695,22 @@ function computeIndividualNassauResults(round, computed) {
                     </button>
                   </div>
                   {activeCfg.nassau && (
-                    <div style={{ fontSize: 11, color: "#8a8a80", marginTop: 6 }}>
-                      Splits the round into three separate competitions: front 9, back 9, and overall 18 - each with its own winner, ranked individually rather than in teams.
+                    <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 8 }}>
+                      <div style={{ fontSize: 11, color: "#8a8a80" }}>
+                        Splits the round into three separate competitions: front 9, back 9, and overall 18 - each with its own winner, ranked individually rather than in teams.
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 4 }}>Front 9 wager</div>
+                        <input className="gsc-input" placeholder="$5" value={activeCfg.nassauFrontPrize || ""} onChange={(e) => setActiveCfg({ ...activeCfg, nassauFrontPrize: e.target.value })} />
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 4 }}>Back 9 wager</div>
+                        <input className="gsc-input" placeholder="$5" value={activeCfg.nassauBackPrize || ""} onChange={(e) => setActiveCfg({ ...activeCfg, nassauBackPrize: e.target.value })} />
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 4 }}>Overall 18 wager</div>
+                        <input className="gsc-input" placeholder="$5" value={activeCfg.nassauOverallPrize || ""} onChange={(e) => setActiveCfg({ ...activeCfg, nassauOverallPrize: e.target.value })} />
+                      </div>
                     </div>
                   )}
                 </div>
@@ -12340,7 +12368,7 @@ function computeIndividualNassauResults(round, computed) {
                 </div>
               </div>
             )}
-            {(!cfg.nassau || gameKey === "swami" || gameKey === "dstreet" || gameKey === "individualputts") && (
+            {!cfg.nassau && (
               <div className="gsc-field">
                 <div className="gsc-label">Prize / stakes</div>
                 <input className="gsc-input" value={cfg.prize} onChange={(e) => setCfg({ ...cfg, prize: e.target.value })} />
@@ -12421,8 +12449,22 @@ function computeIndividualNassauResults(round, computed) {
                   </div>
                 )}
                 {cfg.nassau && (
-                  <div style={{ fontSize: 11, color: "#8a8a80", marginTop: 6 }}>
-                    Splits the round into three separate competitions: front 9, back 9, and overall 18 - each with its own winner, ranked individually rather than in teams.
+                  <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 8 }}>
+                    <div style={{ fontSize: 11, color: "#8a8a80" }}>
+                      Splits the round into three separate competitions: front 9, back 9, and overall 18 - each with its own winner, ranked individually rather than in teams.
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 4 }}>Front 9 wager</div>
+                      <input className="gsc-input" placeholder="$5" value={cfg.nassauFrontPrize || ""} onChange={(e) => setCfg({ ...cfg, nassauFrontPrize: e.target.value })} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 4 }}>Back 9 wager</div>
+                      <input className="gsc-input" placeholder="$5" value={cfg.nassauBackPrize || ""} onChange={(e) => setCfg({ ...cfg, nassauBackPrize: e.target.value })} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 4 }}>Overall 18 wager</div>
+                      <input className="gsc-input" placeholder="$5" value={cfg.nassauOverallPrize || ""} onChange={(e) => setCfg({ ...cfg, nassauOverallPrize: e.target.value })} />
+                    </div>
                   </div>
                 )}
               </div>
@@ -12447,8 +12489,22 @@ function computeIndividualNassauResults(round, computed) {
                   </button>
                 </div>
                 {cfg.nassau && (
-                  <div style={{ fontSize: 11, color: "#8a8a80", marginTop: 6 }}>
-                    Splits the round into three separate competitions: front 9, back 9, and overall 18 - each with its own winner, ranked individually rather than in teams.
+                  <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 8 }}>
+                    <div style={{ fontSize: 11, color: "#8a8a80" }}>
+                      Splits the round into three separate competitions: front 9, back 9, and overall 18 - each with its own winner, ranked individually rather than in teams.
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 4 }}>Front 9 wager</div>
+                      <input className="gsc-input" placeholder="$5" value={cfg.nassauFrontPrize || ""} onChange={(e) => setCfg({ ...cfg, nassauFrontPrize: e.target.value })} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 4 }}>Back 9 wager</div>
+                      <input className="gsc-input" placeholder="$5" value={cfg.nassauBackPrize || ""} onChange={(e) => setCfg({ ...cfg, nassauBackPrize: e.target.value })} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 4 }}>Overall 18 wager</div>
+                      <input className="gsc-input" placeholder="$5" value={cfg.nassauOverallPrize || ""} onChange={(e) => setCfg({ ...cfg, nassauOverallPrize: e.target.value })} />
+                    </div>
                   </div>
                 )}
               </div>
@@ -13711,14 +13767,14 @@ function computeIndividualNassauResults(round, computed) {
             const indivNassau = computeIndividualNassauResults(round, computed);
             if (!indivNassau) return null;
             const segments = [
-              { label: "Front 9", seg: indivNassau.front },
-              { label: "Back 9", seg: indivNassau.back },
-              { label: "Overall 18", seg: indivNassau.overall },
+              { label: "Front 9", seg: indivNassau.front, prize: round.cfg.nassauFrontPrize },
+              { label: "Back 9", seg: indivNassau.back, prize: round.cfg.nassauBackPrize },
+              { label: "Overall 18", seg: indivNassau.overall, prize: round.cfg.nassauOverallPrize },
             ];
             return (
               <div className="gsc-card">
                 <div className="gsc-label" style={{ marginBottom: 10 }}>Nassau - Final Results</div>
-                {segments.map(({ label, seg }) => {
+                {segments.map(({ label, seg, prize }) => {
                   const leader = seg.rows.find((r) => r.holesPlayed > 0);
                   const tiedLeaders = leader ? seg.rows.filter((r) => r.holesPlayed > 0 && r.total === leader.total) : [];
                   return (
@@ -13732,6 +13788,7 @@ function computeIndividualNassauResults(round, computed) {
                             {"\u{1F3C6}"} {tiedLeaders.map((r) => r.name).join(" & ")}
                           </div>
                         )}
+                        {prize && <div style={{ fontSize: 12, color: "#B08D57" }}>${prize}</div>}
                       </div>
                     </div>
                   );
@@ -14921,9 +14978,12 @@ function computeIndividualNassauResults(round, computed) {
               round.game === "dstreet" ? `${total} pts`
               : round.game === "individualputts" ? `${total} putts`
               : `${round.cfg.netScoring ? "Net " : ""}${total}`;
-            const segmentBlock = (label, seg) => (
+            const segmentBlock = (label, seg, prize) => (
               <div style={{ marginBottom: 12 }}>
-                <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 4 }}>{label}</div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                  <div style={{ fontWeight: 700, fontSize: 13 }}>{label}</div>
+                  {prize && <div style={{ fontSize: 12, color: "#B08D57" }}>${prize}</div>}
+                </div>
                 {seg.rows.map((row, idx) => (
                   <div key={row.playerIdx} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "5px 0", borderBottom: idx < seg.rows.length - 1 ? "1px solid #eee6cf" : "none" }}>
                     <div>
@@ -14942,9 +15002,9 @@ function computeIndividualNassauResults(round, computed) {
             return (
               <div className="gsc-card" style={{ marginTop: 10 }}>
                 <div className="gsc-label" style={{ marginBottom: 8, fontSize: 15, color: "#1B4332", fontWeight: 800 }}>Nassau Standings</div>
-                {segmentBlock("Front 9", indivNassau.front)}
-                {segmentBlock("Back 9", indivNassau.back)}
-                {segmentBlock("Overall 18", indivNassau.overall)}
+                {segmentBlock("Front 9", indivNassau.front, round.cfg.nassauFrontPrize)}
+                {segmentBlock("Back 9", indivNassau.back, round.cfg.nassauBackPrize)}
+                {segmentBlock("Overall 18", indivNassau.overall, round.cfg.nassauOverallPrize)}
               </div>
             );
           })()}
