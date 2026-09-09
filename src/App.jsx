@@ -8908,8 +8908,11 @@ function computeIndividualNassauResults(round, computed) {
           )}
 
           {session && (
-            <div className="gsc-card">
-              <div className="gsc-label" style={{ marginBottom: 6, fontSize: 17 }}>Create a New Group</div>
+            <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+                <span style={{ fontSize: 18 }}>{"\u{1F465}"}</span>
+                <div style={{ fontWeight: 800, fontSize: 17, color: "#8a6a2f" }}>Create a New Group</div>
+              </div>
               {groupsErr && <div style={{ color: "#A42E2D", fontSize: 13, marginBottom: 8 }}>{groupsErr}</div>}
               <div className="gsc-row" style={{ marginBottom: 8, alignItems: "center" }}>
                 <button
@@ -8963,8 +8966,11 @@ function computeIndividualNassauResults(round, computed) {
                   ))}
                 </div>
               )}
-              <div style={{ marginBottom: 14 }} />
-              <div className="gsc-label" style={{ marginBottom: 6, fontSize: 17 }}>Join Existing Group</div>
+              <div style={{ marginBottom: 14, borderTop: "1px solid rgba(176,141,87,0.3)" }} />
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+                <span style={{ fontSize: 18 }}>{"\u{1F511}"}</span>
+                <div style={{ fontWeight: 800, fontSize: 17, color: "#8a6a2f" }}>Join Existing Group</div>
+              </div>
               <div className="gsc-row">
                 <input className="gsc-input gsc-mono" placeholder="ENTER GROUP CODE HERE" value={joinGroupCode} onChange={(e) => { setJoinGroupCode(e.target.value.toUpperCase()); setJoinGroupSuccess(""); }} />
                 <button className="gsc-btn gsc-btn-primary" style={{ flex: "0 0 auto" }} disabled={joinGroupBusy || !joinGroupCode.trim()} onClick={joinGroup}>
@@ -8976,8 +8982,11 @@ function computeIndividualNassauResults(round, computed) {
             </div>
           )}
 
-          <div className="gsc-card">
-            <div className="gsc-label" style={{ marginBottom: 6, fontSize: 17 }}>Join Existing Round</div>
+          <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+              <span style={{ fontSize: 18 }}>{"\u26F3"}</span>
+              <div style={{ fontWeight: 800, fontSize: 17, color: "#8a6a2f" }}>Join Existing Round</div>
+            </div>
             <div className="gsc-row">
               <input className="gsc-input gsc-mono" id="join-code-home" name="join-code-home" autoComplete="off" placeholder="ENTER GAME CODE HERE" value={joinCode} onChange={(e) => setJoinCode(e.target.value.toUpperCase())} maxLength={6} />
               <button className="gsc-btn gsc-btn-primary" style={{ flex: "0 0 auto" }} disabled={busy || !joinCode} onClick={() => joinRoundOrTournament(joinCode)}>
