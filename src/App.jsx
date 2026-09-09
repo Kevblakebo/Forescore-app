@@ -11173,7 +11173,7 @@ function computeIndividualNassauResults(round, computed) {
                     High stakes - lots of drama, every hole can swing{isTourn ? " (closest fit: Best Ball Tournament)" : ""}
                   </OptionButton>
                   {(Number(wizardAnswers.playerCount) === 2 || Number(wizardAnswers.playerCount) === 3) && (
-                    <OptionButton onClick={() => pickVibe("maxStrategy")}>Maximum strategy - scoring formats like Nassau and Oceans 11</OptionButton>
+                    <OptionButton onClick={() => pickVibe("maxStrategy")}>Maximum strategy - scoring formats like Nassau (front 9, back 9, overall) and Oceans 11 (select 11 holes for your score as you play)</OptionButton>
                   )}
                   {Number(wizardAnswers.playerCount) === 4 && (
                     <OptionButton onClick={() => pickVibe("maxStrategy")}>Maximum strategy - partner decisions and scoring formats</OptionButton>
