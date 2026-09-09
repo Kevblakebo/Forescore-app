@@ -11439,8 +11439,12 @@ function computeIndividualNassauResults(round, computed) {
                 </div>
               )}
               {courseTeeOptions && (
-                <div style={{ marginTop: 10 }}>
-                  <div className="gsc-label">Pick a tee ({courseTeeOptions.courseLabel})</div>
+                <div style={{ marginTop: 10, padding: 12, background: "#FDF6E9", border: "2px solid #B08D57", borderRadius: 12 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+                    <span style={{ fontSize: 16 }}>{"\u{1F449}"}</span>
+                    <div style={{ fontWeight: 800, fontSize: 15, color: "#8a6a2f" }}>Pick your tee ({courseTeeOptions.courseLabel})</div>
+                  </div>
+                  <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 8 }}>Required - tap a tee below to load par and yardage for your round.</div>
                   {courseTeeOptions.tees.map((tee, i) => (
                     <div key={i} className="gsc-card gsc-game-card" style={{ marginBottom: 8, padding: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }} onClick={() => applyCourseTee(tee, isTournament)}>
                       <div>
@@ -12171,10 +12175,13 @@ function computeIndividualNassauResults(round, computed) {
                 )}
 
                 {courseTeeOptions && (
-                  <div style={{ marginTop: 10 }}>
-                    <div className="gsc-label">Pick a tee ({courseTeeOptions.courseLabel})</div>
+                  <div style={{ marginTop: 10, padding: 12, background: "#FDF6E9", border: "2px solid #B08D57", borderRadius: 12 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+                      <span style={{ fontSize: 16 }}>{"\u{1F449}"}</span>
+                      <div style={{ fontWeight: 800, fontSize: 15, color: "#8a6a2f" }}>Pick your tee ({courseTeeOptions.courseLabel})</div>
+                    </div>
                     <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 8 }}>
-                      Par can differ slightly between tees at the same course - pick the one your group is actually playing.
+                      Required - tap a tee below to load par and yardage. Par can differ slightly between tees at the same course, so pick the one your group is actually playing.
                     </div>
                     {courseTeeOptions.tees.map((tee, i) => (
                       <div
@@ -12902,10 +12909,13 @@ function computeIndividualNassauResults(round, computed) {
               )}
 
               {courseTeeOptions && (
-                <div style={{ marginTop: 10 }}>
-                  <div className="gsc-label">Pick a tee ({courseTeeOptions.courseLabel})</div>
+                <div style={{ marginTop: 10, padding: 12, background: "#FDF6E9", border: "2px solid #B08D57", borderRadius: 12 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+                    <span style={{ fontSize: 16 }}>{"\u{1F449}"}</span>
+                    <div style={{ fontWeight: 800, fontSize: 15, color: "#8a6a2f" }}>Pick your tee ({courseTeeOptions.courseLabel})</div>
+                  </div>
                   <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 8 }}>
-                    Par can differ slightly between tees at the same course - pick the one the tournament is playing.
+                    Required - tap a tee below to load par and yardage. Par can differ slightly between tees at the same course, so pick the one the tournament is playing.
                   </div>
                   {courseTeeOptions.tees.map((tee, i) => (
                     <div
