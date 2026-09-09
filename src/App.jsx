@@ -9111,8 +9111,11 @@ function computeIndividualNassauResults(round, computed) {
         <Header title={<span style={{ fontSize: 23 }}>Games</span>} sub="Join, start, or revisit" />
         <div className="gsc-body gsc-body-tabbed">
           {activeRound && !activeRound.tournamentId && !isRoundDone(activeRound) && (
-            <div className="gsc-card" style={{ border: "2px solid #B08D57" }}>
-              <div className="gsc-label">Round in progress</div>
+            <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <span style={{ fontSize: 16 }}>{"\u23F3"}</span>
+                <div style={{ fontWeight: 800, fontSize: 15, color: "#8a6a2f" }}>Round in progress</div>
+              </div>
               <div style={{ fontWeight: 700, fontSize: 16, marginTop: 2 }}>{activeRound.name}</div>
               <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 2 }}>
                 {GAMES[activeRound.game].name} - {activeRound.date}{activeRound.course ? " - " + activeRound.course : ""}
@@ -9125,8 +9128,11 @@ function computeIndividualNassauResults(round, computed) {
           )}
 
           {lastTournament && (
-            <div className="gsc-card" style={{ border: "2px solid #B08D57" }}>
-              <div className="gsc-label">Tournament in progress</div>
+            <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <span style={{ fontSize: 16 }}>{"\u{1F3C6}"}</span>
+                <div style={{ fontWeight: 800, fontSize: 15, color: "#8a6a2f" }}>Tournament in progress</div>
+              </div>
               <div style={{ fontWeight: 700, fontSize: 16, marginTop: 2 }}>{lastTournament.name}</div>
               <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
                 <button className="gsc-btn gsc-btn-primary" style={{ flex: 1 }} onClick={() => openTournamentBoard(lastTournament.id)}>Continue tournament</button>
@@ -9145,8 +9151,11 @@ function computeIndividualNassauResults(round, computed) {
             </div>
           )}
 
-          <div className="gsc-card">
-            <div className="gsc-label" style={{ marginBottom: 6, fontSize: 17 }}>Join Existing Round</div>
+          <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+              <span style={{ fontSize: 18 }}>{"\u26F3"}</span>
+              <div style={{ fontWeight: 800, fontSize: 17, color: "#8a6a2f" }}>Join Existing Round</div>
+            </div>
             <div className="gsc-row" style={{ marginTop: 6 }}>
               <input className="gsc-input gsc-mono" id="round-join-code" name="round-join-code" autoComplete="off" placeholder="ENTER GAME CODE HERE" value={joinCode} onChange={(e) => setJoinCode(e.target.value.toUpperCase())} maxLength={6} />
               <button className="gsc-btn gsc-btn-primary" style={{ flex: "0 0 auto" }} disabled={busy || !joinCode} onClick={() => joinRoundOrTournament(joinCode)}>
@@ -9180,8 +9189,11 @@ function computeIndividualNassauResults(round, computed) {
             </button>
           </div>
 
-          <div className="gsc-card">
-            <div className="gsc-label" style={{ marginBottom: 6, fontSize: 17 }}>Start a New Round</div>
+          <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+              <span style={{ fontSize: 18 }}>{"\u26F3"}</span>
+              <div style={{ fontWeight: 800, fontSize: 17, color: "#8a6a2f" }}>Start a New Round</div>
+            </div>
 
             <div className="gsc-label" style={{ marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Individual Game Formats</div>
             <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>Up to 4 Players</div>
@@ -9268,8 +9280,11 @@ function computeIndividualNassauResults(round, computed) {
               ))}
           </div>
 
-          <div className="gsc-card">
-            <div className="gsc-label" style={{ marginBottom: 6, fontSize: 17 }}>Start a New Tournament</div>
+          <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+              <span style={{ fontSize: 18 }}>{"\u{1F3C6}"}</span>
+              <div style={{ fontWeight: 800, fontSize: 17, color: "#8a6a2f" }}>Start a New Tournament</div>
+            </div>
             <div className="gsc-label" style={{ marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Tournament Game Formats</div>
             <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>Multiple Foursomes</div>
             {TOURNAMENT_GAME_KEYS.map((key) => {
@@ -9313,22 +9328,31 @@ function computeIndividualNassauResults(round, computed) {
             })}
           </div>
 
-          <div className="gsc-card">
-            <div className="gsc-label" style={{ marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Nassau</div>
+          <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+              <span style={{ fontSize: 16 }}>{"\u26F3"}</span>
+              <div style={{ fontWeight: 800, fontSize: 15, color: "#8a6a2f" }}>Nassau</div>
+            </div>
             <div style={{ fontSize: 13, color: "#4b4b45" }}>
               Nassau isn't its own game - it's a scoring method you can turn on for the team formats marked *Nassau Avail above, all of which are 4-player, 2 vs 2 formats. Instead of one winner for the whole round, it splits things into three separate bets: front 9, back 9, and overall 18 - each with its own winner and its own wager, so a rough front 9 doesn't have to spoil the whole day. Turn it on from the "Set your game limits and scoring" step during setup.
             </div>
           </div>
 
-          <div className="gsc-card">
-            <div className="gsc-label" style={{ marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Oceans 11</div>
+          <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+              <span style={{ fontSize: 16 }}>{"\u{1F30A}"}</span>
+              <div style={{ fontWeight: 800, fontSize: 15, color: "#8a6a2f" }}>Oceans 11</div>
+            </div>
             <div style={{ fontSize: 13, color: "#4b4b45" }}>
               Oceans 11 isn't its own game either - it's a scoring method available for Individual Strokes, marked *Oceans 11 Avail above. Instead of counting all 18 holes, each player selects their own best 11 as they go, visible to the whole group - lowest total across just those 11 wins. Once a hole is taken as one of your 11, that choice is meant to stick; the option to change it is only there in case of a mistake, not to freely reconsider your strategy mid-round. Turn it on from the "Set your game limits and scoring" step during setup.
             </div>
           </div>
 
-          <div className="gsc-card">
-            <div className="gsc-label" style={{ marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Side Games</div>
+          <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+              <span style={{ fontSize: 16 }}>{"\u{1F3AF}"}</span>
+              <div style={{ fontWeight: 800, fontSize: 15, color: "#8a6a2f" }}>Side Games</div>
+            </div>
             <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 12 }}>
               Played alongside any round above - hole-by-hole bets like Closest to the Pin or Sandies. Open Side Games from within an active round's scoring screen once it's started.
             </div>
@@ -9410,8 +9434,11 @@ function computeIndividualNassauResults(round, computed) {
               </button>
             </div>
           ) : (
-            <div className="gsc-card">
-              <div className="gsc-label" style={{ marginBottom: 4 }}>Account</div>
+            <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+                <span style={{ fontSize: 16 }}>{"\u{1F464}"}</span>
+                <div style={{ fontWeight: 800, fontSize: 16, color: "#8a6a2f" }}>Account</div>
+              </div>
               <div style={{ fontSize: 13, color: "#6b6b63", marginBottom: 14 }}>{session.user.email}</div>
 
               {SUBSCRIPTIONS_AVAILABLE_HERE && (
@@ -9558,8 +9585,11 @@ function computeIndividualNassauResults(round, computed) {
           )}
 
           {session && (
-            <div className="gsc-card">
-              <div className="gsc-label" style={{ marginBottom: 10 }}>My Stats</div>
+            <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+                <span style={{ fontSize: 16 }}>{"\u{1F4CA}"}</span>
+                <div style={{ fontWeight: 800, fontSize: 16, color: "#8a6a2f" }}>My Stats</div>
+              </div>
 
               <div style={{ display: "flex", alignItems: "flex-end", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
                 <div style={{ flex: "1 1 120px" }}>
@@ -9642,8 +9672,11 @@ function computeIndividualNassauResults(round, computed) {
           )}
 
           {session && stats && stats.recent && stats.recent.length > 0 && (
-            <div className="gsc-card">
-              <div className="gsc-label" style={{ marginBottom: 10 }}>Finished Games</div>
+            <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+                <span style={{ fontSize: 16 }}>{"\u{1F4CB}"}</span>
+                <div style={{ fontWeight: 800, fontSize: 16, color: "#8a6a2f" }}>Finished Games</div>
+              </div>
               {deleteHistoryErr && <div style={{ color: "#A42E2D", fontSize: 12, marginBottom: 8 }}>{deleteHistoryErr}</div>}
               {stats.recent.map((r, i) => (
                 <div
@@ -9674,8 +9707,11 @@ function computeIndividualNassauResults(round, computed) {
             </div>
           )}
           {session && (
-            <div className="gsc-card">
-              <div className="gsc-label" style={{ marginBottom: 10 }}>Public Leaderboard</div>
+            <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+                <span style={{ fontSize: 16 }}>{"\u{1F3C6}"}</span>
+                <div style={{ fontWeight: 800, fontSize: 16, color: "#8a6a2f" }}>Public Leaderboard</div>
+              </div>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
                 {Object.entries(LEADERBOARD_CATEGORIES).map(([key, cat]) => (
                   <button
@@ -9749,8 +9785,11 @@ function computeIndividualNassauResults(round, computed) {
 
 
           {session && headToHeadList.length > 0 && (
-            <div className="gsc-card">
-              <div className="gsc-label" style={{ marginBottom: 10 }}>Head-to-Head Records</div>
+            <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+                <span style={{ fontSize: 16 }}>{"\u2694\uFE0F"}</span>
+                <div style={{ fontWeight: 800, fontSize: 16, color: "#8a6a2f" }}>Head-to-Head Records</div>
+              </div>
               {headToHeadList.map((h, i) => {
                 const avgDiff = h.rounds_played > 0 ? (h.opp_strokes_sum - h.my_strokes_sum) / h.rounds_played : 0;
                 return (
@@ -9784,8 +9823,11 @@ function computeIndividualNassauResults(round, computed) {
           )}
 
           {session && (
-            <div className="gsc-card">
-              <div className="gsc-label" style={{ marginBottom: 6 }}>Post to GHIN</div>
+            <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+                <span style={{ fontSize: 16 }}>{"\u26F3"}</span>
+                <div style={{ fontWeight: 800, fontSize: 16, color: "#8a6a2f" }}>Post to GHIN</div>
+              </div>
               <div style={{ fontSize: 13, color: "#4b4b45" }}>
                 Head to GHIN.com to post your score toward your official handicap.
               </div>
@@ -9823,8 +9865,11 @@ function computeIndividualNassauResults(round, computed) {
             </div>
           )}
           {session && (
-            <div className="gsc-card">
-              <div className="gsc-label" style={{ marginBottom: 10, fontSize: 17 }}>My Groups</div>
+            <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+                <span style={{ fontSize: 18 }}>{"\u{1F465}"}</span>
+                <div style={{ fontWeight: 800, fontSize: 17, color: "#8a6a2f" }}>My Groups</div>
+              </div>
 
               {selectedGroupId ? (
                 <>
@@ -10235,8 +10280,11 @@ function computeIndividualNassauResults(round, computed) {
         <style>{STYLE}</style>
         <Header title={<span style={{ fontSize: 23 }}>Library</span>} sub="Games & about this app" />
         <div className="gsc-body gsc-body-tabbed">
-          <div className="gsc-card" style={{ cursor: "pointer" }} onClick={() => goToScreen("whyPlay")}>
-            <div className="gsc-label" style={{ marginBottom: 6 }}>Why People Love These Games</div>
+          <div className="gsc-card" style={{ cursor: "pointer", background: "#FDF6E9", border: "2px solid #B08D57" }} onClick={() => goToScreen("whyPlay")}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+              <span style={{ fontSize: 16 }}>{"\u2764\uFE0F"}</span>
+              <div style={{ fontWeight: 800, fontSize: 16, color: "#8a6a2f" }}>Why People Love These Games</div>
+            </div>
             <div style={{ fontSize: 13, color: "#4b4b45" }}>
               What makes each of the 15 formats worth playing, straight from the golfers who love them.
             </div>
@@ -10245,8 +10293,11 @@ function computeIndividualNassauResults(round, computed) {
             </button>
           </div>
 
-          <div className="gsc-card" style={{ cursor: "pointer" }} onClick={() => goToScreen("library")}>
-            <div className="gsc-label" style={{ marginBottom: 6 }}>Golf Games Library</div>
+          <div className="gsc-card" style={{ cursor: "pointer", background: "#FDF6E9", border: "2px solid #B08D57" }} onClick={() => goToScreen("library")}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+              <span style={{ fontSize: 16 }}>{"\u{1F4D6}"}</span>
+              <div style={{ fontWeight: 800, fontSize: 16, color: "#8a6a2f" }}>Golf Games Library</div>
+            </div>
             <div style={{ fontSize: 13, color: "#4b4b45" }}>
               Browse other popular team, individual, side, and just-for-fun formats worth trying on your next round.
             </div>
@@ -10255,8 +10306,11 @@ function computeIndividualNassauResults(round, computed) {
             </button>
           </div>
 
-          <div className="gsc-card" style={{ cursor: "pointer" }} onClick={() => goToScreen("about")}>
-            <div className="gsc-label" style={{ marginBottom: 6 }}>About this App</div>
+          <div className="gsc-card" style={{ cursor: "pointer", background: "#FDF6E9", border: "2px solid #B08D57" }} onClick={() => goToScreen("about")}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+              <span style={{ fontSize: 16 }}>{"\u2139\uFE0F"}</span>
+              <div style={{ fontWeight: 800, fontSize: 16, color: "#8a6a2f" }}>About this App</div>
+            </div>
             <div style={{ fontSize: 13, color: "#4b4b45" }}>
               What RipScore tracks for you, and how a round works from tee to tally.
             </div>
@@ -10265,8 +10319,11 @@ function computeIndividualNassauResults(round, computed) {
             </button>
           </div>
 
-          <div className="gsc-card" style={{ cursor: "pointer" }} onClick={() => goToScreen("feedback")}>
-            <div className="gsc-label" style={{ marginBottom: 6 }}>Give Feedback</div>
+          <div className="gsc-card" style={{ cursor: "pointer", background: "#FDF6E9", border: "2px solid #B08D57" }} onClick={() => goToScreen("feedback")}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+              <span style={{ fontSize: 16 }}>{"\u{1F4AC}"}</span>
+              <div style={{ fontWeight: 800, fontSize: 16, color: "#8a6a2f" }}>Give Feedback</div>
+            </div>
             <div style={{ fontSize: 13, color: "#4b4b45" }}>
               Two minutes, ten questions - tell us what's working and what isn't.
             </div>
@@ -10275,8 +10332,11 @@ function computeIndividualNassauResults(round, computed) {
             </button>
           </div>
 
-          <div className="gsc-card" style={{ cursor: "pointer" }} onClick={() => goToScreen("termsOfService")}>
-            <div className="gsc-label" style={{ marginBottom: 6 }}>Terms of Service</div>
+          <div className="gsc-card" style={{ cursor: "pointer", background: "#FDF6E9", border: "2px solid #B08D57" }} onClick={() => goToScreen("termsOfService")}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+              <span style={{ fontSize: 16 }}>{"\u{1F4DC}"}</span>
+              <div style={{ fontWeight: 800, fontSize: 16, color: "#8a6a2f" }}>Terms of Service</div>
+            </div>
             <div style={{ fontSize: 13, color: "#4b4b45" }}>
               The terms for using RipScore.
             </div>
@@ -10285,8 +10345,11 @@ function computeIndividualNassauResults(round, computed) {
             </button>
           </div>
 
-          <div className="gsc-card" style={{ cursor: "pointer" }} onClick={() => goToScreen("privacyPolicy")}>
-            <div className="gsc-label" style={{ marginBottom: 6 }}>Privacy Policy</div>
+          <div className="gsc-card" style={{ cursor: "pointer", background: "#FDF6E9", border: "2px solid #B08D57" }} onClick={() => goToScreen("privacyPolicy")}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+              <span style={{ fontSize: 16 }}>{"\u{1F512}"}</span>
+              <div style={{ fontWeight: 800, fontSize: 16, color: "#8a6a2f" }}>Privacy Policy</div>
+            </div>
             <div style={{ fontSize: 13, color: "#4b4b45" }}>
               How RipScore handles your data.
             </div>
