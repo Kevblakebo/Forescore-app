@@ -10410,12 +10410,20 @@ function computeIndividualNassauResults(round, computed) {
                   <p style={{ margin: 0 }}>{WHY_PLAY[key]}</p>
                 </div>
               ))}
-              <div style={{ marginBottom: 0 }}>
+              <div style={{ marginBottom: 20 }}>
                 <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px", fontSize: 14 }}>
                   {"\u26F3"} Nassau
                 </p>
                 <p style={{ margin: 0 }}>
                   Nassau's whole appeal is built into its structure - by splitting the round into three separate bets instead of one, a bad front 9 doesn't have to ruin the day, since the back 9 and the overall match are still fully in play. That built-in "second chance" is exactly why it's stayed the standard wager in casual and club golf for generations - it keeps every single hole meaningful, right up through the 18th, instead of a round quietly turning into a formality once someone gets too far ahead too early.
+                </p>
+              </div>
+              <div style={{ marginBottom: 0 }}>
+                <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px", fontSize: 14 }}>
+                  {"\u{1F30A}"} Oceans 11
+                </p>
+                <p style={{ margin: 0 }}>
+                  Oceans 11 turns every single hole into its own small decision, not just a number to add up. Take a good score now, and you're locked in - safe, but maybe leaving something better on the table. Pass on it hoping for even lower later, and you're gambling that the back nine treats you kindly, with fewer holes left to recover if it doesn't. That constant "bank it or hold out" tension is what people end up talking about after the round - it rewards reading your own game in the moment, not just playing steady, and it means even a rough start doesn't have to be the whole story.
                 </p>
               </div>
             </div>
