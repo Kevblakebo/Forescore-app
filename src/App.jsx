@@ -158,7 +158,7 @@ const GAMES = {
   teamstrokes: {
     name: "Team Strokes",
     tag: "Fixed teams stroke play - 4 players",
-    desc: "A 4-person, 2 vs 2 team combined strokes competition. Each player plays their own ball and records their own strokes and putts. Lowest team total strokes wins; lowest team total putts settles a tie.",
+    desc: "A 4-person, 2 vs 2 team combined strokes competition. Each player plays their own ball and records their own strokes and putts. Lowest team total strokes wins; lowest team total putts settles a tie. Overall and Nassau scoring methods available.",
     rotates: false,
     hasScore: true,
     hasPutts: true,
@@ -189,7 +189,7 @@ const GAMES = {
   teamputts: {
     name: "Team Putts",
     tag: "Putting teams - 4 players",
-    desc: "A simple points-based putting game for 4 players, 2 vs 2 teams. The team with the least combined putts earns 1 point per hole. Most points at the end of the round wins. Total strokes also kept track of.",
+    desc: "A simple points-based putting game for 4 players, 2 vs 2 teams. The team with the least combined putts earns 1 point per hole. Most points at the end of the round wins. Total strokes also kept track of. Overall and Nassau scoring methods available.",
     rotates: false,
     hasScore: true,
     hasPutts: true,
@@ -302,7 +302,7 @@ const GAMES = {
   ponto: {
     name: "Team Skins",
     tag: "Fixed teams points - 4 players",
-    desc: "Two 2-person teams, same partners all 18 holes. Points for low combined score AND low combined putts each hole. Great for similar handicaps.",
+    desc: "Two 2-person teams, same partners all 18 holes. Points for low combined score AND low combined putts each hole. Great for similar handicaps. Overall and Nassau scoring methods available.",
     rotates: false,
     hasScore: true,
     hasPutts: true,
@@ -366,7 +366,7 @@ const GAMES = {
   beachside: {
     name: "Team Best Ball",
     tag: "Best-ball teams - 4 players",
-    desc: "Two 2-person teams, best-ball scoring - the lower of the team's two strokes AND the lower of the team's two putts count each hole. Same structure as Team Skins, but best-ball instead of combined. Great for mixed handicap pairs.",
+    desc: "Two 2-person teams, best-ball scoring - the lower of the team's two strokes AND the lower of the team's two putts count each hole. Same structure as Team Skins, but best-ball instead of combined. Great for mixed handicap pairs. Overall and Nassau scoring methods available.",
     rotates: false,
     hasScore: true,
     hasPutts: true,
@@ -507,7 +507,7 @@ const GAMES = {
   swami: {
     name: "Individual Strokes",
     tag: "Individual stroke play - up to 4 players",
-    desc: "A standard, no-frills stroke play game for up to 4 players. Lowest total strokes wins; total putts breaks a tie. Great for players who just want to keep an honest scorecard.",
+    desc: "A standard, no-frills stroke play game for up to 4 players. Lowest total strokes wins; total putts breaks a tie. Great for players who just want to keep an honest scorecard. Overall, Nassau, and Oceans 11 scoring methods available.",
     rotates: false,
     hasScore: true,
     hasPutts: true,
@@ -531,7 +531,7 @@ const GAMES = {
   dstreet: {
     name: "Individual Skins",
     tag: "Individual points - up to 4 players",
-    desc: "Individual strokes and putting skins game for up to 4 players. Points for low strokes AND low putts each hole. Most points wins. Great for similar handicaps.",
+    desc: "Individual strokes and putting skins game for up to 4 players. Points for low strokes AND low putts each hole. Most points wins. Great for similar handicaps. Overall and Nassau scoring methods available.",
     rotates: false,
     hasScore: true,
     hasPutts: true,
@@ -562,7 +562,7 @@ const GAMES = {
   individualputts: {
     name: "Individual Putts",
     tag: "Individual putting game - up to 4 players",
-    desc: "A simple total putts game for up to 4 players, every player for themselves. The player with the least amount of putts at the end of the round wins. Total strokes also still kept track of.",
+    desc: "A simple total putts game for up to 4 players, every player for themselves. The player with the least amount of putts at the end of the round wins. Total strokes also still kept track of. Overall and Nassau scoring methods available.",
     rotates: false,
     hasScore: true,
     hasPutts: true,
@@ -6174,7 +6174,7 @@ export default function GolfScorecard() {
         setTournamentFoursomeCount(Math.max(2, Math.ceil((Number(nextAnswers.playerCount) || 8) / 4)));
       } else {
         setGameKey(key);
-        setCfg(withProfileVenmo({ ...GAMES[key].defaults, ...(nextAnswers.wantsNassau ? { nassau: true } : {}) }));
+        setCfg(withProfileVenmo({ ...GAMES[key].defaults, ...(nextAnswers.wantsNassau && !["swami", "dstreet", "individualputts"].includes(key) ? { nassau: true } : {}) }));
         const count = key === "swami" || key === "dstreet" || key === "pontobango" || key === "individualputts" || key === "stableford" ? Math.max(1, Math.min(4, Number(nextAnswers.playerCount) || 4)) : 4;
         setPlayers((p) => {
           const base = [...p];
