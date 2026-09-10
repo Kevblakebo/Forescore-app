@@ -11177,6 +11177,11 @@ function computeIndividualNassauResults(round, computed) {
         <div className="gsc-body">
           {wizardStepId === "groupStep" && (
             <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
+              {!session && (
+                <div style={{ fontWeight: 800, fontSize: 17, color: "#8a6a2f", marginBottom: 6 }}>
+                  Create a New Group or Join an Existing Group
+                </div>
+              )}
               <div style={{ fontSize: 13, color: "#6b6b63", marginBottom: 14 }}>
                 {session
                   ? "Groups let you and your regulars share a leaderboard across every round you play together. Join one with a code below, start a new one, or skip this and just start a game."
