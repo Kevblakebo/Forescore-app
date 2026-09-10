@@ -11252,7 +11252,9 @@ function computeIndividualNassauResults(round, computed) {
           {wizardStepId === "groupStep" && (
             <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
               <div style={{ fontSize: 13, color: "#6b6b63", marginBottom: 14 }}>
-                Groups let you and your regulars share a leaderboard across every round you play together. Join one with a code below, start a new one, or skip this and just start a game.
+                {session
+                  ? "Groups let you and your regulars share a leaderboard across every round you play together. Join one with a code below, start a new one, or skip this and just start a game."
+                  : "Groups let you and your regulars share a leaderboard across every round you play together."}
               </div>
 
               {session ? (
@@ -11332,7 +11334,7 @@ function computeIndividualNassauResults(round, computed) {
               ) : (
                 <div style={{ background: "#fff", borderRadius: 10, padding: 14, textAlign: "center" }}>
                   <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 12 }}>
-                    Log in or create a free account to make or join a group. You'll come right back here to keep going.
+                    Optional - log in or create a free account to make or join a group. You'll come right back here to keep going. Or just tap Next below to skip this for now.
                   </div>
                   <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginBottom: 8 }} onClick={() => goToScreen("login")}>
                     Log In
