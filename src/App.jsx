@@ -8821,10 +8821,10 @@ function computeIndividualNassauResults(round, computed) {
               <>
                 {profile && profile.name ? (
                   <>
-                    Welcome back {profile.avatar && <span style={{ fontSize: 15 }}>{profile.avatar}</span>} {profile.name}, what would you like to do today?
+                    Welcome back {profile.avatar && <span style={{ fontSize: 15 }}>{profile.avatar}</span>} {profile.name}, what game would you like to play today?
                   </>
                 ) : (
-                  "Welcome back, what would you like to do today?"
+                  "Welcome back, what game would you like to play today?"
                 )}
               </>
             ) : (
