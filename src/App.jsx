@@ -8826,9 +8826,6 @@ function computeIndividualNassauResults(round, computed) {
                 ) : (
                   "Welcome back, what would you like to do today?"
                 )}
-                <div style={{ marginTop: 8 }}>
-                  Create a new group or join an existing group, join an existing round, or start a new round below:
-                </div>
               </>
             ) : (
               <>
@@ -11258,6 +11255,8 @@ function computeIndividualNassauResults(round, computed) {
                 Groups let you and your regulars share a leaderboard across every round you play together. Join one with a code below, start a new one, or skip this and just start a game.
               </div>
 
+              {session ? (
+              <>
               <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
                 <span style={{ fontSize: 18 }}>{"\u{1F465}"}</span>
                 <div style={{ fontWeight: 800, fontSize: 17, color: "#8a6a2f" }}>Create a New Group</div>
@@ -11329,6 +11328,20 @@ function computeIndividualNassauResults(round, computed) {
               </div>
               {joinGroupErr && <div style={{ color: "#A42E2D", fontSize: 13, marginTop: 8 }}>{joinGroupErr}</div>}
               {joinGroupSuccess && <div style={{ color: "#3F6B54", fontWeight: 700, fontSize: 13, marginTop: 8 }}>{"\u2713"} {joinGroupSuccess}</div>}
+              </>
+              ) : (
+                <div style={{ background: "#fff", borderRadius: 10, padding: 14, textAlign: "center" }}>
+                  <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 12 }}>
+                    Log in or create a free account to make or join a group. You'll come right back here to keep going.
+                  </div>
+                  <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginBottom: 8 }} onClick={() => goToScreen("login")}>
+                    Log In
+                  </button>
+                  <button className="gsc-btn gsc-btn-outline" style={{ width: "100%" }} onClick={() => goToScreen("register")}>
+                    Create Account
+                  </button>
+                </div>
+              )}
 
               <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 16 }} onClick={() => wizardGoNext("groupStep", {})}>
                 Next
