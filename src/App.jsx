@@ -970,6 +970,7 @@ const AVATAR_OPTIONS = [
   "\u{1F40A}", "\u{1F986}", "\u{1F43A}", "\u{1F989}", "\u{1F409}", "\u{1F451}", "\u{1F3A9}", "\u{1F340}", "\u{1F334}", "\u{1F3B2}", "\u{1F947}", "\u{1F9CA}",
   "\u26CF\u{FE0F}", "\u26F3", "\u{1F355}", "\u{1F426}", "\u{1F37A}", "\u2600\u{FE0F}",
   "\u{1F42C}", "\u{1F428}", "\u{1F98A}", "\u{1F98B}", "\u{1F308}", "\u{1F996}", "\u26F7\u{FE0F}",
+  "\u{1F438}", "\u{1F984}", "\u{1F419}", "\u{1F9A5}", "\u{1F43C}", "\u{1F3C4}", "\u{1F3B3}",
 ];
 const TEAM_CLASS = ["gsc-teamA", "gsc-teamB", "gsc-teamC", "gsc-teamD"];
 
