@@ -4590,16 +4590,17 @@ export default function GolfScorecard() {
     );
   }
 
-  function GameDetailsModal() {
-    if (!gameDetailsOpen || !round) return null;
-    const cfg = round.cfg || {};
+  function GameDetailsModal(targetRound) {
+    const r = targetRound || round;
+    if (!gameDetailsOpen || !r) return null;
+    const cfg = r.cfg || {};
     return (
       <div className="gsc-modal-backdrop" onClick={() => setGameDetailsOpen(false)}>
         <div className="gsc-modal" onClick={(e) => e.stopPropagation()}>
           <div className="gsc-modal-title">Game Details</div>
           <div style={{ fontSize: 13, color: "#4b4b45", lineHeight: 1.9 }}>
             <div><b>Max score over par per hole:</b> {cfg.doubleParMax ? "Double par" : cfg.maxOver != null ? `+${cfg.maxOver}` : "No limit set"}</div>
-            {GAMES[round.game] && GAMES[round.game].hasPutts && (
+            {GAMES[r.game] && GAMES[r.game].hasPutts && (
               <div><b>Track putts:</b> {cfg.trackPutts !== false ? "Yes" : "No"}</div>
             )}
             <div><b>Max putts per hole:</b> {cfg.trackPutts === false ? "N/A (putts not tracked)" : cfg.maxPutts != null ? cfg.maxPutts : "No limit set"}</div>
@@ -4618,7 +4619,7 @@ export default function GolfScorecard() {
             )}
             <div><b>Venmo handle for settling up:</b> {cfg.venmo ? cfg.venmo : "Not set"}</div>
             <div><b>Use per-hole handicapping:</b> {cfg.netScoring ? "Yes" : "No"}</div>
-            {["dstreet", "ponto", "teamputts"].includes(round.game) && (
+            {["dstreet", "ponto", "teamputts"].includes(r.game) && (
               <div><b>Ties carry over to next hole:</b> {cfg.tiesCarryOver ? "Yes" : "No"}</div>
             )}
           </div>
@@ -11439,7 +11440,7 @@ function computeIndividualNassauResults(round, computed) {
           {wizardStepId === "field_name" && (
             <div className="gsc-card">
               <div className="gsc-label" style={{ marginBottom: 10, fontSize: 16 }}>
-                What do you want to name your {isTournament ? "tournament" : "Group"}? (Optional)
+                What do you want to name your {isTournament ? "tournament" : "Group"}? {isTournament ? "(Required)" : "(Optional)"}
               </div>
               {!isTournament && session && (
                 <button className="gsc-link" style={{ fontSize: 13, fontWeight: 700, marginBottom: 8, display: "inline-block" }} onClick={() => openGroupFillPicker("playersAndMeta")}>
@@ -13631,6 +13632,9 @@ function computeIndividualNassauResults(round, computed) {
                 <button className="gsc-link" style={{ color: "#F3EFE0", fontSize: 11, textDecoration: "underline" }} onClick={() => openRules(t.game)}>
                   Rules
                 </button>
+                <button className="gsc-link" style={{ color: "#F3EFE0", fontSize: 11, textDecoration: "underline" }} onClick={() => setGameDetailsOpen(true)}>
+                  Game Details
+                </button>
                 {isTournamentOrganizer(t) && (
                   <button className="gsc-link" style={{ color: "#F3EFE0", fontSize: 11, textDecoration: "underline" }} onClick={() => startTournamentFoursome(t)}>
                     Add Foursome
@@ -13697,6 +13701,7 @@ function computeIndividualNassauResults(round, computed) {
         {EditFoursomeModal()}
         {RulesModal()}
         {WhyPlayModal()}
+        {t && GameDetailsModal({ game: t.game, cfg: t.cfg })}
       </div>
     );
   }
