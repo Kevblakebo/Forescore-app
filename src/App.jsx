@@ -3429,7 +3429,7 @@ export default function GolfScorecard() {
         if (lbError) console.warn("Couldn't sync leaderboard name:", lbError.message);
       });
     setJoinGroupCode("");
-    setJoinGroupSuccess("You're in! Check your groups below.");
+    setJoinGroupSuccess("You're in!");
     loadMyGroups();
   }
 
@@ -9272,7 +9272,7 @@ function computeIndividualNassauResults(round, computed) {
               <div style={{ fontWeight: 800, fontSize: 15, color: "#8a6a2f" }}>Nassau</div>
             </div>
             <div style={{ fontSize: 13, color: "#4b4b45" }}>
-              Nassau isn't its own game - it's a scoring method you can turn on for the team formats marked *Nassau Avail above, all of which are 4-player, 2 vs 2 formats. Instead of one winner for the whole round, it splits things into three separate bets: front 9, back 9, and overall 18 - each with its own winner and its own wager, so a rough front 9 doesn't have to spoil the whole day. Turn it on from the "Set your game limits and scoring" step during setup.
+              Nassau is a scoring method you can turn on for the team formats marked *Nassau Avail above, all of which are 4-player, 2 vs 2 formats. Instead of one winner for the whole round, it splits things into three separate bets: front 9, back 9, and overall 18 - each with its own winner and its own wager, so a rough front 9 doesn't have to spoil the whole day. Turn it on from the "Set your game limits and scoring" step during setup.
             </div>
           </div>
 
@@ -9282,7 +9282,7 @@ function computeIndividualNassauResults(round, computed) {
               <div style={{ fontWeight: 800, fontSize: 15, color: "#8a6a2f" }}>Oceans 11</div>
             </div>
             <div style={{ fontSize: 13, color: "#4b4b45" }}>
-              Oceans 11 isn't its own game either - it's a scoring method available for Individual Strokes, marked *Oceans 11 Avail above. Instead of counting all 18 holes, each player selects their own best 11 as they go, visible to the whole group - lowest total across just those 11 wins. Once a hole is taken as one of your 11, that choice is meant to stick; the option to change it is only there in case of a mistake, not to freely reconsider your strategy mid-round. Turn it on from the "Set your game limits and scoring" step during setup.
+              Oceans 11 is a scoring method you can turn on for the Individual Strokes game, marked *Oceans 11 Avail above. Instead of counting all 18 holes, each player selects their own best 11 as they go, visible to the whole group - lowest total across just those 11 wins. Once a hole is taken as one of your 11, that choice is meant to stick; the option to change it is only there in case of a mistake, not to freely reconsider your strategy mid-round. Turn it on from the "Set your game limits and scoring" step during setup.
             </div>
           </div>
 
