@@ -11332,17 +11332,12 @@ function computeIndividualNassauResults(round, computed) {
               {joinGroupSuccess && <div style={{ color: "#3F6B54", fontWeight: 700, fontSize: 13, marginTop: 8 }}>{"\u2713"} {joinGroupSuccess}</div>}
               </>
               ) : (
-                <div style={{ background: "#fff", borderRadius: 10, padding: 14, textAlign: "center" }}>
-                  <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 12 }}>
-                    Optional - log in or create a free account to make or join a group. You'll come right back here to keep going. Or just tap Next below to skip this for now.
-                  </div>
-                  <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginBottom: 8 }} onClick={() => goToScreen("login")}>
-                    Log In
-                  </button>
-                  <button className="gsc-btn gsc-btn-outline" style={{ width: "100%" }} onClick={() => goToScreen("register")}>
-                    Create Account
-                  </button>
-                </div>
+                <button
+                  onClick={() => goToScreen("login")}
+                  style={{ display: "block", width: "100%", textAlign: "left", fontSize: 12, color: "#6b6b63", padding: "8px 10px", background: "#F8F1E4", border: "none", borderRadius: 8, cursor: "pointer" }}
+                >
+                  {"\u{1F465}"} Log in to unlock create or join a group. <span style={{ textDecoration: "underline", fontWeight: 700 }}>Tap to log in</span>
+                </button>
               )}
 
               <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 16 }} onClick={() => wizardGoNext("groupStep", {})}>
