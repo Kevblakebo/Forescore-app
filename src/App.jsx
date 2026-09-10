@@ -11184,8 +11184,8 @@ function computeIndividualNassauResults(round, computed) {
               )}
               <div style={{ fontSize: 13, color: "#6b6b63", marginBottom: 14 }}>
                 {session
-                  ? "Groups let you and your regulars share a leaderboard across every round you play together. Join one with a code below, start a new one, or skip this and just start a game."
-                  : "Groups let you and your regulars share a leaderboard across every round you play together."}
+                  ? "Groups let you and your regulars share a leaderboard across every round you play together. Join one with a code below, start a new one, or skip this and just start a game. (Optional)"
+                  : "Groups let you and your regulars share a leaderboard across every round you play together. (Optional)"}
               </div>
 
               {session ? (
