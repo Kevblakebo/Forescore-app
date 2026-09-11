@@ -2251,6 +2251,8 @@ export default function GolfScorecard() {
   const [justCreatedGroupCode, setJustCreatedGroupCode] = useState("");
   const [copiedGroupCode, setCopiedGroupCode] = useState(false);
   const [editGroupAvatarPickerOpen, setEditGroupAvatarPickerOpen] = useState(false);
+  const [editGroupNameOpen, setEditGroupNameOpen] = useState(false);
+  const [editGroupNameDraft, setEditGroupNameDraft] = useState("");
   const [deleteGroupConfirming, setDeleteGroupConfirming] = useState(false);
   const [leaveGroupConfirming, setLeaveGroupConfirming] = useState(false);
   const [leaveGroupBusy, setLeaveGroupBusy] = useState(false);
@@ -3283,6 +3285,22 @@ export default function GolfScorecard() {
       return;
     }
     setMyGroups((prev) => prev.map((g) => (g.id === groupId ? { ...g, avatar } : g)));
+  }
+
+  async function updateGroupName(groupId, name) {
+    const trimmed = name.trim();
+    if (!trimmed) {
+      setGroupsErr("Give the group a name before saving.");
+      return;
+    }
+    if (!session || !supabase) return;
+    setGroupsErr("");
+    const { error } = await supabase.from("groups").update({ name: trimmed }).eq("id", groupId);
+    if (error) {
+      setGroupsErr(`Couldn't update the group's name (${error.message}).`);
+      return;
+    }
+    setMyGroups((prev) => prev.map((g) => (g.id === groupId ? { ...g, name: trimmed } : g)));
   }
 
   // Only the group's creator can do this - matches the new RLS delete
@@ -5000,6 +5018,7 @@ export default function GolfScorecard() {
 
   useEffect(() => {
     setEditGroupAvatarPickerOpen(false);
+    setEditGroupNameOpen(false);
     setDeleteGroupConfirming(false);
     setLeaveGroupConfirming(false);
     setRemoveMemberConfirming(null);
@@ -9840,7 +9859,50 @@ function computeIndividualNassauResults(round, computed) {
                           ) : (
                             g && g.avatar && <span style={{ fontSize: 20 }}>{g.avatar}</span>
                           )}
-                          {(g && g.name) || "Group"} Leaderboard
+                          {editGroupNameOpen && canEdit ? (
+                            <div style={{ display: "flex", alignItems: "center", gap: 6, flex: 1 }}>
+                              <input
+                                className="gsc-input"
+                                style={{ flex: 1 }}
+                                value={editGroupNameDraft}
+                                onChange={(e) => setEditGroupNameDraft(e.target.value)}
+                                autoFocus
+                              />
+                              <button
+                                className="gsc-btn gsc-btn-primary"
+                                style={{ flex: "0 0 auto", padding: "8px 12px", minHeight: "auto" }}
+                                onClick={() => {
+                                  updateGroupName(g.id, editGroupNameDraft);
+                                  setEditGroupNameOpen(false);
+                                }}
+                              >
+                                Save
+                              </button>
+                              <button
+                                className="gsc-btn gsc-btn-outline"
+                                style={{ flex: "0 0 auto", padding: "8px 12px", minHeight: "auto" }}
+                                onClick={() => setEditGroupNameOpen(false)}
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          ) : (
+                            <>
+                              {(g && g.name) || "Group"} Leaderboard
+                              {canEdit && (
+                                <button
+                                  className="gsc-link"
+                                  style={{ fontSize: 12, fontWeight: 400 }}
+                                  onClick={() => {
+                                    setEditGroupNameDraft((g && g.name) || "");
+                                    setEditGroupNameOpen(true);
+                                  }}
+                                >
+                                  {"\u270F\uFE0F"} Edit
+                                </button>
+                              )}
+                            </>
+                          )}
                         </>
                       );
                     })()}
