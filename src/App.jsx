@@ -9150,6 +9150,8 @@ function computeIndividualNassauResults(round, computed) {
                     {g.name}
                   </div>
                   <div className="gsc-tag">{g.tag}</div>
+                  {gameSupportsNassau(key) && <div style={{ fontSize: 11, color: "#B08D57", fontWeight: 700, marginTop: 4 }}>*Nassau Avail</div>}
+                  {gameSupportsOceans11(key) && <div style={{ fontSize: 11, color: "#B08D57", fontWeight: 700, marginTop: 4 }}>*Oceans 11 Avail</div>}
                   <div className="gsc-no-select" style={{ fontSize: 13, marginTop: 8, color: "#4b4b45" }}>{g.desc}</div>
                   {WHY_PLAY[key] && (
                     <button
