@@ -1,0 +1,10 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "com.ripscoregolf.twa",
+    "sha256_cert_fingerprints": [
+      "2D:E1:C6:DC:A7:07:3A:67:D4:41:15:AF:92:20:52:AD:DC:03:36:84:EB:4D:3D:50:C5:B0:B2:3E:CB:B5:16:79"
+    ]
+  }
+}]
