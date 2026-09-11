@@ -22,7 +22,7 @@ const LOGO_DATA_URI = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABOYAAATmCAY
 const API_BASE = "https://www.ripscoregolf.com";
 
 const STYLE = `
-  html, body { overflow-x: hidden; max-width: 100%; }
+  html, body { overflow-x: hidden; overflow-y: auto; max-width: 100%; }
   .gsc { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background:#F3EFE0; color:#2B2B28; min-height:100vh; -webkit-tap-highlight-color: transparent; overflow-x:hidden; overflow-anchor:none; }
   .gsc * { box-sizing: border-box; }
   .gsc-display { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif; }
