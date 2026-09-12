@@ -3418,15 +3418,22 @@ export default function GolfScorecard() {
       setPostRoundGroupErr(`The group was created, but not everyone could be added (${memErr.message}). You can invite them with the code: ${code}`);
       return;
     }
-    // Make sure everyone added has a leaderboard_stats row with a real
-    // name, same reasoning as when joining a group by code - without
-    // this, someone who's never visited their own stats page would just
-    // be missing from this new group's leaderboard.
+    // Make sure EVERY linked player added has a leaderboard_stats row
+    // with a real name, not just the person creating the group - without
+    // this, anyone who's never visited their own stats page would show
+    // up as the generic "Golfer" placeholder to everyone else in the
+    // group, even though they do have a real name set. Uses each
+    // player's name as entered in this round (the best information
+    // actually available here), same reasoning as the single-user
+    // version of this fix used elsewhere.
     supabase
       .from("leaderboard_stats")
-      .upsert({ user_id: session.user.id, display_name: (profile && profile.name) || "Golfer" }, { onConflict: "user_id", ignoreDuplicates: false })
+      .upsert(
+        linkedPlayers.map((p) => ({ user_id: p.user_id, display_name: p.name || "Golfer" })),
+        { onConflict: "user_id", ignoreDuplicates: false }
+      )
       .then(({ error: lbError }) => {
-        if (lbError) console.warn("Couldn't sync leaderboard name:", lbError.message);
+        if (lbError) console.warn("Couldn't sync leaderboard names:", lbError.message);
       });
     setPostRoundGroupBusy(false);
     setPostRoundGroupCreated(true);
