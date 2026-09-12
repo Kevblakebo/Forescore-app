@@ -5663,14 +5663,14 @@ export default function GolfScorecard() {
       const sharedRes = await storageSet(`golfround:${r.id}`, JSON.stringify(finishedRound), true);
       if (!sharedRes.ok) {
         setBusy(false);
-        setArchiveErr(`Couldn't save this round as finished (${sharedRes.error || "storage error"}). Tap "Finish & exit" to retry.`);
+        setArchiveErr(`Couldn't save this round as finished (${sharedRes.error || "storage error"}). Tap "Finish & Save Completed Round" to retry.`);
         return;
       }
     }
     const savedRoundRes = await storageSet(`${FINISHED_PREFIX}${r.id}`, JSON.stringify(finishedRound), false);
     if (!savedRoundRes.ok) {
       setBusy(false);
-      setArchiveErr(`Couldn't save this round (${savedRoundRes.error || "storage error"}). Your round hasn't been touched - tap "Finish & exit" to retry.`);
+      setArchiveErr(`Couldn't save this round (${savedRoundRes.error || "storage error"}). Your round hasn't been touched - tap "Finish & Save Completed Round" to retry.`);
       return;
     }
     const idxRes = await storageGet(FINISHED_INDEX_KEY, false);
@@ -5690,7 +5690,7 @@ export default function GolfScorecard() {
       // listing it under "Finished rounds" failed. Don't delete the active
       // pointer or navigate away, so the round stays reachable and the user
       // can retry rather than losing track of it.
-      setArchiveErr(`Saved the round, but couldn't add it to your finished-rounds list (${idxSetRes.error || "storage error"}). Tap "Finish & exit" again to retry.`);
+      setArchiveErr(`Saved the round, but couldn't add it to your finished-rounds list (${idxSetRes.error || "storage error"}). Tap "Finish & Save Completed Round" again to retry.`);
       return;
     }
     setFinishedRounds(idx);
@@ -7573,7 +7573,21 @@ export default function GolfScorecard() {
   // without changing anything at all) doesn't keep re-showing it.
   const shownAccoladesRef = useRef(new Set());
   useEffect(() => {
-    shownAccoladesRef.current = new Set();
+    const r = round;
+    const already = new Set();
+    if (r && r.scores) {
+      const isOneTeamScore = r.game && GAMES[r.game] && GAMES[r.game].oneTeamScore;
+      const playersToCheck = isOneTeamScore ? (r.players || []).slice(0, 1) : r.players || [];
+      Object.keys(r.scores).forEach((holeIdxKey) => {
+        const holeScores = r.scores[holeIdxKey] || {};
+        playersToCheck.forEach((p, i) => {
+          const entry = holeScores[i] || {};
+          if (entry.strokes != null && entry.strokes !== "") already.add(`${holeIdxKey}-${i}-strokes-${entry.strokes}`);
+          if (entry.putts != null && entry.putts !== "") already.add(`${holeIdxKey}-${i}-putts-${entry.putts}`);
+        });
+      });
+    }
+    shownAccoladesRef.current = already;
   }, [round && round.id]);
   const accoladeTimerRef = useRef(null);
 
@@ -15548,21 +15562,31 @@ function computeIndividualNassauResults(round, computed) {
           <div style={{ fontSize: 12, color: "#8a8a80", textAlign: "center", marginTop: 16 }}>
             Share code <b className="gsc-mono">{round.id}</b> with your group so everyone can enter or view scores.
           </div>
-          {canEditThisRound ? (
-            <>
-              <button className="gsc-btn" style={{ width: "100%", marginTop: 14, background: "#A42E2D", color: "#fff" }} disabled={busy} onClick={() => setConfirmFinishOpen(true)}>
-                {busy ? "Saving..." : "Finish & exit this round"}
-              </button>
-              {archiveErr && <div style={{ color: "#A42E2D", fontSize: 12, textAlign: "center", marginTop: 8 }}>{archiveErr}</div>}
-              <div style={{ fontSize: 11, color: "#8a8a80", textAlign: "center", marginTop: 6 }}>
-                {session
-                  ? "This saves it to \"Finished rounds\" in your Profile - it won't be deleted."
-                  : "You'll still see your results on the next page, and this round stays under \"Games\" for this session - but it'll be gone for good once you close the app, unless you log in."}
+          {!isRoundDone(round) && (
+            canEditThisRound ? (
+              <>
+                <button className="gsc-btn" style={{ width: "100%", marginTop: 14, background: "#A42E2D", color: "#fff" }} disabled={busy} onClick={() => setConfirmFinishOpen(true)}>
+                  {busy ? "Saving..." : "Finish & Save Completed Round"}
+                </button>
+                {archiveErr && <div style={{ color: "#A42E2D", fontSize: 12, textAlign: "center", marginTop: 8 }}>{archiveErr}</div>}
+                <div style={{ fontSize: 11, color: "#8a8a80", textAlign: "center", marginTop: 6 }}>
+                  {session
+                    ? "This saves it to \"Finished rounds\" in your Profile - it won't be deleted."
+                    : "You'll still see your results on the next page, and this round stays under \"Games\" for this session - but it'll be gone for good once you close the app, unless you log in."}
+                </div>
+              </>
+            ) : (
+              <div style={{ fontSize: 12, color: "#8a8a80", textAlign: "center", marginTop: 14 }}>
+                Only the tournament organizer or this foursome's captain can finish this round.
               </div>
-            </>
-          ) : (
-            <div style={{ fontSize: 12, color: "#8a8a80", textAlign: "center", marginTop: 14 }}>
-              Only the tournament organizer or this foursome's captain can finish this round.
+            )
+          )}
+          <button className="gsc-btn gsc-btn-outline" style={{ width: "100%", marginTop: 14 }} onClick={() => goToScreen("home")}>
+            Exit
+          </button>
+          {isRoundDone(round) && (
+            <div style={{ fontSize: 11, color: "#8a8a80", textAlign: "center", marginTop: 6 }}>
+              This round is already finished and saved - exiting won't change anything.
             </div>
           )}
         </div>
