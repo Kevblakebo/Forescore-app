@@ -7659,7 +7659,6 @@ export default function GolfScorecard() {
       const diff = value - parH;
       if (diff <= -2) return { emoji: "\u{1F985}", text: "EAGLE!", big: true };
       if (diff === -1) return { emoji: "\u{1F426}", text: "BIRDIE!", big: false };
-      if (diff === 0) return { emoji: "\u{1F44D}", text: "Nice par!", big: false };
       if (diff >= parH) return { emoji: "\u{1F4AA}", text: "Keep Grinding!", big: false };
       return null;
     }
@@ -7673,7 +7672,7 @@ export default function GolfScorecard() {
   // Shows accolades for the hole you just left, not while you're still
   // dialing in a score on the hole you're currently on - so tapping the
   // stepper through 3, 4, 5 on the way to your actual score doesn't flash
-  // a premature "Nice par!" partway there. Fires once per hole change,
+  // a premature "BIRDIE!" partway there. Fires once per hole change,
   // checking every player's final entered values for that completed hole.
   useEffect(() => {
     const prevIdx = prevHoleIdxRef.current;
