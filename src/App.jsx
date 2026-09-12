@@ -7913,17 +7913,27 @@ export default function GolfScorecard() {
     try {
       const fresh = JSON.parse(value);
       if (Date.now() - lastLocalEditRef.current > 3000) {
+        let justBecameFinished = false;
         setRound((prev) => {
           if (!prev || prev.id !== fresh.id) return prev;
           if (JSON.stringify(fresh.scores) === JSON.stringify(prev.scores) && JSON.stringify(fresh.players) === JSON.stringify(prev.players) && !!fresh.finished === !!prev.finished) {
             return prev; // nothing actually changed - bail out to avoid an unnecessary re-render
           }
+          // Only a genuine, brand-new transition from not-finished to
+          // finished should trigger the auto-redirect below - not a round
+          // that was already known to be finished before this sync ran.
+          // Someone deliberately opening an already-finished round to
+          // browse its holes also lands on this same screen, and without
+          // this check, this same background poll would kick them out of
+          // it within seconds every single time, mistaking "still finished"
+          // for "just finished."
+          if (fresh.finished && !prev.finished) justBecameFinished = true;
           return { ...prev, scores: fresh.scores, players: fresh.players, teams: fresh.teams, cfg: fresh.cfg, par: fresh.par, finished: fresh.finished, winnerUserIds: fresh.winnerUserIds };
         });
         // If someone else just finished this round while this device was
         // still actively scoring it, don't leave them stuck on a
         // now-stale hole view - take them straight to the results.
-        if (fresh.finished && screen === "card") {
+        if (justBecameFinished && screen === "card") {
           goToScreen("roundComplete");
         }
       }
