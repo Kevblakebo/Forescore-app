@@ -4993,6 +4993,7 @@ export default function GolfScorecard() {
   const [deleteRoundBusy, setDeleteRoundBusy] = useState(false);
   const [deleteRoundErr, setDeleteRoundErr] = useState("");
   const [archiveErr, setArchiveErr] = useState("");
+  const [finishedByOtherNotice, setFinishedByOtherNotice] = useState("");
   const [finishedTournaments, setFinishedTournaments] = useState([]);
   const [deleteTournamentConfirm, setDeleteTournamentConfirm] = useState(null); // {id, name} while confirming a delete
   const [deleteTournamentBusy, setDeleteTournamentBusy] = useState(false);
@@ -5583,33 +5584,67 @@ export default function GolfScorecard() {
     // nothing behind it in storage for Reopen to find.
     setErr("");
     setArchiveErr("");
+    setFinishedByOtherNotice("");
     setBusy(true);
-    // Mark the round itself as finished in SHARED storage first - without
-    // this, "finished" only ever existed in this one device's local
-    // archive, meaning nobody else (including this same account viewed
-    // from a different device, like the Profile page's stats) could ever
-    // correctly tell this round was actually done.
-    //
-    // Also compute and save who actually won, right now, using this
-    // app's own real, format-specific winner logic - the same logic
-    // that's already correct for every one of the 15 game formats
-    // (team games, points-based games, stroke play, all of it). Saving
-    // the answer here means nothing downstream (including any future
-    // server-side stats calculation) ever needs to re-derive "who won"
-    // itself in a different, second implementation that could drift out
-    // of sync with this one.
-    const computedForFinish = computeRoundScoring(r);
-    const winnerUserIds = computedForFinish
-      ? determineWinners(r, computedForFinish)
-          .map((w) => r.players[w.idx] && r.players[w.idx].user_id)
-          .filter(Boolean)
-      : [];
-    const finishedRound = { ...r, finished: true, winnerUserIds };
-    const sharedRes = await storageSet(`golfround:${r.id}`, JSON.stringify(finishedRound), true);
-    if (!sharedRes.ok) {
-      setBusy(false);
-      setArchiveErr(`Couldn't save this round as finished (${sharedRes.error || "storage error"}). Tap "Finish & exit" to retry.`);
-      return;
+
+    // Before computing or saving anything from THIS device's own copy of
+    // the round, check whether someone else in the group has already,
+    // genuinely finished it first. Without this check, a second player
+    // tapping "Finish & exit" from an out-of-date local copy (e.g.
+    // missing the last few holes someone else already entered) would
+    // silently overwrite the already-correct, complete result with their
+    // own incomplete one - permanent, irrecoverable data loss. This is
+    // the exact scenario that happened in practice and motivated this
+    // check existing at all.
+    const existingRes = await storageGet(`golfround:${r.id}`, true);
+    let existing = null;
+    if (existingRes.ok && existingRes.value) {
+      try {
+        existing = JSON.parse(existingRes.value);
+      } catch (e) {}
+    }
+
+    let finishedRound;
+    let computedForFinish;
+    let alreadyFinishedByOther = false;
+
+    if (existing && existing.finished) {
+      // Someone else already finished this round first. Use their
+      // already-saved, complete version as the source of truth instead
+      // of this device's own, possibly-incomplete copy - never overwrite
+      // an already-finished round, no matter what.
+      alreadyFinishedByOther = true;
+      finishedRound = existing;
+      computedForFinish = computeRoundScoring(existing);
+      setFinishedByOtherNotice("Someone else in your group already finished this round. Showing the final, saved results below - nothing here was overwritten.");
+    } else {
+      // Mark the round itself as finished in SHARED storage first - without
+      // this, "finished" only ever existed in this one device's local
+      // archive, meaning nobody else (including this same account viewed
+      // from a different device, like the Profile page's stats) could ever
+      // correctly tell this round was actually done.
+      //
+      // Also compute and save who actually won, right now, using this
+      // app's own real, format-specific winner logic - the same logic
+      // that's already correct for every one of the 15 game formats
+      // (team games, points-based games, stroke play, all of it). Saving
+      // the answer here means nothing downstream (including any future
+      // server-side stats calculation) ever needs to re-derive "who won"
+      // itself in a different, second implementation that could drift out
+      // of sync with this one.
+      computedForFinish = computeRoundScoring(r);
+      const winnerUserIds = computedForFinish
+        ? determineWinners(r, computedForFinish)
+            .map((w) => r.players[w.idx] && r.players[w.idx].user_id)
+            .filter(Boolean)
+        : [];
+      finishedRound = { ...r, finished: true, winnerUserIds };
+      const sharedRes = await storageSet(`golfround:${r.id}`, JSON.stringify(finishedRound), true);
+      if (!sharedRes.ok) {
+        setBusy(false);
+        setArchiveErr(`Couldn't save this round as finished (${sharedRes.error || "storage error"}). Tap "Finish & exit" to retry.`);
+        return;
+      }
     }
     const savedRoundRes = await storageSet(`${FINISHED_PREFIX}${r.id}`, JSON.stringify(finishedRound), false);
     if (!savedRoundRes.ok) {
@@ -5640,13 +5675,16 @@ export default function GolfScorecard() {
     setFinishedRounds(idx);
     await storageDelete(ACTIVE_KEY, false);
     setActiveRound(null);
-    if (finishedRound.createGroupOnFinish && session) {
+    if (finishedRound.createGroupOnFinish && session && !alreadyFinishedByOther) {
       // Best-effort, same as the round-index writes above - if this
       // fails, the round itself is still fully saved and finished, it
       // just won't have automatically become a group too. Uses
       // finishedRound (not the setup-time state) so it reflects whoever
       // actually ended up linked by the time the round was finished,
       // including anyone added or corrected via "Edit players" mid-round.
+      // Skipped entirely when someone else already finished this round
+      // first, since that already ran this exact same step - running it
+      // again here would create a second, duplicate group.
       createGroupFromRound(finishedRound, finishedRound.createGroupName || finishedRound.name);
     }
     detectMoments(finishedRound).then(setEarnedMoments);
@@ -7210,7 +7248,13 @@ export default function GolfScorecard() {
     if (!isRoundDone(r)) setActiveRound(r);
     setViewingRoundFromStats(false); // normal join flow - always a real active round, not a read-only view
     saveRound(r);
-    goToScreen("card");
+    // If this round was already finished (by anyone in the group, on any
+    // device) by the time it's opened here, go straight to the results
+    // screen rather than the in-progress scoring view - landing on a
+    // stale "still on hole 14" view for an already-complete round is
+    // exactly the confusion that once led someone to tap "Finish & exit"
+    // a second time, nearly overwriting the correct, saved result.
+    goToScreen(isRoundDone(r) ? "roundComplete" : "card");
   }
 
   // Opens a round for reference from the Profile page's Recent Rounds list
@@ -7819,11 +7863,17 @@ export default function GolfScorecard() {
       if (Date.now() - lastLocalEditRef.current > 3000) {
         setRound((prev) => {
           if (!prev || prev.id !== fresh.id) return prev;
-          if (JSON.stringify(fresh.scores) === JSON.stringify(prev.scores) && JSON.stringify(fresh.players) === JSON.stringify(prev.players)) {
+          if (JSON.stringify(fresh.scores) === JSON.stringify(prev.scores) && JSON.stringify(fresh.players) === JSON.stringify(prev.players) && !!fresh.finished === !!prev.finished) {
             return prev; // nothing actually changed - bail out to avoid an unnecessary re-render
           }
-          return { ...prev, scores: fresh.scores, players: fresh.players, teams: fresh.teams, cfg: fresh.cfg, par: fresh.par };
+          return { ...prev, scores: fresh.scores, players: fresh.players, teams: fresh.teams, cfg: fresh.cfg, par: fresh.par, finished: fresh.finished, winnerUserIds: fresh.winnerUserIds };
         });
+        // If someone else just finished this round while this device was
+        // still actively scoring it, don't leave them stuck on a
+        // now-stale hole view - take them straight to the results.
+        if (fresh.finished && screen === "card") {
+          goToScreen("roundComplete");
+        }
       }
       if (isManual) {
         setSyncStatus("synced");
@@ -13869,6 +13919,15 @@ function computeIndividualNassauResults(round, computed) {
         </div>
 
         <div className="gsc-body">
+          {finishedByOtherNotice && (
+            <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+                <span style={{ fontSize: 16 }}>{"\u2139\uFE0F"}</span>
+                <div style={{ fontWeight: 800, fontSize: 15, color: "#8a6a2f" }}>Round already finished</div>
+              </div>
+              <div style={{ fontSize: 13, color: "#4b4b45" }}>{finishedByOtherNotice}</div>
+            </div>
+          )}
           {g.singleTeam ? (
             <div className="gsc-card gsc-winner-card" style={{ textAlign: "center" }}>
               <div style={{ fontSize: 28, marginBottom: 6 }}>&#127942;</div>
