@@ -5820,6 +5820,20 @@ export default function GolfScorecard() {
     idx = idx.filter((x) => x.id !== id);
     await storageSet(FINISHED_INDEX_KEY, JSON.stringify(idx), false);
     setFinishedRounds(idx);
+    // Also remove this user's own link to the round from user_rounds -
+    // the actual table Head-to-Head Records, Public Leaderboard, and
+    // every other server-side stat is computed from. Without this, the
+    // round would keep counting toward those indefinitely, even though
+    // it no longer shows up anywhere in the app itself. Only removes
+    // this user's own row, same as confirmDeleteFromHistory does -
+    // never affects anyone else who was also linked to this same round.
+    if (session && supabase) {
+      const { error } = await supabase.from("user_rounds").delete().eq("user_id", session.user.id).eq("round_code", id);
+      if (!error) {
+        loadStats(); // refresh so My Stats and Head-to-Head reflect the removal right away
+        supabase.functions.invoke("refresh-all-stats").catch((e) => console.warn("Post-delete stats refresh failed (hourly schedule will catch it):", e));
+      }
+    }
     setDeleteRoundBusy(false);
     setDeleteRoundConfirm(null);
   }
