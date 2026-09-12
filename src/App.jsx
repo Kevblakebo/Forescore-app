@@ -1185,6 +1185,18 @@ function wolfFirstHitterIndexForHole(h) {
   return (4 - (h % 4)) % 4;
 }
 
+// The 2nd and 3rd hitters each hole - simply the next players in the same
+// rotation after the first hitter, wrapping around within the 4-player
+// order. Together with wolfFirstHitterIndexForHole and wolfIndexForHole
+// (the 4th/last hitter, the Wolf), these four functions always account
+// for all 4 players exactly once per hole.
+function wolfSecondHitterIndexForHole(h) {
+  return (wolfFirstHitterIndexForHole(h) + 1) % 4;
+}
+function wolfThirdHitterIndexForHole(h) {
+  return (wolfFirstHitterIndexForHole(h) + 2) % 4;
+}
+
 // Great-circle distance between two GPS points, in yards. Standard
 // Haversine formula - works with coordinates from any data source, so
 // this doesn't need to change no matter which GPS provider eventually
@@ -14822,6 +14834,38 @@ function computeIndividualNassauResults(round, computed) {
                         {"\u26F3"} TEES OFF FIRST
                       </span>
                     )}
+                    {g.tracksWolf && i === wolfSecondHitterIndexForHole(holeIdx) && (
+                      <span
+                        style={{
+                          marginLeft: 6,
+                          fontSize: 10,
+                          fontWeight: 800,
+                          color: "#fff",
+                          background: "#B08D57",
+                          padding: "2px 7px",
+                          borderRadius: 20,
+                          verticalAlign: "middle",
+                        }}
+                      >
+                        {"\u26F3"} TEES OFF 2ND
+                      </span>
+                    )}
+                    {g.tracksWolf && i === wolfThirdHitterIndexForHole(holeIdx) && (
+                      <span
+                        style={{
+                          marginLeft: 6,
+                          fontSize: 10,
+                          fontWeight: 800,
+                          color: "#fff",
+                          background: "#3F6B54",
+                          padding: "2px 7px",
+                          borderRadius: 20,
+                          verticalAlign: "middle",
+                        }}
+                      >
+                        {"\u26F3"} TEES OFF 3RD
+                      </span>
+                    )}
                   </div>
                   {scoringAvatarPickerFor === i && (
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 8, padding: "10px 0 4px" }}>
@@ -14983,12 +15027,22 @@ function computeIndividualNassauResults(round, computed) {
               const wolfPlayer = round.players[wolfIdx];
               const firstHitterIdx = wolfFirstHitterIndexForHole(holeIdx);
               const firstHitterPlayer = round.players[firstHitterIdx];
+              const secondHitterIdx = wolfSecondHitterIndexForHole(holeIdx);
+              const secondHitterPlayer = round.players[secondHitterIdx];
+              const thirdHitterIdx = wolfThirdHitterIndexForHole(holeIdx);
+              const thirdHitterPlayer = round.players[thirdHitterIdx];
               const others = [0, 1, 2, 3].filter((i) => i !== wolfIdx);
               const current = hs.wolfPartner;
               return (
                 <div className="gsc-card" style={{ marginTop: 10 }}>
                   <div className="gsc-label" style={{ marginBottom: 4 }}>
                     {"\u26F3"} Tees off first: {firstHitterPlayer ? firstHitterPlayer.name : ""}
+                  </div>
+                  <div className="gsc-label" style={{ marginBottom: 4 }}>
+                    {"\u26F3"} Tees off 2nd: {secondHitterPlayer ? secondHitterPlayer.name : ""}
+                  </div>
+                  <div className="gsc-label" style={{ marginBottom: 4 }}>
+                    {"\u26F3"} Tees off 3rd: {thirdHitterPlayer ? thirdHitterPlayer.name : ""}
                   </div>
                   <div className="gsc-label" style={{ marginBottom: 4 }}>
                     {"\u{1F43A}"} This hole's Wolf: {wolfPlayer ? wolfPlayer.name : ""}
