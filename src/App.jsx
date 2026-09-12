@@ -2555,6 +2555,7 @@ export default function GolfScorecard() {
   const [pendingNavTarget, setPendingNavTarget] = useState(null);
   const [confirmFinishOpen, setConfirmFinishOpen] = useState(false);
   const [viewingRoundFromStats, setViewingRoundFromStats] = useState(false);
+  const [roundViewReturnScreen, setRoundViewReturnScreen] = useState("home");
   const [rulesOpenFor, setRulesOpenFor] = useState(null);
   const [whyPlayOpenFor, setWhyPlayOpenFor] = useState(null);
   const [quickInfoFor, setQuickInfoFor] = useState(null);
@@ -5792,7 +5793,8 @@ export default function GolfScorecard() {
     setEarnedMoments([]);
     setAiRecap(null);
     setAiRecapLoading(false);
-    setScreen("home");
+    setScreen(roundViewReturnScreen);
+    setRoundViewReturnScreen("home");
   }
 
   async function openFinishedRound(id) {
@@ -7340,6 +7342,7 @@ export default function GolfScorecard() {
     rememberCode(r.id, r.name);
     if (!isRoundDone(r)) setActiveRound(r);
     setViewingRoundFromStats(false); // normal join flow - always a real active round, not a read-only view
+    setRoundViewReturnScreen("home");
     saveRound(r);
     // If this round was already finished (by anyone in the group, on any
     // device) by the time it's opened here, go straight to the results
@@ -7355,7 +7358,7 @@ export default function GolfScorecard() {
   // round doesn't hijack the "Round in progress" card on Home/Rounds for
   // whatever round you're actually currently playing (or make it look like
   // a brand new round is in progress if you weren't playing one at all).
-  async function viewRoundFromProfile(code) {
+  async function viewRoundFromProfile(code, returnScreen) {
     setErr("");
     setBusy(true);
     const res = await storageGet(`golfround:${code.toUpperCase().trim()}`, true);
@@ -7370,6 +7373,7 @@ export default function GolfScorecard() {
     setHoleIdx(firstOpenHole(r));
     setAiRecap(r.aiRecap || null);
     setViewingRoundFromStats(true);
+    setRoundViewReturnScreen(returnScreen || "home");
     goToScreen("roundComplete");
   }
 
@@ -9823,7 +9827,7 @@ function computeIndividualNassauResults(round, computed) {
               {stats.recent.map((r, i) => (
                 <div
                   key={i}
-                  onClick={() => (r.tournamentId ? openTournamentBoard(r.tournamentId) : viewRoundFromProfile(r.code))}
+                  onClick={() => (r.tournamentId ? openTournamentBoard(r.tournamentId) : viewRoundFromProfile(r.code, "profileTab"))}
                   style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "7px 0", borderBottom: i === stats.recent.length - 1 ? "none" : "1px solid #eee6cf", cursor: "pointer" }}
                 >
                   <div style={{ fontSize: 13, color: "#1B4332", fontWeight: 600 }}>
@@ -10230,7 +10234,7 @@ function computeIndividualNassauResults(round, computed) {
                         {groupRounds.map((r, i) => (
                           <div
                             key={r.code}
-                            onClick={() => (r.tournamentId ? openTournamentBoard(r.tournamentId) : viewRoundFromProfile(r.code))}
+                            onClick={() => (r.tournamentId ? openTournamentBoard(r.tournamentId) : viewRoundFromProfile(r.code, "groupsTab"))}
                             style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "7px 0", borderBottom: i === groupRounds.length - 1 ? "none" : "1px solid #eee6cf", cursor: "pointer" }}
                           >
                             <div style={{ fontSize: 13, color: "#1B4332", fontWeight: 600 }}>
@@ -14497,7 +14501,7 @@ function computeIndividualNassauResults(round, computed) {
           )}
 
           <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 10 }} onClick={finishCelebrationAndGoHome}>
-            Continue to Home
+            {roundViewReturnScreen === "profileTab" ? "Continue to Profile" : roundViewReturnScreen === "groupsTab" ? "Continue to Groups" : "Continue to Home"}
           </button>
         </div>
       </div>
