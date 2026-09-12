@@ -7251,17 +7251,33 @@ export default function GolfScorecard() {
   async function loadRound(code) {
     setErr("");
     setBusy(true);
-    const res = await storageGet(`golfround:${code.toUpperCase().trim()}`, true);
-    setBusy(false);
-    if (!res.ok) {
-      setErr(`Couldn't reach shared rounds (${res.error}). Please try again in a moment.`);
-      return;
+    // Read directly from the same kv_store row saveRoundPatch writes to,
+    // same reasoning and pattern as syncRoundFromServer - guarantees
+    // opening a round can never show anything other than exactly what
+    // the last save actually wrote, which the "already finished" check
+    // just below depends on being genuinely current.
+    const roundId = code.toUpperCase().trim();
+    let value = null;
+    if (supabase) {
+      const { data: row, error: fetchErr } = await supabase.from("kv_store").select("value").eq("key", `golfround:${roundId}`).maybeSingle();
+      if (!fetchErr && row) value = row.value;
     }
-    if (!res.value) {
-      setErr("No round found with that code.");
-      return;
+    if (value == null) {
+      const res = await storageGet(`golfround:${roundId}`, true);
+      setBusy(false);
+      if (!res.ok) {
+        setErr(`Couldn't reach shared rounds (${res.error}). Please try again in a moment.`);
+        return;
+      }
+      if (!res.value) {
+        setErr("No round found with that code.");
+        return;
+      }
+      value = res.value;
+    } else {
+      setBusy(false);
     }
-    const r = JSON.parse(res.value);
+    const r = JSON.parse(value);
     setRound(r);
     setGameKey(r.game);
     setHoleIdx(firstOpenHole(r));
@@ -7871,16 +7887,31 @@ export default function GolfScorecard() {
   async function syncRoundFromServer(isManual) {
     if (!round) return;
     if (isManual) setSyncStatus("syncing");
-    const res = await storageGet(`golfround:${round.id}`, true);
-    if (!res.ok || !res.value) {
-      if (isManual) {
-        setSyncStatus("error");
-        setTimeout(() => setSyncStatus(""), 2500);
+    // Read directly from the same kv_store row saveRoundPatch writes to,
+    // via the identical direct Supabase query it uses - rather than the
+    // separate window.storage.get path, which is a different access
+    // route to (presumably, but not verifiably from here) the same
+    // underlying data. Reading through the exact same path the save
+    // goes through guarantees Refresh can never see anything other than
+    // exactly what the last save actually wrote.
+    let value = null;
+    if (supabase) {
+      const { data: row, error: fetchErr } = await supabase.from("kv_store").select("value").eq("key", `golfround:${round.id}`).maybeSingle();
+      if (!fetchErr && row) value = row.value;
+    }
+    if (value == null) {
+      const res = await storageGet(`golfround:${round.id}`, true);
+      if (!res.ok || !res.value) {
+        if (isManual) {
+          setSyncStatus("error");
+          setTimeout(() => setSyncStatus(""), 2500);
+        }
+        return;
       }
-      return;
+      value = res.value;
     }
     try {
-      const fresh = JSON.parse(res.value);
+      const fresh = JSON.parse(value);
       if (Date.now() - lastLocalEditRef.current > 3000) {
         setRound((prev) => {
           if (!prev || prev.id !== fresh.id) return prev;
