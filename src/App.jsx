@@ -5198,6 +5198,23 @@ export default function GolfScorecard() {
     return true;
   }
 
+  // The specific hole numbers (1-indexed, for display) missing at least
+  // one player's score - same "strokes or putts filled" logic as
+  // isRoundFullyComplete, just reporting which holes rather than a
+  // single true/false. Used to give the Finish confirmation something
+  // concrete to say, rather than a generic "are you sure?" with no
+  // actual indication of what, if anything, still needs attention.
+  function getIncompleteHoles(r) {
+    if (!r || !r.scores || !r.players) return [];
+    const incomplete = [];
+    for (let h = 0; h < 18; h++) {
+      const hs = r.scores[h] || {};
+      const filled = r.players.every((_, i) => hs[i] && ((hs[i].strokes != null && hs[i].strokes !== "") || (hs[i].putts != null && hs[i].putts !== "")));
+      if (!filled) incomplete.push(h + 1);
+    }
+    return incomplete;
+  }
+
   // The real, authoritative answer to "is this round done" - checks the
   // actual finished-rounds archive (set explicitly whenever someone taps
   // "Finish & exit"), not just whether every single cell happens to be
@@ -15727,22 +15744,37 @@ function computeIndividualNassauResults(round, computed) {
             </div>
           </div>
         )}
-        {confirmFinishOpen && (
-          <div className="gsc-modal-backdrop" onClick={() => setConfirmFinishOpen(false)}>
-            <div className="gsc-modal" onClick={(e) => e.stopPropagation()}>
-              <div className="gsc-modal-title">Finish this round?</div>
-              <div className="gsc-modal-body">
-                This will exit and save the round as finished. Are you sure?
-              </div>
-              <div className="gsc-modal-row">
-                <button className="gsc-btn gsc-btn-outline" onClick={() => setConfirmFinishOpen(false)}>No, go back</button>
-                <button className="gsc-btn gsc-btn-primary" disabled={busy} onClick={() => { setConfirmFinishOpen(false); archiveAndExitRound(round); }}>
-                  {busy ? "Saving..." : "Yes, finish"}
-                </button>
+        {confirmFinishOpen && (() => {
+          const incompleteHoles = getIncompleteHoles(round);
+          return (
+            <div className="gsc-modal-backdrop" onClick={() => setConfirmFinishOpen(false)}>
+              <div className="gsc-modal" onClick={(e) => e.stopPropagation()}>
+                <div className="gsc-modal-title">Finish this round?</div>
+                <div className="gsc-modal-body">
+                  {incompleteHoles.length > 0 ? (
+                    <>
+                      <div style={{ color: "#A42E2D", fontWeight: 700, marginBottom: 6 }}>
+                        {"\u26A0\uFE0F"} {incompleteHoles.length === 1 ? "Hole" : "Holes"} {incompleteHoles.join(", ")} {incompleteHoles.length === 1 ? "is" : "are"} still missing a score for at least one player.
+                      </div>
+                      This will exit and save the round as finished as-is. Are you sure everything's entered correctly?
+                    </>
+                  ) : (
+                    <>
+                      <div style={{ color: "#3F6B54", fontWeight: 700, marginBottom: 6 }}>{"\u2713"} All 18 holes have scores entered.</div>
+                      This will exit and save the round as finished. Are you sure everything's entered correctly?
+                    </>
+                  )}
+                </div>
+                <div className="gsc-modal-row">
+                  <button className="gsc-btn gsc-btn-outline" onClick={() => setConfirmFinishOpen(false)}>No, go back</button>
+                  <button className="gsc-btn gsc-btn-primary" disabled={busy} onClick={() => { setConfirmFinishOpen(false); archiveAndExitRound(round); }}>
+                    {busy ? "Saving..." : "Yes, finish"}
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
         {RulesModal()}
         {WhyPlayModal()}
         {EditFoursomeModal()}
