@@ -5115,6 +5115,24 @@ export default function GolfScorecard() {
           }
         } catch (e) {}
         setActiveRound(resumed);
+        // The locally-stored "active round" pointer only ever reflects
+        // what this device last knew - if someone else in the group
+        // finished this same round while this device was away, this
+        // local copy has no way of knowing that on its own. Check the
+        // shared, current state directly; only if it's confirmed
+        // already finished there does this call into the exact same
+        // reconciliation archiveAndExitRound already does for "someone
+        // else already finished this" - never call that unconditionally,
+        // since it would incorrectly finish a genuinely-still-active round.
+        const freshCheck = await storageGet(`golfround:${resumed.id}`, true);
+        if (freshCheck.ok && freshCheck.value) {
+          try {
+            const freshResumed = JSON.parse(freshCheck.value);
+            if (freshResumed.finished) {
+              archiveAndExitRound(resumed);
+            }
+          } catch (e) {}
+        }
       }
       setResumeChecked(true);
       const fres = await storageGet(FINISHED_INDEX_KEY, false);
@@ -5769,7 +5787,7 @@ export default function GolfScorecard() {
     setAiRecap(r.aiRecap || null);
     if (!isRoundDone(r)) setActiveRound(r);
     saveRound(r);
-    goToScreen("card");
+    goToScreen("roundComplete");
   }
 
   function requestDeleteFinishedRound(f) {
@@ -15581,7 +15599,24 @@ function computeIndividualNassauResults(round, computed) {
               </div>
             )
           )}
-          <button className="gsc-btn gsc-btn-outline" style={{ width: "100%", marginTop: 14 }} onClick={() => goToScreen("home")}>
+          <button
+            className="gsc-btn gsc-btn-outline"
+            style={{ width: "100%", marginTop: 14 }}
+            onClick={() => {
+              if (round.finished) {
+                // Make sure this device's own finished-rounds archive and
+                // active-round pointer are properly reconciled before
+                // leaving - covers exiting right after seeing a round is
+                // done, immediately, rather than only catching up on the
+                // next app restart. Safe to call even if this device was
+                // the one that originally finished it: archiveAndExitRound
+                // never overwrites an already-finished round either way.
+                archiveAndExitRound(round).then(() => goToScreen("home"));
+              } else {
+                goToScreen("home");
+              }
+            }}
+          >
             Exit
           </button>
           {round.finished && (
