@@ -1176,6 +1176,15 @@ function wolfIndexForHole(h) {
   return 3 - (h % 4);
 }
 
+// The player who tees off first each hole - the other end of the same
+// rotation wolfIndexForHole describes. Player 1 (index 0) hits first on
+// hole 1, then whoever was the Wolf the hole before becomes the new
+// first-hitter (Player 4 on hole 2, Player 3 on hole 3, Player 2 on hole
+// 4), repeating every 4 holes right alongside the Wolf rotation itself.
+function wolfFirstHitterIndexForHole(h) {
+  return (4 - (h % 4)) % 4;
+}
+
 // Great-circle distance between two GPS points, in yards. Standard
 // Haversine formula - works with coordinates from any data source, so
 // this doesn't need to change no matter which GPS provider eventually
@@ -14797,6 +14806,22 @@ function computeIndividualNassauResults(round, computed) {
                         {"\u{1F43A}"} WOLF
                       </span>
                     )}
+                    {g.tracksWolf && i === wolfFirstHitterIndexForHole(holeIdx) && (
+                      <span
+                        style={{
+                          marginLeft: 6,
+                          fontSize: 10,
+                          fontWeight: 800,
+                          color: "#fff",
+                          background: "#1B4332",
+                          padding: "2px 7px",
+                          borderRadius: 20,
+                          verticalAlign: "middle",
+                        }}
+                      >
+                        {"\u26F3"} TEES OFF FIRST
+                      </span>
+                    )}
                   </div>
                   {scoringAvatarPickerFor === i && (
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 8, padding: "10px 0 4px" }}>
@@ -14956,10 +14981,15 @@ function computeIndividualNassauResults(round, computed) {
             {g.tracksWolf && (() => {
               const wolfIdx = wolfIndexForHole(holeIdx);
               const wolfPlayer = round.players[wolfIdx];
+              const firstHitterIdx = wolfFirstHitterIndexForHole(holeIdx);
+              const firstHitterPlayer = round.players[firstHitterIdx];
               const others = [0, 1, 2, 3].filter((i) => i !== wolfIdx);
               const current = hs.wolfPartner;
               return (
                 <div className="gsc-card" style={{ marginTop: 10 }}>
+                  <div className="gsc-label" style={{ marginBottom: 4 }}>
+                    {"\u26F3"} Tees off first: {firstHitterPlayer ? firstHitterPlayer.name : ""}
+                  </div>
                   <div className="gsc-label" style={{ marginBottom: 4 }}>
                     {"\u{1F43A}"} This hole's Wolf: {wolfPlayer ? wolfPlayer.name : ""}
                   </div>
