@@ -7291,7 +7291,7 @@ export default function GolfScorecard() {
     // stale "still on hole 14" view for an already-complete round is
     // exactly the confusion that once led someone to tap "Finish & exit"
     // a second time, nearly overwriting the correct, saved result.
-    goToScreen(isRoundDone(r) ? "roundComplete" : "card");
+    goToScreen(r.finished ? "roundComplete" : "card");
   }
 
   // Opens a round for reference from the Profile page's Recent Rounds list
@@ -15562,7 +15562,7 @@ function computeIndividualNassauResults(round, computed) {
           <div style={{ fontSize: 12, color: "#8a8a80", textAlign: "center", marginTop: 16 }}>
             Share code <b className="gsc-mono">{round.id}</b> with your group so everyone can enter or view scores.
           </div>
-          {!isRoundDone(round) && (
+          {!round.finished && (
             canEditThisRound ? (
               <>
                 <button className="gsc-btn" style={{ width: "100%", marginTop: 14, background: "#A42E2D", color: "#fff" }} disabled={busy} onClick={() => setConfirmFinishOpen(true)}>
@@ -15584,7 +15584,7 @@ function computeIndividualNassauResults(round, computed) {
           <button className="gsc-btn gsc-btn-outline" style={{ width: "100%", marginTop: 14 }} onClick={() => goToScreen("home")}>
             Exit
           </button>
-          {isRoundDone(round) && (
+          {round.finished && (
             <div style={{ fontSize: 11, color: "#8a8a80", textAlign: "center", marginTop: 6 }}>
               This round is already finished and saved - exiting won't change anything.
             </div>
