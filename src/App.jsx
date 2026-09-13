@@ -311,7 +311,10 @@ const GAMES = {
       "Two 2-person team strokes and putting competition (same game as Round Robin, except no team rotation).",
       {
         text: "0, 1, or 2 points possible per hole per team:",
-        sub: ["1 pt per team for lowest combined putts", "1 pt per team for lowest combined strokes"],
+        sub: [
+          "1 pt for the lowest combined putts - a tie means no one gets the point that hole (it carries to the next hole if Ties Carryover is on, otherwise it's simply lost)",
+          "1 pt for the lowest combined strokes - same tie rule as above",
+        ],
       },
       "Highest total-point team wins.",
       "Prize: to be agreed on prior to round.",
@@ -541,8 +544,8 @@ const GAMES = {
       {
         text: "0, 1, or 2 points possible per hole per player:",
         sub: [
-          "1 pt per player for lowest putts - if tied, the lowest tied players each get 1 pt",
-          "1 pt per player for lowest strokes - if tied, the lowest tied players each get 1 pt",
+          "1 pt for the single lowest putts - a tie means no one gets the point that hole (it carries to the next hole if Ties Carryover is on, otherwise it's simply lost)",
+          "1 pt for the single lowest strokes - same tie rule as above",
         ],
       },
       "Most total points wins.",
@@ -8256,31 +8259,35 @@ function computeRoundScoring(round) {
       };
     });
 
-    // Award 1 pt to every team/player tied at the lowest sum for a
-    // category, unless everyone is tied (a full push earns nobody a
-    // point that hole - matches "no carry-overs on ties"). This works
-    // the same for 2-team games (a tie just means nobody scores that
+    // Award 1 pt to whoever has the single, sole lowest sum for a
+    // category - any tie for that lowest spot, whether it's everyone or
+    // just some of the field, earns nobody a point that hole (matches
+    // "no carry-overs on ties" when that setting is off). This works the
+    // same for 2-team games (a tie just means nobody scores that
     // category) and for individual skins-style games with more entrants
-    // (e.g. two players tied for lowest putts each get the point).
+    // (e.g. two players tied for lowest putts means neither gets the
+    // point, even though everyone else is higher).
     function awardLowest(sums, poolKey) {
       const awarded = sums.map(() => 0);
       if (!sums.every((v) => v != null)) return awarded; // hole not played yet - leave any carry pool untouched, award nothing
       const min = Math.min(...sums);
       const winners = sums.filter((v) => v === min).length;
-      if (winners < sums.length) {
-        // A real winner (or several tied-for-lowest, per the existing
-        // rule that a partial tie still pays everyone tied for the
-        // lead) - award this hole's point plus whatever's built up in
-        // the pool, then the pool resets to zero.
+      if (winners === 1) {
+        // A single, sole lowest score - the only case that actually wins
+        // the hole outright. Awards this hole's point plus whatever's
+        // built up in the pool, then the pool resets to zero.
         const value = poolKey && tiesCarryOverOn ? 1 + carryPools[poolKey] : 1;
         if (poolKey) carryPools[poolKey] = 0;
         sums.forEach((v, i) => {
           if (v === min) awarded[i] = value;
         });
       } else if (poolKey && tiesCarryOverOn) {
-        // Everyone tied for this category on a fully-played hole - carry
-        // one more point into whichever hole finally breaks the tie,
-        // rather than awarding (and losing) it now.
+        // Two or more tied for lowest - a real tie, whether that's
+        // everyone on the hole or just some of them. Either way, nobody
+        // wins this hole outright, so carry one more point into whichever
+        // hole finally breaks the tie, rather than awarding (and losing)
+        // it now. If carryovers are off, this point is simply lost - the
+        // awarded array stays all zeros for this hole either way.
         carryPools[poolKey] += 1;
       }
       return awarded;
