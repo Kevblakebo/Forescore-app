@@ -4320,6 +4320,10 @@ export default function GolfScorecard() {
   }
 
   const [deleteHistoryConfirm, setDeleteHistoryConfirm] = useState(null); // {code, name} while confirming
+  const [replayRoundConfirm, setReplayRoundConfirm] = useState(null); // the full, original round while confirming a replay
+  const [replayRoundBusy, setReplayRoundBusy] = useState(false);
+  const [replayRoundErr, setReplayRoundErr] = useState("");
+  const [pendingReplayStart, setPendingReplayStart] = useState(false);
   const [deleteHistoryBusy, setDeleteHistoryBusy] = useState(false);
   const [deleteHistoryErr, setDeleteHistoryErr] = useState("");
 
@@ -4866,6 +4870,35 @@ export default function GolfScorecard() {
     );
   }
 
+
+  function ReplayRoundModal() {
+    if (!replayRoundConfirm) return null;
+    const old = replayRoundConfirm;
+    const g = GAMES[old.game];
+    return (
+      <div className="gsc-modal-backdrop" onClick={() => setReplayRoundConfirm(null)}>
+        <div className="gsc-modal" onClick={(e) => e.stopPropagation()}>
+          <div className="gsc-modal-title">Start a new {g ? g.name : "round"}?</div>
+          <div className="gsc-modal-body">
+            <div style={{ marginBottom: 10 }}>
+              This creates a brand new round with the exact same settings as "{old.name}" - same course, same format, same players, same setup. Scores start completely fresh.
+            </div>
+            <div style={{ fontSize: 13, color: "#4b4b45", background: "#F8F1E4", borderRadius: 8, padding: 10 }}>
+              <div><b>Course:</b> {old.course || "Not set"}</div>
+              <div><b>Players:</b> {old.players.map((p) => p.name).join(", ")}</div>
+            </div>
+            <div style={{ fontSize: 11, color: "#8a8a80", marginTop: 8 }}>
+              "{old.name}" itself won't be touched - it stays exactly as it is in your history.
+            </div>
+          </div>
+          <div className="gsc-modal-row">
+            <button className="gsc-btn gsc-btn-outline" onClick={() => setReplayRoundConfirm(null)}>Cancel</button>
+            <button className="gsc-btn gsc-btn-primary" onClick={confirmReplayRound}>Start New Round</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   function QuickInfoModal() {
     if (!quickInfoFor) return null;
@@ -6426,6 +6459,68 @@ export default function GolfScorecard() {
     loadSavedCourses();
     goToScreen("quickStart");
   }
+
+  // Fetches a past round's full data so its settings can be reused for a
+  // brand new one - opens the confirmation modal once it's loaded. Only
+  // reads the old round; nothing about it is touched or changed here.
+  async function openReplayRoundConfirm(code) {
+    setReplayRoundErr("");
+    setReplayRoundBusy(true);
+    const res = await storageGet(`golfround:${code}`, true);
+    setReplayRoundBusy(false);
+    if (!res.ok || !res.value) {
+      setReplayRoundErr("Couldn't load that round's settings right now. Try again in a moment.");
+      return;
+    }
+    try {
+      setReplayRoundConfirm(JSON.parse(res.value));
+    } catch (e) {
+      setReplayRoundErr("Couldn't read that round's settings.");
+    }
+  }
+
+  // Actually builds the new round from the confirmed old one - same game,
+  // course, par/yardage/stroke index, settings, and players (including
+  // whichever of them were linked to real accounts, so the same group
+  // members are automatically linked again this time too). Deliberately
+  // does NOT copy scores, bonus mulligans, or anything else round-specific -
+  // finishSetup() already always builds those fresh for a brand new round
+  // regardless of what's set here, exactly as intended for a genuinely new
+  // game. Only sets the shared, component-level state finishSetup() reads
+  // from; the actual new round (with its own new code) isn't created until
+  // finishSetup() itself runs, right after this.
+  function confirmReplayRound() {
+    const old = replayRoundConfirm;
+    if (!old) return;
+    setReplayRoundConfirm(null);
+    setActiveTournament(null);
+    setGameKey(old.game);
+    setCfg({ ...old.cfg });
+    setRoundName("");
+    setRoundDate(new Date().toISOString().slice(0, 10));
+    setPlayers(old.players.map((p) => ({ name: p.name, hcp: p.hcp, avatar: p.avatar || "", user_id: p.user_id })));
+    setPontoPairing([[0, 1], [2, 3]]);
+    setPar([...old.par]);
+    setYardage(old.yardage ? [...old.yardage] : Array(18).fill(""));
+    setStrokeIndex(old.strokeIndex ? [...old.strokeIndex] : Array(18).fill(""));
+    setCourseName(old.course || "");
+    setCourseSelectedViaSearch(true);
+    setCourseMsg("");
+    setCourseTeeOptions(null);
+    setPendingReplayStart(true);
+  }
+
+  // Runs finishSetup() only once the component has actually re-rendered
+  // with confirmReplayRound's new state - calling finishSetup() directly,
+  // synchronously, right after that batch of setState calls would read
+  // the stale, pre-update values instead, since React state updates
+  // aren't applied within the same function call that triggered them.
+  useEffect(() => {
+    if (pendingReplayStart) {
+      setPendingReplayStart(false);
+      finishSetup();
+    }
+  }, [pendingReplayStart]);
 
   // Preps the same setup screen used for a normal round, but with the
   // game/par/settings locked in from the tournament so every foursome
@@ -10297,6 +10392,15 @@ function computeIndividualNassauResults(round, computed) {
                             </div>
                             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                               <div style={{ fontSize: 12, color: "#6b6b63" }}>{r.date}</div>
+                              {!r.tournamentId && (
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); openReplayRoundConfirm(r.code); }}
+                                  style={{ background: "none", border: "none", padding: 4, color: "#1B4332", fontSize: 14, cursor: "pointer", lineHeight: 1 }}
+                                  title="Start a new round with these same settings"
+                                >
+                                  {"\u{1F504}"}
+                                </button>
+                              )}
                               {canEdit && (
                                 <button
                                   onClick={(e) => { e.stopPropagation(); setDeleteHistoryErr(""); setDeleteHistoryConfirm({ code: r.code, name: r.name }); }}
@@ -10310,6 +10414,7 @@ function computeIndividualNassauResults(round, computed) {
                             </div>
                           </div>
                         ))}
+                        {replayRoundErr && <div style={{ color: "#A42E2D", fontSize: 12, marginTop: 8 }}>{replayRoundErr}</div>}
                       </div>
                     );
                   })()}
@@ -10505,6 +10610,7 @@ function computeIndividualNassauResults(round, computed) {
         {RulesModal()}
         {WhyPlayModal()}
         {DeleteHistoryConfirmModal()}
+        {ReplayRoundModal()}
         {HeadToHeadModal()}
         {YearlyRecapModal()}
         <BottomNav />
@@ -12438,6 +12544,7 @@ function computeIndividualNassauResults(round, computed) {
   }
 
   if (screen === "quickStart") {
+    const g = GAMES[gameKey];
     return (
       <div className="gsc">
         <style>{STYLE}</style>
@@ -12453,7 +12560,50 @@ function computeIndividualNassauResults(round, computed) {
             </div>
           </div>
 
+          {g.hasScore && (
+            <div className="gsc-card">
+              <div className="gsc-label">Distance to Green GPS</div>
+              {!session ? (
+                <button
+                  onClick={() => goToScreen("login")}
+                  style={{ display: "block", width: "100%", textAlign: "left", fontSize: 12, color: "#6b6b63", padding: "8px 10px", background: "#F8F1E4", border: "none", borderRadius: 8, cursor: "pointer" }}
+                >
+                  {"\u26F3"} Log in to unlock live distance-to-green GPS. <span style={{ textDecoration: "underline", fontWeight: 700 }}>Tap to log in</span>
+                </button>
+              ) : cfg.gpsCourseLabel ? (
+                <div style={{ fontSize: 12, color: "#1B4332", fontWeight: 600, padding: "8px 10px", background: "#EBF0EC", borderRadius: 8 }}>
+                  {"\u26F3"} Enabled for {cfg.gpsCourseLabel}
+                </div>
+              ) : (
+                <div style={{ fontSize: 12, color: "#6b6b63" }}>
+                  Automatically enabled when you search and select your course below, if GPS data is available for it.
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="gsc-card">
+            {courseName && courseSelectedViaSearch ? (
+              <div className="gsc-card gsc-winner-card" style={{ padding: 12 }}>
+                <div className="gsc-label" style={{ marginBottom: 4 }}>Selected Course</div>
+                <div style={{ fontWeight: 700, fontSize: 15 }}>{courseName}</div>
+                <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 2 }}>
+                  Par {par.reduce((a, b) => a + (Number(b) || 0), 0)} - {par.filter((p) => p !== "" && p != null).length}/18 holes entered
+                </div>
+                <button
+                  className="gsc-link"
+                  style={{ marginTop: 8, fontSize: 12 }}
+                  onClick={() => {
+                    setCourseName("");
+                    setCourseSelectedViaSearch(false);
+                    setCourseMsg("");
+                  }}
+                >
+                  Change course
+                </button>
+              </div>
+            ) : (
+              <>
             <div className="gsc-label">Search for your course (Required)</div>
             <div className="gsc-row">
               <input
@@ -12580,6 +12730,8 @@ function computeIndividualNassauResults(round, computed) {
                   ))}
                 </div>
               </div>
+            )}
+              </>
             )}
           </div>
 
