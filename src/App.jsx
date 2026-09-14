@@ -6407,8 +6407,8 @@ export default function GolfScorecard() {
   // setup screen and changed nothing beyond those three things.
   function startQuickStart() {
     setActiveTournament(null);
-    setGameKey("dstreet");
-    setCfg(withProfileVenmo({ ...GAMES.dstreet.defaults }));
+    setGameKey("swami");
+    setCfg(withProfileVenmo({ ...GAMES.swami.defaults }));
     setRoundName("");
     setRoundDate(new Date().toISOString().slice(0, 10));
     setPlayers(freshPlayerSlots());
@@ -9176,7 +9176,7 @@ function computeIndividualNassauResults(round, computed) {
           <div className="gsc-card gsc-winner-card" style={{ cursor: "pointer" }} onClick={startWizardFromHome}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <div>
-                <div style={{ fontWeight: 700, fontSize: 16 }}>{"\u{1F9D9}"} Not sure how to get started?</div>
+                <div style={{ fontWeight: 700, fontSize: 16 }}>{"\u{1F9D9}"} Not sure which format to pick?</div>
                 <div style={{ fontSize: 13, color: "#4b4b45", marginTop: 3 }}>
                   Answer a few quick questions and we'll get everything set up for you.
                 </div>
