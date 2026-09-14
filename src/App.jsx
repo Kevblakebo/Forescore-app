@@ -12439,13 +12439,17 @@ function computeIndividualNassauResults(round, computed) {
                   <div style={{ fontSize: 12, color: "#8a8a80", marginBottom: 10 }}>
                     For every skin won, whoever won it collects this amount from everyone else - carried-over skins count as multiple. Leave blank to just play for points, no money tracked.
                   </div>
-                  <input
-                    className="gsc-input"
-                    inputMode="decimal"
-                    placeholder="e.g. 0.50"
-                    value={activeCfg.skinStake || ""}
-                    onChange={(e) => setActiveCfg({ ...activeCfg, skinStake: e.target.value })}
-                  />
+                  <div style={{ position: "relative" }}>
+                    <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#6b6b63", fontSize: 15, pointerEvents: "none" }}>$</span>
+                    <input
+                      className="gsc-input"
+                      style={{ paddingLeft: 24 }}
+                      inputMode="decimal"
+                      placeholder="0.50"
+                      value={activeCfg.skinStake || ""}
+                      onChange={(e) => setActiveCfg({ ...activeCfg, skinStake: e.target.value })}
+                    />
+                  </div>
                 </>
               ) : (
                 <>
@@ -13369,17 +13373,21 @@ function computeIndividualNassauResults(round, computed) {
             )}
             {!cfg.nassau && (gameKey === "dstreet" || gameKey === "ponto") && (
               <div className="gsc-field">
-                <div className="gsc-label">Stakes per skin, per player ($)</div>
+                <div className="gsc-label">Stakes per skin, per player</div>
                 <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 6 }}>
                   For every skin won, whoever won it collects this amount from everyone else - carried-over skins count as multiple. Leave blank to just play for points, no money tracked.
                 </div>
-                <input
-                  className="gsc-input"
-                  inputMode="decimal"
-                  placeholder="e.g. 0.50"
-                  value={cfg.skinStake || ""}
-                  onChange={(e) => setCfg({ ...cfg, skinStake: e.target.value })}
-                />
+                <div style={{ position: "relative" }}>
+                  <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#6b6b63", fontSize: 15, pointerEvents: "none" }}>$</span>
+                  <input
+                    className="gsc-input"
+                    style={{ paddingLeft: 24 }}
+                    inputMode="decimal"
+                    placeholder="0.50"
+                    value={cfg.skinStake || ""}
+                    onChange={(e) => setCfg({ ...cfg, skinStake: e.target.value })}
+                  />
+                </div>
               </div>
             )}
             {!cfg.nassau && gameKey !== "dstreet" && gameKey !== "ponto" && (
