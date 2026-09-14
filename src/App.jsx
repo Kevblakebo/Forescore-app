@@ -16283,6 +16283,35 @@ function computeIndividualNassauResults(round, computed) {
           </div>
           )}
 
+          {SKINS_STAKE_GAMES.includes(round.game) && (() => {
+            const net = computeSkinsStakes(round, computed);
+            if (!net) return null;
+            const rows = round.players
+              .map((p, i) => ({ name: p.name, amount: net[i] }))
+              .sort((a, b) => b.amount - a.amount);
+            const allEven = rows.every((r) => r.amount === 0);
+            return (
+              <div className="gsc-card">
+                <div className="gsc-label" style={{ marginBottom: 4, fontSize: 15, color: "#1B4332", fontWeight: 800 }}>Skins Stakes - Settlement</div>
+                <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 10 }}>
+                  At ${round.cfg.skinStake} per skin, per player - through hole {holeIdx + 1}.
+                </div>
+                {allEven ? (
+                  <div style={{ fontWeight: 700, color: "#6b6b63" }}>All even so far - nobody owes anybody.</div>
+                ) : (
+                  rows.map((r, i) => (
+                    <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: i === rows.length - 1 ? "none" : "1px solid #eee6cf" }}>
+                      <div style={{ fontWeight: 700 }}>{r.name}</div>
+                      <div className="gsc-mono" style={{ fontWeight: 700, color: r.amount > 0 ? "#1B4332" : r.amount < 0 ? "#A42E2D" : "#6b6b63" }}>
+                        {r.amount > 0 ? "+" : r.amount < 0 ? "-" : ""}${Math.abs(r.amount).toFixed(2)}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            );
+          })()}
+
 
           <div style={{ fontSize: 12, color: "#8a8a80", textAlign: "center", marginTop: 16 }}>
             Share code <b className="gsc-mono">{round.id}</b> with your group so everyone can enter or view scores.
