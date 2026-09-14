@@ -15711,6 +15711,22 @@ function computeIndividualNassauResults(round, computed) {
                     </button>
                     {p.name}
                     {p.hcp && <span className="gsc-hcp">HCP {p.hcp}</span>}
+                    {computed.netScoringOn && computed.strokesOffForHole(i, holeIdx) > 0 && (
+                      <span
+                        style={{
+                          marginLeft: 6,
+                          fontSize: 10,
+                          fontWeight: 800,
+                          color: "#fff",
+                          background: "#B08D57",
+                          padding: "2px 7px",
+                          borderRadius: 20,
+                          verticalAlign: "middle",
+                        }}
+                      >
+                        {"\u26F3"} +{computed.strokesOffForHole(i, holeIdx)} STROKE{computed.strokesOffForHole(i, holeIdx) > 1 ? "S" : ""}
+                      </span>
+                    )}
                     {g.tracksWolf && i === wolfIndexForHole(holeIdx) && (
                       <span
                         style={{
