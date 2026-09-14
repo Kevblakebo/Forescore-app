@@ -6398,6 +6398,35 @@ export default function GolfScorecard() {
     goToScreen("setup");
   }
 
+  // Same initialization as startNewRound, but hardcoded to Individual
+  // Strokes and landing on a new, deliberately trimmed-down setup screen
+  // instead of the full one - course search, the per-hole handicapping
+  // choice, and player names are the only things asked; everything else
+  // (limits, prize, mulligans, Venmo, etc.) stays at Individual Strokes'
+  // own normal defaults, exactly as if someone had gone through the full
+  // setup screen and changed nothing beyond those three things.
+  function startQuickStart() {
+    setActiveTournament(null);
+    setGameKey("dstreet");
+    setCfg(withProfileVenmo({ ...GAMES.dstreet.defaults }));
+    setRoundName("");
+    setRoundDate(new Date().toISOString().slice(0, 10));
+    setPlayers(freshPlayerSlots());
+    setPar(Array(18).fill(""));
+    setYardage(Array(18).fill(""));
+    setStrokeIndex(Array(18).fill(""));
+    setCourseName("");
+    setCourseSelectedViaSearch(false);
+    setCourseMsg("");
+    setCourseSearchQuery("");
+    setCourseSearchResults([]);
+    setCourseSearchErr("");
+    setCourseTeeOptions(null);
+    setShowManualCourse(false);
+    loadSavedCourses();
+    goToScreen("quickStart");
+  }
+
   // Preps the same setup screen used for a normal round, but with the
   // game/par/settings locked in from the tournament so every foursome
   // plays under identical conditions. Only the foursome's own name and
@@ -9130,6 +9159,19 @@ function computeIndividualNassauResults(round, computed) {
               )}
             </div>
           )}
+
+          <div className="gsc-card" style={{ cursor: "pointer", border: "2px solid #A42E2D" }} onClick={startQuickStart}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <span style={{ fontSize: 18 }}>{"\u26A1"}</span>
+              <div style={{ fontWeight: 800, fontSize: 16, color: "#A42E2D" }}>Quick Start a Game</div>
+            </div>
+            <div style={{ fontSize: 13, color: "#4b4b45", marginTop: 3 }}>
+              Just want to track scores? Search your course, add your players, and go - no formats or wagers to set up.
+            </div>
+            <button className="gsc-btn" style={{ width: "100%", marginTop: 10, background: "#A42E2D", color: "#F3EFE0" }} onClick={startQuickStart}>
+              Quick Start
+            </button>
+          </div>
 
           <div className="gsc-card gsc-winner-card" style={{ cursor: "pointer" }} onClick={startWizardFromHome}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -12391,6 +12433,311 @@ function computeIndividualNassauResults(round, computed) {
         {WhyPlayModal()}
         {GroupFillModal()}
         {WheelModal()}
+      </div>
+    );
+  }
+
+  if (screen === "quickStart") {
+    return (
+      <div className="gsc">
+        <style>{STYLE}</style>
+        <Header title="Quick Start" sub="Individual Strokes - just the basics" onBack={() => goBack("home")} />
+        <div className="gsc-body">
+          <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+              <span style={{ fontSize: 18 }}>{"\u26A1"}</span>
+              <div style={{ fontWeight: 800, fontSize: 16, color: "#8a6a2f" }}>Quick Start</div>
+            </div>
+            <div style={{ fontSize: 13, color: "#4b4b45" }}>
+              Just track everyone's strokes and putts - no wagers, no formats to pick, nothing else to configure. Search your course, say yes or no to handicapping, add your players, and go.
+            </div>
+          </div>
+
+          <div className="gsc-card">
+            <div className="gsc-label">Search for your course (Required)</div>
+            <div className="gsc-row">
+              <input
+                className="gsc-input"
+                placeholder="e.g. Pebble Beach"
+                value={courseSearchQuery}
+                onChange={(e) => setCourseSearchQuery(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && searchCourses()}
+              />
+              <button className="gsc-btn gsc-btn-primary" style={{ flex: "0 0 auto" }} disabled={courseSearchBusy} onClick={searchCourses}>
+                {courseSearchBusy ? "Searching..." : "Search"}
+              </button>
+            </div>
+            <button
+              className="gsc-btn gsc-btn-outline"
+              style={{ width: "100%", marginTop: 8 }}
+              disabled={gpsCourseSearchBusy}
+              onClick={searchCoursesByGps}
+            >
+              {gpsCourseSearchBusy ? "Finding nearby courses..." : `${"\u{1F4CD}"} Use my location instead`}
+            </button>
+            {courseSearchErr && <div style={{ color: "#A42E2D", fontSize: 12, marginTop: 8 }}>{courseSearchErr}</div>}
+
+            {courseSearchResults.length > 0 && !courseTeeOptions && (
+              <div style={{ marginTop: 10 }}>
+                <div className="gsc-label">Select your course</div>
+                <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 8 }}>
+                  Tap a course below, then pick your tee on the next step to load par and yardage.
+                </div>
+                {courseSearchResults.slice(0, 8).map((c) => (
+                  <div
+                    key={c.courseID}
+                    className="gsc-card gsc-game-card"
+                    style={{ marginBottom: 8, padding: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}
+                    onClick={() => selectCourseResult(c)}
+                  >
+                    <div>
+                      <div style={{ fontWeight: 700, fontSize: 14 }}>{c.courseName && c.courseName !== c.clubName ? `${c.clubName} - ${c.courseName}` : c.clubName}</div>
+                      {(c.city || c.state) && <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 2 }}>{c.city}{c.city && c.state ? ", " : ""}{c.state}</div>}
+                      {c.distanceMiles != null && <div style={{ fontSize: 12, color: "#8a6a2f", marginTop: 2 }}>{c.distanceMiles < 0.1 ? "Less than 0.1 mi away" : `${c.distanceMiles.toFixed(1)} mi away`}</div>}
+                    </div>
+                    <span style={{ color: "#8FA998", fontSize: 18, marginLeft: 8 }}>{"\u203A"}</span>
+                  </div>
+                ))}
+                {courseDetailBusy && <div style={{ fontSize: 12, color: "#6b6b63" }}>Loading course details...</div>}
+              </div>
+            )}
+
+            {courseTeeOptions && (
+              <div style={{ marginTop: 10, padding: 12, background: "#FDF6E9", border: "2px solid #B08D57", borderRadius: 12 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+                  <span style={{ fontSize: 16 }}>{"\u{1F449}"}</span>
+                  <div style={{ fontWeight: 800, fontSize: 15, color: "#8a6a2f" }}>Pick your tee ({courseTeeOptions.courseLabel})</div>
+                </div>
+                <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 8 }}>
+                  Required - tap a tee below to load par and yardage. Par can differ slightly between tees at the same course, so pick the one your group is actually playing.
+                </div>
+                {courseTeeOptions.tees.map((tee, i) => (
+                  <div
+                    key={i}
+                    className="gsc-card gsc-game-card"
+                    style={{ marginBottom: 8, padding: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}
+                    onClick={() => applyCourseTee(tee)}
+                  >
+                    <div>
+                      <div style={{ fontWeight: 700, fontSize: 14 }}>{tee.teeName}</div>
+                      <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 2 }}>
+                        Par {(courseTeeOptions.parsMen || []).slice(0, courseTeeOptions.numHoles || 18).reduce((a, b) => a + (b || 0), 0)} - {courseTeeOptions.numHoles} holes{Array.from({ length: courseTeeOptions.numHoles || 18 }, (_, h) => tee[`length${h + 1}`]).some((v) => v != null) ? ` - ${Array.from({ length: courseTeeOptions.numHoles || 18 }, (_, h) => tee[`length${h + 1}`] || 0).reduce((a, b) => a + b, 0)} yds` : ""}
+                      </div>
+                    </div>
+                    <span style={{ color: "#8FA998", fontSize: 18, marginLeft: 8 }}>{"\u203A"}</span>
+                  </div>
+                ))}
+                <button className="gsc-link" style={{ marginTop: 4, fontSize: 12 }} onClick={() => setCourseTeeOptions(null)}>
+                  Back to search results
+                </button>
+              </div>
+            )}
+            {courseMsg && (
+              <div style={{ fontSize: 12, color: courseMsg.startsWith("Couldn't") ? "#A42E2D" : "#B08D57", marginTop: 8 }}>
+                {courseMsg}
+              </div>
+            )}
+            <button className="gsc-link" style={{ marginTop: 10, fontSize: 12 }} onClick={() => setShowManualCourse((s) => !s)}>
+              {showManualCourse ? "Hide manual course entry" : "Course not listed? Enter or edit par manually"}
+            </button>
+            {showManualCourse && (
+              <div style={{ marginTop: 12 }}>
+                <div className="gsc-label" style={{ marginBottom: 10 }}>Enter or Edit Par Manually</div>
+                {savedCourses.length > 0 && (
+                  <div className="gsc-field">
+                    <div className="gsc-label">Load a saved course</div>
+                    <select className="gsc-input" defaultValue="" onChange={(e) => e.target.value && applySavedCourse(e.target.value)}>
+                      <option value="">Choose a course you've saved before...</option>
+                      {savedCourses.map((c) => (
+                        <option key={c.name} value={c.name}>{c.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+                <div className="gsc-field">
+                  <div className="gsc-label">Course name</div>
+                  <input className="gsc-input" placeholder="e.g. Seabluffe Golf Links" value={courseName} onChange={(e) => setCourseName(e.target.value)} />
+                </div>
+                <div className="gsc-label" style={{ marginBottom: 6 }}>Par per hole</div>
+                <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 8 }}>
+                  If you couldn't find your course above, load a saved course or enter par for every hole here - you won't be able to create the round until all 18 are filled in.
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 6 }}>
+                  {par.map((v, i) => (
+                    <div key={i}>
+                      <div style={{ fontSize: 10, color: "#8a8a80", textAlign: "center" }}>{i + 1}</div>
+                      <input
+                        className="gsc-input"
+                        style={{ textAlign: "center", padding: "6px 2px" }}
+                        value={v}
+                        onChange={(e) => {
+                          const next = [...par];
+                          next[i] = e.target.value;
+                          setPar(next);
+                        }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="gsc-card">
+            <div className="gsc-label">Use per-hole handicapping (net scoring)?</div>
+            <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 6 }}>
+              Strokes are given to higher-handicap players on the hardest holes, and net scores are used for scoring and standings.
+            </div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button
+                className="gsc-btn"
+                style={{ flex: 1, background: !cfg.netScoring ? "#A42E2D" : "transparent", color: !cfg.netScoring ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
+                onClick={() => setCfg({ ...cfg, netScoring: false })}
+              >
+                No
+              </button>
+              <button
+                className="gsc-btn"
+                style={{ flex: 1, background: cfg.netScoring ? "#A42E2D" : "transparent", color: cfg.netScoring ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
+                onClick={() => setCfg({ ...cfg, netScoring: true })}
+              >
+                Yes
+              </button>
+            </div>
+          </div>
+
+          <div className="gsc-card">
+            <div className="gsc-label" style={{ marginBottom: 10 }}>Players</div>
+            {session && (
+              <button className="gsc-link" style={{ fontSize: 13, fontWeight: 700, marginBottom: 10, display: "inline-block" }} onClick={() => openGroupFillPicker("players")}>
+                {"\u{1F465}"} Fill players from a group
+              </button>
+            )}
+            <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 10 }}>
+              1-4 players - add or remove below to match who's actually playing.
+            </div>
+            {players.map((p, i) => (
+              <div key={i} style={{ marginBottom: 8 }}>
+                <div className="gsc-row">
+                  <button
+                    onClick={() => setAvatarPickerFor(avatarPickerFor === i ? null : i)}
+                    style={{
+                      position: "relative",
+                      flex: "0 0 40px",
+                      height: 40,
+                      borderRadius: "50%",
+                      border: p.avatar ? "1.5px solid #1B4332" : "1.5px dashed #B08D57",
+                      background: p.avatar ? "#fff" : "#EBF0EC",
+                      fontSize: p.avatar ? 20 : 12,
+                      fontWeight: 800,
+                      color: "#1B4332",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                    title="Choose an avatar (optional)"
+                  >
+                    {p.avatar || LETTERS[i]}
+                    {!p.avatar && (
+                      <span style={{ position: "absolute", bottom: -2, right: -2, width: 16, height: 16, borderRadius: "50%", background: "#A42E2D", color: "#fff", fontSize: 11, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", border: "1.5px solid #F3EFE0" }}>
+                        +
+                      </span>
+                    )}
+                  </button>
+                  <input className="gsc-input" placeholder={`Player ${LETTERS[i]} name`} value={p.name} onChange={(e) => updatePlayer(i, "name", e.target.value)} />
+                  <input className="gsc-input" style={{ flex: "0 0 70px" }} placeholder="HCP" value={p.hcp} onChange={(e) => updatePlayer(i, "hcp", e.target.value)} />
+                  {players.length > 1 && (
+                    <button
+                      className="gsc-btn gsc-btn-outline"
+                      style={{ flex: "0 0 auto", color: "#A42E2D", borderColor: "#A42E2D", padding: "9px 12px" }}
+                      onClick={() => removePlayerSlot(i)}
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+                {avatarPickerFor === i && (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8, padding: "10px 4px 4px 46px" }}>
+                    {AVATAR_OPTIONS.map((emoji) => (
+                      <button
+                        key={emoji}
+                        onClick={() => {
+                          updatePlayer(i, "avatar", p.avatar === emoji ? "" : emoji);
+                          setAvatarPickerFor(null);
+                        }}
+                        style={{ width: 36, height: 36, borderRadius: "50%", border: p.avatar === emoji ? "2px solid #A42E2D" : "1.5px solid #d8d2bd", background: "#fff", fontSize: 18, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {session && (
+                  <div style={{ padding: "4px 4px 0 46px" }}>
+                    {p.user_id ? (
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <div style={{ fontSize: 11, color: "#1B4332", fontWeight: 700 }}>
+                          {"\u2713"} Linked to {p.name}'s account
+                        </div>
+                        <button className="gsc-link" style={{ fontSize: 11 }} onClick={() => unlinkPlayerSlot(i)}>
+                          Change
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        className="gsc-link"
+                        style={{ fontSize: 11 }}
+                        onClick={() => {
+                          if (groupmatePickerFor === i) {
+                            setGroupmatePickerFor(null);
+                          } else {
+                            setGroupmatePickerFor(i);
+                            if (groupmates === null) loadGroupmates();
+                          }
+                        }}
+                      >
+                        {"\u{1F465}"} Pick from your groups
+                      </button>
+                    )}
+                    {groupmatePickerFor === i && (
+                      <div style={{ marginTop: 6 }}>
+                        {groupmatesErr && <div style={{ color: "#A42E2D", fontSize: 11 }}>{groupmatesErr}</div>}
+                        {groupmates === null ? (
+                          <div style={{ fontSize: 11, color: "#8a8a80" }}>Loading...</div>
+                        ) : groupmates.length === 0 ? (
+                          <div style={{ fontSize: 11, color: "#8a8a80" }}>You're not sharing a group with anyone yet.</div>
+                        ) : (
+                          groupmates.map((mate) => (
+                            <button
+                              key={mate.user_id}
+                              onClick={() => selectGroupmateForSlot(i, mate)}
+                              style={{ display: "flex", alignItems: "center", gap: 6, width: "100%", textAlign: "left", padding: "5px 0", background: "none", border: "none", borderBottom: "1px solid #eee6cf", cursor: "pointer", fontSize: 12 }}
+                            >
+                              <span>{mate.avatar || "\u{1F464}"}</span>
+                              <span>{mate.name}{session && mate.user_id === session.user.id ? " (You)" : ""}</span>
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+            {players.length < 4 && (
+              <button className="gsc-btn gsc-btn-outline" style={{ width: "100%", marginTop: 4 }} onClick={addPlayerSlot}>
+                + Add another player
+              </button>
+            )}
+          </div>
+
+          {err && <div style={{ color: "#A42E2D", fontSize: 13, marginTop: 4 }}>{err}</div>}
+          <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 10 }} disabled={busy} onClick={finishSetup}>
+            {busy ? "Starting..." : `${"\u26A1"} Start Round`}
+          </button>
+        </div>
+        {GroupFillModal()}
       </div>
     );
   }
