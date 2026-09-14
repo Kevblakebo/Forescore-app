@@ -4660,7 +4660,11 @@ export default function GolfScorecard() {
             <div><b>Max putts per hole:</b> {cfg.trackPutts === false ? "N/A (putts not tracked)" : cfg.maxPutts != null ? cfg.maxPutts : "No limit set"}</div>
             <div><b>Mulligans per player:</b> {cfg.mulliganSegment ? cfg.mulliganSegment : "None set (tracked freely)"}</div>
             <div><b>Earn a bonus mulligan:</b> {cfg.mulliganChallenge ? cfg.mulliganChallenge : "Not set"}</div>
-            <div><b>Prize / stakes:</b> {cfg.prize ? cfg.prize : "Not set"}</div>
+            {r.game === "dstreet" || r.game === "ponto" ? (
+              <div><b>Stakes per skin, per player:</b> {cfg.skinStake ? `$${cfg.skinStake}` : "Not set"}</div>
+            ) : (
+              <div><b>Prize / stakes:</b> {cfg.prize ? cfg.prize : "Not set"}</div>
+            )}
             {cfg.nassau && (
               <div>
                 <b>Scoring method:</b> Nassau (front ${cfg.nassauFrontPrize || "0"}, back ${cfg.nassauBackPrize || "0"}, overall ${cfg.nassauOverallPrize || "0"})
@@ -8665,7 +8669,52 @@ function computeOceans11Results(round, computed) {
   return { rows, allComplete };
 }
 
-// Individual Nassau - for Individual Strokes, Individual Skins, and
+// Per-skin, per-player stakes for Individual Skins and Team Skins - for
+// every skin actually won on a completed hole (strokes and putts are
+// each their own skin, so a hole can be worth up to 2), the winning
+// side collects the stake from every player NOT on that side, and every
+// player not on that side owes the winning side. Written generically
+// against each hole's actual team groupings (holeResults[h].teamsThisHole)
+// rather than assuming a specific team size, so the exact same logic
+// correctly handles Individual Skins (each player their own team of
+// one) and Team Skins (two teams of two) without needing two separate
+// versions of this function. Verified to always net to exactly zero
+// across all players combined, as any zero-sum transfer must.
+const SKINS_STAKE_GAMES = ["dstreet", "ponto"];
+function computeSkinsStakes(round, computed) {
+  if (!round || !SKINS_STAKE_GAMES.includes(round.game)) return null;
+  const stake = Number(round.cfg.skinStake);
+  if (!stake || stake <= 0) return null;
+  const holeResults = computed && computed.holeResults;
+  if (!holeResults || holeResults.length === 0) return null;
+  const nPlayers = round.players.length;
+  const net = Array(nPlayers).fill(0);
+  let anyHolesComplete = false;
+  holeResults.forEach((hr) => {
+    if (!hr || !hr.complete) return;
+    anyHolesComplete = true;
+    hr.teamsThisHole.forEach((team, ti) => {
+      const awarded = hr.ptsAwarded[ti];
+      if (!awarded) return;
+      const units = (awarded.score || 0) + (awarded.putt || 0);
+      if (units <= 0) return;
+      const opponentCount = nPlayers - team.length;
+      team.forEach((pi) => {
+        net[pi] += units * stake * opponentCount;
+      });
+      for (let pi = 0; pi < nPlayers; pi++) {
+        if (!team.includes(pi)) net[pi] -= units * stake * team.length;
+      }
+    });
+  });
+  if (!anyHolesComplete) return null;
+  // Round to the nearest cent - accumulating many small stake fractions
+  // hole by hole otherwise leaves stray floating-point remainders like
+  // $2.9999999999999996 that would display incorrectly.
+  return net.map((n) => Math.round(n * 100) / 100);
+}
+
+
 // Individual Putts. Genuinely different from computeNassauResults
 // above: instead of two teams compared head-to-head, every player is
 // independently ranked within each segment (front 9, back 9, overall
@@ -12384,8 +12433,26 @@ function computeIndividualNassauResults(round, computed) {
 
           {wizardStepId === "field_prize" && (
             <div className="gsc-card">
-              <div className="gsc-label" style={{ marginBottom: 10, fontSize: 16 }}>What's the prize for winning? (optional)</div>
-              <input className="gsc-input" placeholder="e.g. Losers buy winners a drink at the 19th hole" value={activeCfg.prize} onChange={(e) => setActiveCfg({ ...activeCfg, prize: e.target.value })} />
+              {gameKey === "dstreet" || gameKey === "ponto" ? (
+                <>
+                  <div className="gsc-label" style={{ marginBottom: 6, fontSize: 16 }}>Stakes per skin, per player? (optional)</div>
+                  <div style={{ fontSize: 12, color: "#8a8a80", marginBottom: 10 }}>
+                    For every skin won, whoever won it collects this amount from everyone else - carried-over skins count as multiple. Leave blank to just play for points, no money tracked.
+                  </div>
+                  <input
+                    className="gsc-input"
+                    inputMode="decimal"
+                    placeholder="e.g. 0.50"
+                    value={activeCfg.skinStake || ""}
+                    onChange={(e) => setActiveCfg({ ...activeCfg, skinStake: e.target.value })}
+                  />
+                </>
+              ) : (
+                <>
+                  <div className="gsc-label" style={{ marginBottom: 10, fontSize: 16 }}>What's the prize for winning? (optional)</div>
+                  <input className="gsc-input" placeholder="e.g. Losers buy winners a drink at the 19th hole" value={activeCfg.prize} onChange={(e) => setActiveCfg({ ...activeCfg, prize: e.target.value })} />
+                </>
+              )}
               <button
                 className="gsc-btn gsc-btn-primary"
                 style={{ width: "100%", marginTop: 14 }}
@@ -13300,7 +13367,22 @@ function computeIndividualNassauResults(round, computed) {
                 </div>
               </div>
             )}
-            {!cfg.nassau && (
+            {!cfg.nassau && (gameKey === "dstreet" || gameKey === "ponto") && (
+              <div className="gsc-field">
+                <div className="gsc-label">Stakes per skin, per player ($)</div>
+                <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 6 }}>
+                  For every skin won, whoever won it collects this amount from everyone else - carried-over skins count as multiple. Leave blank to just play for points, no money tracked.
+                </div>
+                <input
+                  className="gsc-input"
+                  inputMode="decimal"
+                  placeholder="e.g. 0.50"
+                  value={cfg.skinStake || ""}
+                  onChange={(e) => setCfg({ ...cfg, skinStake: e.target.value })}
+                />
+              </div>
+            )}
+            {!cfg.nassau && gameKey !== "dstreet" && gameKey !== "ponto" && (
               <div className="gsc-field">
                 <div className="gsc-label">Prize / stakes</div>
                 <input className="gsc-input" value={cfg.prize} onChange={(e) => setCfg({ ...cfg, prize: e.target.value })} />
@@ -14874,6 +14956,35 @@ function computeIndividualNassauResults(round, computed) {
                     </div>
                   )}
                 </div>
+              </div>
+            );
+          })()}
+
+          {SKINS_STAKE_GAMES.includes(round.game) && (() => {
+            const net = computeSkinsStakes(round, computed);
+            if (!net) return null;
+            const rows = round.players
+              .map((p, i) => ({ name: p.name, amount: net[i] }))
+              .sort((a, b) => b.amount - a.amount);
+            const allEven = rows.every((r) => r.amount === 0);
+            return (
+              <div className="gsc-card">
+                <div className="gsc-label" style={{ marginBottom: 4 }}>Skins Stakes - Final Settlement</div>
+                <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 10 }}>
+                  At ${round.cfg.skinStake} per skin, per player.
+                </div>
+                {allEven ? (
+                  <div style={{ fontWeight: 700, color: "#6b6b63" }}>All even - nobody owes anybody.</div>
+                ) : (
+                  rows.map((r, i) => (
+                    <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: i === rows.length - 1 ? "none" : "1px solid #eee6cf" }}>
+                      <div style={{ fontWeight: 700 }}>{r.name}</div>
+                      <div className="gsc-mono" style={{ fontWeight: 700, color: r.amount > 0 ? "#1B4332" : r.amount < 0 ? "#A42E2D" : "#6b6b63" }}>
+                        {r.amount > 0 ? "+" : r.amount < 0 ? "-" : ""}${Math.abs(r.amount).toFixed(2)}
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             );
           })()}
