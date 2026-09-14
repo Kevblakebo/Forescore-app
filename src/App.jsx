@@ -158,13 +158,13 @@ const GAMES = {
   teamstrokes: {
     name: "Team Strokes",
     tag: "Fixed teams stroke play - 4 players",
-    desc: "A 4-person, 2 vs 2 team combined strokes competition. Each player plays their own ball and records their own strokes and putts. Lowest team total strokes wins; lowest team total putts settles a tie. Overall and Nassau scoring methods available.",
+    desc: "A 4-person, 2 vs 2 team combined strokes competition. Each player plays their own ball and records their own strokes and putts. Lowest team total strokes wins; lowest team total putts settles a tie. Overall and Nassau scoring methods available. Per-hole handicapping (net scoring) is defaulted to On, but can be turned off when setting up the round.",
     rotates: false,
     hasScore: true,
     hasPutts: true,
     totalScoring: true,
     rankByTeamTotal: true,
-    defaults: { maxOver: "", maxPutts: "", mulliganSegment: "", mulliganChallenge: "", prize: "" },
+    defaults: { maxOver: "", maxPutts: "", mulliganSegment: "", mulliganChallenge: "", prize: "", netScoring: true },
     rules: [
       "4-person, 2 vs 2 team, combined strokes competition.",
       "Each player plays their own ball and records their own strokes and putts.",
@@ -182,19 +182,19 @@ const GAMES = {
       "Flagstick can stay in.",
       "Putts start once on the putting green.",
       "No carry-overs on ties.",
-      "Handicaps (net score per hole) optional in game scoring settings.",
+      "Per-hole handicapping (net score per hole) is defaulted to On, but can be turned off in game scoring settings.",
       "Great for mixed handicaps.",
     ],
   },
   teamputts: {
     name: "Team Putts",
     tag: "Putting teams - 4 players",
-    desc: "A simple points-based putting game for 4 players, 2 vs 2 teams. The team with the least combined putts earns 1 point per hole. Most points at the end of the round wins. Total strokes also kept track of. Overall and Nassau scoring methods available.",
+    desc: "A simple points-based putting game for 4 players, 2 vs 2 teams. The team with the least combined putts earns 1 point per hole. Most points at the end of the round wins. Total strokes also kept track of. Overall and Nassau scoring methods available. Per-hole handicapping (net scoring) is defaulted to On, but can be turned off when setting up the round.",
     rotates: false,
     hasScore: true,
     hasPutts: true,
     puttsOnlyScoring: true,
-    defaults: { maxOver: "", maxPutts: "", mulliganSegment: "", mulliganChallenge: "", prize: "", tiesCarryOver: false },
+    defaults: { maxOver: "", maxPutts: "", mulliganSegment: "", mulliganChallenge: "", prize: "", tiesCarryOver: false, netScoring: true },
     rules: [
       "Team putting game for 4 players (2 vs 2 teams).",
       "Total strokes and putts are kept track of.",
@@ -208,17 +208,17 @@ const GAMES = {
       "Must putt all the way into the hole.",
       "Flagstick can stay in.",
       "Putts start once on the putting green.",
-      "Handicaps (net score per hole) optional in game scoring settings.",
+      "Per-hole handicapping (net score per hole) is defaulted to On, but can be turned off in game scoring settings.",
     ],
   },
   seabluffe: {
     name: "Round Robin",
     tag: "Rotating teams - 4 players",
-    desc: "Two 2-person teams that swap partners every 6 holes. Points for low combined score AND low combined putts each hole. Great for mixed handicaps.",
+    desc: "Two 2-person teams that swap partners every 6 holes. Points for low combined score AND low combined putts each hole. Great for mixed handicaps. Per-hole handicapping (net scoring) is defaulted to On, but can be turned off when setting up the round.",
     rotates: true,
     hasScore: true,
     hasPutts: true,
-    defaults: { maxOver: "", maxPutts: "", mulliganSegment: "", mulliganChallenge: "", prize: "" },
+    defaults: { maxOver: "", maxPutts: "", mulliganSegment: "", mulliganChallenge: "", prize: "", netScoring: true },
     rules: [
       "Rotating team overall and putting game.",
       {
@@ -240,20 +240,20 @@ const GAMES = {
       "Flagstick can stay in.",
       "Putts start once on the putting green.",
       "No carry-overs on ties.",
-      "Handicaps (net score per hole) optional in game scoring settings.",
+      "Per-hole handicapping (net score per hole) is defaulted to On, but can be turned off in game scoring settings.",
       "Great for mixed handicap groups.",
     ],
   },
   moonlightwolf: {
     name: "Wolf",
     tag: "Best ball rotating teams - 4 players",
-    desc: "A rotating team four-player game where one player acts as the \"Wolf\" on each hole. The Wolf watches the other drives (tees off last), then either chooses a partner or goes it alone (\"Lone Wolf\"), to win points based on a best-ball lowest strokes and putts format.",
+    desc: "A rotating team four-player game where one player acts as the \"Wolf\" on each hole. The Wolf watches the other drives (tees off last), then either chooses a partner or goes it alone (\"Lone Wolf\"), to win points based on a best-ball lowest strokes and putts format. Per-hole handicapping (net scoring) is defaulted to On, but can be turned off when setting up the round.",
     rotates: true,
     hasScore: true,
     hasPutts: true,
     bestBall: true,
     tracksWolf: true,
-    defaults: { maxOver: "", maxPutts: "", mulliganSegment: "", mulliganChallenge: "", prize: "" },
+    defaults: { maxOver: "", maxPutts: "", mulliganSegment: "", mulliganChallenge: "", prize: "", netScoring: true },
     rules: [
       {
         text: "Setting Up the Game",
@@ -292,7 +292,7 @@ const GAMES = {
       "Strokes max: to be agreed on prior to round.",
       "Putts max: to be agreed on prior to round.",
       "Mulligans: to be agreed on prior to round.",
-      "Handicaps: not used in game scoring.",
+      "Per-hole handicapping (net score per hole) is defaulted to On, but can be turned off in game scoring settings.",
       "Play OB shots as a lateral drop (1 out, 1 in).",
       "Must putt all the way into the hole.",
       "Flagstick can stay in.",
@@ -302,11 +302,11 @@ const GAMES = {
   ponto: {
     name: "Team Skins",
     tag: "Fixed teams points - 4 players",
-    desc: "Two 2-person teams, same partners all 18 holes. Points for low combined score AND low combined putts each hole. Great for similar handicaps. Overall and Nassau scoring methods available. In this game format you can choose to play Ties Carryover (classic Skins format) or Ties do not carryover (similar to Match Play format). This game is currently defaulted to Ties Carryover, that you can change when setting up the round.",
+    desc: "Two 2-person teams, same partners all 18 holes. Points for low combined score AND low combined putts each hole. Great for similar handicaps. Overall and Nassau scoring methods available. In this game format you can choose to play Ties Carryover (classic Skins format) or Ties do not carryover (similar to Match Play format). This game is currently defaulted to Ties Carryover, that you can change when setting up the round. Per-hole handicapping (net scoring) is defaulted to On, but can be turned off when setting up the round.",
     rotates: false,
     hasScore: true,
     hasPutts: true,
-    defaults: { maxOver: "", maxPutts: "", mulliganSegment: "", mulliganChallenge: "", prize: "", tiesCarryOver: true },
+    defaults: { maxOver: "", maxPutts: "", mulliganSegment: "", mulliganChallenge: "", prize: "", tiesCarryOver: true, netScoring: true },
     rules: [
       "Two 2-person team strokes and putting competition (same game as Round Robin, except no team rotation).",
       {
@@ -326,19 +326,19 @@ const GAMES = {
       "Flagstick can stay in.",
       "Putts start once on the putting green.",
       "In this game format you can choose to play Ties Carryover (classic Skins format) or Ties do not carryover (similar to Match Play format). This game is currently defaulted to Ties Carryover, that you can change when setting up the round.",
-      "Handicaps (net score per hole) optional in game scoring settings.",
+      "Per-hole handicapping (net score per hole) is defaulted to On, but can be turned off in game scoring settings.",
       "Great for similar handicap groups.",
     ],
   },
   vegas: {
     name: "Vegas",
     tag: "Fixed teams points - 4 players",
-    desc: "Two 2-person teams, same partners all 18 holes. Partners' scores combine into a two-digit number instead of adding together - lower number wins the hole, and a birdie or better flips your own team's digits.",
+    desc: "Two 2-person teams, same partners all 18 holes. Partners' scores combine into a two-digit number instead of adding together - lower number wins the hole, and a birdie or better flips your own team's digits. Per-hole handicapping (net scoring) is defaulted to On, but can be turned off when setting up the round.",
     rotates: false,
     hasScore: true,
     hasPutts: true,
     tracksVegas: true,
-    defaults: { maxOver: "", maxPutts: "", mulliganSegment: "", mulliganChallenge: "", prize: "" },
+    defaults: { maxOver: "", maxPutts: "", mulliganSegment: "", mulliganChallenge: "", prize: "", netScoring: true },
     rules: [
       "Two 2-person teams, same partners all 18 holes.",
       {
@@ -359,7 +359,7 @@ const GAMES = {
       "Strokes max: to be agreed on prior to round.",
       "Putts max: to be agreed on prior to round.",
       "Mulligans: to be agreed on prior to round.",
-      "Handicaps (net score per hole) optional in game scoring settings.",
+      "Per-hole handicapping (net score per hole) is defaulted to On, but can be turned off in game scoring settings.",
       "Play OB shots as a lateral drop (1 out, 1 in).",
       "Must putt all the way into the hole.",
       "Flagstick can stay in.",
@@ -369,12 +369,12 @@ const GAMES = {
   beachside: {
     name: "Team Best Ball",
     tag: "Best-ball teams - 4 players",
-    desc: "Two 2-person teams, best-ball scoring - the lower of the team's two strokes AND the lower of the team's two putts count each hole. Same structure as Team Skins, but best-ball instead of combined. Great for mixed handicap pairs. Overall and Nassau scoring methods available.",
+    desc: "Two 2-person teams, best-ball scoring - the lower of the team's two strokes AND the lower of the team's two putts count each hole. Same structure as Team Skins, but best-ball instead of combined. Great for mixed handicap pairs. Overall and Nassau scoring methods available. Per-hole handicapping (net scoring) is defaulted to On, but can be turned off when setting up the round.",
     rotates: false,
     hasScore: true,
     hasPutts: true,
     bestBall: true,
-    defaults: { maxOver: "", maxPutts: "", mulliganSegment: "", mulliganChallenge: "", prize: "" },
+    defaults: { maxOver: "", maxPutts: "", mulliganSegment: "", mulliganChallenge: "", prize: "", netScoring: true },
     rules: [
       {
         text: "Two 2-person team Best-Ball Strokes and Best-Ball Putts Skins competition (same as Team Skins, except using best-ball scores from the 2-person team):",
@@ -399,21 +399,21 @@ const GAMES = {
       "Flagstick can stay in.",
       "Putts start once on the putting green.",
       "No carry-overs on ties.",
-      "Handicaps (net score per hole) optional in game scoring settings.",
+      "Per-hole handicapping (net score per hole) is defaulted to On, but can be turned off in game scoring settings.",
       "Great for mixed handicap teams.",
     ],
   },
   tourneybb: {
     name: "Best Ball Tournament",
     tag: "4-person best-ball - Tournaments only",
-    desc: "The whole foursome plays as one best-ball team - no 2-person sub-teams. The lowest strokes and lowest putts among all 4 players count each hole. Used only in Tournaments, where foursomes are ranked against each other by total best-ball strokes and total best-ball putts.",
+    desc: "The whole foursome plays as one best-ball team - no 2-person sub-teams. The lowest strokes and lowest putts among all 4 players count each hole. Used only in Tournaments, where foursomes are ranked against each other by total best-ball strokes and total best-ball putts. Per-hole handicapping (net scoring) is defaulted to On, but can be turned off when setting up the round.",
     rotates: false,
     hasScore: true,
     hasPutts: true,
     bestBall: true,
     singleTeam: true,
     tournamentOnly: true,
-    defaults: { maxOver: "", maxPutts: "", mulliganSegment: "", mulliganChallenge: "", prize: "" },
+    defaults: { maxOver: "", maxPutts: "", mulliganSegment: "", mulliganChallenge: "", prize: "", netScoring: true },
     rules: [
       "4-person team best-ball strokes and best-ball putts competition - the whole foursome plays as one team, not split into 2-person sub-teams.",
       "Each player plays their own ball and records their own strokes and putts.",
@@ -431,21 +431,21 @@ const GAMES = {
       "Flagstick can stay in.",
       "Putts start once on the putting green.",
       "No carry-overs on ties.",
-      "Handicaps (net score per hole) optional in game scoring settings.",
+      "Per-hole handicapping (net score per hole) is defaulted to On, but can be turned off in game scoring settings.",
       "Great for foursome-vs-foursome tournament play.",
     ],
   },
   tourneygg: {
     name: "Combined Strokes Tournament",
     tag: "4-person combined - Tournaments only",
-    desc: "The whole foursome plays as one team - no 2-person sub-teams. All 4 players' strokes are added together, and all 4 players' putts are added together, each hole. Used only in Tournaments, where foursomes are ranked against each other by total combined strokes and total combined putts.",
+    desc: "The whole foursome plays as one team - no 2-person sub-teams. All 4 players' strokes are added together, and all 4 players' putts are added together, each hole. Used only in Tournaments, where foursomes are ranked against each other by total combined strokes and total combined putts. Per-hole handicapping (net scoring) is defaulted to On, but can be turned off when setting up the round.",
     rotates: false,
     hasScore: true,
     hasPutts: true,
     bestBall: false,
     singleTeam: true,
     tournamentOnly: true,
-    defaults: { maxOver: "", maxPutts: "", mulliganSegment: "", mulliganChallenge: "", prize: "" },
+    defaults: { maxOver: "", maxPutts: "", mulliganSegment: "", mulliganChallenge: "", prize: "", netScoring: true },
     rules: [
       "4-person team combined strokes and combined putts competition - the whole foursome plays as one team, not split into 2-person sub-teams.",
       "Each player plays their own ball and records their own strokes and putts.",
@@ -463,14 +463,14 @@ const GAMES = {
       "Flagstick can stay in.",
       "Putts start once on the putting green.",
       "No carry-overs on ties.",
-      "Handicaps (net score per hole) optional in game scoring settings.",
+      "Per-hole handicapping (net score per hole) is defaulted to On, but can be turned off in game scoring settings.",
       "Great for foursome-vs-foursome tournament play.",
     ],
   },
   avoscramble: {
     name: "Scramble Tournament",
     tag: "Choose best shot - Tournaments only",
-    desc: "The whole foursome plays as one team. Every team member tees off on each hole, the team picks the best shot of the foursome, and all players hit their next shots from that same location. This cycle repeats until the ball is in the hole. The team's strokes score for the hole is then captured.",
+    desc: "The whole foursome plays as one team. Every team member tees off on each hole, the team picks the best shot of the foursome, and all players hit their next shots from that same location. This cycle repeats until the ball is in the hole. The team's strokes score for the hole is then captured. Per-hole handicapping (net scoring) is defaulted to On, but can be turned off when setting up the round.",
     rotates: false,
     hasScore: true,
     hasPutts: false,
@@ -479,7 +479,7 @@ const GAMES = {
     oneTeamScore: true,
     tournamentOnly: true,
     tracksDrives: true,
-    defaults: { maxOver: "", maxPutts: "", mulliganSegment: "", mulliganChallenge: "", minDrives: "", prize: "" },
+    defaults: { maxOver: "", maxPutts: "", mulliganSegment: "", mulliganChallenge: "", minDrives: "", prize: "", netScoring: true },
     rules: [
       "4-person team strokes competition - the whole foursome plays as one team",
       {
@@ -499,7 +499,7 @@ const GAMES = {
       "Strokes max: to be agreed on prior to round.",
       "Putts max: to be agreed on prior to round.",
       "Mulligans: to be agreed on prior to round.",
-      "Handicaps: could be used in game scoring. If so, this would be an average of the 4 players' handicaps and subtracted from the Total Score to determine Net Score.",
+      "Per-hole handicapping (net score per hole) is defaulted to On, but can be turned off in game scoring settings. Since this format has just one team score per hole, this works as an average of the 4 players' handicaps, subtracted from the team's total score to determine net score.",
       "Play OB shots as a lateral drop (1 out, 1 in).",
       "Must putt all the way into the hole.",
       "Flagstick can stay in.",
@@ -510,12 +510,12 @@ const GAMES = {
   swami: {
     name: "Individual Strokes",
     tag: "Individual stroke play - up to 4 players",
-    desc: "A standard, no-frills stroke play game for up to 4 players. Lowest total strokes wins; total putts breaks a tie. Great for players who just want to keep an honest scorecard. Overall, Nassau, and Oceans 11 scoring methods available.",
+    desc: "A standard, no-frills stroke play game for up to 4 players. Lowest total strokes wins; total putts breaks a tie. Great for players who just want to keep an honest scorecard. Overall, Nassau, and Oceans 11 scoring methods available. Per-hole handicapping (net scoring) is defaulted to On, but can be turned off when setting up the round.",
     rotates: false,
     hasScore: true,
     hasPutts: true,
     totalScoring: true,
-    defaults: { maxOver: "", maxPutts: "", mulliganSegment: "", mulliganChallenge: "", prize: "" },
+    defaults: { maxOver: "", maxPutts: "", mulliganSegment: "", mulliganChallenge: "", prize: "", netScoring: true },
     rules: [
       "Individual strokes and putting game for up to 4 players.",
       "Total strokes and putts are kept track of.",
@@ -528,17 +528,17 @@ const GAMES = {
       "Must putt all the way into the hole.",
       "Flagstick can stay in.",
       "Putts start once on the putting green.",
-      "Handicaps (net score per hole) optional in game scoring settings.",
+      "Per-hole handicapping (net score per hole) is defaulted to On, but can be turned off in game scoring settings.",
     ],
   },
   dstreet: {
     name: "Individual Skins",
     tag: "Individual points - up to 4 players",
-    desc: "Individual strokes and putting skins game for up to 4 players. Points for low strokes AND low putts each hole. Most points wins. Great for similar handicaps. Overall and Nassau scoring methods available. In this game format you can choose to play Ties Carryover (classic Skins format) or Ties do not carryover (similar to Match Play format). This game is currently defaulted to Ties Carryover, that you can change when setting up the round.",
+    desc: "Individual strokes and putting skins game for up to 4 players. Points for low strokes AND low putts each hole. Most points wins. Great for similar handicaps. Overall and Nassau scoring methods available. In this game format you can choose to play Ties Carryover (classic Skins format) or Ties do not carryover (similar to Match Play format). This game is currently defaulted to Ties Carryover, that you can change when setting up the round. Per-hole handicapping (net scoring) is defaulted to On, but can be turned off when setting up the round.",
     rotates: false,
     hasScore: true,
     hasPutts: true,
-    defaults: { maxOver: "", maxPutts: "", mulliganSegment: "", mulliganChallenge: "", prize: "", tiesCarryOver: true },
+    defaults: { maxOver: "", maxPutts: "", mulliganSegment: "", mulliganChallenge: "", prize: "", tiesCarryOver: true, netScoring: true },
     rules: [
       "Individual strokes and putting skins game for up to 4 players. Points for low strokes AND low putts each hole. Most points wins.",
       {
@@ -558,20 +558,20 @@ const GAMES = {
       "Flagstick can stay in.",
       "Putts start once on the putting green.",
       "In this game format you can choose to play Ties Carryover (classic Skins format) or Ties do not carryover (similar to Match Play format). This game is currently defaulted to Ties Carryover, that you can change when setting up the round.",
-      "Handicaps (net score per hole) optional in game scoring settings.",
+      "Per-hole handicapping (net score per hole) is defaulted to On, but can be turned off in game scoring settings.",
       "Great for similar handicap foursomes.",
     ],
   },
   individualputts: {
     name: "Individual Putts",
     tag: "Individual putting game - up to 4 players",
-    desc: "A simple total putts game for up to 4 players, every player for themselves. The player with the least amount of putts at the end of the round wins. Total strokes also still kept track of. Overall and Nassau scoring methods available.",
+    desc: "A simple total putts game for up to 4 players, every player for themselves. The player with the least amount of putts at the end of the round wins. Total strokes also still kept track of. Overall and Nassau scoring methods available. Per-hole handicapping (net scoring) is defaulted to On, but can be turned off when setting up the round.",
     rotates: false,
     hasScore: true,
     hasPutts: true,
     totalScoring: true,
     rankByPutts: true,
-    defaults: { maxOver: "", maxPutts: "", mulliganSegment: "", mulliganChallenge: "", prize: "" },
+    defaults: { maxOver: "", maxPutts: "", mulliganSegment: "", mulliganChallenge: "", prize: "", netScoring: true },
     rules: [
       "Individual putting game for up to 4 players.",
       "Total strokes and putts are kept track of.",
@@ -584,18 +584,18 @@ const GAMES = {
       "Must putt all the way into the hole.",
       "Flagstick can stay in.",
       "Putts start once on the putting green.",
-      "Handicaps (net score per hole) optional in game scoring settings.",
+      "Per-hole handicapping (net score per hole) is defaulted to On, but can be turned off in game scoring settings.",
     ],
   },
   pontobango: {
     name: "Bingo Bango Bongo",
     tag: "Individual points game - up to 4 players",
-    desc: "Each hole is worth three points. The Bingo point goes to the first player on the green. The Bango point goes to the player closest to the pin once on the green. The Bongo point goes to the longest putt. The player with the most points wins. Strokes and putts still tracked.",
+    desc: "Each hole is worth three points. The Bingo point goes to the first player on the green. The Bango point goes to the player closest to the pin once on the green. The Bongo point goes to the longest putt. The player with the most points wins. Strokes and putts still tracked. Per-hole handicapping (net scoring) is defaulted to On, but can be turned off when setting up the round.",
     rotates: false,
     hasScore: true,
     hasPutts: true,
     tracksPontoBangoBongo: true,
-    defaults: { maxOver: "", maxPutts: "", mulliganSegment: "", mulliganChallenge: "", prize: "" },
+    defaults: { maxOver: "", maxPutts: "", mulliganSegment: "", mulliganChallenge: "", prize: "", netScoring: true },
     rules: [
       "Individual strokes and putting game for up to 4 players.",
       "Total strokes and putts are still kept track of (similar to Individual Strokes).",
@@ -617,13 +617,13 @@ const GAMES = {
       "Must putt all the way into the hole.",
       "Flagstick can stay in.",
       "Putts start once on the putting green.",
-      "Handicaps (net score per hole) optional in game scoring settings.",
+      "Per-hole handicapping (net score per hole) is defaulted to On, but can be turned off in game scoring settings.",
     ],
   },
   stableford: {
     name: "Stableford",
     tag: "Individual points game - up to 4 players",
-    desc: "Points awarded each hole based on your net score relative to par - a blow-up hole only ever costs you zero points, not a huge number. Highest total points wins.",
+    desc: "Points awarded each hole based on your net score relative to par - a blow-up hole only ever costs you zero points, not a huge number. Highest total points wins. Per-hole handicapping (net scoring) is defaulted to On, but can be turned off when setting up the round.",
     rotates: false,
     hasScore: true,
     hasPutts: true,
@@ -642,10 +642,9 @@ const GAMES = {
           "Double bogey or worse (2+ over par): 0 points",
         ],
       },
-      "Handicaps are used in this format by default - points are based on net score per hole, not gross. A net 3 on a par 4 is a birdie, worth 3 points.",
+      "Per-hole handicapping (net score per hole) is defaulted to On for this format, since points are based on net score relative to par - a net 3 on a par 4 is a birdie, worth 3 points. Can be turned off in game scoring settings to use gross score instead.",
       "Highest total points at the end of the round wins.",
       "Putts are tracked but don't count toward the standings.",
-      "Handicaps: to be agreed on prior to round.",
       "Prize: to be agreed on prior to round.",
       "Strokes max: to be agreed on prior to round.",
       "Putts max: to be agreed on prior to round.",
@@ -12351,17 +12350,17 @@ function computeIndividualNassauResults(round, computed) {
                   <div style={{ display: "flex", gap: 8 }}>
                     <button
                       className="gsc-btn"
-                      style={{ flex: 1, background: !activeCfg.netScoring ? "#A42E2D" : "transparent", color: !activeCfg.netScoring ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
-                      onClick={() => setActiveCfg({ ...activeCfg, netScoring: false })}
-                    >
-                      No
-                    </button>
-                    <button
-                      className="gsc-btn"
                       style={{ flex: 1, background: activeCfg.netScoring ? "#A42E2D" : "transparent", color: activeCfg.netScoring ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
                       onClick={() => setActiveCfg({ ...activeCfg, netScoring: true })}
                     >
                       Yes
+                    </button>
+                    <button
+                      className="gsc-btn"
+                      style={{ flex: 1, background: !activeCfg.netScoring ? "#A42E2D" : "transparent", color: !activeCfg.netScoring ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
+                      onClick={() => setActiveCfg({ ...activeCfg, netScoring: false })}
+                    >
+                      No
                     </button>
                   </div>
                 </div>
@@ -12375,17 +12374,17 @@ function computeIndividualNassauResults(round, computed) {
                   <div style={{ display: "flex", gap: 8 }}>
                     <button
                       className="gsc-btn"
-                      style={{ flex: 1, background: !activeCfg.tiesCarryOver ? "#A42E2D" : "transparent", color: !activeCfg.tiesCarryOver ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
-                      onClick={() => setActiveCfg({ ...activeCfg, tiesCarryOver: false })}
-                    >
-                      No
-                    </button>
-                    <button
-                      className="gsc-btn"
                       style={{ flex: 1, background: activeCfg.tiesCarryOver ? "#A42E2D" : "transparent", color: activeCfg.tiesCarryOver ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
                       onClick={() => setActiveCfg({ ...activeCfg, tiesCarryOver: true })}
                     >
                       Yes
+                    </button>
+                    <button
+                      className="gsc-btn"
+                      style={{ flex: 1, background: !activeCfg.tiesCarryOver ? "#A42E2D" : "transparent", color: !activeCfg.tiesCarryOver ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
+                      onClick={() => setActiveCfg({ ...activeCfg, tiesCarryOver: false })}
+                    >
+                      No
                     </button>
                   </div>
                 </div>
@@ -12814,17 +12813,17 @@ function computeIndividualNassauResults(round, computed) {
             <div style={{ display: "flex", gap: 8 }}>
               <button
                 className="gsc-btn"
-                style={{ flex: 1, background: !cfg.netScoring ? "#A42E2D" : "transparent", color: !cfg.netScoring ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
-                onClick={() => setCfg({ ...cfg, netScoring: false })}
-              >
-                No
-              </button>
-              <button
-                className="gsc-btn"
                 style={{ flex: 1, background: cfg.netScoring ? "#A42E2D" : "transparent", color: cfg.netScoring ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
                 onClick={() => setCfg({ ...cfg, netScoring: true })}
               >
                 Yes
+              </button>
+              <button
+                className="gsc-btn"
+                style={{ flex: 1, background: !cfg.netScoring ? "#A42E2D" : "transparent", color: !cfg.netScoring ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
+                onClick={() => setCfg({ ...cfg, netScoring: false })}
+              >
+                No
               </button>
             </div>
           </div>
@@ -13544,17 +13543,17 @@ function computeIndividualNassauResults(round, computed) {
                 <div style={{ display: "flex", gap: 8 }}>
                   <button
                     className="gsc-btn"
-                    style={{ flex: 1, background: !cfg.netScoring ? "#A42E2D" : "transparent", color: !cfg.netScoring ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
-                    onClick={() => setCfg({ ...cfg, netScoring: false })}
-                  >
-                    No
-                  </button>
-                  <button
-                    className="gsc-btn"
                     style={{ flex: 1, background: cfg.netScoring ? "#A42E2D" : "transparent", color: cfg.netScoring ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
                     onClick={() => setCfg({ ...cfg, netScoring: true })}
                   >
                     Yes
+                  </button>
+                  <button
+                    className="gsc-btn"
+                    style={{ flex: 1, background: !cfg.netScoring ? "#A42E2D" : "transparent", color: !cfg.netScoring ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
+                    onClick={() => setCfg({ ...cfg, netScoring: false })}
+                  >
+                    No
                   </button>
                 </div>
               </div>
@@ -13568,17 +13567,17 @@ function computeIndividualNassauResults(round, computed) {
                 <div style={{ display: "flex", gap: 8 }}>
                   <button
                     className="gsc-btn"
-                    style={{ flex: 1, background: !cfg.tiesCarryOver ? "#A42E2D" : "transparent", color: !cfg.tiesCarryOver ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
-                    onClick={() => setCfg({ ...cfg, tiesCarryOver: false })}
-                  >
-                    No
-                  </button>
-                  <button
-                    className="gsc-btn"
                     style={{ flex: 1, background: cfg.tiesCarryOver ? "#A42E2D" : "transparent", color: cfg.tiesCarryOver ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
                     onClick={() => setCfg({ ...cfg, tiesCarryOver: true })}
                   >
                     Yes
+                  </button>
+                  <button
+                    className="gsc-btn"
+                    style={{ flex: 1, background: !cfg.tiesCarryOver ? "#A42E2D" : "transparent", color: !cfg.tiesCarryOver ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
+                    onClick={() => setCfg({ ...cfg, tiesCarryOver: false })}
+                  >
+                    No
                   </button>
                 </div>
               </div>
@@ -14126,17 +14125,17 @@ function computeIndividualNassauResults(round, computed) {
                 <div style={{ display: "flex", gap: 8 }}>
                   <button
                     className="gsc-btn"
-                    style={{ flex: 1, background: !tournamentCfg.netScoring ? "#A42E2D" : "transparent", color: !tournamentCfg.netScoring ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
-                    onClick={() => setTournamentCfg({ ...tournamentCfg, netScoring: false })}
-                  >
-                    No
-                  </button>
-                  <button
-                    className="gsc-btn"
                     style={{ flex: 1, background: tournamentCfg.netScoring ? "#A42E2D" : "transparent", color: tournamentCfg.netScoring ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
                     onClick={() => setTournamentCfg({ ...tournamentCfg, netScoring: true })}
                   >
                     Yes
+                  </button>
+                  <button
+                    className="gsc-btn"
+                    style={{ flex: 1, background: !tournamentCfg.netScoring ? "#A42E2D" : "transparent", color: !tournamentCfg.netScoring ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
+                    onClick={() => setTournamentCfg({ ...tournamentCfg, netScoring: false })}
+                  >
+                    No
                   </button>
                 </div>
               </div>
