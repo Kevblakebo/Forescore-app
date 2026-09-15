@@ -9548,21 +9548,6 @@ function computeIndividualNassauResults(round, computed) {
             </button>
           </div>
 
-          <div className="gsc-card gsc-winner-card" style={{ cursor: "pointer" }} onClick={startWizardFromHome}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <div>
-                <div style={{ fontWeight: 700, fontSize: 16 }}>{"\u{1F9D9}"} Not sure which format to pick?</div>
-                <div style={{ fontSize: 13, color: "#4b4b45", marginTop: 3 }}>
-                  Answer a few quick questions and we'll get everything set up for you.
-                </div>
-              </div>
-            </div>
-            <button className="gsc-btn gsc-btn-gold" style={{ width: "100%", marginTop: 10 }} onClick={startWizardFromHome}>
-              Start the Game Wizard
-            </button>
-          </div>
-
-
           <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
               <span style={{ fontSize: 18 }}>{"\u26F3"}</span>
@@ -9619,6 +9604,20 @@ function computeIndividualNassauResults(round, computed) {
                 );
               })}
             </div>
+          </div>
+
+          <div className="gsc-card gsc-winner-card" style={{ cursor: "pointer" }} onClick={startWizardFromHome}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: 16 }}>{"\u{1F9D9}"} Not sure which format to pick?</div>
+                <div style={{ fontSize: 13, color: "#4b4b45", marginTop: 3 }}>
+                  Answer a few quick questions and we'll get everything set up for you.
+                </div>
+              </div>
+            </div>
+            <button className="gsc-btn gsc-btn-gold" style={{ width: "100%", marginTop: 10 }} onClick={startWizardFromHome}>
+              Start the Game Wizard
+            </button>
           </div>
 
 
