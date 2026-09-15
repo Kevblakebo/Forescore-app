@@ -1337,7 +1337,7 @@ const TOURNAMENT_PREFIX = "gsc-tournament:";
 // Explicit order (not auto-derived from GAMES) so display order is
 // deliberate and controllable - remember to add any new tournamentOnly
 // game here too, or it won't show up in the Tournament Game Formats list.
-const TOURNAMENT_GAME_KEYS = ["avoscramble", "tourneybb", "tourneygg"];
+const TOURNAMENT_GAME_KEYS = ["avoscramble", "tourneybb", "tourneygg", "matchplay", "matchplayfourball"];
 
 function genCode() {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -6810,7 +6810,7 @@ export default function GolfScorecard() {
     setCfg({ ...tournament.cfg });
     setRoundName("");
     setRoundDate(tournament.date);
-    setPlayers(freshPlayerSlots());
+    setPlayers(freshPlayerSlots(tournament.game));
     setPontoPairing([[0, 1], [2, 3]]);
     setPar([...tournament.par]);
     setCourseName(tournament.course || "");
@@ -7270,15 +7270,11 @@ export default function GolfScorecard() {
     }
     const count = tournamentFoursomeCount === "" || tournamentFoursomeCount == null || isNaN(Number(tournamentFoursomeCount)) ? 2 : Math.max(1, Number(tournamentFoursomeCount));
     setTournamentFoursomeCount(count);
+    const slotsPerMatch = tournamentGameKey === "matchplay" ? 2 : 4;
     setTournamentFoursomesDraft(
       Array.from({ length: count }, (_, i) => ({
         name: `Foursome ${i + 1}`,
-        players: i === 0 ? freshPlayerSlots() : [
-          { name: "", hcp: "", avatar: "" },
-          { name: "", hcp: "", avatar: "" },
-          { name: "", hcp: "", avatar: "" },
-          { name: "", hcp: "", avatar: "" },
-        ],
+        players: i === 0 ? freshPlayerSlots(tournamentGameKey) : Array.from({ length: slotsPerMatch }, () => ({ name: "", hcp: "", avatar: "" })),
       }))
     );
     goToScreen("tournamentRoster");
@@ -7379,7 +7375,7 @@ export default function GolfScorecard() {
         course: tournamentCourseName.trim(),
         cfg: cleanCfg,
         players: cleanPlayers,
-        teams: [[0, 1, 2, 3]],
+        teams: tournamentGameKey === "matchplay" ? [[0], [1]] : tournamentGameKey === "matchplayfourball" ? [[0, 1], [2, 3]] : [[0, 1, 2, 3]],
         par: cleanPar,
         yardage: cleanYardage,
         strokeIndex: cleanStrokeIndex,
@@ -7520,8 +7516,21 @@ export default function GolfScorecard() {
         return a[key] - b[key]; // lower is better for both strokes and putts
       });
     }
+    // Match Play tournaments don't rank against a shared number the way
+    // stroke-based tournaments do - each match is its own, independent
+    // contest, so this is simply each match's own result, in the same
+    // order the matches were entered, reusing the exact same proven
+    // computeMatchPlayResult already used for a standalone Match Play
+    // round rather than a second, separate version of that logic.
+    const matchResults = MATCH_PLAY_GAMES.includes(tournament.game)
+      ? results.map((f) => {
+          if (f.error) return { ...f, matchResult: null };
+          const matchComputed = computeRoundScoring(f.round);
+          return { ...f, matchResult: computeMatchPlayResult(f.round, matchComputed) };
+        })
+      : null;
     setBoardLoading(false);
-    setBoard({ tournament, strokesRanked: rankedBy("totalStrokes"), puttsRanked: rankedBy("totalPutts") });
+    setBoard({ tournament, strokesRanked: rankedBy("totalStrokes"), puttsRanked: rankedBy("totalPutts"), matchResults });
   }
 
   function openEditFoursome(id, roundData) {
@@ -14834,10 +14843,14 @@ function computeMatchPlayResult(round, computed) {
     return (
       <div className="gsc">
         <style>{STYLE}</style>
-        <Header title={tournamentName || "New Tournament"} sub="Add each foursome" onBack={() => goBack("tournamentCreate")} />
+        <Header title={tournamentName || "New Tournament"} sub={tournamentGameKey === "matchplay" ? "Add each match" : tournamentGameKey === "matchplayfourball" ? "Add each match" : "Add each foursome"} onBack={() => goBack("tournamentCreate")} />
         <div className="gsc-body">
           <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 12 }}>
-            Enter each foursome's name and its 4 players. You can always add more foursomes later with the tournament code.
+            {tournamentGameKey === "matchplay"
+              ? "Enter each match's name and its 2 players. You can always add more matches later with the tournament code."
+              : tournamentGameKey === "matchplayfourball"
+              ? "Enter each match's name and its 4 players (2 vs 2). You can always add more matches later with the tournament code."
+              : "Enter each foursome's name and its 4 players. You can always add more foursomes later with the tournament code."}
           </div>
           {tournamentFoursomesDraft.map((f, fi) => (
             <div key={fi} className="gsc-card">
@@ -15076,7 +15089,7 @@ function computeMatchPlayResult(round, computed) {
         <style>{STYLE}</style>
         <Header
           title={t ? t.name : "Tournament Leaderboard"}
-          sub={t ? `${GAMES[t.game].name} - strokes and putts ranked separately` : ""}
+          sub={t ? (MATCH_PLAY_GAMES.includes(t.game) ? `${GAMES[t.game].name} - each match's own result` : `${GAMES[t.game].name} - strokes and putts ranked separately`) : ""}
           onBack={() => setScreen("home")}
           backExtra={
             <button
@@ -15115,7 +15128,7 @@ function computeMatchPlayResult(round, computed) {
                 </button>
                 {isTournamentOrganizer(t) && (
                   <button className="gsc-link" style={{ color: "#F3EFE0", fontSize: 11, textDecoration: "underline" }} onClick={() => startTournamentFoursome(t)}>
-                    Add Foursome
+                    {t && MATCH_PLAY_GAMES.includes(t.game) ? "Add Match" : "Add Foursome"}
                   </button>
                 )}
               </div>
@@ -15125,7 +15138,9 @@ function computeMatchPlayResult(round, computed) {
         <div className="gsc-body">
           {board && t && (
             <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 12 }}>
-              {GAMES[t.game].oneTeamScore
+              {MATCH_PLAY_GAMES.includes(t.game)
+                ? "Each pairing below is its own, independent match, decided hole by hole - there's no combined ranking across matches, just each match's own result."
+                : GAMES[t.game].oneTeamScore
                 ? "Scramble scoring: the whole foursome shares one team stroke total per hole."
                 : GAMES[t.game].bestBall
                 ? "Best-ball scoring: each foursome's stroke and putt totals are the single lowest score among all 4 players on each hole."
@@ -15143,10 +15158,72 @@ function computeMatchPlayResult(round, computed) {
           {board && t && board.strokesRanked.length > 0 && (
             <div className="gsc-card" style={{ background: "#EBF0EC", border: "1px solid #1B4332" }}>
               <div style={{ fontSize: 13, color: "#1B4332", fontWeight: 700 }}>
-                Tap a foursome below to enter (or view) hole-by-hole scores as you play.
+                {MATCH_PLAY_GAMES.includes(t.game)
+                  ? "Tap a match below to enter (or view) hole-by-hole scores as you play."
+                  : "Tap a foursome below to enter (or view) hole-by-hole scores as you play."}
               </div>
             </div>
           )}
+          {board && t && board.matchResults ? (
+            <div className="gsc-card">
+              <div className="gsc-label" style={{ marginBottom: 10 }}>Match Results</div>
+              {board.matchResults.length === 0 && <div style={{ fontSize: 13, color: "#6b6b63" }}>No matches have joined yet.</div>}
+              {board.matchResults.map((row, idx) => (
+                <div
+                  key={row.id}
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    padding: "10px 0",
+                    borderBottom: idx < board.matchResults.length - 1 ? "1px solid #eee6cf" : "none",
+                    background: round && row.id === round.id ? "#F0EEE3" : undefined,
+                    cursor: row.error ? "default" : "pointer",
+                  }}
+                  onClick={() => !row.error && loadRound(row.id)}
+                >
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: 14 }}>
+                      {row.name} {round && row.id === round.id && <span className="gsc-chip gsc-lead">YOU</span>}
+                    </div>
+                    <div style={{ fontSize: 12, color: "#6b6b63" }}>
+                      {row.error
+                        ? `Couldn't load (${row.error})`
+                        : !row.matchResult || row.matchResult.holesPlayed === 0
+                        ? "Not started"
+                        : `${row.matchResult.sideAName} vs ${row.matchResult.sideBName}`}
+                    </div>
+                    {!row.error && canEditTournamentRound(row.round) && (
+                      <button
+                        className="gsc-link"
+                        style={{ fontSize: 11, marginTop: 2 }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openEditFoursome(row.id, row.round);
+                        }}
+                      >
+                        Edit match
+                      </button>
+                    )}
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 2 }}>
+                    <div className="gsc-mono" style={{ fontWeight: 700, fontSize: 14, textAlign: "right" }}>
+                      {row.error ? "-" : row.matchResult ? row.matchResult.statusText : "-"}
+                    </div>
+                    {!row.error && row.matchResult && row.matchResult.isDecided && (
+                      <span className="gsc-chip gsc-lead">DECIDED</span>
+                    )}
+                    {!row.error && (
+                      <div style={{ fontSize: 11, fontWeight: 700, color: "#1B4332", whiteSpace: "nowrap" }}>
+                        Enter scores {"\u203A"}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <>
           {board && (
             <div className="gsc-card">
               <div className="gsc-label" style={{ marginBottom: 10 }}>Ranked by Strokes</div>
@@ -15160,6 +15237,8 @@ function computeMatchPlayResult(round, computed) {
               {board.puttsRanked.length === 0 && <div style={{ fontSize: 13, color: "#6b6b63" }}>No foursomes have joined yet.</div>}
               {board.puttsRanked.map((row, idx) => renderFoursomeRow(row, idx, "totalPutts", "puttHoles"))}
             </div>
+          )}
+            </>
           )}
           {t && isTournamentOrganizer(t) && (
             <button className="gsc-btn" style={{ width: "100%", marginTop: 14, background: "#A42E2D", color: "#fff" }} disabled={finishTournamentBusy} onClick={() => finishTournament(t)}>
