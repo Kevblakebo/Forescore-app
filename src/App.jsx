@@ -2142,6 +2142,9 @@ export default function GolfScorecard() {
   const lastLocalEditRef = useRef(0);
   const currentAnnounceAudioRef = useRef(null);
   const golfClapAudioRef = useRef(null);
+  const wolfHowlAudioRef = useRef(null);
+  const victoryFanfareAudioRef = useRef(null);
+  const crowdCheerAudioRef = useRef(null);
   // One ref array per manual par-entry grid (Setup, Wizard, Tournament
   // create) - used to auto-advance focus to the next hole's input once a
   // par digit is typed, since real par values are always a single digit
@@ -5981,14 +5984,14 @@ export default function GolfScorecard() {
       if (!sharedRes.ok) {
         setBusy(false);
         setArchiveErr(`Couldn't save this round as finished (${sharedRes.error || "storage error"}). Tap "Finish & Save Completed Round" to retry.`);
-        return;
+        return false;
       }
     }
     const savedRoundRes = await storageSet(`${FINISHED_PREFIX}${r.id}`, JSON.stringify(finishedRound), false);
     if (!savedRoundRes.ok) {
       setBusy(false);
       setArchiveErr(`Couldn't save this round (${savedRoundRes.error || "storage error"}). Your round hasn't been touched - tap "Finish & Save Completed Round" to retry.`);
-      return;
+      return false;
     }
     const idxRes = await storageGet(FINISHED_INDEX_KEY, false);
     let idx = [];
@@ -6008,7 +6011,7 @@ export default function GolfScorecard() {
       // pointer or navigate away, so the round stays reachable and the user
       // can retry rather than losing track of it.
       setArchiveErr(`Saved the round, but couldn't add it to your finished-rounds list (${idxSetRes.error || "storage error"}). Tap "Finish & Save Completed Round" again to retry.`);
-      return;
+      return false;
     }
     setFinishedRounds(idx);
     await storageDelete(ACTIVE_KEY, false);
@@ -6060,6 +6063,7 @@ export default function GolfScorecard() {
       }
     }
     goToScreen("roundComplete");
+    return true;
   }
 
   function finishCelebrationAndGoHome() {
@@ -7177,6 +7181,7 @@ export default function GolfScorecard() {
     setActiveRound(newRound);
     setRound(newRound);
     setHoleIdx(0);
+    playVictoryFanfare();
     if (isTournament) {
       openTournamentBoard(activeTournament.id);
     } else {
@@ -9325,24 +9330,38 @@ function computeIndividualNassauResults(round, computed) {
     }
   }
 
-  // Plays the Golf Clap sound effect - purely local to whoever taps it,
-  // same as the standings announcer (this is a client-side audio
-  // playback, not a broadcast to other players viewing the same round).
-  // Restarting from the beginning on a repeat tap, rather than letting a
-  // second copy stack on top of a still-playing one, since a rapid
-  // double-tap overlapping itself would sound like a mistake, not two
-  // claps.
-  function playGolfClap() {
+  // Plays a short sound effect - purely local to whoever triggers it,
+  // same as the standings announcer (this is client-side audio playback,
+  // not a broadcast to other players viewing the same round). Restarts
+  // from the beginning on a repeat trigger, rather than letting a second
+  // copy stack on top of a still-playing one, since two overlapping
+  // copies of the same clip would sound like a mistake, not intentional
+  // layering. Each distinct sound gets its own ref (passed in), so
+  // playing one never stops or interferes with a different one already
+  // in progress.
+  function playSound(ref, url) {
     if (typeof window === "undefined") return;
-    if (golfClapAudioRef.current) {
-      golfClapAudioRef.current.pause();
-      golfClapAudioRef.current.currentTime = 0;
-      golfClapAudioRef.current.play().catch(() => {});
+    if (ref.current) {
+      ref.current.pause();
+      ref.current.currentTime = 0;
+      ref.current.play().catch(() => {});
       return;
     }
-    const audio = new Audio("/sounds/golf-clap.mp3");
-    golfClapAudioRef.current = audio;
+    const audio = new Audio(url);
+    ref.current = audio;
     audio.play().catch(() => {});
+  }
+  function playGolfClap() {
+    playSound(golfClapAudioRef, "/sounds/golf-clap.mp3");
+  }
+  function playWolfHowl() {
+    playSound(wolfHowlAudioRef, "/sounds/wolf-howl.mp3");
+  }
+  function playVictoryFanfare() {
+    playSound(victoryFanfareAudioRef, "/sounds/victory-fanfare.mp3");
+  }
+  function playCrowdCheer() {
+    playSound(crowdCheerAudioRef, "/sounds/crowd-cheer.mp3");
   }
 
   useEffect(() => {
@@ -16425,7 +16444,7 @@ function computeIndividualNassauResults(round, computed) {
                       );
                     })}
                     <button
-                      onClick={() => updateHoleWinner("wolfPartner", "lone")}
+                      onClick={() => { updateHoleWinner("wolfPartner", "lone"); playWolfHowl(); }}
                       style={{
                         padding: "8px 12px",
                         borderRadius: 8,
@@ -16894,7 +16913,7 @@ function computeIndividualNassauResults(round, computed) {
                 </div>
                 <div className="gsc-modal-row">
                   <button className="gsc-btn gsc-btn-outline" onClick={() => setConfirmFinishOpen(false)}>No, go back</button>
-                  <button className="gsc-btn gsc-btn-primary" disabled={busy} onClick={() => { setConfirmFinishOpen(false); archiveAndExitRound(round); }}>
+                  <button className="gsc-btn gsc-btn-primary" disabled={busy} onClick={() => { setConfirmFinishOpen(false); archiveAndExitRound(round).then((ok) => { if (ok) playCrowdCheer(); }); }}>
                     {busy ? "Saving..." : "Yes, finish"}
                   </button>
                 </div>
