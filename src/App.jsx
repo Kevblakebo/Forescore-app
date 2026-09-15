@@ -658,7 +658,7 @@ const GAMES = {
   matchplay: {
     name: "Individual Match Play",
     tag: "Head-to-head, 1 vs 1 - exactly 2 players",
-    desc: "The classic hole-by-hole format - two players go head-to-head, winning, losing, or halving each hole based on net score. Whoever's ahead by more holes than remain wins the match early; otherwise it's decided after 18. Overall and Nassau scoring methods available.",
+    desc: "The classic hole-by-hole format - two players go head-to-head, winning, losing, or halving each hole based on net score. Whoever's ahead by more holes than remain wins the match early; otherwise it's decided after 18.",
     rotates: false,
     hasScore: true,
     hasPutts: true,
@@ -689,7 +689,7 @@ const GAMES = {
     name: "Team Match Play",
     tournamentName: "Team Match Play Tournament",
     tag: "Team head-to-head, 2 vs 2 - exactly 4 players",
-    desc: "Team match play, better-ball style - two 2-person teams go head-to-head, each hole decided by whichever side's better net score (between its own two players) is lower. Winning, losing, or halving each hole is tracked just like Individual Match Play, including a match that can end before the 18th hole. Overall and Nassau scoring methods available.",
+    desc: "Team match play, better-ball style - two 2-person teams go head-to-head, each hole decided by whichever side's better net score (between its own two players) is lower. Winning, losing, or halving each hole is tracked just like Individual Match Play, including a match that can end before the 18th hole.",
     rotates: false,
     hasScore: true,
     hasPutts: true,
