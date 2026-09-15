@@ -6110,10 +6110,20 @@ export default function GolfScorecard() {
   }
 
   function finishCelebrationAndGoHome() {
+    const tournamentId = round && round.tournamentId;
     setRound(null);
     setEarnedMoments([]);
     setAiRecap(null);
     setAiRecapLoading(false);
+    if (tournamentId) {
+      // The tournament itself may still be ongoing even though this one
+      // round/match just finished - other foursomes or matches could still
+      // be playing, so this goes back to the shared leaderboard rather than
+      // home, same as the "View Leaderboard" buttons elsewhere already do.
+      openTournamentBoard(tournamentId);
+      setRoundViewReturnScreen("home");
+      return;
+    }
     setScreen(roundViewReturnScreen);
     setRoundViewReturnScreen("home");
   }
@@ -15941,7 +15951,13 @@ function computeMatchPlayResult(round, computed) {
           )}
 
           <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 10 }} onClick={finishCelebrationAndGoHome}>
-            {roundViewReturnScreen === "profileTab" ? "Continue to Profile" : roundViewReturnScreen === "groupsTab" ? "Continue to Groups" : "Continue to Home"}
+            {round && round.tournamentId
+              ? "Continue to Leaderboard"
+              : roundViewReturnScreen === "profileTab"
+              ? "Continue to Profile"
+              : roundViewReturnScreen === "groupsTab"
+              ? "Continue to Groups"
+              : "Continue to Home"}
           </button>
         </div>
       </div>
