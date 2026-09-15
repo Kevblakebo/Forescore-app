@@ -4955,7 +4955,7 @@ export default function GolfScorecard() {
           <div className="gsc-modal-title">{"\u{1F50A}"} Standings Announcer</div>
           <div className="gsc-modal-body">
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-              <div style={{ fontSize: 14, fontWeight: 700 }}>Announce standings on refresh</div>
+              <div style={{ fontSize: 14, fontWeight: 700 }}>Announce Standings On / Off</div>
               <button
                 className="gsc-btn"
                 style={{ padding: "6px 14px", minHeight: "auto", background: announceEnabled ? "#1B4332" : "transparent", color: announceEnabled ? "#F3EFE0" : "#1B4332", border: "1.5px solid #1B4332" }}
