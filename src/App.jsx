@@ -6010,7 +6010,7 @@ export default function GolfScorecard() {
       //
       // Also compute and save who actually won, right now, using this
       // app's own real, format-specific winner logic - the same logic
-      // that's already correct for every one of the 15 game formats
+      // that's already correct for every one of the 18 game formats
       // (team games, points-based games, stroke play, all of it). Saving
       // the answer here means nothing downstream (including any future
       // server-side stats calculation) ever needs to re-derive "who won"
@@ -9871,7 +9871,7 @@ function computeMatchPlayResult(round, computed) {
                 RipScore is the golf app built for every group you play with.
                 <div style={{ margin: "8px 0 0" }}>
                   <div style={{ marginBottom: 4 }}>{"\u{1F465}"} Set Up Your Group Once</div>
-                  <div style={{ marginBottom: 4 }}>{"\u26F3"} 15 Game Formats + Side Games, for Every Kind of Day</div>
+                  <div style={{ marginBottom: 4 }}>{"\u26F3"} 18 Game Formats + Side Games, for Every Kind of Day</div>
                   <div style={{ marginBottom: 4 }}>{"\u{1F4CD}"} Live Distance to the Green GPS</div>
                   <div style={{ marginBottom: 4 }}>{"\u{1F3CC}\u{FE0F}"} Optional Handicapping, Done Right</div>
                   <div style={{ marginBottom: 4 }}>{"\u{1F4CA}"} A Leaderboard Just for Your Group</div>
@@ -10005,46 +10005,42 @@ function computeMatchPlayResult(round, computed) {
             </div>
             <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 10 }}>Quick Pick Game List</div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
-              {Object.keys(GAME_TILE_STYLE).map((key) => {
-                const { emoji, color } = GAME_TILE_STYLE[key];
-                return (
-                  <div
-                    key={key}
-                    onClick={() => (GAMES[key].tournamentOnly ? startTournamentCreateFlow(key) : startNewRound(key))}
-                    style={{ position: "relative", background: color, borderRadius: 12, padding: "16px 6px 12px", textAlign: "center", cursor: "pointer", minHeight: 108, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}
-                  >
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setQuickInfoFor(key); }}
-                      title="Quick info"
-                      style={{ position: "absolute", top: 4, right: 4, width: 20, height: 20, borderRadius: "50%", background: "rgba(255,255,255,0.25)", border: "none", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+              {(() => {
+                const baseKeys = Object.keys(GAME_TILE_STYLE);
+                const insertBeforeIdx = baseKeys.indexOf("avoscramble");
+                // Regular tiles in their usual order, with each dual-purpose
+                // game's tournament-variant tile inserted right before the
+                // tournament-only games begin - so the whole run of colors
+                // (regular tiles through tournament tiles) cycles and
+                // alternates naturally, with no manual color override needed.
+                const entries = [
+                  ...baseKeys.slice(0, insertBeforeIdx).map((key) => ({ key, isTournament: false })),
+                  ...DUAL_TOURNAMENT_TILE_KEYS.map((key) => ({ key, isTournament: true })),
+                  ...baseKeys.slice(insertBeforeIdx).map((key) => ({ key, isTournament: false })),
+                ];
+                const colors = ["#1B4332", "#3A7352", "#B08D57", "#2A5B42", "#8A6A2F", "#719A82"];
+                return entries.map((entry, i) => {
+                  const { emoji } = GAME_TILE_STYLE[entry.key];
+                  const color = colors[i % colors.length];
+                  return (
+                    <div
+                      key={entry.isTournament ? `${entry.key}-tournament` : entry.key}
+                      onClick={() => (entry.isTournament || GAMES[entry.key].tournamentOnly ? startTournamentCreateFlow(entry.key) : startNewRound(entry.key))}
+                      style={{ position: "relative", background: color, borderRadius: 12, padding: "16px 6px 12px", textAlign: "center", cursor: "pointer", minHeight: 108, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}
                     >
-                      i
-                    </button>
-                    <div style={{ fontSize: 26, marginBottom: 6 }}>{emoji}</div>
-                    <div style={{ fontSize: 11.5, fontWeight: 700, color: "#fff", lineHeight: 1.3 }}>{GAMES[key].name}</div>
-                  </div>
-                );
-              })}
-              {DUAL_TOURNAMENT_TILE_KEYS.map((key) => {
-                const { emoji, color } = GAME_TILE_STYLE[key];
-                return (
-                  <div
-                    key={`${key}-tournament`}
-                    onClick={() => startTournamentCreateFlow(key)}
-                    style={{ position: "relative", background: color, borderRadius: 12, padding: "16px 6px 12px", textAlign: "center", cursor: "pointer", minHeight: 108, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}
-                  >
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setQuickInfoFor(key); }}
-                      title="Quick info"
-                      style={{ position: "absolute", top: 4, right: 4, width: 20, height: 20, borderRadius: "50%", background: "rgba(255,255,255,0.25)", border: "none", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
-                    >
-                      i
-                    </button>
-                    <div style={{ fontSize: 26, marginBottom: 6 }}>{emoji}</div>
-                    <div style={{ fontSize: 11.5, fontWeight: 700, color: "#fff", lineHeight: 1.3 }}>{GAMES[key].tournamentName}</div>
-                  </div>
-                );
-              })}
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setQuickInfoFor(entry.key); }}
+                        title="Quick info"
+                        style={{ position: "absolute", top: 4, right: 4, width: 20, height: 20, borderRadius: "50%", background: "rgba(255,255,255,0.25)", border: "none", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+                      >
+                        i
+                      </button>
+                      <div style={{ fontSize: 26, marginBottom: 6 }}>{emoji}</div>
+                      <div style={{ fontSize: 11.5, fontWeight: 700, color: "#fff", lineHeight: 1.3 }}>{entry.isTournament ? GAMES[entry.key].tournamentName : GAMES[entry.key].name}</div>
+                    </div>
+                  );
+                });
+              })()}
             </div>
           </div>
 
@@ -11488,7 +11484,7 @@ function computeMatchPlayResult(round, computed) {
                 Save your regular playing partners as a group. Next time you play, fill in everyone's name, avatar, and handicap with one tap - no retyping names round after round.
               </p>
 
-              <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>{"\u26F3"} 15 Game Formats + Side Games, for Every Kind of Day</p>
+              <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>{"\u26F3"} 18 Game Formats + Side Games, for Every Kind of Day</p>
               <p style={{ margin: "0 0 14px" }}>
                 Skins, Wolf, Vegas, Stableford, Bingo Bango Bongo, Best Ball, Round Robin, and more - for individuals, teams, and full multi-foursome tournaments. Pick a format, and RipScore keeps score, tracks mulligans, and shows exactly who's winning, hole by hole.
               </p>
@@ -11559,6 +11555,14 @@ function computeMatchPlayResult(round, computed) {
                   <p style={{ margin: 0 }}>{WHY_PLAY[key]}</p>
                 </div>
               ))}
+              <div style={{ marginBottom: 20 }}>
+                <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px", fontSize: 14 }}>
+                  {"\u{1F93A}"} Match Play Four-Ball Tournament
+                </p>
+                <p style={{ margin: 0 }}>
+                  Running Four-Ball as a tournament captures how the format is actually played at events like the Ryder Cup - several pairs going head-to-head at once, all under one shared event, with no bracket or advancement to worry about. Every match is entirely its own contest, decided hole by hole, so a lopsided match at one table never affects anyone else's - and with everyone's status visible in one place, it's easy to see how the whole group is doing without having to track down each pair individually. It's a natural fit for a club outing or group event where several pairs want real head-to-head competition happening side by side.
+                </p>
+              </div>
               <div style={{ marginBottom: 20 }}>
                 <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px", fontSize: 14 }}>
                   {"\u26F3"} Nassau
