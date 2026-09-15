@@ -2140,6 +2140,7 @@ export default function GolfScorecard() {
   const [storageBroken, setStorageBroken] = useState(false);
   const failCountRef = useRef(0);
   const lastLocalEditRef = useRef(0);
+  const currentAnnounceAudioRef = useRef(null);
   // One ref array per manual par-entry grid (Setup, Wizard, Tournament
   // create) - used to auto-advance focus to the next hole's input once a
   // par digit is typed, since real par values are always a single digit
@@ -4339,6 +4340,25 @@ export default function GolfScorecard() {
   });
   const [availableVoices, setAvailableVoices] = useState([]);
   const [voicePickerOpen, setVoicePickerOpen] = useState(false);
+  const [ttsProvider, setTtsProvider] = useState(() => {
+    try {
+      return window.localStorage.getItem("ripscore_tts_provider") || "builtin";
+    } catch (e) {
+      return "builtin";
+    }
+  });
+  const [elevenLabsVoiceId, setElevenLabsVoiceId] = useState(() => {
+    try {
+      return window.localStorage.getItem("ripscore_elevenlabs_voice") || "";
+    } catch (e) {
+      return "";
+    }
+  });
+  const [elevenLabsVoices, setElevenLabsVoices] = useState(null); // null = not yet loaded
+  const [elevenLabsVoicesLoading, setElevenLabsVoicesLoading] = useState(false);
+  const [elevenLabsVoicesErr, setElevenLabsVoicesErr] = useState("");
+  const [elevenLabsBusy, setElevenLabsBusy] = useState(false);
+  const [elevenLabsAnnounceErr, setElevenLabsAnnounceErr] = useState("");
   const [deleteHistoryBusy, setDeleteHistoryBusy] = useState(false);
   const [deleteHistoryErr, setDeleteHistoryErr] = useState("");
 
@@ -4928,6 +4948,13 @@ export default function GolfScorecard() {
         window.localStorage.setItem("ripscore_announce_enabled", next ? "true" : "false");
       } catch (e) {}
     }
+    function chooseProvider(p) {
+      setTtsProvider(p);
+      try {
+        window.localStorage.setItem("ripscore_tts_provider", p);
+      } catch (e) {}
+      if (p === "elevenlabs") loadElevenLabsVoices();
+    }
     function chooseVoice(uri) {
       setAnnounceVoiceUri(uri);
       try {
@@ -4940,6 +4967,22 @@ export default function GolfScorecard() {
       const utterance = new SpeechSynthesisUtterance("Sarah in 1st with 8 points.");
       utterance.voice = voice;
       window.speechSynthesis.speak(utterance);
+    }
+    function chooseElevenLabsVoice(voiceId) {
+      setElevenLabsVoiceId(voiceId);
+      try {
+        window.localStorage.setItem("ripscore_elevenlabs_voice", voiceId);
+      } catch (e) {}
+    }
+    function previewElevenLabsVoice(voice) {
+      if (!voice.previewUrl || typeof window === "undefined") return;
+      if (currentAnnounceAudioRef.current) {
+        currentAnnounceAudioRef.current.pause();
+        currentAnnounceAudioRef.current = null;
+      }
+      const audio = new Audio(voice.previewUrl);
+      currentAnnounceAudioRef.current = audio;
+      audio.play().catch(() => {});
     }
     return (
       <div className="gsc-modal-backdrop" onClick={() => setVoicePickerOpen(false)}>
@@ -4958,41 +5001,110 @@ export default function GolfScorecard() {
             </div>
             {announceEnabled && (
               <>
-                <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 8 }}>
-                  Choose a voice - tap one to hear a quick preview.
+                <div className="gsc-label" style={{ marginBottom: 6 }}>Voice source</div>
+                <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+                  <button
+                    className="gsc-btn"
+                    style={{ flex: 1, background: ttsProvider === "builtin" ? "#A42E2D" : "transparent", color: ttsProvider === "builtin" ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
+                    onClick={() => chooseProvider("builtin")}
+                  >
+                    Built-in (Free)
+                  </button>
+                  <button
+                    className="gsc-btn"
+                    style={{ flex: 1, background: ttsProvider === "elevenlabs" ? "#A42E2D" : "transparent", color: ttsProvider === "elevenlabs" ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
+                    onClick={() => chooseProvider("elevenlabs")}
+                  >
+                    ElevenLabs
+                  </button>
                 </div>
-                {availableVoices.length === 0 ? (
-                  <div style={{ fontSize: 13, color: "#8a8a80" }}>No voices found on this device yet.</div>
-                ) : (
-                  <div style={{ maxHeight: 280, overflowY: "auto" }}>
-                    {availableVoices.map((v) => (
-                      <div
-                        key={v.voiceURI}
-                        onClick={() => {
-                          chooseVoice(v.voiceURI);
-                          previewVoice(v);
-                        }}
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                          padding: "10px 8px",
-                          borderRadius: 8,
-                          marginBottom: 4,
-                          cursor: "pointer",
-                          background: announceVoiceUri === v.voiceURI ? "#EBF0EC" : "transparent",
-                          border: announceVoiceUri === v.voiceURI ? "1.5px solid #1B4332" : "1.5px solid transparent",
-                        }}
-                      >
-                        <div style={{ fontSize: 13, fontWeight: announceVoiceUri === v.voiceURI ? 700 : 500 }}>{v.name}</div>
-                        {announceVoiceUri === v.voiceURI && <span style={{ color: "#1B4332", fontWeight: 700 }}>{"\u2713"}</span>}
+
+                {ttsProvider === "builtin" ? (
+                  <>
+                    <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 8 }}>
+                      Choose a voice - tap one to hear a quick preview.
+                    </div>
+                    {availableVoices.length === 0 ? (
+                      <div style={{ fontSize: 13, color: "#8a8a80" }}>No voices found on this device yet.</div>
+                    ) : (
+                      <div style={{ maxHeight: 280, overflowY: "auto" }}>
+                        {availableVoices.map((v) => (
+                          <div
+                            key={v.voiceURI}
+                            onClick={() => {
+                              chooseVoice(v.voiceURI);
+                              previewVoice(v);
+                            }}
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "center",
+                              padding: "10px 8px",
+                              borderRadius: 8,
+                              marginBottom: 4,
+                              cursor: "pointer",
+                              background: announceVoiceUri === v.voiceURI ? "#EBF0EC" : "transparent",
+                              border: announceVoiceUri === v.voiceURI ? "1.5px solid #1B4332" : "1.5px solid transparent",
+                            }}
+                          >
+                            <div style={{ fontSize: 13, fontWeight: announceVoiceUri === v.voiceURI ? 700 : 500 }}>{v.name}</div>
+                            {announceVoiceUri === v.voiceURI && <span style={{ color: "#1B4332", fontWeight: 700 }}>{"\u2713"}</span>}
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
+                    )}
+                    <div style={{ fontSize: 11, color: "#8a8a80", marginTop: 10 }}>
+                      These are your device's built-in voices - the exact options vary by phone.
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 8 }}>
+                      Choose a voice - tap one to hear a quick preview.
+                    </div>
+                    {elevenLabsVoicesErr && <div style={{ color: "#A42E2D", fontSize: 12, marginBottom: 8 }}>{elevenLabsVoicesErr}</div>}
+                    {elevenLabsAnnounceErr && <div style={{ color: "#A42E2D", fontSize: 12, marginBottom: 8 }}>{elevenLabsAnnounceErr}</div>}
+                    {elevenLabsVoicesLoading ? (
+                      <div style={{ fontSize: 13, color: "#8a8a80" }}>Loading voices...</div>
+                    ) : !elevenLabsVoices || elevenLabsVoices.length === 0 ? (
+                      <div style={{ fontSize: 13, color: "#8a8a80" }}>No voices found on this account.</div>
+                    ) : (
+                      <div style={{ maxHeight: 280, overflowY: "auto" }}>
+                        {elevenLabsVoices.map((v) => (
+                          <div
+                            key={v.voiceId}
+                            onClick={() => {
+                              chooseElevenLabsVoice(v.voiceId);
+                              previewElevenLabsVoice(v);
+                            }}
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "center",
+                              padding: "10px 8px",
+                              borderRadius: 8,
+                              marginBottom: 4,
+                              cursor: "pointer",
+                              background: elevenLabsVoiceId === v.voiceId ? "#EBF0EC" : "transparent",
+                              border: elevenLabsVoiceId === v.voiceId ? "1.5px solid #1B4332" : "1.5px solid transparent",
+                            }}
+                          >
+                            <div>
+                              <div style={{ fontSize: 13, fontWeight: elevenLabsVoiceId === v.voiceId ? 700 : 500 }}>{v.name}</div>
+                              {(v.accent || v.gender) && (
+                                <div style={{ fontSize: 11, color: "#8a8a80" }}>{[v.gender, v.accent].filter(Boolean).join(" - ")}</div>
+                              )}
+                            </div>
+                            {elevenLabsVoiceId === v.voiceId && <span style={{ color: "#1B4332", fontWeight: 700 }}>{"\u2713"}</span>}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <div style={{ fontSize: 11, color: "#8a8a80", marginTop: 10 }}>
+                      Higher-quality, paid voices - a small cost applies each time standings are announced.
+                    </div>
+                  </>
                 )}
-                <div style={{ fontSize: 11, color: "#8a8a80", marginTop: 10 }}>
-                  These are your device's built-in voices - the exact options vary by phone.
-                </div>
               </>
             )}
           </div>
@@ -9128,15 +9240,78 @@ function computeIndividualNassauResults(round, computed) {
     return `${intro} ${lines.join(". ")}.`;
   }
 
-  // Speaks the current standings aloud using the browser's built-in
-  // text-to-speech. Cancels anything already queued or playing first, so
-  // tapping the button again while a prior announcement is still going
-  // replaces it rather than overlapping or stacking up behind it.
-  function announceStandings() {
+  // Speaks the current standings aloud - either the browser's built-in
+  // text-to-speech, or ElevenLabs via the backend proxy, depending on
+  // which provider is selected. Cancels/stops anything already playing
+  // first, so tapping the button again while a prior announcement is
+  // still going replaces it rather than overlapping or stacking up
+  // behind it.
+  // Fetches the ElevenLabs voices actually available on this account via
+  // the backend proxy - never called with the real API key client-side.
+  // Only fetches once per session; the voice list doesn't change often
+  // enough to justify re-fetching every time the settings modal opens.
+  async function loadElevenLabsVoices() {
+    if (elevenLabsVoices !== null || elevenLabsVoicesLoading) return;
+    setElevenLabsVoicesLoading(true);
+    setElevenLabsVoicesErr("");
+    try {
+      const res = await fetch(`${API_BASE}/api/tts-voices`);
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || `Request failed (${res.status})`);
+      }
+      const data = await res.json();
+      setElevenLabsVoices(data.voices || []);
+    } catch (e) {
+      setElevenLabsVoicesErr(`Couldn't load voices (${e.message}).`);
+      setElevenLabsVoices([]);
+    } finally {
+      setElevenLabsVoicesLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    if (voicePickerOpen && ttsProvider === "elevenlabs") loadElevenLabsVoices();
+  }, [voicePickerOpen, ttsProvider]);
+
+  async function announceStandings() {
     if (!announceEnabled) return;
-    if (typeof window === "undefined" || !window.speechSynthesis) return;
     const text = buildStandingsNarration(round, computed);
     if (!text) return;
+
+    if (ttsProvider === "elevenlabs") {
+      if (!elevenLabsVoiceId) return;
+      setElevenLabsAnnounceErr("");
+      if (currentAnnounceAudioRef.current) {
+        currentAnnounceAudioRef.current.pause();
+        currentAnnounceAudioRef.current = null;
+      }
+      setElevenLabsBusy(true);
+      try {
+        const res = await fetch(`${API_BASE}/api/tts`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text, voiceId: elevenLabsVoiceId }),
+        });
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          throw new Error(body.error || `Request failed (${res.status})`);
+        }
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const audio = new Audio(url);
+        currentAnnounceAudioRef.current = audio;
+        audio.onended = () => URL.revokeObjectURL(url);
+        await audio.play();
+      } catch (e) {
+        setElevenLabsAnnounceErr(`Couldn't play that voice (${e.message}). Try again, or switch to a built-in voice.`);
+      } finally {
+        setElevenLabsBusy(false);
+      }
+      return;
+    }
+
+    if (typeof window === "undefined" || !window.speechSynthesis) return;
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     const selectedVoice = availableVoices.find((v) => v.voiceURI === announceVoiceUri);
@@ -16477,11 +16652,12 @@ function computeIndividualNassauResults(round, computed) {
             <button
               className="gsc-btn gsc-btn-outline"
               style={{ width: "100%", marginTop: 10 }}
-              disabled={!announceEnabled}
+              disabled={!announceEnabled || elevenLabsBusy}
               onClick={announceStandings}
             >
-              {"\u{1F4E2}"} Announce Scores
+              {elevenLabsBusy ? "Generating..." : `${"\u{1F4E2}"} Announce Scores`}
             </button>
+            {elevenLabsAnnounceErr && <div style={{ color: "#A42E2D", fontSize: 12, marginTop: 6 }}>{elevenLabsAnnounceErr}</div>}
             <div style={{ marginTop: 10, fontSize: 13 }}>
               <b>Prize:</b> {round.cfg.prize}
               {round.cfg.venmo && (
