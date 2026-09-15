@@ -801,7 +801,7 @@ const VIBE_GAME_MAP = {
     // instead of two - team, individual, or Wolf's own team/lone-wolf
     // mix, decided per hole rather than up front.
     maxStrategy: {
-      team: ["teamstrokes", "ponto", "beachside", "teamputts"],
+      team: ["teamstrokes", "ponto", "beachside", "matchplayfourball"],
       individual: ["swami", "dstreet", "individualputts"],
       mixed: "moonlightwolf",
     },
