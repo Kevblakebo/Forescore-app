@@ -657,6 +657,7 @@ const GAMES = {
   },
   matchplay: {
     name: "Match Play",
+    tournamentName: "Match Play Tournament",
     tag: "Head-to-head, 1 vs 1 - exactly 2 players",
     desc: "The classic hole-by-hole format - two players go head-to-head, winning, losing, or halving each hole based on net score. Whoever's ahead by more holes than remain wins the match early; otherwise it's decided after 18. Overall and Nassau scoring methods available.",
     rotates: false,
@@ -687,6 +688,7 @@ const GAMES = {
   },
   matchplayfourball: {
     name: "Match Play Four-Ball",
+    tournamentName: "Match Play Four-Ball Tournament",
     tag: "Team head-to-head, 2 vs 2 - exactly 4 players",
     desc: "Team match play, better-ball style - two 2-person teams go head-to-head, each hole decided by whichever side's better net score (between its own two players) is lower. Winning, losing, or halving each hole is tracked just like Singles Match Play, including a match that can end before the 18th hole. Overall and Nassau scoring methods available.",
     rotates: false,
@@ -1338,6 +1340,11 @@ const TOURNAMENT_PREFIX = "gsc-tournament:";
 // deliberate and controllable - remember to add any new tournamentOnly
 // game here too, or it won't show up in the Tournament Game Formats list.
 const TOURNAMENT_GAME_KEYS = ["avoscramble", "tourneybb", "tourneygg", "matchplay", "matchplayfourball"];
+// Games playable as both a regular, standalone round AND, separately, as
+// a tournament - unlike the tournament-only games above, one homepage
+// tile can't route to both actions, so these get a second, dedicated
+// tournament tile alongside their existing regular-round one.
+const DUAL_TOURNAMENT_TILE_KEYS = ["matchplay", "matchplayfourball"];
 
 function genCode() {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -5834,6 +5841,7 @@ export default function GolfScorecard() {
       tournament: t,
       strokesRanked: board && board.tournament && board.tournament.id === t.id ? board.strokesRanked : [],
       puttsRanked: board && board.tournament && board.tournament.id === t.id ? board.puttsRanked : [],
+      matchResults: board && board.tournament && board.tournament.id === t.id ? board.matchResults : null,
       hasPutts: GAMES[t.game] ? GAMES[t.game].hasPutts : false,
     });
     if (supabase) {
@@ -6816,7 +6824,7 @@ export default function GolfScorecard() {
     setCourseName(tournament.course || "");
     setCourseMsg("");
     setTournamentErr("");
-    const pointer = { id: tournament.id, name: tournament.name, organizerId: tournament.organizerId ?? null };
+    const pointer = { id: tournament.id, name: tournament.name, game: tournament.game, organizerId: tournament.organizerId ?? null };
     setLastTournament(pointer);
     storageSet(LAST_TOURNAMENT_KEY, JSON.stringify(pointer), false);
     goToScreen("setup");
@@ -7217,7 +7225,11 @@ export default function GolfScorecard() {
     if (isTournament) {
       const reg = await registerFoursomeInTournament(activeTournament.id, code, foursomeName);
       if (!reg.ok) {
-        setTournamentErr(`Your foursome was created and is playable, but couldn't be added to the tournament leaderboard yet (${reg.error}). Try refreshing the leaderboard from your scorecard once you're underway.`);
+        setTournamentErr(
+          MATCH_PLAY_GAMES.includes(activeTournament.game)
+            ? `Your match was created and is playable, but couldn't be added to the tournament board yet (${reg.error}). Try refreshing the board from your scorecard once you're underway.`
+            : `Your foursome was created and is playable, but couldn't be added to the tournament leaderboard yet (${reg.error}). Try refreshing the leaderboard from your scorecard once you're underway.`
+        );
       }
     }
     setBusy(false);
@@ -7434,7 +7446,7 @@ export default function GolfScorecard() {
       setTournamentErr(`All ${foursomeEntries.length} foursomes were saved, but the tournament record itself failed to save (${w.error}). Try again.`);
       return;
     }
-    const pointer = { id: tournament.id, name: tournament.name, organizerId: tournament.organizerId ?? null };
+    const pointer = { id: tournament.id, name: tournament.name, game: tournament.game, organizerId: tournament.organizerId ?? null };
     setLastTournament(pointer);
     storageSet(LAST_TOURNAMENT_KEY, JSON.stringify(pointer), false);
     setTournamentCreatedSnapshot({ tournament, foursomeCount: foursomeEntries.length });
@@ -9940,7 +9952,7 @@ function computeMatchPlayResult(round, computed) {
                   disabled={tournamentBusy}
                   onClick={() => addFoursomeToTournamentId(lastTournament.id)}
                 >
-                  Add a foursome
+                  {lastTournament.game && MATCH_PLAY_GAMES.includes(lastTournament.game) ? "Add a match" : "Add a foursome"}
                 </button>
               )}
             </div>
@@ -10011,6 +10023,26 @@ function computeMatchPlayResult(round, computed) {
                     </button>
                     <div style={{ fontSize: 26, marginBottom: 6 }}>{emoji}</div>
                     <div style={{ fontSize: 11.5, fontWeight: 700, color: "#fff", lineHeight: 1.3 }}>{GAMES[key].name}</div>
+                  </div>
+                );
+              })}
+              {DUAL_TOURNAMENT_TILE_KEYS.map((key) => {
+                const { emoji, color } = GAME_TILE_STYLE[key];
+                return (
+                  <div
+                    key={`${key}-tournament`}
+                    onClick={() => startTournamentCreateFlow(key)}
+                    style={{ position: "relative", background: color, borderRadius: 12, padding: "16px 6px 12px", textAlign: "center", cursor: "pointer", minHeight: 108, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}
+                  >
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setQuickInfoFor(key); }}
+                      title="Quick info"
+                      style={{ position: "absolute", top: 4, right: 4, width: 20, height: 20, borderRadius: "50%", background: "rgba(255,255,255,0.25)", border: "none", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+                    >
+                      i
+                    </button>
+                    <div style={{ fontSize: 26, marginBottom: 6 }}>{emoji}</div>
+                    <div style={{ fontSize: 11.5, fontWeight: 700, color: "#fff", lineHeight: 1.3 }}>{GAMES[key].tournamentName}</div>
                   </div>
                 );
               })}
@@ -10123,7 +10155,7 @@ function computeMatchPlayResult(round, computed) {
                   disabled={tournamentBusy}
                   onClick={() => addFoursomeToTournamentId(lastTournament.id)}
                 >
-                  Add a foursome
+                  {lastTournament.game && MATCH_PLAY_GAMES.includes(lastTournament.game) ? "Add a match" : "Add a foursome"}
                 </button>
               )}
             </div>
@@ -10277,7 +10309,7 @@ function computeMatchPlayResult(round, computed) {
                         {GAME_TILE_STYLE[key].emoji}
                       </span>
                     )}
-                    {g.name}
+                    {g.tournamentName || g.name}
                   </div>
                   <div className="gsc-tag">{g.tag}</div>
                   <div className="gsc-no-select" style={{ fontSize: 13, marginTop: 8, color: "#4b4b45" }}>{g.desc}</div>
@@ -13614,7 +13646,7 @@ function computeMatchPlayResult(round, computed) {
         <style>{STYLE}</style>
         <Header
           title={activeTournament ? activeTournament.name : g.name}
-          sub={activeTournament ? `${g.name} - Foursome setup` : isTeamGame ? "Round setup (2 vs 2)" : "Round setup"}
+          sub={activeTournament ? (MATCH_PLAY_GAMES.includes(activeTournament.game) ? `${g.name} - Match setup` : `${g.name} - Foursome setup`) : isTeamGame ? "Round setup (2 vs 2)" : "Round setup"}
           onBack={() => {
             if (activeTournament) setActiveTournament(null);
             goBack("roundsTab");
@@ -13639,15 +13671,17 @@ function computeMatchPlayResult(round, computed) {
                 <br />
                 Prize: {activeTournament.cfg.prize}
                 <br />
-                Ranked by: strokes and putts (tracked separately, lowest wins each) - {GAMES[activeTournament.game].bestBall ? "best-ball (lowest single score) per hole" : "combined (all 4 players added) per hole"}
+                {MATCH_PLAY_GAMES.includes(activeTournament.game)
+                  ? "Each match is its own, independent contest, decided hole by hole."
+                  : `Ranked by: strokes and putts (tracked separately, lowest wins each) - ${GAMES[activeTournament.game].bestBall ? "best-ball (lowest single score) per hole" : "combined (all 4 players added) per hole"}`}
               </div>
               <div style={{ fontSize: 12, color: "#8a8a80", marginTop: 8 }}>
-                Every foursome in this tournament plays under these same settings so the leaderboard stays fair. Tournament code: <span className="gsc-mono" style={{ fontWeight: 700 }}>{activeTournament.id}</span>
+                {MATCH_PLAY_GAMES.includes(activeTournament.game) ? "Every match" : "Every foursome"} in this tournament plays under these same settings so the leaderboard stays fair. Tournament code: <span className="gsc-mono" style={{ fontWeight: 700 }}>{activeTournament.id}</span>
               </div>
             </div>
           )}
           <div className="gsc-card">
-            <div className="gsc-label">{activeTournament ? "Foursome name (Optional)" : "Group name (Optional)"}</div>
+            <div className="gsc-label">{activeTournament ? (MATCH_PLAY_GAMES.includes(activeTournament.game) ? "Match name (Optional)" : "Foursome name (Optional)") : "Group name (Optional)"}</div>
             {!activeTournament && session && (
               <button className="gsc-link" style={{ fontSize: 13, fontWeight: 700, marginBottom: 8, display: "inline-block" }} onClick={() => openGroupFillPicker("playersAndMeta")}>
                 {"\u{1F465}"} Select a group to fill in name, avatar & players
@@ -13663,7 +13697,7 @@ function computeMatchPlayResult(round, computed) {
             )}
             <input
               className="gsc-input"
-              placeholder={activeTournament ? "e.g. Foursome 1" : g.name + " at ..."}
+              placeholder={activeTournament ? (MATCH_PLAY_GAMES.includes(activeTournament.game) ? "e.g. Match 1" : "e.g. Foursome 1") : g.name + " at ..."}
               value={roundName}
               onChange={(e) => setRoundName(e.target.value)}
             />
@@ -14410,7 +14444,7 @@ function computeMatchPlayResult(round, computed) {
           )}
           {!storageBroken && storageWarning && <div style={{ color: "#B08D57", fontSize: 13, marginBottom: 10 }}>{storageWarning}</div>}
           <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", padding: 14, fontSize: 16 }} disabled={busy} onClick={finishSetup}>
-            {busy ? "Saving..." : activeTournament ? "Add my foursome & start playing" : "Create Round & Generate Share Code"}
+            {busy ? "Saving..." : activeTournament ? (MATCH_PLAY_GAMES.includes(activeTournament.game) ? "Add my match & start playing" : "Add my foursome & start playing") : "Create Round & Generate Share Code"}
           </button>
         </div>
         {RulesModal()}
@@ -14425,10 +14459,10 @@ function computeMatchPlayResult(round, computed) {
     return (
       <div className="gsc">
         <style>{STYLE}</style>
-        <Header title={tg.name} sub="Tournament setup - every foursome plays this format" onBack={() => goBack("roundsTab")} />
+        <Header title={tg.tournamentName || tg.name} sub={MATCH_PLAY_GAMES.includes(tournamentGameKey) ? "Tournament setup - every match plays this format" : "Tournament setup - every foursome plays this format"} onBack={() => goBack("roundsTab")} />
         <div className="gsc-body">
           <button className="gsc-link" style={{ marginBottom: 12, fontSize: 13 }} onClick={() => openRules(tournamentGameKey)}>
-            View full rules for {tg.name}
+            View full rules for {tg.tournamentName || tg.name}
           </button>
           <div className="gsc-card">
             <div className="gsc-label">Tournament name</div>
@@ -14808,7 +14842,7 @@ function computeMatchPlayResult(round, computed) {
           </div>
 
           <div className="gsc-card">
-            <div className="gsc-label">Number of foursomes</div>
+            <div className="gsc-label">{MATCH_PLAY_GAMES.includes(tournamentGameKey) ? "Number of matches" : "Number of foursomes"}</div>
             <input
               className="gsc-input"
               type="number"
@@ -14824,13 +14858,17 @@ function computeMatchPlayResult(round, computed) {
               }}
             />
             <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 8 }}>
-              You'll add each foursome's name and 4 players next. More foursomes can always join later with the tournament code.
+              {tournamentGameKey === "matchplay"
+                ? "You'll add each match's name and its 2 players next. More matches can always join later with the tournament code."
+                : tournamentGameKey === "matchplayfourball"
+                ? "You'll add each match's name and its 4 players (2 vs 2) next. More matches can always join later with the tournament code."
+                : "You'll add each foursome's name and 4 players next. More foursomes can always join later with the tournament code."}
             </div>
           </div>
 
           {tournamentErr && <div style={{ color: "#A42E2D", marginBottom: 10 }}>{tournamentErr}</div>}
           <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", padding: 14, fontSize: 16 }} onClick={proceedToFoursomeRoster}>
-            Next: add foursomes
+            {MATCH_PLAY_GAMES.includes(tournamentGameKey) ? "Next: add matches" : "Next: add foursomes"}
           </button>
         </div>
         {RulesModal()}
@@ -14854,7 +14892,7 @@ function computeMatchPlayResult(round, computed) {
           </div>
           {tournamentFoursomesDraft.map((f, fi) => (
             <div key={fi} className="gsc-card">
-              <div className="gsc-label">Foursome name</div>
+              <div className="gsc-label">{MATCH_PLAY_GAMES.includes(tournamentGameKey) ? "Match name" : "Foursome name"}</div>
               <input className="gsc-input" style={{ marginBottom: 12 }} value={f.name} onChange={(e) => updateFoursomeDraftName(fi, e.target.value)} />
               <div className="gsc-label" style={{ marginBottom: 6 }}>Players Names and Handicaps (Optional)</div>
               {session && (
@@ -14998,9 +15036,11 @@ function computeMatchPlayResult(round, computed) {
                 );
               })}
               <div style={{ marginTop: 10 }}>
-                <div className="gsc-label" style={{ marginBottom: 6 }}>Who's this foursome's captain?</div>
+                <div className="gsc-label" style={{ marginBottom: 6 }}>{MATCH_PLAY_GAMES.includes(tournamentGameKey) ? "Who's this match's captain?" : "Who's this foursome's captain?"}</div>
                 <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 8 }}>
-                  Only the captain can enter or change scores for this foursome - everyone else can just view. Defaults to Player A if not set.
+                  {MATCH_PLAY_GAMES.includes(tournamentGameKey)
+                    ? "Only the captain can enter or change scores for this match - everyone else can just view. Defaults to Player A if not set."
+                    : "Only the captain can enter or change scores for this foursome - everyone else can just view. Defaults to Player A if not set."}
                 </div>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                   {f.players.map((p, pi) => (
@@ -15026,7 +15066,11 @@ function computeMatchPlayResult(round, computed) {
           ))}
           {tournamentErr && <div style={{ color: "#A42E2D", marginBottom: 10 }}>{tournamentErr}</div>}
           <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", padding: 14, fontSize: 16 }} disabled={tournamentBusy} onClick={finishTournamentCreate}>
-            {tournamentBusy ? "Creating..." : `Create tournament with ${tournamentFoursomesDraft.length} foursome${tournamentFoursomesDraft.length === 1 ? "" : "s"}`}
+            {tournamentBusy
+              ? "Creating..."
+              : MATCH_PLAY_GAMES.includes(tournamentGameKey)
+              ? `Create tournament with ${tournamentFoursomesDraft.length} match${tournamentFoursomesDraft.length === 1 ? "" : "es"}`
+              : `Create tournament with ${tournamentFoursomesDraft.length} foursome${tournamentFoursomesDraft.length === 1 ? "" : "s"}`}
           </button>
         </div>
         {GroupFillModal()}
@@ -15089,7 +15133,7 @@ function computeMatchPlayResult(round, computed) {
         <style>{STYLE}</style>
         <Header
           title={t ? t.name : "Tournament Leaderboard"}
-          sub={t ? (MATCH_PLAY_GAMES.includes(t.game) ? `${GAMES[t.game].name} - each match's own result` : `${GAMES[t.game].name} - strokes and putts ranked separately`) : ""}
+          sub={t ? (MATCH_PLAY_GAMES.includes(t.game) ? `${GAMES[t.game].tournamentName || GAMES[t.game].name} - each match's own result` : `${GAMES[t.game].name} - strokes and putts ranked separately`) : ""}
           onBack={() => setScreen("home")}
           backExtra={
             <button
@@ -15151,7 +15195,7 @@ function computeMatchPlayResult(round, computed) {
             <div className="gsc-card" style={{ textAlign: "center" }}>
               <div className="gsc-label" style={{ marginBottom: 6 }}>Tournament code</div>
               <div className="gsc-code" style={{ background: "#1B4332", color: "#F3EFE0", fontSize: 18, padding: "8px 16px" }}>{t.id}</div>
-              <div style={{ fontSize: 12, color: "#8a8a80", marginTop: 8 }}>Share this so more foursomes can join</div>
+              <div style={{ fontSize: 12, color: "#8a8a80", marginTop: 8 }}>{t && MATCH_PLAY_GAMES.includes(t.game) ? "Share this so more matches can join" : "Share this so more foursomes can join"}</div>
             </div>
           )}
           {boardErr && <div style={{ color: "#A42E2D", marginBottom: 10 }}>{boardErr}</div>}
@@ -15870,6 +15914,7 @@ function computeMatchPlayResult(round, computed) {
 
   if (screen === "tournamentCreatedCelebration" && tournamentCreatedSnapshot) {
     const { tournament: ct, foursomeCount } = tournamentCreatedSnapshot;
+    const isMatchPlayTournament = MATCH_PLAY_GAMES.includes(ct.game);
     return (
       <div className="gsc">
         <style>{STYLE}</style>
@@ -15879,7 +15924,7 @@ function computeMatchPlayResult(round, computed) {
             <img src={LOGO_DATA_URI} alt="RipScore logo" style={{ width: 66, height: "auto", marginBottom: 10 }} />
             <div className="gsc-display" style={{ fontSize: 24, fontWeight: 700, color: "#F3EFE0" }}>You're All Set!</div>
             <div style={{ fontSize: 13, color: "#F3EFE0", opacity: 0.8, marginTop: 4 }}>
-              {ct.name} - {GAMES[ct.game].name}
+              {ct.name} - {GAMES[ct.game].tournamentName || GAMES[ct.game].name}
             </div>
           </div>
         </div>
@@ -15888,10 +15933,12 @@ function computeMatchPlayResult(round, computed) {
           <div className="gsc-card gsc-winner-card" style={{ textAlign: "center" }}>
             <div style={{ fontSize: 28, marginBottom: 6 }}>&#127943;</div>
             <div style={{ fontWeight: 700, fontSize: 19 }}>
-              {foursomeCount} foursome{foursomeCount === 1 ? "" : "s"} ready to play
+              {isMatchPlayTournament ? `${foursomeCount} match${foursomeCount === 1 ? "" : "es"} ready to play` : `${foursomeCount} foursome${foursomeCount === 1 ? "" : "s"} ready to play`}
             </div>
             <div style={{ fontSize: 13, color: "#6b6b63", marginTop: 6 }}>
-              Share tournament code <span className="gsc-mono" style={{ fontWeight: 700 }}>{ct.id}</span> so more foursomes can join any time.
+              {isMatchPlayTournament
+                ? <>Share tournament code <span className="gsc-mono" style={{ fontWeight: 700 }}>{ct.id}</span> so more matches can join any time.</>
+                : <>Share tournament code <span className="gsc-mono" style={{ fontWeight: 700 }}>{ct.id}</span> so more foursomes can join any time.</>}
             </div>
           </div>
 
@@ -15904,10 +15951,11 @@ function computeMatchPlayResult(round, computed) {
   }
 
   if (screen === "tournamentFinishCelebration" && tournamentFinishSnapshot) {
-    const { tournament: ft, strokesRanked, puttsRanked, hasPutts } = tournamentFinishSnapshot;
+    const { tournament: ft, strokesRanked, puttsRanked, matchResults, hasPutts } = tournamentFinishSnapshot;
     const strokesWinner = strokesRanked.find((r) => !r.error);
     const puttsWinner = hasPutts ? puttsRanked.find((r) => !r.error) : null;
     const sameWinner = puttsWinner && strokesWinner && puttsWinner.id === strokesWinner.id;
+    const isMatchPlayTournament = MATCH_PLAY_GAMES.includes(ft.game);
 
     return (
       <div className="gsc">
@@ -15918,13 +15966,31 @@ function computeMatchPlayResult(round, computed) {
             <img src={LOGO_DATA_URI} alt="RipScore logo" style={{ width: 66, height: "auto", marginBottom: 10 }} />
             <div className="gsc-display" style={{ fontSize: 24, fontWeight: 700, color: "#F3EFE0" }}>Tournament Complete!</div>
             <div style={{ fontSize: 13, color: "#F3EFE0", opacity: 0.8, marginTop: 4 }}>
-              {ft.name} - {GAMES[ft.game].name} - {ft.date}
+              {ft.name} - {GAMES[ft.game].tournamentName || GAMES[ft.game].name} - {ft.date}
             </div>
           </div>
         </div>
 
         <div className="gsc-body">
-          {strokesWinner ? (
+          {isMatchPlayTournament ? (
+            <div className="gsc-card">
+              <div className="gsc-label" style={{ marginBottom: 10 }}>Final Match Results</div>
+              {(!matchResults || matchResults.length === 0) && <div style={{ fontSize: 13, color: "#6b6b63" }}>No matches were played in this tournament.</div>}
+              {matchResults && matchResults.map((row, idx) => (
+                <div key={row.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: idx === matchResults.length - 1 ? "none" : "1px solid #eee6cf" }}>
+                  <div>
+                    <div style={{ fontWeight: 700 }}>{row.name}</div>
+                    <div style={{ fontSize: 12, color: "#6b6b63" }}>
+                      {row.error || !row.matchResult || row.matchResult.holesPlayed === 0 ? "Not completed" : `${row.matchResult.sideAName} vs ${row.matchResult.sideBName}`}
+                    </div>
+                  </div>
+                  <div className="gsc-mono" style={{ fontWeight: 700, textAlign: "right" }}>
+                    {row.error || !row.matchResult ? "-" : row.matchResult.statusText}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : strokesWinner ? (
             <div className="gsc-card gsc-winner-card" style={{ textAlign: "center" }}>
               <div style={{ fontSize: 28, marginBottom: 6 }}>&#127942;</div>
               <div style={{ fontWeight: 700, fontSize: 12, textTransform: "uppercase", letterSpacing: "0.5px", color: "#B08D57", marginBottom: 6 }}>
@@ -15948,7 +16014,7 @@ function computeMatchPlayResult(round, computed) {
             </div>
           )}
 
-          {strokesRanked.length > 0 && (
+          {!isMatchPlayTournament && strokesRanked.length > 0 && (
             <div className="gsc-card">
               <div className="gsc-label" style={{ marginBottom: 10 }}>Final Standings - Strokes</div>
               {strokesRanked.map((row, idx) => (
@@ -16338,7 +16404,7 @@ function computeMatchPlayResult(round, computed) {
 
             {!canEditThisRound && (
               <div style={{ background: "#F8F1E4", border: "1px solid #B08D57", borderRadius: 10, padding: "10px 12px", marginBottom: 10, fontSize: 12, color: "#8a6a2f", textAlign: "center" }}>
-                {"\u{1F441}\u{FE0F}"} View only - only the tournament organizer or this foursome's captain can enter or change scores.
+                {"\u{1F441}\u{FE0F}"} View only - only the tournament organizer or this {MATCH_PLAY_GAMES.includes(round.game) ? "match's" : "foursome's"} captain can enter or change scores.
               </div>
             )}
             <div style={{ pointerEvents: canEditThisRound ? "auto" : "none", opacity: canEditThisRound ? 1 : 0.6 }}>
@@ -17144,7 +17210,7 @@ function computeMatchPlayResult(round, computed) {
               </>
             ) : (
               <div style={{ fontSize: 12, color: "#8a8a80", textAlign: "center", marginTop: 14 }}>
-                Only the tournament organizer or this foursome's captain can finish this round.
+                Only the tournament organizer or this {MATCH_PLAY_GAMES.includes(round.game) ? "match's" : "foursome's"} captain can finish this round.
               </div>
             )
           )}
