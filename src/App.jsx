@@ -2237,6 +2237,11 @@ export default function GolfScorecard() {
   const [headToHeadLoading, setHeadToHeadLoading] = useState(false);
   const [headToHeadModal, setHeadToHeadModal] = useState(null); // { opponentId, opponentName, opponentAvatar } while open
   const [gameDetailsOpen, setGameDetailsOpen] = useState(false);
+  const [editSettingsOpen, setEditSettingsOpen] = useState(false);
+  const [editSettingsId, setEditSettingsId] = useState(null);
+  const [editSettingsCfg, setEditSettingsCfg] = useState(null);
+  const [editSettingsBusy, setEditSettingsBusy] = useState(false);
+  const [editSettingsErr, setEditSettingsErr] = useState("");
   const [yearlyRecapOpen, setYearlyRecapOpen] = useState(false);
   const [yearlyRecapYear, setYearlyRecapYear] = useState(new Date().getFullYear());
   const [yearlyRecapData, setYearlyRecapData] = useState(null);
@@ -4704,6 +4709,120 @@ export default function GolfScorecard() {
           <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 14 }} onClick={() => setGameDetailsOpen(false)}>
             Close
           </button>
+          {!r.finished && (
+            <button className="gsc-btn gsc-btn-outline" style={{ width: "100%", marginTop: 8 }} onClick={() => openEditSettings(r)}>
+              {"\u270F\uFE0F"} Edit Settings
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  function EditSettingsModal() {
+    if (!editSettingsOpen || !editSettingsCfg) return null;
+    const g = GAMES[round && round.game];
+    const c = editSettingsCfg;
+    const set = (patch) => setEditSettingsCfg({ ...c, ...patch });
+    return (
+      <div className="gsc-modal-backdrop" onClick={() => !editSettingsBusy && setEditSettingsOpen(false)}>
+        <div className="gsc-modal" style={{ maxWidth: 420, maxHeight: "85vh", overflowY: "auto" }} onClick={(e) => e.stopPropagation()}>
+          <div className="gsc-modal-title">Edit Settings</div>
+          <div style={{ fontSize: 12, color: "#8a8a80", marginBottom: 14 }}>
+            Changes apply for the rest of this round - everyone viewing will see the update.
+          </div>
+
+          <div className="gsc-field">
+            <div className="gsc-label">Max score over par per hole</div>
+            <input className="gsc-input" placeholder="No limit" value={c.maxOver ?? ""} onChange={(e) => set({ maxOver: e.target.value })} />
+          </div>
+
+          {g && g.hasPutts && (
+            <>
+              <div className="gsc-field">
+                <div className="gsc-label">Track putts?</div>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button className="gsc-btn" style={{ flex: 1, background: c.trackPutts !== false ? "#A42E2D" : "transparent", color: c.trackPutts !== false ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }} onClick={() => set({ trackPutts: true })}>Yes</button>
+                  <button className="gsc-btn" style={{ flex: 1, background: c.trackPutts === false ? "#A42E2D" : "transparent", color: c.trackPutts === false ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }} onClick={() => set({ trackPutts: false })}>No</button>
+                </div>
+              </div>
+              {c.trackPutts !== false && (
+                <div className="gsc-field">
+                  <div className="gsc-label">Max putts per hole</div>
+                  <input className="gsc-input" placeholder="No limit" value={c.maxPutts ?? ""} onChange={(e) => set({ maxPutts: e.target.value })} />
+                </div>
+              )}
+            </>
+          )}
+
+          <div className="gsc-field">
+            <div className="gsc-label">Mulligans per player</div>
+            <input className="gsc-input" placeholder="None set" value={c.mulliganSegment ?? ""} onChange={(e) => set({ mulliganSegment: e.target.value })} />
+          </div>
+
+          <div className="gsc-field">
+            <div className="gsc-label">Earn a bonus mulligan</div>
+            <input className="gsc-input" placeholder="Not set" value={c.mulliganChallenge ?? ""} onChange={(e) => set({ mulliganChallenge: e.target.value })} />
+          </div>
+
+          {round && (round.game === "dstreet" || round.game === "ponto") && !c.nassau ? (
+            <div className="gsc-field">
+              <div className="gsc-label">Stakes per skin, per player</div>
+              <div style={{ position: "relative" }}>
+                <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#6b6b63", fontSize: 15, pointerEvents: "none" }}>$</span>
+                <input className="gsc-input" style={{ paddingLeft: 24 }} inputMode="decimal" placeholder="0.50" value={c.skinStake ?? ""} onChange={(e) => set({ skinStake: e.target.value })} />
+              </div>
+            </div>
+          ) : !c.nassau ? (
+            <div className="gsc-field">
+              <div className="gsc-label">Prize / stakes</div>
+              <input className="gsc-input" placeholder="Not set" value={c.prize ?? ""} onChange={(e) => set({ prize: e.target.value })} />
+            </div>
+          ) : (
+            <>
+              <div className="gsc-field">
+                <div className="gsc-label">Nassau - Front 9 prize</div>
+                <input className="gsc-input" placeholder="0" value={c.nassauFrontPrize ?? ""} onChange={(e) => set({ nassauFrontPrize: e.target.value })} />
+              </div>
+              <div className="gsc-field">
+                <div className="gsc-label">Nassau - Back 9 prize</div>
+                <input className="gsc-input" placeholder="0" value={c.nassauBackPrize ?? ""} onChange={(e) => set({ nassauBackPrize: e.target.value })} />
+              </div>
+              <div className="gsc-field">
+                <div className="gsc-label">Nassau - Overall 18 prize</div>
+                <input className="gsc-input" placeholder="0" value={c.nassauOverallPrize ?? ""} onChange={(e) => set({ nassauOverallPrize: e.target.value })} />
+              </div>
+            </>
+          )}
+
+          <div className="gsc-field">
+            <div className="gsc-label">Venmo handle for settling up</div>
+            <input className="gsc-input" placeholder="@handle" value={c.venmo ?? ""} onChange={(e) => set({ venmo: e.target.value })} />
+          </div>
+
+          <div className="gsc-field">
+            <div className="gsc-label">Use per-hole handicapping (net scoring)?</div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button className="gsc-btn" style={{ flex: 1, background: c.netScoring ? "#A42E2D" : "transparent", color: c.netScoring ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }} onClick={() => set({ netScoring: true })}>Yes</button>
+              <button className="gsc-btn" style={{ flex: 1, background: !c.netScoring ? "#A42E2D" : "transparent", color: !c.netScoring ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }} onClick={() => set({ netScoring: false })}>No</button>
+            </div>
+          </div>
+
+          {round && ["dstreet", "ponto", "teamputts"].includes(round.game) && (
+            <div className="gsc-field">
+              <div className="gsc-label">Ties carry over to next hole?</div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button className="gsc-btn" style={{ flex: 1, background: c.tiesCarryOver ? "#A42E2D" : "transparent", color: c.tiesCarryOver ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }} onClick={() => set({ tiesCarryOver: true })}>Yes</button>
+                <button className="gsc-btn" style={{ flex: 1, background: !c.tiesCarryOver ? "#A42E2D" : "transparent", color: !c.tiesCarryOver ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }} onClick={() => set({ tiesCarryOver: false })}>No</button>
+              </div>
+            </div>
+          )}
+
+          {editSettingsErr && <div style={{ color: "#A42E2D", fontSize: 13, marginTop: 6 }}>{editSettingsErr}</div>}
+          <div className="gsc-modal-row" style={{ marginTop: 10 }}>
+            <button className="gsc-btn gsc-btn-outline" disabled={editSettingsBusy} onClick={() => setEditSettingsOpen(false)}>Cancel</button>
+            <button className="gsc-btn gsc-btn-primary" disabled={editSettingsBusy} onClick={saveEditSettings}>{editSettingsBusy ? "Saving..." : "Save Changes"}</button>
+          </div>
         </div>
       </div>
     );
@@ -7477,6 +7596,57 @@ export default function GolfScorecard() {
     }
     setEditFoursomeBusy(false);
     setEditFoursomeOpen(false);
+    if (board) loadTournamentBoard(board.tournament.id);
+  }
+
+  // Opens the mid-round settings editor, seeded from whichever round's
+  // Game Details the person was just looking at (works from both the
+  // regular scoring screen's own round and a tournament foursome).
+  function openEditSettings(targetRound) {
+    const r = targetRound || round;
+    if (!r) return;
+    setEditSettingsErr("");
+    setEditSettingsId(r.id);
+    setEditSettingsCfg({ ...r.cfg });
+    setGameDetailsOpen(false);
+    setEditSettingsOpen(true);
+  }
+
+  // Saves mid-round settings changes - same pattern as saveEditFoursome:
+  // fetches the freshest copy of the round right before writing (so this
+  // can't clobber a scoring update someone else made in the meantime),
+  // changes only cfg, and syncs local state afterward if this is the
+  // round currently on screen.
+  async function saveEditSettings() {
+    setEditSettingsErr("");
+    setEditSettingsBusy(true);
+    const res = await storageGet(`golfround:${editSettingsId}`, true);
+    if (!res.ok || !res.value) {
+      setEditSettingsBusy(false);
+      setEditSettingsErr(`Couldn't load this round to edit it (${res.error || "not found"}).`);
+      return;
+    }
+    let r;
+    try {
+      r = JSON.parse(res.value);
+    } catch (e) {
+      setEditSettingsBusy(false);
+      setEditSettingsErr("This round's data looks corrupted.");
+      return;
+    }
+    r.cfg = { ...r.cfg, ...editSettingsCfg };
+    const w = await storageSet(`golfround:${editSettingsId}`, JSON.stringify(r), true);
+    if (!w.ok) {
+      setEditSettingsBusy(false);
+      setEditSettingsErr(`Couldn't save those changes (${w.error}). Try again.`);
+      return;
+    }
+    if (round && round.id === editSettingsId) {
+      setRound(r);
+      setActiveRound(r);
+    }
+    setEditSettingsBusy(false);
+    setEditSettingsOpen(false);
     if (board) loadTournamentBoard(board.tournament.id);
   }
 
@@ -16709,6 +16879,7 @@ function computeIndividualNassauResults(round, computed) {
         {WhyPlayModal()}
         {EditFoursomeModal()}
         {GameDetailsModal()}
+        {EditSettingsModal()}
         {GPSExplainerModal()}
         {VoiceSettingsModal()}
       </div>
