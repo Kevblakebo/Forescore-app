@@ -15971,7 +15971,7 @@ function computeIndividualNassauResults(round, computed) {
                   onClick={playGolfClap}
                   style={{ display: "flex", width: "fit-content", alignItems: "center", gap: 5, background: "#EBF0EC", color: "#1B4332", fontWeight: 700, fontSize: 13, padding: "5px 12px", borderRadius: 20, cursor: "pointer", marginTop: 8 }}
                 >
-                  {"\u{1F3CC}\uFE0F"} Golf Clap {"\u{1F44F}"}
+                  {"\u{1F44F}"} Golf Clap
                 </div>
               </div>
             </div>
