@@ -15764,9 +15764,6 @@ function computeIndividualNassauResults(round, computed) {
               <button className="gsc-link" style={{ color: "#F3EFE0", fontSize: 11, textDecoration: "underline" }} onClick={() => setGameDetailsOpen(true)}>
                 Game Details
               </button>
-              <button className="gsc-link" style={{ color: "#F3EFE0", fontSize: 11, textDecoration: "underline" }} onClick={playGolfClap}>
-                {"\u{1F3CC}\uFE0F"} Golf Clap {"\u{1F44F}"}
-              </button>
               {canEditThisRound && (
                 <button className="gsc-link" style={{ color: "#F3EFE0", fontSize: 11, textDecoration: "underline" }} onClick={() => openEditFoursome(round.id, round)}>
                   Edit Players
@@ -16002,6 +15999,12 @@ function computeIndividualNassauResults(round, computed) {
                     {"\u{1F3B2}"} Side Games{sideGamesHoleSet.has(holeIdx + 1) ? " \u2713" : ""}
                   </div>
                 )}
+                <div
+                  onClick={playGolfClap}
+                  style={{ display: "flex", width: "fit-content", alignItems: "center", gap: 5, background: "#EBF0EC", color: "#1B4332", fontWeight: 700, fontSize: 13, padding: "5px 12px", borderRadius: 20, cursor: "pointer", marginTop: 8 }}
+                >
+                  {"\u{1F3CC}\uFE0F"} Golf Clap {"\u{1F44F}"}
+                </div>
               </div>
             </div>
 
