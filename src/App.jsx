@@ -1040,6 +1040,27 @@ function playEagleSound() {
   }
 }
 
+// Plays alongside the existing fireworks sound specifically for a
+// hole-in-one - not hooked into playFireworksSound() itself, since that
+// function is also reused for other, unrelated celebrations (tournament
+// finish, the wizard's own finish step) where this crowd cheer shouldn't
+// play.
+let holeInOneCheerAudio = null;
+function playHoleInOneCheer() {
+  try {
+    if (holeInOneCheerAudio) {
+      holeInOneCheerAudio.pause();
+      holeInOneCheerAudio.currentTime = 0;
+      holeInOneCheerAudio.play().catch(() => {});
+      return;
+    }
+    holeInOneCheerAudio = new Audio("/sounds/hole-in-one-cheer.mp3");
+    holeInOneCheerAudio.play().catch(() => {});
+  } catch (e) {
+    // Silently ignore - sound is a nice-to-have, never worth surfacing an error over.
+  }
+}
+
 function playFireworksSound() {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -8102,6 +8123,7 @@ export default function GolfScorecard() {
         playEagleSound();
       } else if (next.text === "HOLE IN ONE!!!") {
         playFireworksSound();
+        playHoleInOneCheer();
         setInPlayFireworks(true);
         if (inPlayFireworksTimerRef.current) clearTimeout(inPlayFireworksTimerRef.current);
         inPlayFireworksTimerRef.current = setTimeout(() => setInPlayFireworks(false), 4700);
