@@ -11361,7 +11361,7 @@ function computeMatchPlayResult(round, computed) {
               <div style={{ fontWeight: 800, fontSize: 16, color: "#8a6a2f" }}>Why People Love These Games</div>
             </div>
             <div style={{ fontSize: 13, color: "#4b4b45" }}>
-              What makes each of the 15 formats worth playing, straight from the golfers who love them.
+              What makes each of the 18 formats worth playing, straight from the golfers who love them.
             </div>
             <button className="gsc-link" style={{ marginTop: 8, fontSize: 12 }} onClick={() => goToScreen("whyPlay")}>
               Read more
