@@ -4323,6 +4323,23 @@ export default function GolfScorecard() {
   const [replayRoundBusy, setReplayRoundBusy] = useState(false);
   const [replayRoundErr, setReplayRoundErr] = useState("");
   const [pendingReplayStart, setPendingReplayStart] = useState(false);
+  const [announceEnabled, setAnnounceEnabled] = useState(() => {
+    try {
+      return window.localStorage.getItem("ripscore_announce_enabled") !== "false";
+    } catch (e) {
+      return true;
+    }
+  });
+  const [announceVoiceUri, setAnnounceVoiceUri] = useState(() => {
+    try {
+      return window.localStorage.getItem("ripscore_announce_voice") || "";
+    } catch (e) {
+      return "";
+    }
+  });
+  const [availableVoices, setAvailableVoices] = useState([]);
+  const [voicePickerOpen, setVoicePickerOpen] = useState(false);
+  const [pendingAnnounce, setPendingAnnounce] = useState(false);
   const [deleteHistoryBusy, setDeleteHistoryBusy] = useState(false);
   const [deleteHistoryErr, setDeleteHistoryErr] = useState("");
 
@@ -4897,6 +4914,91 @@ export default function GolfScorecard() {
           <div className="gsc-modal-row">
             <button className="gsc-btn gsc-btn-outline" onClick={() => setReplayRoundConfirm(null)}>Cancel</button>
             <button className="gsc-btn gsc-btn-primary" onClick={confirmReplayRound}>Start New Round</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  function VoiceSettingsModal() {
+    if (!voicePickerOpen) return null;
+    function toggleEnabled() {
+      const next = !announceEnabled;
+      setAnnounceEnabled(next);
+      try {
+        window.localStorage.setItem("ripscore_announce_enabled", next ? "true" : "false");
+      } catch (e) {}
+    }
+    function chooseVoice(uri) {
+      setAnnounceVoiceUri(uri);
+      try {
+        window.localStorage.setItem("ripscore_announce_voice", uri);
+      } catch (e) {}
+    }
+    function previewVoice(voice) {
+      if (typeof window === "undefined" || !window.speechSynthesis) return;
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance("Sarah in 1st with 8 points.");
+      utterance.voice = voice;
+      window.speechSynthesis.speak(utterance);
+    }
+    return (
+      <div className="gsc-modal-backdrop" onClick={() => setVoicePickerOpen(false)}>
+        <div className="gsc-modal" onClick={(e) => e.stopPropagation()}>
+          <div className="gsc-modal-title">{"\u{1F50A}"} Standings Announcer</div>
+          <div className="gsc-modal-body">
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+              <div style={{ fontSize: 14, fontWeight: 700 }}>Announce standings on refresh</div>
+              <button
+                className="gsc-btn"
+                style={{ padding: "6px 14px", minHeight: "auto", background: announceEnabled ? "#1B4332" : "transparent", color: announceEnabled ? "#F3EFE0" : "#1B4332", border: "1.5px solid #1B4332" }}
+                onClick={toggleEnabled}
+              >
+                {announceEnabled ? "On" : "Off"}
+              </button>
+            </div>
+            {announceEnabled && (
+              <>
+                <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 8 }}>
+                  Choose a voice - tap one to hear a quick preview.
+                </div>
+                {availableVoices.length === 0 ? (
+                  <div style={{ fontSize: 13, color: "#8a8a80" }}>No voices found on this device yet.</div>
+                ) : (
+                  <div style={{ maxHeight: 280, overflowY: "auto" }}>
+                    {availableVoices.map((v) => (
+                      <div
+                        key={v.voiceURI}
+                        onClick={() => {
+                          chooseVoice(v.voiceURI);
+                          previewVoice(v);
+                        }}
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          padding: "10px 8px",
+                          borderRadius: 8,
+                          marginBottom: 4,
+                          cursor: "pointer",
+                          background: announceVoiceUri === v.voiceURI ? "#EBF0EC" : "transparent",
+                          border: announceVoiceUri === v.voiceURI ? "1.5px solid #1B4332" : "1.5px solid transparent",
+                        }}
+                      >
+                        <div style={{ fontSize: 13, fontWeight: announceVoiceUri === v.voiceURI ? 700 : 500 }}>{v.name}</div>
+                        {announceVoiceUri === v.voiceURI && <span style={{ color: "#1B4332", fontWeight: 700 }}>{"\u2713"}</span>}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div style={{ fontSize: 11, color: "#8a8a80", marginTop: 10 }}>
+                  These are your device's built-in voices - the exact options vary by phone.
+                </div>
+              </>
+            )}
+          </div>
+          <div className="gsc-modal-row">
+            <button className="gsc-btn gsc-btn-primary" style={{ width: "100%" }} onClick={() => setVoicePickerOpen(false)}>Done</button>
           </div>
         </div>
       </div>
@@ -8153,6 +8255,24 @@ export default function GolfScorecard() {
     }
   }
 
+  // Loads the device's available system voices for the standings
+  // announcement feature. Browsers frequently don't have voices ready
+  // the instant a page loads, so this also listens for the voiceschanged
+  // event to pick them up once they actually become available.
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.speechSynthesis) return;
+    function loadVoices() {
+      const all = window.speechSynthesis.getVoices();
+      const english = all.filter((v) => v.lang && v.lang.toLowerCase().startsWith("en"));
+      setAvailableVoices(english.length > 0 ? english : all);
+    }
+    loadVoices();
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+    return () => {
+      if (window.speechSynthesis) window.speechSynthesis.onvoiceschanged = null;
+    };
+  }, []);
+
   // Background auto-sync while actively viewing the scorecard - checks for
   // other players' updates every 8 seconds. This is polling, not a true
   // realtime push, so there's a small delay rather than instant sync, but
@@ -8959,6 +9079,89 @@ function computeIndividualNassauResults(round, computed) {
         return b.points - a.points;
       });
   }
+
+  function ordinal(n) {
+    const rem100 = n % 100;
+    if (rem100 >= 11 && rem100 <= 13) return `${n}th`;
+    switch (n % 10) {
+      case 1: return `${n}st`;
+      case 2: return `${n}nd`;
+      case 3: return `${n}rd`;
+      default: return `${n}th`;
+    }
+  }
+
+  // Builds a plain-language standings summary for the voice announcement,
+  // reusing playerRank() directly rather than re-deriving rankings - this
+  // guarantees the announcement always matches exactly what the visible
+  // Standings card already shows, for any game type. Deliberately reads
+  // out just rank order plus one sensible headline number per player
+  // (points, strokes, or putts depending on the game) rather than trying
+  // to narrate every stat variant every different game format displays,
+  // since that value alone is reliably correct and meaningful regardless
+  // of which of the many display modes a given game happens to use.
+  function buildStandingsNarration(r, c) {
+    if (!r || !c) return "";
+    const g = GAMES[r.game];
+    if (!g) return "";
+    const ranksNow = playerRank(r, c);
+    if (ranksNow.length === 0) return "";
+    const holesPlayed = Object.keys(r.scores || {}).filter((h) => {
+      const holeScores = r.scores[h];
+      return holeScores && Object.values(holeScores).some((e) => e && e.strokes != null && e.strokes !== "");
+    }).length;
+    if (holesPlayed === 0) return "No scores entered yet.";
+    const intro = `Standings through hole ${holesPlayed}.`;
+    const lines = ranksNow.map((p, i) => {
+      const position = ordinal(i + 1);
+      const name = p.name || `Player ${i + 1}`;
+      let valueText;
+      if (g.rankByPutts) {
+        valueText = `${p.putts} putt${p.putts === 1 ? "" : "s"}`;
+      } else if (g.totalScoring) {
+        const val = c.netScoringOn ? p.netScore : p.score;
+        valueText = `${val} stroke${val === 1 ? "" : "s"}`;
+      } else {
+        valueText = `${p.points} point${p.points === 1 ? "" : "s"}`;
+      }
+      return `${name} in ${position} with ${valueText}`;
+    });
+    return `${intro} ${lines.join(". ")}.`;
+  }
+
+  // Speaks the current standings aloud using the browser's built-in
+  // text-to-speech. Cancels anything already queued or playing first, so
+  // tapping the button again while a prior announcement is still going
+  // replaces it rather than overlapping or stacking up behind it.
+  function announceStandings() {
+    if (!announceEnabled) return;
+    if (typeof window === "undefined" || !window.speechSynthesis) return;
+    const text = buildStandingsNarration(round, computed);
+    if (!text) return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    const selectedVoice = availableVoices.find((v) => v.voiceURI === announceVoiceUri);
+    if (selectedVoice) utterance.voice = selectedVoice;
+    window.speechSynthesis.speak(utterance);
+  }
+
+  // Refresh-then-announce wrapper for the button. syncRoundFromServer
+  // updates `round` via setRound, which - like any React state update -
+  // isn't applied yet the instant the await resolves, so announcing
+  // immediately after it here would read stale, pre-refresh data. Setting
+  // this flag instead and letting the effect below fire the actual
+  // announcement guarantees it only runs once the component has genuinely
+  // re-rendered with whatever the refresh actually found.
+  async function refreshAndAnnounceScores() {
+    await syncRoundFromServer(true);
+    setPendingAnnounce(true);
+  }
+  useEffect(() => {
+    if (pendingAnnounce) {
+      setPendingAnnounce(false);
+      announceStandings();
+    }
+  }, [pendingAnnounce]);
 
   // ---------- render helpers ----------
   function Header({ title, sub, onBack, backExtra, right, belowLogo }) {
@@ -15320,7 +15523,7 @@ function computeIndividualNassauResults(round, computed) {
                 padding: "5px 3px",
                 borderRadius: 6,
                 cursor: "pointer",
-                width: 68,
+                width: 84,
                 textAlign: "center",
                 lineHeight: 1.2,
                 minHeight: 44,
@@ -15328,9 +15531,9 @@ function computeIndividualNassauResults(round, computed) {
                 alignItems: "center",
                 justifyContent: "center",
               }}
-              onClick={() => syncRoundFromServer(true)}
+              onClick={refreshAndAnnounceScores}
             >
-              {syncStatus === "syncing" ? "Refreshing..." : syncStatus === "synced" ? "Up To Date \u2713" : syncStatus === "error" ? "Couldn't Refresh" : "Refresh Scores"}
+              {syncStatus === "syncing" ? "Refreshing..." : syncStatus === "synced" ? "Up To Date \u2713" : syncStatus === "error" ? "Couldn't Refresh" : "Refresh/Announce Scores"}
             </button>
           }
           right={
@@ -16235,7 +16438,12 @@ function computeIndividualNassauResults(round, computed) {
             </div>
           ) : (
           <div className="gsc-card">
-            <div className="gsc-label" style={{ marginBottom: 8, fontSize: 15, color: "#1B4332", fontWeight: 800 }}>Standings</div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+              <div className="gsc-label" style={{ marginBottom: 0, fontSize: 15, color: "#1B4332", fontWeight: 800 }}>Standings</div>
+              <button className="gsc-link" style={{ fontSize: 12 }} onClick={() => setVoicePickerOpen(true)}>
+                {"\u{1F50A}"} Voice
+              </button>
+            </div>
             {ranks.map((p, idx) => (
               <div key={p.idx} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "6px 0", borderBottom: "1px solid #eee6cf", fontSize: 13 }}>
                 <div style={{ fontWeight: 700 }}>
@@ -16452,6 +16660,7 @@ function computeIndividualNassauResults(round, computed) {
         {EditFoursomeModal()}
         {GameDetailsModal()}
         {GPSExplainerModal()}
+        {VoiceSettingsModal()}
       </div>
     );
   }
