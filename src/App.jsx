@@ -15160,7 +15160,7 @@ function computeIndividualNassauResults(round, computed) {
                 <thead>
                   <tr>
                     <th style={{ textAlign: "left" }}>Round Total</th>
-                    <th>Total</th>
+                    <th>Gross</th>
                     {g.hasScore && <th>+/- Par</th>}
                     {!g.totalScoring && <th>Pts</th>}
                     <th>Hcp Strokes</th>
