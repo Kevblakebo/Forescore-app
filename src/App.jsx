@@ -657,7 +657,6 @@ const GAMES = {
   },
   matchplay: {
     name: "Match Play",
-    tournamentName: "Match Play Tournament",
     tag: "Head-to-head, 1 vs 1 - exactly 2 players",
     desc: "The classic hole-by-hole format - two players go head-to-head, winning, losing, or halving each hole based on net score. Whoever's ahead by more holes than remain wins the match early; otherwise it's decided after 18. Overall and Nassau scoring methods available.",
     rotates: false,
@@ -1339,12 +1338,12 @@ const TOURNAMENT_PREFIX = "gsc-tournament:";
 // Explicit order (not auto-derived from GAMES) so display order is
 // deliberate and controllable - remember to add any new tournamentOnly
 // game here too, or it won't show up in the Tournament Game Formats list.
-const TOURNAMENT_GAME_KEYS = ["avoscramble", "tourneybb", "tourneygg", "matchplay", "matchplayfourball"];
+const TOURNAMENT_GAME_KEYS = ["avoscramble", "tourneybb", "tourneygg", "matchplayfourball"];
 // Games playable as both a regular, standalone round AND, separately, as
 // a tournament - unlike the tournament-only games above, one homepage
 // tile can't route to both actions, so these get a second, dedicated
 // tournament tile alongside their existing regular-round one.
-const DUAL_TOURNAMENT_TILE_KEYS = ["matchplay", "matchplayfourball"];
+const DUAL_TOURNAMENT_TILE_KEYS = ["matchplayfourball"];
 
 function genCode() {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
