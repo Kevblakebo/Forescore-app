@@ -730,8 +730,8 @@ const GAMES = {
 // this is a refactor of already-existing colors, not a new palette.
 const GAME_TILE_STYLE = (() => {
   const order = [
-    "swami", "dstreet", "individualputts", "pontobango", "stableford", "matchplay",
-    "teamstrokes", "ponto", "teamputts", "beachside", "seabluffe", "moonlightwolf", "vegas", "matchplayfourball",
+    "swami", "dstreet", "matchplay", "individualputts", "pontobango", "stableford",
+    "teamstrokes", "ponto", "matchplayfourball", "teamputts", "beachside", "seabluffe", "moonlightwolf", "vegas",
     "avoscramble", "tourneybb", "tourneygg",
   ];
   const emoji = {
@@ -8513,7 +8513,8 @@ export default function GolfScorecard() {
   }, [screen, round && round.id]);
 
   useEffect(() => {
-    if (screen === "tournamentFinishCelebration" || screen === "tournamentCreatedCelebration") playFireworksSound();
+    if (screen === "tournamentFinishCelebration") playCrowdCheer();
+    if (screen === "tournamentCreatedCelebration") playVictoryFanfare();
     if (screen === "gameWizard" && wizardStepId === "finish") playFireworksSound();
   }, [screen, wizardStepId]);
 
@@ -10165,7 +10166,7 @@ function computeMatchPlayResult(round, computed) {
 
             <div className="gsc-label" style={{ marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Individual Game Formats</div>
             <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>Up to 4 Players</div>
-            {["swami", "dstreet", "individualputts", "pontobango", "stableford", "matchplay"]
+            {["swami", "dstreet", "matchplay", "individualputts", "pontobango", "stableford"]
               .map((key) => [key, GAMES[key]])
               .map(([key, g]) => (
                 <div key={key} className="gsc-card gsc-game-card" style={{ marginBottom: 10 }} onClick={() => startNewRound(key)}>
@@ -10208,7 +10209,7 @@ function computeMatchPlayResult(round, computed) {
 
             <div className="gsc-label" style={{ marginTop: 14, marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Team Game Formats</div>
             <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>2 vs 2</div>
-            {["teamstrokes", "ponto", "teamputts", "beachside", "seabluffe", "moonlightwolf", "vegas", "matchplayfourball"]
+            {["teamstrokes", "ponto", "matchplayfourball", "teamputts", "beachside", "seabluffe", "moonlightwolf", "vegas"]
               .map((key) => [key, GAMES[key]])
               .map(([key, g]) => (
                 <div key={key} className="gsc-card gsc-game-card" style={{ marginBottom: 10 }} onClick={() => startNewRound(key)}>
@@ -13598,7 +13599,7 @@ function computeMatchPlayResult(round, computed) {
 
   if (screen === "setup") {
     const g = GAMES[gameKey];
-    const isTeamGame = gameKey === "seabluffe" || gameKey === "ponto" || gameKey === "vegas" || gameKey === "beachside" || gameKey === "teamputts" || gameKey === "teamstrokes";
+    const isTeamGame = gameKey === "seabluffe" || gameKey === "ponto" || gameKey === "vegas" || gameKey === "beachside" || gameKey === "teamputts" || gameKey === "teamstrokes" || gameKey === "matchplayfourball";
     return (
       <div className="gsc">
         <style>{STYLE}</style>
@@ -14370,7 +14371,7 @@ function computeMatchPlayResult(round, computed) {
                 Rotation: Holes 1-6 {LETTERS[0]}+{LETTERS[1]} vs {LETTERS[2]}+{LETTERS[3]} - Holes 7-12 {LETTERS[0]}+{LETTERS[2]} vs {LETTERS[1]}+{LETTERS[3]} - Holes 13-18 {LETTERS[0]}+{LETTERS[3]} vs {LETTERS[1]}+{LETTERS[2]}
               </div>
             )}
-            {(gameKey === "ponto" || gameKey === "vegas" || gameKey === "beachside" || gameKey === "teamputts" || gameKey === "teamstrokes") && (
+            {(gameKey === "ponto" || gameKey === "vegas" || gameKey === "beachside" || gameKey === "teamputts" || gameKey === "teamstrokes" || gameKey === "matchplayfourball") && (
               <div style={{ marginTop: 10 }}>
                 <div className="gsc-label">Teams</div>
                 <div className="gsc-row">
