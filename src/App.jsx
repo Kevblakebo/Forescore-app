@@ -16926,26 +16926,6 @@ function computeMatchPlayResult(round, computed) {
                 </div>
               </div>
             ))}
-            {session ? (
-              <>
-                <button
-                  className="gsc-btn gsc-btn-outline"
-                  style={{ width: "100%", marginTop: 10 }}
-                  disabled={!announceEnabled || elevenLabsBusy}
-                  onClick={announceStandings}
-                >
-                  {elevenLabsBusy ? "Generating..." : `${"\u{1F4E2}"} Announce Scores`}
-                </button>
-                {elevenLabsAnnounceErr && <div style={{ color: "#A42E2D", fontSize: 12, marginTop: 6 }}>{elevenLabsAnnounceErr}</div>}
-              </>
-            ) : (
-              <button
-                onClick={() => goToScreen("login")}
-                style={{ display: "block", width: "100%", textAlign: "left", fontSize: 12, color: "#6b6b63", padding: "8px 10px", marginTop: 10, background: "#F8F1E4", border: "none", borderRadius: 8, cursor: "pointer" }}
-              >
-                {"\u{1F50A}"} Log in to unlock the Standings Announcer. <span style={{ textDecoration: "underline", fontWeight: 700 }}>Tap to log in</span>
-              </button>
-            )}
             <div style={{ marginTop: 10, fontSize: 13 }}>
               <b>Prize:</b> {round.cfg.prize}
               {round.cfg.venmo && (
