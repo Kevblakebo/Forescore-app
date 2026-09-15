@@ -158,7 +158,7 @@ const GAMES = {
   teamstrokes: {
     name: "Team Strokes",
     tag: "Fixed teams stroke play - 4 players",
-    desc: "A 4-person, 2 vs 2 team combined strokes competition. Each player plays their own ball and records their own strokes and putts. Lowest team total strokes wins; lowest team total putts settles a tie. Overall and Nassau scoring methods available. Per-hole handicapping (net scoring) is defaulted to On, but can be turned off when setting up the round.",
+    desc: "A 4-person, 2 vs 2 team combined strokes competition. Each player plays their own ball and records their own strokes and putts. Lowest team total strokes wins; lowest team total putts settles a tie. Overall and Nassau scoring methods available.",
     rotates: false,
     hasScore: true,
     hasPutts: true,
@@ -189,7 +189,7 @@ const GAMES = {
   teamputts: {
     name: "Team Putts",
     tag: "Putting teams - 4 players",
-    desc: "A simple points-based putting game for 4 players, 2 vs 2 teams. The team with the least combined putts earns 1 point per hole. Most points at the end of the round wins. Total strokes also kept track of. Overall and Nassau scoring methods available. Per-hole handicapping (net scoring) is defaulted to On, but can be turned off when setting up the round.",
+    desc: "A simple points-based putting game for 4 players, 2 vs 2 teams. The team with the least combined putts earns 1 point per hole. Most points at the end of the round wins. Total strokes also kept track of. Overall and Nassau scoring methods available.",
     rotates: false,
     hasScore: true,
     hasPutts: true,
@@ -214,7 +214,7 @@ const GAMES = {
   seabluffe: {
     name: "Round Robin",
     tag: "Rotating teams - 4 players",
-    desc: "Two 2-person teams that swap partners every 6 holes. Points for low combined score AND low combined putts each hole. Great for mixed handicaps. Per-hole handicapping (net scoring) is defaulted to On, but can be turned off when setting up the round.",
+    desc: "Two 2-person teams that swap partners every 6 holes. Points for low combined score AND low combined putts each hole. Great for mixed handicaps.",
     rotates: true,
     hasScore: true,
     hasPutts: true,
@@ -247,7 +247,7 @@ const GAMES = {
   moonlightwolf: {
     name: "Wolf",
     tag: "Best ball rotating teams - 4 players",
-    desc: "A rotating team four-player game where one player acts as the \"Wolf\" on each hole. The Wolf watches the other drives (tees off last), then either chooses a partner or goes it alone (\"Lone Wolf\"), to win points based on a best-ball lowest strokes and putts format. Per-hole handicapping (net scoring) is defaulted to On, but can be turned off when setting up the round.",
+    desc: "A rotating team four-player game where one player acts as the \"Wolf\" on each hole. The Wolf watches the other drives (tees off last), then either chooses a partner or goes it alone (\"Lone Wolf\"), to win points based on a best-ball lowest strokes and putts format.",
     rotates: true,
     hasScore: true,
     hasPutts: true,
@@ -302,7 +302,7 @@ const GAMES = {
   ponto: {
     name: "Team Skins",
     tag: "Fixed teams points - 4 players",
-    desc: "Two 2-person teams, same partners all 18 holes. Points for low combined score AND low combined putts each hole. Great for similar handicaps. Overall and Nassau scoring methods available. In this game format you can choose to play Ties Carryover (classic Skins format) or Ties do not carryover (similar to Match Play format). This game is currently defaulted to Ties Carryover, that you can change when setting up the round. Per-hole handicapping (net scoring) is defaulted to On, but can be turned off when setting up the round.",
+    desc: "Two 2-person teams, same partners all 18 holes. Points for low combined score AND low combined putts each hole. Great for similar handicaps. Overall and Nassau scoring methods available. In this game format you can choose to play Ties Carryover (classic Skins format) or Ties do not carryover (similar to Match Play format). This game is currently defaulted to Ties Carryover, that you can change when setting up the round.",
     rotates: false,
     hasScore: true,
     hasPutts: true,
@@ -333,7 +333,7 @@ const GAMES = {
   vegas: {
     name: "Vegas",
     tag: "Fixed teams points - 4 players",
-    desc: "Two 2-person teams, same partners all 18 holes. Partners' scores combine into a two-digit number instead of adding together - lower number wins the hole, and a birdie or better flips your own team's digits. Per-hole handicapping (net scoring) is defaulted to On, but can be turned off when setting up the round.",
+    desc: "Two 2-person teams, same partners all 18 holes. Partners' scores combine into a two-digit number instead of adding together - lower number wins the hole, and a birdie or better flips your own team's digits.",
     rotates: false,
     hasScore: true,
     hasPutts: true,
@@ -369,7 +369,7 @@ const GAMES = {
   beachside: {
     name: "Team Best Ball",
     tag: "Best-ball teams - 4 players",
-    desc: "Two 2-person teams, best-ball scoring - the lower of the team's two strokes AND the lower of the team's two putts count each hole. Same structure as Team Skins, but best-ball instead of combined. Great for mixed handicap pairs. Overall and Nassau scoring methods available. Per-hole handicapping (net scoring) is defaulted to On, but can be turned off when setting up the round.",
+    desc: "Two 2-person teams, best-ball scoring - the lower of the team's two strokes AND the lower of the team's two putts count each hole. Same structure as Team Skins, but best-ball instead of combined. Great for mixed handicap pairs. Overall and Nassau scoring methods available.",
     rotates: false,
     hasScore: true,
     hasPutts: true,
@@ -406,7 +406,7 @@ const GAMES = {
   tourneybb: {
     name: "Best Ball Tournament",
     tag: "4-person best-ball - Tournaments only",
-    desc: "The whole foursome plays as one best-ball team - no 2-person sub-teams. The lowest strokes and lowest putts among all 4 players count each hole. Used only in Tournaments, where foursomes are ranked against each other by total best-ball strokes and total best-ball putts. Per-hole handicapping (net scoring) is defaulted to On, but can be turned off when setting up the round.",
+    desc: "The whole foursome plays as one best-ball team - no 2-person sub-teams. The lowest strokes and lowest putts among all 4 players count each hole. Used only in Tournaments, where foursomes are ranked against each other by total best-ball strokes and total best-ball putts.",
     rotates: false,
     hasScore: true,
     hasPutts: true,
@@ -438,7 +438,7 @@ const GAMES = {
   tourneygg: {
     name: "Combined Strokes Tournament",
     tag: "4-person combined - Tournaments only",
-    desc: "The whole foursome plays as one team - no 2-person sub-teams. All 4 players' strokes are added together, and all 4 players' putts are added together, each hole. Used only in Tournaments, where foursomes are ranked against each other by total combined strokes and total combined putts. Per-hole handicapping (net scoring) is defaulted to On, but can be turned off when setting up the round.",
+    desc: "The whole foursome plays as one team - no 2-person sub-teams. All 4 players' strokes are added together, and all 4 players' putts are added together, each hole. Used only in Tournaments, where foursomes are ranked against each other by total combined strokes and total combined putts.",
     rotates: false,
     hasScore: true,
     hasPutts: true,
@@ -470,7 +470,7 @@ const GAMES = {
   avoscramble: {
     name: "Scramble Tournament",
     tag: "Choose best shot - Tournaments only",
-    desc: "The whole foursome plays as one team. Every team member tees off on each hole, the team picks the best shot of the foursome, and all players hit their next shots from that same location. This cycle repeats until the ball is in the hole. The team's strokes score for the hole is then captured. Per-hole handicapping (net scoring) is defaulted to On, but can be turned off when setting up the round.",
+    desc: "The whole foursome plays as one team. Every team member tees off on each hole, the team picks the best shot of the foursome, and all players hit their next shots from that same location. This cycle repeats until the ball is in the hole. The team's strokes score for the hole is then captured.",
     rotates: false,
     hasScore: true,
     hasPutts: false,
@@ -510,7 +510,7 @@ const GAMES = {
   swami: {
     name: "Individual Strokes",
     tag: "Individual stroke play - up to 4 players",
-    desc: "A standard, no-frills stroke play game for up to 4 players. Lowest total strokes wins; total putts breaks a tie. Great for players who just want to keep an honest scorecard. Overall, Nassau, and Oceans 11 scoring methods available. Per-hole handicapping (net scoring) is defaulted to On, but can be turned off when setting up the round.",
+    desc: "A standard, no-frills stroke play game for up to 4 players. Lowest total strokes wins; total putts breaks a tie. Great for players who just want to keep an honest scorecard. Overall, Nassau, and Oceans 11 scoring methods available.",
     rotates: false,
     hasScore: true,
     hasPutts: true,
@@ -534,7 +534,7 @@ const GAMES = {
   dstreet: {
     name: "Individual Skins",
     tag: "Individual points - up to 4 players",
-    desc: "Individual strokes and putting skins game for up to 4 players. Points for low strokes AND low putts each hole. Most points wins. Great for similar handicaps. Overall and Nassau scoring methods available. In this game format you can choose to play Ties Carryover (classic Skins format) or Ties do not carryover (similar to Match Play format). This game is currently defaulted to Ties Carryover, that you can change when setting up the round. Per-hole handicapping (net scoring) is defaulted to On, but can be turned off when setting up the round.",
+    desc: "Individual strokes and putting skins game for up to 4 players. Points for low strokes AND low putts each hole. Most points wins. Great for similar handicaps. Overall and Nassau scoring methods available. In this game format you can choose to play Ties Carryover (classic Skins format) or Ties do not carryover (similar to Match Play format). This game is currently defaulted to Ties Carryover, that you can change when setting up the round.",
     rotates: false,
     hasScore: true,
     hasPutts: true,
@@ -565,7 +565,7 @@ const GAMES = {
   individualputts: {
     name: "Individual Putts",
     tag: "Individual putting game - up to 4 players",
-    desc: "A simple total putts game for up to 4 players, every player for themselves. The player with the least amount of putts at the end of the round wins. Total strokes also still kept track of. Overall and Nassau scoring methods available. Per-hole handicapping (net scoring) is defaulted to On, but can be turned off when setting up the round.",
+    desc: "A simple total putts game for up to 4 players, every player for themselves. The player with the least amount of putts at the end of the round wins. Total strokes also still kept track of. Overall and Nassau scoring methods available.",
     rotates: false,
     hasScore: true,
     hasPutts: true,
@@ -590,7 +590,7 @@ const GAMES = {
   pontobango: {
     name: "Bingo Bango Bongo",
     tag: "Individual points game - up to 4 players",
-    desc: "Each hole is worth three points. The Bingo point goes to the first player on the green. The Bango point goes to the player closest to the pin once on the green. The Bongo point goes to the longest putt. The player with the most points wins. Strokes and putts still tracked. Per-hole handicapping (net scoring) is defaulted to On, but can be turned off when setting up the round.",
+    desc: "Each hole is worth three points. The Bingo point goes to the first player on the green. The Bango point goes to the player closest to the pin once on the green. The Bongo point goes to the longest putt. The player with the most points wins. Strokes and putts still tracked.",
     rotates: false,
     hasScore: true,
     hasPutts: true,
@@ -623,7 +623,7 @@ const GAMES = {
   stableford: {
     name: "Stableford",
     tag: "Individual points game - up to 4 players",
-    desc: "Points awarded each hole based on your net score relative to par - a blow-up hole only ever costs you zero points, not a huge number. Highest total points wins. Per-hole handicapping (net scoring) is defaulted to On, but can be turned off when setting up the round.",
+    desc: "Points awarded each hole based on your net score relative to par - a blow-up hole only ever costs you zero points, not a huge number. Highest total points wins.",
     rotates: false,
     hasScore: true,
     hasPutts: true,
@@ -15163,7 +15163,7 @@ function computeIndividualNassauResults(round, computed) {
                     <th>Total</th>
                     {g.hasScore && <th>+/- Par</th>}
                     {!g.totalScoring && <th>Pts</th>}
-                    <th>Hcp</th>
+                    <th>Hcp Strokes</th>
                     <th>Net</th>
                   </tr>
                 </thead>
@@ -15171,7 +15171,8 @@ function computeIndividualNassauResults(round, computed) {
                   {round.players.map((p, i) => {
                     const t = gridTotals[i];
                     const hcpNum = p.hcp !== "" && p.hcp != null && !isNaN(Number(p.hcp)) ? Number(p.hcp) : null;
-                    const net = g.hasScore && t.sCount && hcpNum != null ? Math.round(t.sSum - hcpNum) : null;
+                    const hcpStrokes = hcpNum != null ? computed.allocatedStrokes[i] : null;
+                    const net = g.hasScore && t.sCount && hcpNum != null ? computed.playerTotalNetScore[i] : null;
                     return (
                       <tr key={i} style={{ background: i % 2 === 1 ? "#FAF8F1" : undefined }}>
                         <td style={{ textAlign: "left", fontWeight: 700 }}>
@@ -15180,7 +15181,7 @@ function computeIndividualNassauResults(round, computed) {
                         <td style={{ fontWeight: 700 }}>{totalCell(t)}</td>
                         {g.hasScore && <td style={{ fontWeight: 700 }}>{t.sCount ? formatRelPar(t.relPar) : "-"}</td>}
                         {!g.totalScoring && <td style={{ fontWeight: 700 }}>{computed.playerPoints[i]}</td>}
-                        <td style={{ fontWeight: 700 }}>{hcpNum != null ? Math.round(hcpNum) : "-"}</td>
+                        <td style={{ fontWeight: 700 }}>{hcpStrokes != null ? hcpStrokes : "-"}</td>
                         <td style={{ fontWeight: 700 }}>{net != null ? net : "-"}</td>
                       </tr>
                     );
@@ -15194,7 +15195,7 @@ function computeIndividualNassauResults(round, computed) {
               {nineHoleTable(0, frontNineTotals, "OUT")}
               {nineHoleTable(9, backNineTotals, "IN")}
               {roundSummaryTable}
-              <div style={{ fontSize: 11, color: "#6b6b63", marginTop: 6 }}>Cell shows strokes/putts. Totals, +/- Par, and Net only count holes played so far. Net = Total strokes minus Handicap.</div>
+              <div style={{ fontSize: 11, color: "#6b6b63", marginTop: 6 }}>Cell shows strokes/putts. Totals, +/- Par, and Net only count holes played so far. Hcp Strokes is each player's total strokes given for the round, relative to the lowest handicap in the group - the same per-hole handicapping used in Standings.</div>
             </>
           );
         })()}
@@ -15999,7 +16000,7 @@ function computeIndividualNassauResults(round, computed) {
                 )}
                 <div
                   onClick={playGolfClap}
-                  style={{ display: "flex", width: "fit-content", alignItems: "center", gap: 5, background: "#EBF0EC", color: "#1B4332", fontWeight: 700, fontSize: 13, padding: "5px 12px", borderRadius: 20, cursor: "pointer", marginTop: 8 }}
+                  style={{ display: "flex", width: "fit-content", alignItems: "center", gap: 5, background: "#EBF0EC", color: "#1B4332", fontWeight: 700, fontSize: 13, padding: "5px 12px", borderRadius: 20, cursor: "pointer", marginTop: 8, marginLeft: "auto" }}
                 >
                   {"\u{1F44F}"} Golf Clap
                 </div>
