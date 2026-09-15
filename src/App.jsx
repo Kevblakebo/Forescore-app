@@ -734,6 +734,7 @@ const WHY_PLAY = {
   individualputts: "Putting-only formats put a specific skill on trial, separate from anything to do with distance off the tee, which is exactly why they're seen as a fair test even in mixed-ability groups. It's a natural fit for anyone who feels their actual scoring ability doesn't always show up in a full 18-hole total - this format lets that specific strength (or weakness) stand entirely on its own.",
   pontobango: "What makes this format special is that none of its three points is about who hits the ball the furthest - each one rewards a completely different skill, including simply being in the right position to play first. Because the player farthest from the hole always plays first, shorter hitters get the first real shot at points on plenty of holes, and the golfer with the toughest position on the green gets a fair chance too. That built-in leveling is exactly why it's so popular among groups with a real spread of handicaps playing together.",
   stableford: "Stableford's biggest draw is that a single poor hole can't ruin an entire round - it only ever costs zero points, which keeps the pressure low and the format genuinely relaxed and enjoyable for casual and club play alike. It also rewards aggressive play in a way stroke play doesn't, letting golfers go after a spectacular shot without the same fear of a blown-up score. It was originally created specifically to help the average club golfer enjoy a competitive round more - and that founding idea is still exactly why it remains so popular today.",
+  matchplay: "Match play is the original form of the game, and it stays popular because a disastrous hole only ever costs you that one hole, not your entire round - a blow-up on 14 is forgotten the moment you tee off on 15. That head-to-head, hole-by-hole tension is exactly why it's the format the Ryder Cup, Presidents Cup, and Solheim Cup are all built on - it rewards clutch play and course management under direct pressure from a single opponent, not just a good scorecard. A match can also be won before the 18th hole is ever played, which gives it a different, often more dramatic pace than counting strokes all the way to the end.",
 };
 
 // Maps a "what matters most" vibe answer to actual game(s), grouped by
@@ -4988,7 +4989,9 @@ export default function GolfScorecard() {
             <>
               <div className="gsc-modal-title">Who's playing today?</div>
               <div style={{ fontSize: 13, color: "#6b6b63", marginBottom: 12 }}>
-                This group has more than 4 members - pick up to 4 who are actually playing.
+                {gameKey === "matchplay"
+                  ? "This group has more than 2 members - pick the 2 who are actually playing."
+                  : "This group has more than 4 members - pick up to 4 who are actually playing."}
               </div>
               {groupFillMembers.map((m) => {
                 const checked = groupFillChosenIds.includes(m.user_id);
