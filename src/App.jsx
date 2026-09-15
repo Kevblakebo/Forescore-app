@@ -9376,6 +9376,19 @@ function computeMatchPlayResult(round, computed) {
     if (!r || !c) return "";
     const g = GAMES[r.game];
     if (!g) return "";
+    if (r.game === "matchplay") {
+      const match = computeMatchPlayResult(r, c);
+      if (!match || match.holesPlayed === 0) return "No scores entered yet.";
+      if (match.isDecided) {
+        const winnerName = r.players[match.currentTally > 0 ? 0 : 1].name || "Player";
+        return `${winnerName} wins the match, ${match.marginText}.`;
+      }
+      if (match.currentTally === 0) {
+        return `Through hole ${match.holesPlayed}, the match is all square.`;
+      }
+      const leaderName = r.players[match.currentTally > 0 ? 0 : 1].name || "Player";
+      return `Through hole ${match.holesPlayed}, ${leaderName} is ${match.marginText}.`;
+    }
     const ranksNow = playerRank(r, c);
     if (ranksNow.length === 0) return "";
     const holesPlayed = Object.keys(r.scores || {}).filter((h) => {
@@ -16821,7 +16834,14 @@ function computeMatchPlayResult(round, computed) {
             </div>
           ) : matchPlayResult ? (
             <div className="gsc-card gsc-winner-card" style={{ textAlign: "center" }}>
-              <div className="gsc-label" style={{ marginBottom: 8, fontSize: 15, color: "#1B4332", fontWeight: 800 }}>Match Status</div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                <div className="gsc-label" style={{ marginBottom: 0, fontSize: 15, color: "#1B4332", fontWeight: 800 }}>Match Status</div>
+                {session && (
+                  <button className="gsc-link" style={{ fontSize: 12 }} onClick={() => setVoicePickerOpen(true)}>
+                    {"\u{1F50A}"} Voice
+                  </button>
+                )}
+              </div>
               <div style={{ fontSize: 22, fontWeight: 800, color: "#1B4332" }}>{matchPlayResult.statusText}</div>
               {matchPlayResult.isDecided && (
                 <div style={{ marginTop: 6 }}>
