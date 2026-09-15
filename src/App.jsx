@@ -302,7 +302,7 @@ const GAMES = {
   ponto: {
     name: "Team Skins",
     tag: "Fixed teams points - 4 players",
-    desc: "Two 2-person teams, same partners all 18 holes. Points for low combined score AND low combined putts each hole. Great for similar handicaps. Overall and Nassau scoring methods available. In this game format you can choose to play Ties Carryover (classic Skins format) or Ties do not carryover (similar to Match Play format). This game is currently defaulted to Ties Carryover, that you can change when setting up the round.",
+    desc: "Two 2-person teams, same partners all 18 holes. Points for low combined score AND low combined putts each hole. Great for similar handicaps. Overall and Nassau scoring methods available. In this game format you can choose to play Ties Carryover (classic Skins format) or Ties do not carryover (similar to Match Play format).",
     rotates: false,
     hasScore: true,
     hasPutts: true,
@@ -534,7 +534,7 @@ const GAMES = {
   dstreet: {
     name: "Individual Skins",
     tag: "Individual points - up to 4 players",
-    desc: "Individual strokes and putting skins game for up to 4 players. Points for low strokes AND low putts each hole. Most points wins. Great for similar handicaps. Overall and Nassau scoring methods available. In this game format you can choose to play Ties Carryover (classic Skins format) or Ties do not carryover (similar to Match Play format). This game is currently defaulted to Ties Carryover, that you can change when setting up the round.",
+    desc: "Individual strokes and putting skins game for up to 4 players. Points for low strokes AND low putts each hole. Most points wins. Great for similar handicaps. Overall and Nassau scoring methods available. In this game format you can choose to play Ties Carryover (classic Skins format) or Ties do not carryover (similar to Match Play format).",
     rotates: false,
     hasScore: true,
     hasPutts: true,
