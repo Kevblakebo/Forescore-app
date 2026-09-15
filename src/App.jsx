@@ -15980,16 +15980,15 @@ function computeIndividualNassauResults(round, computed) {
                 {session && round.holeGPS && round.holeGPS[holeIdx] && round.holeGPS[holeIdx].length > 0 && (
                   <div>
                     {!holeImageOpen ? (
-                      <button
-                        className="gsc-link"
-                        style={{ fontSize: 12 }}
+                      <div
                         onClick={() => {
                           setHoleImageOpen(true);
                           if (!holeImage) fetchHoleImage();
                         }}
+                        style={{ display: "flex", width: "fit-content", alignItems: "center", gap: 5, background: "#EBF0EC", color: "#1B4332", fontWeight: 700, fontSize: 13, padding: "5px 12px", borderRadius: 20, cursor: "pointer" }}
                       >
-                        {"\u{1F6F0}\u{FE0F}"} View hole from above
-                      </button>
+                        {"\u{1F6F0}\uFE0F"} View hole from above
+                      </div>
                     ) : (
                       <div>
                         {holeImageLoading && <div style={{ fontSize: 12, color: "#8a8a80" }}>Loading...</div>}
