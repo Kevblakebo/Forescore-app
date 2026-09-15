@@ -15979,6 +15979,14 @@ function computeIndividualNassauResults(round, computed) {
                     )}
                   </div>
                 )}
+                {session && (
+                  <div
+                    onClick={announceStandings}
+                    style={{ display: "flex", width: "fit-content", alignItems: "center", gap: 5, background: "#EBF0EC", color: "#1B4332", fontWeight: 700, fontSize: 13, padding: "5px 12px", borderRadius: 20, cursor: announceEnabled && !elevenLabsBusy ? "pointer" : "default", opacity: announceEnabled && !elevenLabsBusy ? 1 : 0.5, marginTop: 8 }}
+                  >
+                    {"\u{1F4E2}"} {elevenLabsBusy ? "Generating..." : "Announce Scores"}
+                  </div>
+                )}
               </div>
               <div style={{ flex: "0 0 auto" }}>
                 {session && (
