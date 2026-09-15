@@ -2141,6 +2141,7 @@ export default function GolfScorecard() {
   const failCountRef = useRef(0);
   const lastLocalEditRef = useRef(0);
   const currentAnnounceAudioRef = useRef(null);
+  const golfClapAudioRef = useRef(null);
   // One ref array per manual par-entry grid (Setup, Wizard, Tournament
   // create) - used to auto-advance focus to the next hole's input once a
   // par digit is typed, since real par values are always a single digit
@@ -9324,6 +9325,26 @@ function computeIndividualNassauResults(round, computed) {
     }
   }
 
+  // Plays the Golf Clap sound effect - purely local to whoever taps it,
+  // same as the standings announcer (this is a client-side audio
+  // playback, not a broadcast to other players viewing the same round).
+  // Restarting from the beginning on a repeat tap, rather than letting a
+  // second copy stack on top of a still-playing one, since a rapid
+  // double-tap overlapping itself would sound like a mistake, not two
+  // claps.
+  function playGolfClap() {
+    if (typeof window === "undefined") return;
+    if (golfClapAudioRef.current) {
+      golfClapAudioRef.current.pause();
+      golfClapAudioRef.current.currentTime = 0;
+      golfClapAudioRef.current.play().catch(() => {});
+      return;
+    }
+    const audio = new Audio("/sounds/golf-clap.mp3");
+    golfClapAudioRef.current = audio;
+    audio.play().catch(() => {});
+  }
+
   useEffect(() => {
     if (voicePickerOpen) loadElevenLabsVoices();
   }, [voicePickerOpen]);
@@ -15742,6 +15763,9 @@ function computeIndividualNassauResults(round, computed) {
               </button>
               <button className="gsc-link" style={{ color: "#F3EFE0", fontSize: 11, textDecoration: "underline" }} onClick={() => setGameDetailsOpen(true)}>
                 Game Details
+              </button>
+              <button className="gsc-link" style={{ color: "#F3EFE0", fontSize: 11, textDecoration: "underline" }} onClick={playGolfClap}>
+                {"\u{1F3CC}\uFE0F"} Golf Clap {"\u{1F44F}"}
               </button>
               {canEditThisRound && (
                 <button className="gsc-link" style={{ color: "#F3EFE0", fontSize: 11, textDecoration: "underline" }} onClick={() => openEditFoursome(round.id, round)}>
