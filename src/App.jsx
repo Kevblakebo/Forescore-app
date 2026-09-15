@@ -4339,7 +4339,6 @@ export default function GolfScorecard() {
   });
   const [availableVoices, setAvailableVoices] = useState([]);
   const [voicePickerOpen, setVoicePickerOpen] = useState(false);
-  const [pendingAnnounce, setPendingAnnounce] = useState(false);
   const [deleteHistoryBusy, setDeleteHistoryBusy] = useState(false);
   const [deleteHistoryErr, setDeleteHistoryErr] = useState("");
 
@@ -9144,24 +9143,6 @@ function computeIndividualNassauResults(round, computed) {
     if (selectedVoice) utterance.voice = selectedVoice;
     window.speechSynthesis.speak(utterance);
   }
-
-  // Refresh-then-announce wrapper for the button. syncRoundFromServer
-  // updates `round` via setRound, which - like any React state update -
-  // isn't applied yet the instant the await resolves, so announcing
-  // immediately after it here would read stale, pre-refresh data. Setting
-  // this flag instead and letting the effect below fire the actual
-  // announcement guarantees it only runs once the component has genuinely
-  // re-rendered with whatever the refresh actually found.
-  async function refreshAndAnnounceScores() {
-    await syncRoundFromServer(true);
-    setPendingAnnounce(true);
-  }
-  useEffect(() => {
-    if (pendingAnnounce) {
-      setPendingAnnounce(false);
-      announceStandings();
-    }
-  }, [pendingAnnounce]);
 
   // ---------- render helpers ----------
   function Header({ title, sub, onBack, backExtra, right, belowLogo }) {
@@ -15523,7 +15504,7 @@ function computeIndividualNassauResults(round, computed) {
                 padding: "5px 3px",
                 borderRadius: 6,
                 cursor: "pointer",
-                width: 84,
+                width: 68,
                 textAlign: "center",
                 lineHeight: 1.2,
                 minHeight: 44,
@@ -15531,9 +15512,9 @@ function computeIndividualNassauResults(round, computed) {
                 alignItems: "center",
                 justifyContent: "center",
               }}
-              onClick={refreshAndAnnounceScores}
+              onClick={() => syncRoundFromServer(true)}
             >
-              {syncStatus === "syncing" ? "Refreshing..." : syncStatus === "synced" ? "Up To Date \u2713" : syncStatus === "error" ? "Couldn't Refresh" : "Refresh/Announce Scores"}
+              {syncStatus === "syncing" ? "Refreshing..." : syncStatus === "synced" ? "Up To Date \u2713" : syncStatus === "error" ? "Couldn't Refresh" : "Refresh Scores"}
             </button>
           }
           right={
@@ -16493,6 +16474,14 @@ function computeIndividualNassauResults(round, computed) {
                 </div>
               </div>
             ))}
+            <button
+              className="gsc-btn gsc-btn-outline"
+              style={{ width: "100%", marginTop: 10 }}
+              disabled={!announceEnabled}
+              onClick={announceStandings}
+            >
+              {"\u{1F4E2}"} Announce Scores
+            </button>
             <div style={{ marginTop: 10, fontSize: 13 }}>
               <b>Prize:</b> {round.cfg.prize}
               {round.cfg.venmo && (
