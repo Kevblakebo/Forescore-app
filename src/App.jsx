@@ -655,6 +655,36 @@ const GAMES = {
       "Putts start once on the putting green.",
     ],
   },
+  matchplay: {
+    name: "Match Play",
+    tag: "Head-to-head, 1 vs 1 - exactly 2 players",
+    desc: "The classic hole-by-hole format - two players go head-to-head, winning, losing, or halving each hole based on net score. Whoever's ahead by more holes than remain wins the match early; otherwise it's decided after 18. Overall and Nassau scoring methods available.",
+    rotates: false,
+    hasScore: true,
+    hasPutts: true,
+    totalScoring: true,
+    isMatchPlay: true,
+    minPlayers: 2,
+    maxPlayers: 2,
+    defaults: { maxOver: "", maxPutts: "", mulliganSegment: "", mulliganChallenge: "", prize: "", netScoring: true },
+    rules: [
+      "Head-to-head match play for exactly 2 players - the classic, original form of golf scoring.",
+      "Each hole is its own contest: whoever has the lower net score wins that hole. Equal net scores halve the hole - nobody wins it.",
+      "The match is tracked hole by hole as holes won, not total strokes - a big blow-up hole only ever costs you that one hole, same as a narrow loss would.",
+      "The match ends the moment a player is ahead by more holes than remain to be played - for example, 3 up with only 2 holes left ends the match \"3 and 2\", and the remaining holes aren't needed to decide the outcome. The group can still keep entering scores for fun if they'd like to play out the full round.",
+      "If the match is still all square after 18 holes, it's declared halved - this app doesn't currently support extra playoff holes.",
+      "Per-hole handicapping (net score per hole) is defaulted to On, but can be turned off in game scoring settings. Match play handicap strokes are based on the difference between the two players.",
+      "Putts are tracked but don't affect who wins the match.",
+      "Prize: to be agreed on prior to round.",
+      "Strokes max: to be agreed on prior to round.",
+      "Putts max: to be agreed on prior to round.",
+      "Mulligans: to be agreed on prior to round.",
+      "Play OB shots as a lateral drop (1 out, 1 in) (to be agreed on).",
+      "Must putt all the way into the hole.",
+      "Flagstick can stay in.",
+      "Putts start once on the putting green.",
+    ],
+  },
 };
 
 // Single source of truth for each game's small visual identity (emoji +
@@ -665,12 +695,12 @@ const GAMES = {
 // this is a refactor of already-existing colors, not a new palette.
 const GAME_TILE_STYLE = (() => {
   const order = [
-    "swami", "dstreet", "individualputts", "pontobango", "stableford",
+    "swami", "dstreet", "individualputts", "pontobango", "stableford", "matchplay",
     "teamstrokes", "ponto", "teamputts", "beachside", "seabluffe", "moonlightwolf", "vegas",
     "avoscramble", "tourneybb", "tourneygg",
   ];
   const emoji = {
-    dstreet: "\u{1F4B0}", swami: "\u26F3", individualputts: "\u{1F3AF}", pontobango: "\u{1F3B2}", stableford: "\u{1F4C8}",
+    dstreet: "\u{1F4B0}", swami: "\u26F3", individualputts: "\u{1F3AF}", pontobango: "\u{1F3B2}", stableford: "\u{1F4C8}", matchplay: "\u2694\uFE0F",
     ponto: "\u{1F91D}", teamstrokes: "\u{1F3CC}\u{FE0F}", teamputts: "\u{1F573}\u{FE0F}", beachside: "\u2B50", seabluffe: "\u{1F504}", moonlightwolf: "\u{1F43A}", vegas: "\u{1F3B0}",
     avoscramble: "\u{1F500}", tourneybb: "\u{1F3C6}", tourneygg: "\u{1F3C5}",
   };
@@ -7024,8 +7054,13 @@ export default function GolfScorecard() {
       avatar: p.avatar || "",
       ...(i === 0 && session ? { user_id: session.user.id } : p.user_id ? { user_id: p.user_id } : {}),
     }));
-    const isIndividual = gameKey === "dstreet" || gameKey === "swami" || gameKey === "pontobango" || gameKey === "individualputts" || gameKey === "stableford";
-    if (isIndividual) {
+    const isIndividual = gameKey === "dstreet" || gameKey === "swami" || gameKey === "pontobango" || gameKey === "individualputts" || gameKey === "stableford" || gameKey === "matchplay";
+    if (gameKey === "matchplay") {
+      if (cleanPlayers.length !== 2) {
+        setErr("Match Play needs exactly 2 players.");
+        return;
+      }
+    } else if (isIndividual) {
       const needsTwo = gameKey === "pontobango" || gameKey === "individualputts";
       const minPlayers = needsTwo ? 2 : 1;
       if (cleanPlayers.length < minPlayers) {
@@ -9052,6 +9087,98 @@ function computeIndividualNassauResults(round, computed) {
   };
 }
 
+// Match Play's hole-by-hole result, running tally, and early-finish
+// detection - a separate, additional computation layer on top of the
+// core scoring engine, exactly like computeIndividualNassauResults above,
+// rather than woven into computeRoundScoring() itself. Match play needs
+// nothing new for the handicap math: for exactly two players, "strokes
+// relative to the lowest handicap in the group" (what strokesOffForHole
+// already does for every game) is mathematically identical to match
+// play's own "based on the difference between the two opponents" rule.
+function computeMatchPlayResult(round, computed) {
+  if (!round || round.game !== "matchplay") return null;
+  if (!computed) return null;
+  if (!round.players || round.players.length !== 2) return null;
+
+  let holesA = 0;
+  let holesB = 0;
+  let holesHalved = 0;
+  let holesPlayed = 0;
+  const holeByHole = [];
+  let decidedAt = null; // set once, the first hole where the lead can no longer be caught
+
+  for (let h = 0; h < 18; h++) {
+    const eA = (round.scores[h] || {})[0];
+    const eB = (round.scores[h] || {})[1];
+    if (!eA || eA.strokes == null || eA.strokes === "" || !eB || eB.strokes == null || eB.strokes === "") {
+      holeByHole.push({ hole: h, result: null, tally: holesA - holesB });
+      continue;
+    }
+    const parH = round.par[h] ?? 4;
+    const effectiveMaxOver = round.cfg.doubleParMax ? parH : round.cfg.maxOver;
+    const capA = Math.min(Number(eA.strokes), parH + (effectiveMaxOver ?? 99));
+    const capB = Math.min(Number(eB.strokes), parH + (effectiveMaxOver ?? 99));
+    const netA = computed.netScoringOn ? capA - computed.strokesOffForHole(0, h) : capA;
+    const netB = computed.netScoringOn ? capB - computed.strokesOffForHole(1, h) : capB;
+    holesPlayed++;
+    let result;
+    if (netA < netB) {
+      holesA++;
+      result = "A";
+    } else if (netB < netA) {
+      holesB++;
+      result = "B";
+    } else {
+      holesHalved++;
+      result = "halve";
+    }
+    const tally = holesA - holesB;
+    holeByHole.push({ hole: h, result, tally });
+    if (!decidedAt) {
+      const holesRemaining = 17 - h;
+      if (Math.abs(tally) > holesRemaining) {
+        decidedAt = { hole: h, margin: Math.abs(tally), holesRemaining, winnerIdx: tally > 0 ? 0 : 1 };
+      }
+    }
+  }
+
+  const currentTally = holesA - holesB; // positive = player 0 up, negative = player 1 up, 0 = all square
+  const isComplete = holesPlayed === 18;
+
+  // Standard golf notation for the match's status/result - "3 and 2" once
+  // decided early, "1 up" if only settled on the very last hole, "All
+  // Square" while tied and still in progress, or "Halved" if genuinely
+  // tied after all 18 with nothing left to settle it (this app doesn't
+  // support extra playoff holes).
+  let statusText;
+  let marginText; // same result, without a name baked in - for anywhere the winner's name is already shown separately
+  if (decidedAt) {
+    statusText = `${decidedAt.margin} and ${decidedAt.holesRemaining}`;
+    marginText = statusText;
+  } else if (currentTally === 0) {
+    statusText = isComplete ? "Halved" : "All Square";
+    marginText = statusText;
+  } else {
+    const leaderName = round.players[currentTally > 0 ? 0 : 1].name || (currentTally > 0 ? "Player A" : "Player B");
+    statusText = isComplete ? `${leaderName} wins, ${Math.abs(currentTally)} up` : `${leaderName} ${Math.abs(currentTally)} up`;
+    marginText = `${Math.abs(currentTally)} up`;
+  }
+
+  return {
+    holesA,
+    holesB,
+    holesHalved,
+    holesPlayed,
+    currentTally,
+    holeByHole,
+    decidedAt,
+    isComplete,
+    isDecided: !!decidedAt || (isComplete && currentTally !== 0),
+    statusText,
+    marginText,
+  };
+}
+
   const computed = useMemo(() => computeRoundScoring(round), [round]);
 
   // Fires a Nassau segment celebration through the same accolade banner
@@ -9946,7 +10073,7 @@ function computeIndividualNassauResults(round, computed) {
 
             <div className="gsc-label" style={{ marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Individual Game Formats</div>
             <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>Up to 4 Players</div>
-            {["swami", "dstreet", "individualputts", "pontobango", "stableford"]
+            {["swami", "dstreet", "individualputts", "pontobango", "stableford", "matchplay"]
               .map((key) => [key, GAMES[key]])
               .map(([key, g]) => (
                 <div key={key} className="gsc-card gsc-game-card" style={{ marginBottom: 10 }} onClick={() => startNewRound(key)}>
@@ -15253,7 +15380,30 @@ function computeIndividualNassauResults(round, computed) {
                 </button>
               )}
             </div>
-          ) : (
+          ) : round.game === "matchplay" ? (() => {
+            const finalMatch = computeMatchPlayResult(round, computed);
+            if (!finalMatch) return null;
+            const isHalved = finalMatch.currentTally === 0;
+            const winnerName = !isHalved ? (round.players[finalMatch.currentTally > 0 ? 0 : 1].name || "Player") : null;
+            return (
+              <div className="gsc-card gsc-winner-card" style={{ textAlign: "center" }}>
+                <div style={{ fontSize: 28, marginBottom: 6 }}>&#127942;</div>
+                <div style={{ fontWeight: 700, fontSize: 12, textTransform: "uppercase", letterSpacing: "0.5px", color: "#B08D57", marginBottom: 6 }}>
+                  {isHalved ? "Match Halved" : "Winner"}
+                </div>
+                {!isHalved && (
+                  <div style={{ fontSize: 19, fontWeight: 700 }}>{winnerName}</div>
+                )}
+                <div style={{ fontSize: 13, color: "#6b6b63", marginTop: 4 }}>
+                  {isHalved ? "All Square - both players halved the match" : `Won ${finalMatch.marginText}`}
+                </div>
+                <div style={{ fontSize: 12, color: "#8a8a80", marginTop: 8 }}>
+                  {round.players[0].name || "Player A"} {finalMatch.holesA} - {finalMatch.holesB} {round.players[1].name || "Player B"}
+                  {finalMatch.holesHalved > 0 ? ` (${finalMatch.holesHalved} halved)` : ""}
+                </div>
+              </div>
+            );
+          })() : (
             winners.length > 0 && (
               <div className="gsc-card gsc-winner-card" style={{ textAlign: "center" }}>
                 <div style={{ fontSize: 28, marginBottom: 6 }}>&#127942;</div>
@@ -15673,6 +15823,13 @@ function computeIndividualNassauResults(round, computed) {
       const truncatedComputed = computeRoundScoring(truncatedRound);
       return playerRank(truncatedRound, truncatedComputed);
     })();
+    const matchPlayResult = round.game === "matchplay" ? (() => {
+      const truncatedScores = { ...round.scores };
+      for (let h = holeIdx + 1; h < 18; h++) truncatedScores[h] = {};
+      const truncatedRound = { ...round, scores: truncatedScores };
+      const truncatedComputed = computeRoundScoring(truncatedRound);
+      return computeMatchPlayResult(truncatedRound, truncatedComputed);
+    })() : null;
     const foursomeTotals = g.singleTeam ? computeTournamentFoursomeTotals(round) : null;
 
 
@@ -16659,6 +16816,34 @@ function computeIndividualNassauResults(round, computed) {
               ) : (
                 !boardLoading && <div style={{ fontSize: 13, color: "#6b6b63" }}>Tap "Refresh leaderboard" to load standings.</div>
               )}
+            </div>
+          ) : matchPlayResult ? (
+            <div className="gsc-card gsc-winner-card" style={{ textAlign: "center" }}>
+              <div className="gsc-label" style={{ marginBottom: 8, fontSize: 15, color: "#1B4332", fontWeight: 800 }}>Match Status</div>
+              <div style={{ fontSize: 22, fontWeight: 800, color: "#1B4332" }}>{matchPlayResult.statusText}</div>
+              {matchPlayResult.isDecided && (
+                <div style={{ marginTop: 6 }}>
+                  <span className="gsc-chip gsc-lead">MATCH DECIDED</span>
+                </div>
+              )}
+              <div style={{ display: "flex", justifyContent: "center", gap: 24, marginTop: 14 }}>
+                <div>
+                  <div style={{ fontWeight: 700 }}>{round.players[0].name || "Player A"}</div>
+                  <div style={{ fontSize: 20, fontWeight: 800, color: "#1B4332" }}>{matchPlayResult.holesA}</div>
+                  <div style={{ fontSize: 11, color: "#8a8a80" }}>holes won</div>
+                </div>
+                <div>
+                  <div style={{ fontWeight: 700, color: "#8a8a80" }}>Halved</div>
+                  <div style={{ fontSize: 20, fontWeight: 800, color: "#8a8a80" }}>{matchPlayResult.holesHalved}</div>
+                  <div style={{ fontSize: 11, color: "#8a8a80" }}>holes</div>
+                </div>
+                <div>
+                  <div style={{ fontWeight: 700 }}>{round.players[1].name || "Player B"}</div>
+                  <div style={{ fontSize: 20, fontWeight: 800, color: "#1B4332" }}>{matchPlayResult.holesB}</div>
+                  <div style={{ fontSize: 11, color: "#8a8a80" }}>holes won</div>
+                </div>
+              </div>
+              <div style={{ fontSize: 11, color: "#8a8a80", marginTop: 10 }}>Thru {matchPlayResult.holesPlayed} holes</div>
             </div>
           ) : (
           <div className="gsc-card">
