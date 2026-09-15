@@ -156,7 +156,7 @@ const SUBSCRIPTIONS_AVAILABLE_HERE = SUBSCRIPTIONS_ENABLED && !isRunningInNative
 
 const GAMES = {
   teamstrokes: {
-    name: "Team Strokes",
+    name: "Team Stroke Play",
     tag: "Fixed teams stroke play - 4 players",
     desc: "A 4-person, 2 vs 2 team combined strokes competition. Each player plays their own ball and records their own strokes and putts. Lowest team total strokes wins; lowest team total putts settles a tie. Overall and Nassau scoring methods available.",
     rotates: false,
@@ -436,7 +436,7 @@ const GAMES = {
     ],
   },
   tourneygg: {
-    name: "Combined Strokes Tournament",
+    name: "Stroke Play Tournament",
     tag: "4-person combined - Tournaments only",
     desc: "The whole foursome plays as one team - no 2-person sub-teams. All 4 players' strokes are added together, and all 4 players' putts are added together, each hole. Used only in Tournaments, where foursomes are ranked against each other by total combined strokes and total combined putts.",
     rotates: false,
@@ -508,7 +508,7 @@ const GAMES = {
     ],
   },
   swami: {
-    name: "Individual Strokes",
+    name: "Individual Stroke Play",
     tag: "Individual stroke play - up to 4 players",
     desc: "A standard, no-frills stroke play game for up to 4 players. Lowest total strokes wins; total putts breaks a tie. Great for players who just want to keep an honest scorecard. Overall, Nassau, and Oceans 11 scoring methods available.",
     rotates: false,
@@ -598,7 +598,7 @@ const GAMES = {
     defaults: { maxOver: "", maxPutts: "", mulliganSegment: "", mulliganChallenge: "", prize: "", netScoring: true },
     rules: [
       "Individual strokes and putting game for up to 4 players.",
-      "Total strokes and putts are still kept track of (similar to Individual Strokes).",
+      "Total strokes and putts are still kept track of (similar to Individual Stroke Play).",
       {
         text: "There are however 3 points awarded per hole:",
         sub: [
@@ -656,7 +656,7 @@ const GAMES = {
     ],
   },
   matchplay: {
-    name: "Match Play",
+    name: "Individual Match Play",
     tag: "Head-to-head, 1 vs 1 - exactly 2 players",
     desc: "The classic hole-by-hole format - two players go head-to-head, winning, losing, or halving each hole based on net score. Whoever's ahead by more holes than remain wins the match early; otherwise it's decided after 18. Overall and Nassau scoring methods available.",
     rotates: false,
@@ -686,10 +686,10 @@ const GAMES = {
     ],
   },
   matchplayfourball: {
-    name: "Match Play Four-Ball",
-    tournamentName: "Match Play Four-Ball Tournament",
+    name: "Team Match Play (Four-Ball)",
+    tournamentName: "Team Match Play (Four-Ball) Tournament",
     tag: "Team head-to-head, 2 vs 2 - exactly 4 players",
-    desc: "Team match play, better-ball style - two 2-person teams go head-to-head, each hole decided by whichever side's better net score (between its own two players) is lower. Winning, losing, or halving each hole is tracked just like Singles Match Play, including a match that can end before the 18th hole. Overall and Nassau scoring methods available.",
+    desc: "Team match play, better-ball style - two 2-person teams go head-to-head, each hole decided by whichever side's better net score (between its own two players) is lower. Winning, losing, or halving each hole is tracked just like Individual Match Play, including a match that can end before the 18th hole. Overall and Nassau scoring methods available.",
     rotates: false,
     hasScore: true,
     hasPutts: true,
@@ -697,7 +697,7 @@ const GAMES = {
     isMatchPlay: true,
     defaults: { maxOver: "", maxPutts: "", mulliganSegment: "", mulliganChallenge: "", prize: "", netScoring: true },
     rules: [
-      "Team match play, better-ball style, for exactly 2 fixed teams of 2 - the team format built on the same hole-by-hole scoring as Singles Match Play.",
+      "Team match play, better-ball style, for exactly 2 fixed teams of 2 - the team format built on the same hole-by-hole scoring as Individual Match Play.",
       "Each player plays their own ball the whole way, same as Best Ball - nobody plays a partner's shot.",
       {
         text: "Each hole is its own contest, decided by better ball:",
@@ -1266,7 +1266,7 @@ function haversineYards(lat1, lon1, lat2, lon2) {
 // formats, and Seabluffe/Wolf's rotating partners, which don't have
 // two fixed, consistent sides for a whole-round bet) never qualifies.
 // Nassau is only offered for these 4 team formats (Team Skins, Team
-// Best Ball, Team Putts, Team Strokes) - all structurally always
+// Best Ball, Team Putts, Team Stroke Play) - all structurally always
 // exactly 2 teams. Individual formats deliberately don't support
 // Nassau at all, even at exactly 2 players - this was tried and found
 // too confusing in practice, so it was removed rather than left as a
@@ -1285,7 +1285,7 @@ function gameSupportsNassau(gameKey) {
   return NASSAU_ALWAYS_TWO_SIDED.includes(gameKey) || NASSAU_INDIVIDUAL_GAMES.includes(gameKey) || gameKey === "swami" || gameKey === "dstreet" || gameKey === "individualputts";
 }
 
-// Oceans 11 - an alternate scoring method for Individual Strokes only,
+// Oceans 11 - an alternate scoring method for Individual Stroke Play only,
 // where each player picks their own best 11 holes to count toward their
 // total, following the same "toggle in game variables" pattern as
 // Nassau above.
@@ -1299,7 +1299,7 @@ function gameSupportsOceans11(gameKey) {
 
 // Individual Skins and Individual Putts get a simpler, 2-way version of
 // the same "scoring method" toggle - just Overall or Nassau, no Oceans
-// 11 option (that stays exclusive to Individual Strokes).
+// 11 option (that stays exclusive to Individual Stroke Play).
 const NASSAU_ONLY_INDIVIDUAL_GAMES = ["dstreet", "individualputts"];
 function nassauOnlyEligible(gameKey, playerCount) {
   return NASSAU_ONLY_INDIVIDUAL_GAMES.includes(gameKey) && playerCount >= 2 && playerCount <= 4;
@@ -6720,7 +6720,7 @@ export default function GolfScorecard() {
   // Strokes and landing on a new, deliberately trimmed-down setup screen
   // instead of the full one - course search, the per-hole handicapping
   // choice, and player names are the only things asked; everything else
-  // (limits, prize, mulligans, Venmo, etc.) stays at Individual Strokes'
+  // (limits, prize, mulligans, Venmo, etc.) stays at Individual Stroke Play'
   // own normal defaults, exactly as if someone had gone through the full
   // setup screen and changed nothing beyond those three things.
   function startQuickStart() {
@@ -7066,7 +7066,7 @@ export default function GolfScorecard() {
     closeGroupFillPicker();
   }
 
-  // Only used by individual game formats (Individual Strokes, Individual Skins) -
+  // Only used by individual game formats (Individual Stroke Play, Individual Skins) -
   // team games and tournaments always need exactly 4 (2v2 or a foursome),
   // so this stays unused/inaccessible there.
   function addPlayerSlot() {
@@ -7102,7 +7102,7 @@ export default function GolfScorecard() {
     const isIndividual = gameKey === "dstreet" || gameKey === "swami" || gameKey === "pontobango" || gameKey === "individualputts" || gameKey === "stableford" || gameKey === "matchplay";
     if (gameKey === "matchplay") {
       if (cleanPlayers.length !== 2) {
-        setErr("Match Play needs exactly 2 players.");
+        setErr("Individual Match Play needs exactly 2 players.");
         return;
       }
     } else if (isIndividual) {
@@ -7286,6 +7286,7 @@ export default function GolfScorecard() {
       Array.from({ length: count }, (_, i) => ({
         name: `Foursome ${i + 1}`,
         players: i === 0 ? freshPlayerSlots(tournamentGameKey) : Array.from({ length: slotsPerMatch }, () => ({ name: "", hcp: "", avatar: "" })),
+        pairing: [[0, 1], [2, 3]],
       }))
     );
     goToScreen("tournamentRoster");
@@ -7313,6 +7314,19 @@ export default function GolfScorecard() {
     setTournamentFoursomesDraft((draft) => {
       const next = [...draft];
       next[fi] = { ...next[fi], captainIdx: pi };
+      return next;
+    });
+  }
+
+  // Same idea as the regular setup screen's pontoPairing selector, but
+  // per-match rather than a single global value - each match in a Match
+  // Play Four-Ball tournament needs its own independent pairing, since
+  // different matches may want different partners.
+  function setFoursomeDraftPairing(fi, partner) {
+    setTournamentFoursomesDraft((draft) => {
+      const next = [...draft];
+      const remaining = [0, 1, 2, 3].filter((x) => x !== 0 && x !== partner);
+      next[fi] = { ...next[fi], pairing: [[0, partner], remaining] };
       return next;
     });
   }
@@ -7386,7 +7400,7 @@ export default function GolfScorecard() {
         course: tournamentCourseName.trim(),
         cfg: cleanCfg,
         players: cleanPlayers,
-        teams: tournamentGameKey === "matchplay" ? [[0], [1]] : tournamentGameKey === "matchplayfourball" ? [[0, 1], [2, 3]] : [[0, 1, 2, 3]],
+        teams: tournamentGameKey === "matchplay" ? [[0], [1]] : tournamentGameKey === "matchplayfourball" ? (draft.pairing || [[0, 1], [2, 3]]) : [[0, 1, 2, 3]],
         par: cleanPar,
         yardage: cleanYardage,
         strokeIndex: cleanStrokeIndex,
@@ -8943,7 +8957,7 @@ function computeNassauResults(round, computed, maxHole = 17) {
   const holeResults = computed && computed.holeResults;
   if (!holeResults || holeResults.length === 0) return null;
 
-  // totalScoring games (Team Strokes, Swami) and puttsOnlyScoring games
+  // totalScoring games (Team Stroke Play, Swami) and puttsOnlyScoring games
   // (Team Putts, Individual Putts) decide their winner by lowest total
   // strokes/putts at the end, not hole-by-hole points - so Nassau
   // segments for these compare summed strokes/putts instead, same
@@ -9080,7 +9094,7 @@ function computeSkinsStakes(round, computed) {
 // fundamentally different (N ranked players, not two totals compared).
 //
 // The three games score in genuinely different ways, so the metric
-// itself varies: net strokes for Individual Strokes (lowest wins),
+// itself varies: net strokes for Individual Stroke Play (lowest wins),
 // putts for Individual Putts (lowest wins), and points for Individual
 // Skins (highest wins - reusing computed.holeResults[h].ptsAwarded
 // directly rather than re-deriving the point-awarding rules here,
@@ -10351,7 +10365,7 @@ function computeMatchPlayResult(round, computed) {
               <div style={{ fontWeight: 800, fontSize: 15, color: "#8a6a2f" }}>Oceans 11</div>
             </div>
             <div style={{ fontSize: 13, color: "#4b4b45" }}>
-              Oceans 11 is a scoring method you can turn on for the Individual Strokes game, marked *Oceans 11 Avail above. Instead of counting all 18 holes, each player selects their own best 11 as they go, visible to the whole group - lowest total across just those 11 wins. Once a hole is taken as one of your 11, that choice is meant to stick; the option to change it is only there in case of a mistake, not to freely reconsider your strategy mid-round. Turn it on from the "Set your game limits and scoring" step during setup.
+              Oceans 11 is a scoring method you can turn on for the Individual Stroke Play game, marked *Oceans 11 Avail above. Instead of counting all 18 holes, each player selects their own best 11 as they go, visible to the whole group - lowest total across just those 11 wins. Once a hole is taken as one of your 11, that choice is meant to stick; the option to change it is only there in case of a mistake, not to freely reconsider your strategy mid-round. Turn it on from the "Set your game limits and scoring" step during setup.
             </div>
           </div>
 
@@ -11557,7 +11571,7 @@ function computeMatchPlayResult(round, computed) {
               ))}
               <div style={{ marginBottom: 20 }}>
                 <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px", fontSize: 14 }}>
-                  {"\u{1F93A}"} Match Play Four-Ball Tournament
+                  {"\u{1F93A}"} Team Match Play (Four-Ball) Tournament
                 </p>
                 <p style={{ margin: 0 }}>
                   Running Four-Ball as a tournament captures how the format is actually played at events like the Ryder Cup - several pairs going head-to-head at once, all under one shared event, with no bracket or advancement to worry about. Every match is entirely its own contest, decided hole by hole, so a lopsided match at one table never affects anyone else's - and with everyone's status visible in one place, it's easy to see how the whole group is doing without having to track down each pair individually. It's a natural fit for a club outing or group event where several pairs want real head-to-head competition happening side by side.
@@ -12172,7 +12186,7 @@ function computeMatchPlayResult(round, computed) {
           <div className="gsc-card">
             <div className="gsc-label" style={{ marginBottom: 8 }}>Which game format(s) have you played? <span style={{ textTransform: "none", fontWeight: 400 }}>(select all that apply)</span></div>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              {["Team Strokes", "Team Putts", "Round Robin", "Wolf", "Team Skins", "Vegas", "Team Best Ball", "Best Ball Tournament", "Combined Strokes Tournament", "Scramble Tournament", "Individual Strokes", "Individual Skins", "Individual Putts", "Bingo Bango Bongo", "Stableford"].map((opt) => (
+              {["Team Stroke Play", "Team Putts", "Round Robin", "Wolf", "Team Skins", "Vegas", "Team Best Ball", "Best Ball Tournament", "Stroke Play Tournament", "Scramble Tournament", "Individual Stroke Play", "Individual Skins", "Individual Putts", "Bingo Bango Bongo", "Stableford"].map((opt) => (
                 <button key={opt} style={pillBtn(a.formats.includes(opt))} onClick={() => toggleFeedbackFormat(opt)}>{opt}</button>
               ))}
             </div>
@@ -13295,7 +13309,7 @@ function computeMatchPlayResult(round, computed) {
     return (
       <div className="gsc">
         <style>{STYLE}</style>
-        <Header title="Quick Start" sub="Individual Strokes - just the basics" onBack={() => goBack("home")} />
+        <Header title="Quick Start" sub="Individual Stroke Play - just the basics" onBack={() => goBack("home")} />
         <div className="gsc-body">
           <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
@@ -15038,6 +15052,25 @@ function computeMatchPlayResult(round, computed) {
                 </div>
                 );
               })}
+              {tournamentGameKey === "matchplayfourball" && (
+                <div style={{ marginTop: 10 }}>
+                  <div className="gsc-label">Teams</div>
+                  <div className="gsc-row">
+                    <select className="gsc-input" value={f.pairing ? f.pairing[0][1] : 1} onChange={(e) => setFoursomeDraftPairing(fi, Number(e.target.value))}>
+                      {[1, 2, 3].map((x) => (
+                        <option key={x} value={x}>{LETTERS[0]} + {LETTERS[x]}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 6 }}>
+                    {f.pairing ? (
+                      <>Team 1: {LETTERS[f.pairing[0][0]]}+{LETTERS[f.pairing[0][1]]} vs Team 2: {LETTERS[f.pairing[1][0]]}+{LETTERS[f.pairing[1][1]]}</>
+                    ) : (
+                      <>Team 1: {LETTERS[0]}+{LETTERS[1]} vs Team 2: {LETTERS[2]}+{LETTERS[3]}</>
+                    )}
+                  </div>
+                </div>
+              )}
               <div style={{ marginTop: 10 }}>
                 <div className="gsc-label" style={{ marginBottom: 6 }}>{MATCH_PLAY_GAMES.includes(tournamentGameKey) ? "Who's this match's captain?" : "Who's this foursome's captain?"}</div>
                 <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 8 }}>
@@ -15348,7 +15381,7 @@ function computeMatchPlayResult(round, computed) {
       }
       return [];
     }
-    // Individual Nassau (Individual Strokes, Skins, or Putts) - same
+    // Individual Nassau (Individual Stroke Play, Skins, or Putts) - same
     // idea as team Nassau above, using the Overall 18 segment to decide
     // the round's overall winner, but ranking all players individually
     // rather than comparing two teams.
