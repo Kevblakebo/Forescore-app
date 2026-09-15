@@ -1000,91 +1000,41 @@ function EyeIcon({ open }) {
 // via touch support; Android tablets typically drop "Mobile" from their
 // user agent string even though they still say "Android", so that's
 // checked too rather than treating any "Android" match as a phone.
-// Both sounds are synthesized directly with the Web Audio API rather than
-// external audio files - keeps the app self-contained (nothing extra to
-// host or upload) and works reliably offline. Wrapped in try/catch since
-// audio can fail silently in some contexts (autoplay restrictions, older
-// browsers) and that should never break the actual score entry.
 
+// Both sounds are the user's own uploaded audio clips, played back via a
+// plain HTML Audio element - previously these were synthesized directly
+// with the Web Audio API, replaced here per explicit request. Module-level
+// audio variables (not React refs, since these functions live outside the
+// component) so a repeat trigger restarts the clip from the beginning
+// rather than letting a second copy stack on top of a still-playing one.
+
+let birdieAudio = null;
 function playBirdieSound() {
   try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const now = ctx.currentTime;
-    // Two quick overlapping upward pitch-sweeps - the classic bird
-    // "tweet-tweet" - repeated a second time after a clear gap, so it
-    // reads as two distinct chirps rather than one quick sound.
-    [0, 0.13, 0.5, 0.63].forEach((startOffset) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = "sine";
-      const start = now + startOffset;
-      osc.frequency.setValueAtTime(2200, start);
-      osc.frequency.exponentialRampToValueAtTime(3400, start + 0.06);
-      osc.frequency.exponentialRampToValueAtTime(2600, start + 0.11);
-      gain.gain.setValueAtTime(0.0001, start);
-      gain.gain.linearRampToValueAtTime(0.25, start + 0.01);
-      gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.13);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(start);
-      osc.stop(start + 0.15);
-    });
-    setTimeout(() => ctx.close(), 1000);
+    if (birdieAudio) {
+      birdieAudio.pause();
+      birdieAudio.currentTime = 0;
+      birdieAudio.play().catch(() => {});
+      return;
+    }
+    birdieAudio = new Audio("/sounds/birdie.mp3");
+    birdieAudio.play().catch(() => {});
   } catch (e) {
     // Silently ignore - sound is a nice-to-have, never worth surfacing an error over.
   }
 }
 
+let eagleAudio = null;
 function playEagleSound() {
   try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const now = ctx.currentTime;
-    // A single, longer, piercing descending screech - the classic raptor
-    // "keeeeer" cry, opposite in shape and character from the birdie's
-    // quick upward tweet: one sustained sweep from high to low, with a
-    // subtle, fast wobble layered on top of the pitch for a rougher,
-    // slightly raspy edge instead of a clean, pure tone.
-    const start = now;
-    const duration = 0.55;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = "sawtooth";
-    osc.frequency.setValueAtTime(3800, start);
-    osc.frequency.exponentialRampToValueAtTime(1700, start + duration);
-
-    // Fast vibrato on top of the main descending sweep, for the raspy,
-    // slightly warbling texture real raptor calls have rather than a
-    // clean, synthetic-sounding slide.
-    const vibrato = ctx.createOscillator();
-    const vibratoGain = ctx.createGain();
-    vibrato.frequency.setValueAtTime(38, start);
-    vibratoGain.gain.setValueAtTime(90, start);
-    vibrato.connect(vibratoGain);
-    vibratoGain.connect(osc.frequency);
-
-    // A gentle low-pass filter that also sweeps down, keeping the tail
-    // end of the cry from sounding too harsh/buzzy as the sawtooth wave
-    // continues into lower, naturally brighter-sounding territory.
-    const filter = ctx.createBiquadFilter();
-    filter.type = "lowpass";
-    filter.frequency.setValueAtTime(5000, start);
-    filter.frequency.exponentialRampToValueAtTime(2200, start + duration);
-    filter.Q.value = 1;
-
-    gain.gain.setValueAtTime(0.0001, start);
-    gain.gain.linearRampToValueAtTime(0.22, start + 0.04);
-    gain.gain.setValueAtTime(0.22, start + duration - 0.18);
-    gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
-
-    osc.connect(filter);
-    filter.connect(gain);
-    gain.connect(ctx.destination);
-
-    vibrato.start(start);
-    osc.start(start);
-    vibrato.stop(start + duration + 0.05);
-    osc.stop(start + duration + 0.05);
-    setTimeout(() => ctx.close(), Math.round((duration + 0.6) * 1000));
+    if (eagleAudio) {
+      eagleAudio.pause();
+      eagleAudio.currentTime = 0;
+      eagleAudio.play().catch(() => {});
+      return;
+    }
+    eagleAudio = new Audio("/sounds/eagle.mp3");
+    eagleAudio.play().catch(() => {});
   } catch (e) {
     // Silently ignore - sound is a nice-to-have, never worth surfacing an error over.
   }
