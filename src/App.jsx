@@ -686,8 +686,8 @@ const GAMES = {
     ],
   },
   matchplayfourball: {
-    name: "Team Match Play (Four-Ball)",
-    tournamentName: "Team Match Play (Four-Ball) Tournament",
+    name: "Team Match Play",
+    tournamentName: "Team Match Play Tournament",
     tag: "Team head-to-head, 2 vs 2 - exactly 4 players",
     desc: "Team match play, better-ball style - two 2-person teams go head-to-head, each hole decided by whichever side's better net score (between its own two players) is lower. Winning, losing, or halving each hole is tracked just like Individual Match Play, including a match that can end before the 18th hole. Overall and Nassau scoring methods available.",
     rotates: false,
@@ -795,7 +795,7 @@ const VIBE_GAME_MAP = {
   "4": {
     simple: { team: ["teamstrokes", "teamputts"], individual: ["swami", "individualputts"] },
     mixedSkill: { team: ["seabluffe", "beachside"], individual: ["pontobango", "stableford"] },
-    highDrama: { team: ["ponto", "vegas"], individual: "dstreet" },
+    highDrama: { team: ["ponto", "vegas", "matchplayfourball"], individual: "dstreet" },
     // Combines what used to be two separate vibes ("maximum strategy"
     // and "playing a Nassau format") into one, branching three ways
     // instead of two - team, individual, or Wolf's own team/lone-wolf
@@ -809,7 +809,7 @@ const VIBE_GAME_MAP = {
   tournament: {
     simple: "tourneygg",
     mixedSkill: ["avoscramble", "tourneybb"],
-    highDrama: "tourneybb",
+    highDrama: ["tourneybb", "matchplayfourball"],
   },
 };
 
@@ -827,6 +827,13 @@ function vibePlayerCountBucket(playerCount) {
 // asked before anything else can be resolved.
 function resolveVibeEntry(playerCount, vibe, roundMode) {
   const bucket = vibePlayerCountBucket(playerCount);
+  // Individual Match Play needs exactly 2 players, not 3 - since the "2-3"
+  // bucket doesn't otherwise distinguish between them, this is handled as
+  // an explicit special case rather than restructuring the whole bucket
+  // for one format.
+  if (bucket === "2-3" && vibe === "highDrama" && Number(playerCount) === 2) {
+    return { candidates: ["dstreet", "matchplay"] };
+  }
   let entry = VIBE_GAME_MAP[bucket] ? VIBE_GAME_MAP[bucket][vibe] : null;
   if (!entry) return {};
   if (bucket === "4" && typeof entry === "object" && !Array.isArray(entry)) {
@@ -852,6 +859,10 @@ function gamesForPlayerCount(playerCount) {
     else if (entry && typeof entry === "object") Object.values(entry).forEach(addEntry);
   };
   Object.values(bucketMap).forEach(addEntry);
+  // Same special case as resolveVibeEntry - Individual Match Play only
+  // ever fits exactly 2 players, so it isn't part of the shared "2-3"
+  // bucket data itself.
+  if (bucket === "2-3" && Number(playerCount) === 2) set.add("matchplay");
   return Array.from(set);
 }
 
@@ -4683,7 +4694,7 @@ export default function GolfScorecard() {
           {wheelResult ? (
             <>
               <div style={{ fontSize: 15, fontWeight: 700, color: "#1B4332", margin: "10px 0 4px" }}>
-                {"\u{1F389}"} You got: {GAMES[wheelResult].name}!
+                {"\u{1F389}"} You got: {vibePlayerCountBucket(wizardAnswers.playerCount) === "tournament" && GAMES[wheelResult].tournamentName ? GAMES[wheelResult].tournamentName : GAMES[wheelResult].name}!
               </div>
               <button
                 className="gsc-btn gsc-btn-primary"
@@ -5841,7 +5852,7 @@ export default function GolfScorecard() {
       strokesRanked: board && board.tournament && board.tournament.id === t.id ? board.strokesRanked : [],
       puttsRanked: board && board.tournament && board.tournament.id === t.id ? board.puttsRanked : [],
       matchResults: board && board.tournament && board.tournament.id === t.id ? board.matchResults : null,
-      hasPutts: GAMES[t.game] ? GAMES[t.game].hasPutts : false,
+      hasPutts: GAMES[t.game] ? GAMES[t.game].hasPutts && t.cfg.trackPutts !== false : false,
     });
     if (supabase) {
       // Same reasoning as the regular round-finish trigger - best-effort,
@@ -6659,7 +6670,7 @@ export default function GolfScorecard() {
       } else {
         setGameKey(key);
         setCfg(withProfileVenmo({ ...GAMES[key].defaults, ...(nextAnswers.wantsNassau && !["swami", "dstreet", "individualputts"].includes(key) ? { nassau: true } : {}) }));
-        const count = key === "swami" || key === "dstreet" || key === "pontobango" || key === "individualputts" || key === "stableford" ? Math.max(1, Math.min(4, Number(nextAnswers.playerCount) || 4)) : 4;
+        const count = key === "swami" || key === "dstreet" || key === "pontobango" || key === "individualputts" || key === "stableford" || key === "matchplay" ? Math.max(1, Math.min(4, Number(nextAnswers.playerCount) || 4)) : 4;
         setPlayers((p) => {
           const base = [...p];
           while (base.length < count) base.push({ name: "", hcp: "", avatar: "" });
@@ -11581,7 +11592,7 @@ function computeMatchPlayResult(round, computed) {
               ))}
               <div style={{ marginBottom: 20 }}>
                 <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px", fontSize: 14 }}>
-                  {"\u{1F93A}"} Team Match Play (Four-Ball) Tournament
+                  {"\u{1F93A}"} Team Match Play Tournament
                 </p>
                 <p style={{ margin: 0 }}>
                   Running Four-Ball as a tournament captures how the format is actually played at events like the Ryder Cup - several pairs going head-to-head at once, all under one shared event, with no bracket or advancement to worry about. Every match is entirely its own contest, decided hole by hole, so a lopsided match at one table never affects anyone else's - and with everyone's status visible in one place, it's easy to see how the whole group is doing without having to track down each pair individually. It's a natural fit for a club outing or group event where several pairs want real head-to-head competition happening side by side.
@@ -12493,7 +12504,7 @@ function computeMatchPlayResult(round, computed) {
                   <OptionButton onClick={() => pickVibe("simple")}>Keep it simple - straightforward, easy to track</OptionButton>
                   <OptionButton onClick={() => pickVibe("mixedSkill")}>Mixed skill levels - level the playing field</OptionButton>
                   <OptionButton onClick={() => pickVibe("highDrama")}>
-                    High stakes - lots of drama, every hole can swing{isTourn ? " (closest fit: Best Ball Tournament)" : ""}
+                    High stakes - lots of drama, every hole can swing
                   </OptionButton>
                   {(Number(wizardAnswers.playerCount) === 2 || Number(wizardAnswers.playerCount) === 3) && (
                     <OptionButton onClick={() => pickVibe("maxStrategy")}>Maximum strategy - scoring formats like Nassau (front 9, back 9, overall) and Oceans 11 (select 11 holes for your score as you play)</OptionButton>
@@ -12565,7 +12576,7 @@ function computeMatchPlayResult(round, computed) {
                       style={{ width: "100%", marginBottom: 10, padding: 14, fontSize: 14, textAlign: "left", cursor: "pointer" }}
                       onClick={() => wizardGoNext("vibeFollowup", { resolvedGameKey: key, isTournament: isTourn })}
                     >
-                      <div style={{ fontWeight: 700, marginBottom: 4 }}>{GAMES[key].name}</div>
+                      <div style={{ fontWeight: 700, marginBottom: 4 }}>{isTourn && GAMES[key].tournamentName ? GAMES[key].tournamentName : GAMES[key].name}</div>
                       <div style={{ fontWeight: 400, fontSize: 12, color: "#6b6b63" }}>{WHY_PLAY[key]}</div>
                     </div>
                   ))}
@@ -12576,7 +12587,7 @@ function computeMatchPlayResult(round, computed) {
           {wizardStepId === "confirmGame" && g && (
             <div className="gsc-card gsc-winner-card">
               <div className="gsc-label">{isTournament ? "Your tournament format" : "Your game format"}</div>
-              <div style={{ fontWeight: 700, fontSize: 19, marginTop: 4 }}>{g.name}</div>
+              <div style={{ fontWeight: 700, fontSize: 19, marginTop: 4 }}>{isTournament && g.tournamentName ? g.tournamentName : g.name}</div>
               <div className="gsc-tag" style={{ marginTop: 6 }}>{g.tag}</div>
               <div className="gsc-no-select" style={{ fontSize: 13, marginTop: 10, color: "#4b4b45" }}>{g.desc}</div>
               <button className="gsc-link" style={{ marginTop: 10, fontSize: 13, display: "block" }} onClick={() => openWhyPlay(wizardAnswers.resolvedGameKey)}>
@@ -13690,7 +13701,7 @@ function computeMatchPlayResult(round, computed) {
                 {activeTournament.course && <>Course: {activeTournament.course}<br /></>}
                 {[
                   activeTournament.cfg.maxOver != null ? `Max over par: ${activeTournament.cfg.maxOver}` : null,
-                  GAMES[activeTournament.game].hasPutts && activeTournament.cfg.maxPutts != null ? `Max putts: ${activeTournament.cfg.maxPutts}` : null,
+                  GAMES[activeTournament.game].hasPutts && activeTournament.cfg.trackPutts !== false && activeTournament.cfg.maxPutts != null ? `Max putts: ${activeTournament.cfg.maxPutts}` : null,
                   `Mulligans: ${activeTournament.cfg.mulliganSegment}${activeTournament.game === "seabluffe" ? ` per ${mulliganWindow(activeTournament.game)} holes` : " per player"}`,
                 ]
                   .filter(Boolean)
@@ -15321,7 +15332,7 @@ function computeMatchPlayResult(round, computed) {
               {board.strokesRanked.map((row, idx) => renderFoursomeRow(row, idx, "totalStrokes", "strokeHoles"))}
             </div>
           )}
-          {board && t && GAMES[t.game].hasPutts && (
+          {board && t && GAMES[t.game].hasPutts && t.cfg.trackPutts !== false && (
             <div className="gsc-card">
               <div className="gsc-label" style={{ marginBottom: 10 }}>Ranked by Putts</div>
               {board.puttsRanked.length === 0 && <div style={{ fontSize: 13, color: "#6b6b63" }}>No foursomes have joined yet.</div>}
