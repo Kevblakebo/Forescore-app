@@ -685,6 +685,41 @@ const GAMES = {
       "Putts start once on the putting green.",
     ],
   },
+  matchplayfourball: {
+    name: "Match Play Four-Ball",
+    tag: "Team head-to-head, 2 vs 2 - exactly 4 players",
+    desc: "Team match play, better-ball style - two 2-person teams go head-to-head, each hole decided by whichever side's better net score (between its own two players) is lower. Winning, losing, or halving each hole is tracked just like Singles Match Play, including a match that can end before the 18th hole. Overall and Nassau scoring methods available.",
+    rotates: false,
+    hasScore: true,
+    hasPutts: true,
+    totalScoring: true,
+    isMatchPlay: true,
+    defaults: { maxOver: "", maxPutts: "", mulliganSegment: "", mulliganChallenge: "", prize: "", netScoring: true },
+    rules: [
+      "Team match play, better-ball style, for exactly 2 fixed teams of 2 - the team format built on the same hole-by-hole scoring as Singles Match Play.",
+      "Each player plays their own ball the whole way, same as Best Ball - nobody plays a partner's shot.",
+      {
+        text: "Each hole is its own contest, decided by better ball:",
+        sub: [
+          "Each side's score for the hole is whichever of its own two players has the lower net score",
+          "The side with the lower of those two better-ball scores wins the hole - equal scores halve it, nobody wins",
+        ],
+      },
+      "The match is tracked hole by hole as holes won, not total strokes - a big blow-up hole only ever costs the team that one hole, since a strong score from either partner still counts.",
+      "The match ends the moment a team is ahead by more holes than remain to be played - for example, 3 up with only 2 holes left ends the match \"3 and 2\", and the remaining holes aren't needed to decide the outcome. The group can still keep entering scores for fun if they'd like to play out the full round.",
+      "If the match is still all square after 18 holes, it's declared halved - this app doesn't currently support extra playoff holes.",
+      "Per-hole handicapping (net score per hole) is defaulted to On, but can be turned off in game scoring settings. Handicap strokes are based on each player's own handicap, relative to the lowest handicap among all 4 players - same approach used across every game in this app.",
+      "Putts are tracked but don't affect who wins the match.",
+      "Prize: to be agreed on prior to round.",
+      "Strokes max: to be agreed on prior to round.",
+      "Putts max: to be agreed on prior to round.",
+      "Mulligans: to be agreed on prior to round.",
+      "Play OB shots as a lateral drop (1 out, 1 in) (to be agreed on).",
+      "Must putt all the way into the hole.",
+      "Flagstick can stay in.",
+      "Putts start once on the putting green.",
+    ],
+  },
 };
 
 // Single source of truth for each game's small visual identity (emoji +
@@ -696,12 +731,12 @@ const GAMES = {
 const GAME_TILE_STYLE = (() => {
   const order = [
     "swami", "dstreet", "individualputts", "pontobango", "stableford", "matchplay",
-    "teamstrokes", "ponto", "teamputts", "beachside", "seabluffe", "moonlightwolf", "vegas",
+    "teamstrokes", "ponto", "teamputts", "beachside", "seabluffe", "moonlightwolf", "vegas", "matchplayfourball",
     "avoscramble", "tourneybb", "tourneygg",
   ];
   const emoji = {
     dstreet: "\u{1F4B0}", swami: "\u26F3", individualputts: "\u{1F3AF}", pontobango: "\u{1F3B2}", stableford: "\u{1F4C8}", matchplay: "\u2694\uFE0F",
-    ponto: "\u{1F91D}", teamstrokes: "\u{1F3CC}\u{FE0F}", teamputts: "\u{1F573}\u{FE0F}", beachside: "\u2B50", seabluffe: "\u{1F504}", moonlightwolf: "\u{1F43A}", vegas: "\u{1F3B0}",
+    ponto: "\u{1F91D}", teamstrokes: "\u{1F3CC}\u{FE0F}", teamputts: "\u{1F573}\u{FE0F}", beachside: "\u2B50", seabluffe: "\u{1F504}", moonlightwolf: "\u{1F43A}", vegas: "\u{1F3B0}", matchplayfourball: "\u{1F93A}",
     avoscramble: "\u{1F500}", tourneybb: "\u{1F3C6}", tourneygg: "\u{1F3C5}",
   };
   const colors = ["#1B4332", "#3A7352", "#B08D57", "#2A5B42", "#8A6A2F", "#719A82"];
@@ -735,6 +770,7 @@ const WHY_PLAY = {
   pontobango: "What makes this format special is that none of its three points is about who hits the ball the furthest - each one rewards a completely different skill, including simply being in the right position to play first. Because the player farthest from the hole always plays first, shorter hitters get the first real shot at points on plenty of holes, and the golfer with the toughest position on the green gets a fair chance too. That built-in leveling is exactly why it's so popular among groups with a real spread of handicaps playing together.",
   stableford: "Stableford's biggest draw is that a single poor hole can't ruin an entire round - it only ever costs zero points, which keeps the pressure low and the format genuinely relaxed and enjoyable for casual and club play alike. It also rewards aggressive play in a way stroke play doesn't, letting golfers go after a spectacular shot without the same fear of a blown-up score. It was originally created specifically to help the average club golfer enjoy a competitive round more - and that founding idea is still exactly why it remains so popular today.",
   matchplay: "Match play is the original form of the game, and it stays popular because a disastrous hole only ever costs you that one hole, not your entire round - a blow-up on 14 is forgotten the moment you tee off on 15. That head-to-head, hole-by-hole tension is exactly why it's the format the Ryder Cup, Presidents Cup, and Solheim Cup are all built on - it rewards clutch play and course management under direct pressure from a single opponent, not just a good scorecard. A match can also be won before the 18th hole is ever played, which gives it a different, often more dramatic pace than counting strokes all the way to the end.",
+  matchplayfourball: "Four-Ball takes match play's core appeal - a bad hole only costs you that one hole, not the round - and adds the safety net of a partner on top of it, which is exactly why it's one of the most popular team formats at the Ryder Cup, Presidents Cup, and Solheim Cup. Since only the better of the two partners' scores counts each hole, both players can play aggressively without the fear of a single bad swing sinking the team, and a struggling partner never has to feel like they're letting the side down. That built-in cushion is what makes it a genuine crowd favorite for pairs who want real head-to-head competition without needing two flawless rounds to win it.",
 };
 
 // Maps a "what matters most" vibe answer to actual game(s), grouped by
@@ -7082,7 +7118,7 @@ export default function GolfScorecard() {
     }
     const code = genCode();
     const teams =
-      gameKey === "ponto" || gameKey === "vegas" || gameKey === "beachside" || gameKey === "teamputts" || gameKey === "teamstrokes"
+      gameKey === "ponto" || gameKey === "vegas" || gameKey === "beachside" || gameKey === "teamputts" || gameKey === "teamstrokes" || gameKey === "matchplayfourball"
         ? pontoPairing
         : isIndividual
         ? cleanPlayers.map((_, i) => [i]) // individual - each player is their own "team" of one, however many were entered
@@ -9092,15 +9128,26 @@ function computeIndividualNassauResults(round, computed) {
 // Match Play's hole-by-hole result, running tally, and early-finish
 // detection - a separate, additional computation layer on top of the
 // core scoring engine, exactly like computeIndividualNassauResults above,
-// rather than woven into computeRoundScoring() itself. Match play needs
-// nothing new for the handicap math: for exactly two players, "strokes
-// relative to the lowest handicap in the group" (what strokesOffForHole
-// already does for every game) is mathematically identical to match
-// play's own "based on the difference between the two opponents" rule.
+// rather than woven into computeRoundScoring() itself. Shared by both
+// Singles (round.teams = [[0],[1]]) and Four-Ball (round.teams =
+// [[0,1],[2,3]]) - each side's hole score is simply the minimum net
+// score among that side's own players, which naturally reduces to a
+// single player's own score for Singles with no special-casing needed.
+// Match play needs nothing new for the handicap math either: for
+// exactly two players (or two fixed teams), "strokes relative to the
+// lowest handicap in the group" (what strokesOffForHole already does
+// for every game) is mathematically identical to match play's own
+// "based on the difference between the two sides" rule.
+const MATCH_PLAY_GAMES = ["matchplay", "matchplayfourball"];
 function computeMatchPlayResult(round, computed) {
-  if (!round || round.game !== "matchplay") return null;
+  if (!round || !MATCH_PLAY_GAMES.includes(round.game)) return null;
   if (!computed) return null;
-  if (!round.players || round.players.length !== 2) return null;
+  const teams = round.teams;
+  if (!teams || teams.length !== 2) return null;
+  const [sideA, sideB] = teams;
+  if (!sideA || !sideB || sideA.length === 0 || sideB.length === 0) return null;
+
+  const sideName = (side) => side.map((pi) => round.players[pi]?.name || `Player ${pi + 1}`).join(" & ");
 
   let holesA = 0;
   let holesB = 0;
@@ -9109,25 +9156,51 @@ function computeMatchPlayResult(round, computed) {
   const holeByHole = [];
   let decidedAt = null; // set once, the first hole where the lead can no longer be caught
 
+  // The net score for one side on one hole - the better (lowest) of
+  // however many players are on that side, plus which specific player's
+  // score it was (relevant for Four-Ball, where that's worth showing).
+  function sideHoleScore(side, h) {
+    let best = null;
+    let bestPi = null;
+    for (const pi of side) {
+      const e = (round.scores[h] || {})[pi];
+      if (!e || e.strokes == null || e.strokes === "") continue;
+      const parH = round.par[h] ?? 4;
+      const effectiveMaxOver = round.cfg.doubleParMax ? parH : round.cfg.maxOver;
+      const capped = Math.min(Number(e.strokes), parH + (effectiveMaxOver ?? 99));
+      const net = computed.netScoringOn ? capped - computed.strokesOffForHole(pi, h) : capped;
+      if (best == null || net < best) {
+        best = net;
+        bestPi = pi;
+      }
+    }
+    return { score: best, playerIdx: bestPi };
+  }
+
   for (let h = 0; h < 18; h++) {
-    const eA = (round.scores[h] || {})[0];
-    const eB = (round.scores[h] || {})[1];
-    if (!eA || eA.strokes == null || eA.strokes === "" || !eB || eB.strokes == null || eB.strokes === "") {
+    const scoreA = sideHoleScore(sideA, h);
+    const scoreB = sideHoleScore(sideB, h);
+    // A side's hole score only counts once every player on it has
+    // entered a score - a single, still-blank partner shouldn't let
+    // their teammate's better score decide the hole prematurely.
+    const sideAReady = sideA.every((pi) => {
+      const e = (round.scores[h] || {})[pi];
+      return e && e.strokes != null && e.strokes !== "";
+    });
+    const sideBReady = sideB.every((pi) => {
+      const e = (round.scores[h] || {})[pi];
+      return e && e.strokes != null && e.strokes !== "";
+    });
+    if (!sideAReady || !sideBReady || scoreA.score == null || scoreB.score == null) {
       holeByHole.push({ hole: h, result: null, tally: holesA - holesB });
       continue;
     }
-    const parH = round.par[h] ?? 4;
-    const effectiveMaxOver = round.cfg.doubleParMax ? parH : round.cfg.maxOver;
-    const capA = Math.min(Number(eA.strokes), parH + (effectiveMaxOver ?? 99));
-    const capB = Math.min(Number(eB.strokes), parH + (effectiveMaxOver ?? 99));
-    const netA = computed.netScoringOn ? capA - computed.strokesOffForHole(0, h) : capA;
-    const netB = computed.netScoringOn ? capB - computed.strokesOffForHole(1, h) : capB;
     holesPlayed++;
     let result;
-    if (netA < netB) {
+    if (scoreA.score < scoreB.score) {
       holesA++;
       result = "A";
-    } else if (netB < netA) {
+    } else if (scoreB.score < scoreA.score) {
       holesB++;
       result = "B";
     } else {
@@ -9135,7 +9208,7 @@ function computeMatchPlayResult(round, computed) {
       result = "halve";
     }
     const tally = holesA - holesB;
-    holeByHole.push({ hole: h, result, tally });
+    holeByHole.push({ hole: h, result, tally, countedPlayerA: scoreA.playerIdx, countedPlayerB: scoreB.playerIdx });
     if (!decidedAt) {
       const holesRemaining = 17 - h;
       if (Math.abs(tally) > holesRemaining) {
@@ -9144,7 +9217,7 @@ function computeMatchPlayResult(round, computed) {
     }
   }
 
-  const currentTally = holesA - holesB; // positive = player 0 up, negative = player 1 up, 0 = all square
+  const currentTally = holesA - holesB; // positive = side A up, negative = side B up, 0 = all square
   const isComplete = holesPlayed === 18;
 
   // Standard golf notation for the match's status/result - "3 and 2" once
@@ -9161,12 +9234,16 @@ function computeMatchPlayResult(round, computed) {
     statusText = isComplete ? "Halved" : "All Square";
     marginText = statusText;
   } else {
-    const leaderName = round.players[currentTally > 0 ? 0 : 1].name || (currentTally > 0 ? "Player A" : "Player B");
+    const leaderName = sideName(currentTally > 0 ? sideA : sideB);
     statusText = isComplete ? `${leaderName} wins, ${Math.abs(currentTally)} up` : `${leaderName} ${Math.abs(currentTally)} up`;
     marginText = `${Math.abs(currentTally)} up`;
   }
 
   return {
+    sideA,
+    sideB,
+    sideAName: sideName(sideA),
+    sideBName: sideName(sideB),
     holesA,
     holesB,
     holesHalved,
@@ -9376,17 +9453,17 @@ function computeMatchPlayResult(round, computed) {
     if (!r || !c) return "";
     const g = GAMES[r.game];
     if (!g) return "";
-    if (r.game === "matchplay") {
+    if (MATCH_PLAY_GAMES.includes(r.game)) {
       const match = computeMatchPlayResult(r, c);
       if (!match || match.holesPlayed === 0) return "No scores entered yet.";
       if (match.isDecided) {
-        const winnerName = r.players[match.currentTally > 0 ? 0 : 1].name || "Player";
+        const winnerName = match.currentTally > 0 ? match.sideAName : match.sideBName;
         return `${winnerName} wins the match, ${match.marginText}.`;
       }
       if (match.currentTally === 0) {
         return `Through hole ${match.holesPlayed}, the match is all square.`;
       }
-      const leaderName = r.players[match.currentTally > 0 ? 0 : 1].name || "Player";
+      const leaderName = match.currentTally > 0 ? match.sideAName : match.sideBName;
       return `Through hole ${match.holesPlayed}, ${leaderName} is ${match.marginText}.`;
     }
     const ranksNow = playerRank(r, c);
@@ -10131,7 +10208,7 @@ function computeMatchPlayResult(round, computed) {
 
             <div className="gsc-label" style={{ marginTop: 14, marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Team Game Formats</div>
             <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>2 vs 2</div>
-            {["teamstrokes", "ponto", "teamputts", "beachside", "seabluffe", "moonlightwolf", "vegas"]
+            {["teamstrokes", "ponto", "teamputts", "beachside", "seabluffe", "moonlightwolf", "vegas", "matchplayfourball"]
               .map((key) => [key, GAMES[key]])
               .map(([key, g]) => (
                 <div key={key} className="gsc-card gsc-game-card" style={{ marginBottom: 10 }} onClick={() => startNewRound(key)}>
@@ -15395,11 +15472,11 @@ function computeMatchPlayResult(round, computed) {
                 </button>
               )}
             </div>
-          ) : round.game === "matchplay" ? (() => {
+          ) : MATCH_PLAY_GAMES.includes(round.game) ? (() => {
             const finalMatch = computeMatchPlayResult(round, computed);
             if (!finalMatch) return null;
             const isHalved = finalMatch.currentTally === 0;
-            const winnerName = !isHalved ? (round.players[finalMatch.currentTally > 0 ? 0 : 1].name || "Player") : null;
+            const winnerName = !isHalved ? (finalMatch.currentTally > 0 ? finalMatch.sideAName : finalMatch.sideBName) : null;
             return (
               <div className="gsc-card gsc-winner-card" style={{ textAlign: "center" }}>
                 <div style={{ fontSize: 28, marginBottom: 6 }}>&#127942;</div>
@@ -15410,10 +15487,10 @@ function computeMatchPlayResult(round, computed) {
                   <div style={{ fontSize: 19, fontWeight: 700 }}>{winnerName}</div>
                 )}
                 <div style={{ fontSize: 13, color: "#6b6b63", marginTop: 4 }}>
-                  {isHalved ? "All Square - both players halved the match" : `Won ${finalMatch.marginText}`}
+                  {isHalved ? "All Square - the match ended halved" : `Won ${finalMatch.marginText}`}
                 </div>
                 <div style={{ fontSize: 12, color: "#8a8a80", marginTop: 8 }}>
-                  {round.players[0].name || "Player A"} {finalMatch.holesA} - {finalMatch.holesB} {round.players[1].name || "Player B"}
+                  {finalMatch.sideAName} {finalMatch.holesA} - {finalMatch.holesB} {finalMatch.sideBName}
                   {finalMatch.holesHalved > 0 ? ` (${finalMatch.holesHalved} halved)` : ""}
                 </div>
               </div>
@@ -15838,7 +15915,7 @@ function computeMatchPlayResult(round, computed) {
       const truncatedComputed = computeRoundScoring(truncatedRound);
       return playerRank(truncatedRound, truncatedComputed);
     })();
-    const matchPlayResult = round.game === "matchplay" ? (() => {
+    const matchPlayResult = MATCH_PLAY_GAMES.includes(round.game) ? (() => {
       const truncatedScores = { ...round.scores };
       for (let h = holeIdx + 1; h < 18; h++) truncatedScores[h] = {};
       const truncatedRound = { ...round, scores: truncatedScores };
@@ -16850,7 +16927,7 @@ function computeMatchPlayResult(round, computed) {
               )}
               <div style={{ display: "flex", justifyContent: "center", gap: 24, marginTop: 14 }}>
                 <div>
-                  <div style={{ fontWeight: 700 }}>{round.players[0].name || "Player A"}</div>
+                  <div style={{ fontWeight: 700 }}>{matchPlayResult.sideAName}</div>
                   <div style={{ fontSize: 20, fontWeight: 800, color: "#1B4332" }}>{matchPlayResult.holesA}</div>
                   <div style={{ fontSize: 11, color: "#8a8a80" }}>holes won</div>
                 </div>
@@ -16860,7 +16937,7 @@ function computeMatchPlayResult(round, computed) {
                   <div style={{ fontSize: 11, color: "#8a8a80" }}>holes</div>
                 </div>
                 <div>
-                  <div style={{ fontWeight: 700 }}>{round.players[1].name || "Player B"}</div>
+                  <div style={{ fontWeight: 700 }}>{matchPlayResult.sideBName}</div>
                   <div style={{ fontSize: 20, fontWeight: 800, color: "#1B4332" }}>{matchPlayResult.holesB}</div>
                   <div style={{ fontSize: 11, color: "#8a8a80" }}>holes won</div>
                 </div>
