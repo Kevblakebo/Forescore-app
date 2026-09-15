@@ -4390,13 +4390,9 @@ export default function GolfScorecard() {
   // they're the one setting this up) is pre-filled so they don't have to
   // retype their own name and handicap every single time. Everyone else
   // still starts blank, same as before.
-  function freshPlayerSlots() {
-    const slots = [
-      { name: "", hcp: "", avatar: "" },
-      { name: "", hcp: "", avatar: "" },
-      { name: "", hcp: "", avatar: "" },
-      { name: "", hcp: "", avatar: "" },
-    ];
+  function freshPlayerSlots(gameKeyArg) {
+    const count = gameKeyArg === "matchplay" ? 2 : 4;
+    const slots = Array.from({ length: count }, () => ({ name: "", hcp: "", avatar: "" }));
     if (session && profile && (profile.name || profile.handicap || profile.avatar)) {
       slots[0] = { name: profile.name || "", hcp: profile.handicap || "", avatar: profile.avatar || "" };
     }
@@ -4998,13 +4994,13 @@ export default function GolfScorecard() {
                 const checked = groupFillChosenIds.includes(m.user_id);
                 return (
                   <label key={m.user_id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: "1px solid #eee6cf", cursor: "pointer" }}>
-                    <input type="checkbox" checked={checked} onChange={() => toggleGroupFillChosen(m.user_id)} disabled={!checked && groupFillChosenIds.length >= 4} />
+                    <input type="checkbox" checked={checked} onChange={() => toggleGroupFillChosen(m.user_id)} disabled={!checked && groupFillChosenIds.length >= (gameKey === "matchplay" ? 2 : 4)} />
                     {m.avatar && <span style={{ fontSize: 18 }}>{m.avatar}</span>}
                     <span style={{ fontWeight: 600 }}>{m.name}</span>
                   </label>
                 );
               })}
-              <div style={{ fontSize: 12, color: "#8a8a80", margin: "10px 0" }}>{groupFillChosenIds.length} of 4 selected</div>
+              <div style={{ fontSize: 12, color: "#8a8a80", margin: "10px 0" }}>{groupFillChosenIds.length} of {gameKey === "matchplay" ? 2 : 4} selected</div>
               <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginBottom: 8 }} disabled={groupFillChosenIds.length === 0} onClick={confirmGroupFillSelection}>
                 Fill in selected players
               </button>
@@ -6658,7 +6654,7 @@ export default function GolfScorecard() {
     setCfg(withProfileVenmo({ ...GAMES[key].defaults }));
     setRoundName("");
     setRoundDate(new Date().toISOString().slice(0, 10));
-    setPlayers(freshPlayerSlots());
+    setPlayers(freshPlayerSlots(key));
     setPontoPairing([[0, 1], [2, 3]]);
     setPar(Array(18).fill(""));
     setYardage(Array(18).fill(""));
@@ -6959,7 +6955,8 @@ export default function GolfScorecard() {
       setGroupFillErr("This group doesn't have any members yet.");
       return;
     }
-    if (members.length <= 4) {
+    const autoFillThreshold = gameKey === "matchplay" ? 2 : 4;
+    if (members.length <= autoFillThreshold) {
       applyGroupMembersToPlayers(members);
     } else {
       setGroupFillMembers(members);
@@ -6973,9 +6970,10 @@ export default function GolfScorecard() {
   }
 
   function toggleGroupFillChosen(userId) {
+    const maxChosen = gameKey === "matchplay" ? 2 : 4;
     setGroupFillChosenIds((prev) => {
       if (prev.includes(userId)) return prev.filter((id) => id !== userId);
-      if (prev.length >= 4) return prev; // never more than a full foursome
+      if (prev.length >= maxChosen) return prev; // never more than this game allows
       return [...prev, userId];
     });
   }
@@ -6998,15 +6996,16 @@ export default function GolfScorecard() {
     // getting bumped there by however the group happened to be ordered)
     // is confusing, not just cosmetic.
     const ordered = session ? [...members].sort((a, b) => (a.user_id === session.user.id ? -1 : b.user_id === session.user.id ? 1 : 0)) : members;
-    const filled = ordered.slice(0, 4).map((m) => ({ name: m.name, avatar: m.avatar, user_id: m.user_id, hcp: m.handicap || "" }));
+    const slotCount = gameKey === "matchplay" ? 2 : 4;
+    const filled = ordered.slice(0, slotCount).map((m) => ({ name: m.name, avatar: m.avatar, user_id: m.user_id, hcp: m.handicap || "" }));
     if (groupFillFor === "players" || groupFillFor === "playersAndMeta") {
       if (filled.length > 0) {
-        // A group with fewer than 4 members shouldn't shrink the player
-        // list down to match it - someone playing with 2 regulars from a
-        // group plus 2 guests needs those extra slots to still exist and
-        // be fillable, not disappear along with the ability to add to
-        // them.
-        const padded = Array.from({ length: 4 }, (_, i) => filled[i] || { name: "", avatar: "", hcp: "" });
+        // A group with fewer members than this game needs shouldn't
+        // shrink the player list down to match it - someone playing with
+        // 2 regulars from a group plus 2 guests needs those extra slots
+        // to still exist and be fillable, not disappear along with the
+        // ability to add to them.
+        const padded = Array.from({ length: slotCount }, (_, i) => filled[i] || { name: "", avatar: "", hcp: "" });
         setPlayers(padded);
       }
     } else if (typeof groupFillFor === "number") {
