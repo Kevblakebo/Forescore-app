@@ -839,7 +839,12 @@ function resolveVibeEntry(playerCount, vibe, roundMode) {
   if (bucket === "4" && typeof entry === "object" && !Array.isArray(entry)) {
     if (!roundMode) return { needsTeamOrIndividual: true };
     entry = entry[roundMode];
-    if (!entry) return {};
+    // A roundMode that doesn't exist for this particular vibe (e.g. a
+    // stale "mixed" answer carried over from a previous "maxStrategy"
+    // pick, then the person went back and chose a different vibe that
+    // has no "mixed" branch) means the answer doesn't actually apply
+    // here - re-ask rather than resolving to nothing.
+    if (!entry) return { needsTeamOrIndividual: true };
   }
   if (Array.isArray(entry)) return { candidates: entry };
   return { resolved: entry };
@@ -12496,7 +12501,7 @@ function computeMatchPlayResult(round, computed) {
               const isTourn = vibePlayerCountBucket(wizardAnswers.playerCount) === "tournament";
               const pickVibe = (vibeKey) => {
                 const r = resolveVibeEntry(wizardAnswers.playerCount, vibeKey, undefined);
-                wizardGoNext("vibe", { vibe: vibeKey, resolvedGameKey: r.resolved || null, isTournament: !!r.resolved && isTourn, wantsNassau: vibeKey === "maxStrategy" });
+                wizardGoNext("vibe", { vibe: vibeKey, roundMode: undefined, resolvedGameKey: r.resolved || null, isTournament: !!r.resolved && isTourn, wantsNassau: vibeKey === "maxStrategy" });
               };
               return (
                 <div className="gsc-card">
