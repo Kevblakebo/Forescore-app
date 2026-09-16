@@ -16416,15 +16416,16 @@ function computeMatchPlayResult(round, computed) {
                 {session && round.holeGPS && round.holeGPS[holeIdx] && round.holeGPS[holeIdx].length > 0 && (
                   <div>
                     {!holeImageOpen ? (
-                      <div
+                      <button
+                        className="gsc-link"
+                        style={{ display: "flex", width: "fit-content", alignItems: "center", gap: 5, fontSize: 13 }}
                         onClick={() => {
                           setHoleImageOpen(true);
                           if (!holeImage) fetchHoleImage();
                         }}
-                        style={{ display: "flex", width: "fit-content", alignItems: "center", gap: 5, background: "#EBF0EC", color: "#1B4332", fontWeight: 700, fontSize: 13, padding: "5px 12px", borderRadius: 20, cursor: "pointer" }}
                       >
                         {"\u{1F6F0}\uFE0F"} View hole from above
-                      </div>
+                      </button>
                     ) : (
                       <div>
                         {holeImageLoading && <div style={{ fontSize: 12, color: "#8a8a80" }}>Loading...</div>}
@@ -16444,29 +16445,33 @@ function computeMatchPlayResult(round, computed) {
                   </div>
                 )}
                 {session && (
-                  <div
+                  <button
+                    className="gsc-link"
+                    disabled={!announceEnabled || elevenLabsBusy}
                     onClick={announceStandings}
-                    style={{ display: "flex", width: "fit-content", alignItems: "center", gap: 5, background: "#EBF0EC", color: "#1B4332", fontWeight: 700, fontSize: 13, padding: "5px 12px", borderRadius: 20, cursor: announceEnabled && !elevenLabsBusy ? "pointer" : "default", opacity: announceEnabled && !elevenLabsBusy ? 1 : 0.5, marginTop: 8 }}
+                    style={{ display: "flex", width: "fit-content", alignItems: "center", gap: 5, fontSize: 13, opacity: announceEnabled && !elevenLabsBusy ? 1 : 0.5, marginTop: 8 }}
                   >
                     {"\u{1F4E2}"} {elevenLabsBusy ? "Generating..." : "Announce Scores"}
-                  </div>
+                  </button>
                 )}
               </div>
               <div style={{ flex: "0 0 auto" }}>
                 {session && (
-                  <div
+                  <button
+                    className="gsc-link"
                     onClick={() => goToScreen("sideGames")}
-                    style={{ position: "relative", display: "inline-flex", alignItems: "center", gap: 5, background: sideGamesHoleSet.has(holeIdx + 1) ? "#A42E2D" : "#EBF0EC", color: sideGamesHoleSet.has(holeIdx + 1) ? "#F3EFE0" : "#1B4332", fontWeight: 700, fontSize: 13, padding: "5px 12px", borderRadius: 20, cursor: "pointer" }}
+                    style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 13, color: sideGamesHoleSet.has(holeIdx + 1) ? "#A42E2D" : "#1B4332" }}
                   >
                     {"\u{1F3B2}"} Side Games{sideGamesHoleSet.has(holeIdx + 1) ? " \u2713" : ""}
-                  </div>
+                  </button>
                 )}
-                <div
+                <button
+                  className="gsc-link"
                   onClick={playGolfClap}
-                  style={{ display: "flex", width: "fit-content", alignItems: "center", gap: 5, background: "#EBF0EC", color: "#1B4332", fontWeight: 700, fontSize: 13, padding: "5px 12px", borderRadius: 20, cursor: "pointer", marginTop: 8, marginLeft: "auto" }}
+                  style={{ display: "flex", width: "fit-content", alignItems: "center", gap: 5, fontSize: 13, marginTop: 8, marginLeft: "auto" }}
                 >
                   {"\u{1F44F}"} Golf Clap
-                </div>
+                </button>
               </div>
             </div>
 
@@ -16616,71 +16621,72 @@ function computeMatchPlayResult(round, computed) {
                         {"\u26F3"} +{computed.strokesOffForHole(i, holeIdx)} STROKE{computed.strokesOffForHole(i, holeIdx) > 1 ? "S" : ""}
                       </span>
                     )}
-                    {g.tracksWolf && i === wolfIndexForHole(holeIdx) && (
-                      <span
-                        style={{
-                          marginLeft: 6,
-                          fontSize: 10,
-                          fontWeight: 800,
-                          color: "#fff",
-                          background: "#A42E2D",
-                          padding: "2px 7px",
-                          borderRadius: 20,
-                          verticalAlign: "middle",
-                        }}
-                      >
-                        {"\u{1F43A}"} WOLF
-                      </span>
-                    )}
-                    {g.tracksWolf && i === wolfFirstHitterIndexForHole(holeIdx) && (
-                      <span
-                        style={{
-                          marginLeft: 6,
-                          fontSize: 10,
-                          fontWeight: 800,
-                          color: "#fff",
-                          background: "#1B4332",
-                          padding: "2px 7px",
-                          borderRadius: 20,
-                          verticalAlign: "middle",
-                        }}
-                      >
-                        {"\u26F3"} TEES OFF FIRST
-                      </span>
-                    )}
-                    {g.tracksWolf && i === wolfSecondHitterIndexForHole(holeIdx) && (
-                      <span
-                        style={{
-                          marginLeft: 6,
-                          fontSize: 10,
-                          fontWeight: 800,
-                          color: "#fff",
-                          background: "#B08D57",
-                          padding: "2px 7px",
-                          borderRadius: 20,
-                          verticalAlign: "middle",
-                        }}
-                      >
-                        {"\u26F3"} TEES OFF 2ND
-                      </span>
-                    )}
-                    {g.tracksWolf && i === wolfThirdHitterIndexForHole(holeIdx) && (
-                      <span
-                        style={{
-                          marginLeft: 6,
-                          fontSize: 10,
-                          fontWeight: 800,
-                          color: "#fff",
-                          background: "#3F6B54",
-                          padding: "2px 7px",
-                          borderRadius: 20,
-                          verticalAlign: "middle",
-                        }}
-                      >
-                        {"\u26F3"} TEES OFF 3RD
-                      </span>
-                    )}
                   </div>
+                  {g.tracksWolf && (
+                    (i === wolfIndexForHole(holeIdx)) ||
+                    (i === wolfFirstHitterIndexForHole(holeIdx)) ||
+                    (i === wolfSecondHitterIndexForHole(holeIdx)) ||
+                    (i === wolfThirdHitterIndexForHole(holeIdx))
+                  ) && (
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 4 }}>
+                      {i === wolfIndexForHole(holeIdx) && (
+                        <span
+                          style={{
+                            fontSize: 10,
+                            fontWeight: 800,
+                            color: "#fff",
+                            background: "#A42E2D",
+                            padding: "2px 7px",
+                            borderRadius: 20,
+                          }}
+                        >
+                          {"\u{1F43A}"} WOLF
+                        </span>
+                      )}
+                      {i === wolfFirstHitterIndexForHole(holeIdx) && (
+                        <span
+                          style={{
+                            fontSize: 10,
+                            fontWeight: 800,
+                            color: "#fff",
+                            background: "#1B4332",
+                            padding: "2px 7px",
+                            borderRadius: 20,
+                          }}
+                        >
+                          {"\u26F3"} TEES OFF FIRST
+                        </span>
+                      )}
+                      {i === wolfSecondHitterIndexForHole(holeIdx) && (
+                        <span
+                          style={{
+                            fontSize: 10,
+                            fontWeight: 800,
+                            color: "#fff",
+                            background: "#B08D57",
+                            padding: "2px 7px",
+                            borderRadius: 20,
+                          }}
+                        >
+                          {"\u26F3"} TEES OFF 2ND
+                        </span>
+                      )}
+                      {i === wolfThirdHitterIndexForHole(holeIdx) && (
+                        <span
+                          style={{
+                            fontSize: 10,
+                            fontWeight: 800,
+                            color: "#fff",
+                            background: "#3F6B54",
+                            padding: "2px 7px",
+                            borderRadius: 20,
+                          }}
+                        >
+                          {"\u26F3"} TEES OFF 3RD
+                        </span>
+                      )}
+                    </div>
+                  )}
                   {scoringAvatarPickerFor === i && (
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 8, padding: "10px 0 4px" }}>
                       {AVATAR_OPTIONS.map((emoji) => (
