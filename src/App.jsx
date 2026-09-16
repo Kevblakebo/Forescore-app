@@ -4470,7 +4470,7 @@ export default function GolfScorecard() {
   }
   function handleLockedGameTap(gameKey) {
     const name = (GAMES[gameKey] && GAMES[gameKey].name) || "this game";
-    setAuthNotice(`Log in or create a free account to play ${name} - you'll unlock every game format, plus Side Games, stats, groups, and more.`);
+    setAuthNotice(`Log in or create an account to play ${name} - you'll unlock every game format, plus Side Games, stats, groups, and more.`);
     goToScreen("login");
   }
 
@@ -11611,7 +11611,7 @@ function computeMatchPlayResult(round, computed) {
 
               <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>{"\u{1F517}"} Join a Round Without Downloading Anything</p>
               <p style={{ margin: "0 0 14px" }}>
-                Start a round and share a simple code. Anyone can join instantly from a browser - no download required to play along. Individual Stroke Play is free to play without creating an account; every other format, along with GPS, satellite hole views, Side Games, stats, and groups, is unlocked with a free account. Everyone sees the same live scorecard update in real time.
+                Start a round and share a simple code. Anyone can join instantly from a browser - no download required to play along. Individual Stroke Play is playable without an account, as is joining an existing round or tournament with a share code; every other format, along with GPS, satellite hole views, Side Games, stats, and groups, is unlocked with an account. Everyone sees the same live scorecard update in real time.
               </p>
 
               <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>{"\u{1F4CD}"} Live Distance to the Green</p>
@@ -11726,7 +11726,7 @@ function computeMatchPlayResult(round, computed) {
 
               <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>Accounts and Share Codes</p>
               <p style={{ margin: "0 0 14px" }}>
-                Individual Stroke Play is free to play without creating an account. Every other game format, along with GPS, satellite hole views, Side Games, stats, and groups, requires a free RipScore account. Once a round or tournament is created, it's accessed using a share code - anyone with that code can view or enter scores for it, regardless of whether they're logged in, so treat your codes the way you'd treat access to a shared document, and only share them with people you actually want in your group.
+                Individual Stroke Play is free to play without creating an account, as is joining an existing round or tournament with a share code. Every other game format, along with GPS, satellite hole views, Side Games, stats, and groups, requires a RipScore account. Once a round or tournament is created, it's accessed using a share code - anyone with that code can view or enter scores for it, regardless of whether they're logged in, so treat your codes the way you'd treat access to a shared document, and only share them with people you actually want in your group.
               </p>
 
               <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>Your Account</p>
@@ -11791,7 +11791,7 @@ function computeMatchPlayResult(round, computed) {
 
               <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>Account Information</p>
               <p style={{ margin: "0 0 14px" }}>
-                Creating a free RipScore account requires an email address and password. Your password is handled by our authentication provider and is never visible to us in plain text. If you choose to save a profile, we also store what you enter there - things like your name, handicap, avatar, and Venmo handle - so it can be filled in automatically next time you play.
+                Creating a RipScore account requires an email address and password. Your password is handled by our authentication provider and is never visible to us in plain text. If you choose to save a profile, we also store what you enter there - things like your name, handicap, avatar, and Venmo handle - so it can be filled in automatically next time you play.
               </p>
 
               <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>Feedback Submissions</p>
