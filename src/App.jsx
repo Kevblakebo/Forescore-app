@@ -11595,7 +11595,7 @@ function computeMatchPlayResult(round, computed) {
 
               <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>{"\u26F3"} 18 Game Formats + Side Games, for Every Kind of Day</p>
               <p style={{ margin: "0 0 14px" }}>
-                Skins, Wolf, Vegas, Stableford, Bingo Bango Bongo, Best Ball, Round Robin, and more - for individuals, teams, and full multi-foursome tournaments. Pick a format, and RipScore keeps score, tracks mulligans, and shows exactly who's winning, hole by hole.
+                Skins, Wolf, Vegas, Stableford, Bingo Bango Bongo, Best Ball, Round Robin, Match Play, and more - for individuals, teams, and full multi-foursome tournaments. Pick a format, and RipScore keeps score, tracks mulligans, and shows exactly who's winning, hole by hole.
               </p>
 
               <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>{"\u{1F3B2}"} Side Games, Right From the Scorecard</p>
@@ -11603,9 +11603,9 @@ function computeMatchPlayResult(round, computed) {
                 Closest to the Pin, Sandies, Barkies, Greenies, and more - run alongside whatever format you're already playing. Track who's owed what hole by hole, and settle up automatically at the end of the round.
               </p>
 
-              <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>{"\u{1F517}"} No App Required for Your Group</p>
+              <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>{"\u{1F517}"} Join a Round Without Downloading Anything</p>
               <p style={{ margin: "0 0 14px" }}>
-                Start a round and share a simple code. Anyone can join instantly from a browser - no download, no account required to play. Everyone sees the same live scorecard update in real time.
+                Start a round and share a simple code. Anyone can join instantly from a browser - no download required to play along. Individual Stroke Play is free to play without creating an account; every other format, along with GPS, satellite hole views, Side Games, stats, and groups, is unlocked with a free account. Everyone sees the same live scorecard update in real time.
               </p>
 
               <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>{"\u{1F4CD}"} Live Distance to the Green</p>
@@ -11718,9 +11718,14 @@ function computeMatchPlayResult(round, computed) {
                 RipScore is not affiliated with, endorsed by, or connected to the USGA, GHIN, or any official handicapping body. Any link to GHIN.com is provided only as a convenience. Posting scores for handicap purposes is entirely your own responsibility, done directly through GHIN or your club - RipScore does not submit anything on your behalf.
               </p>
 
-              <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>Access via Codes, Not Accounts</p>
+              <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>Accounts and Share Codes</p>
               <p style={{ margin: "0 0 14px" }}>
-                RipScore doesn't currently require you to create an account. Rounds and tournaments are accessed using a share code, and anyone with that code can view or enter scores for that round - so treat your codes the way you'd treat access to a shared document, and only share them with people you actually want in your group.
+                Individual Stroke Play is free to play without creating an account. Every other game format, along with GPS, satellite hole views, Side Games, stats, and groups, requires a free RipScore account. Once a round or tournament is created, it's accessed using a share code - anyone with that code can view or enter scores for it, regardless of whether they're logged in, so treat your codes the way you'd treat access to a shared document, and only share them with people you actually want in your group.
+              </p>
+
+              <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>Your Account</p>
+              <p style={{ margin: "0 0 14px" }}>
+                If you create an account, you're responsible for keeping your login credentials secure and for anything done through your account. You can delete your account at any time from the app; see the Privacy Policy for what that removes.
               </p>
 
               <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>Your Responsibilities</p>
@@ -11770,12 +11775,17 @@ function computeMatchPlayResult(round, computed) {
 
               <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>Information Kept Only On Your Device</p>
               <p style={{ margin: "0 0 14px" }}>
-                Some information never leaves your phone: which round you're currently in, your history of past rounds on that device, and your last tournament. This is stored locally in your browser and isn't sent to us or anyone else.
+                Some information never leaves your phone: which round you're currently in, your history of past rounds on that device, your last tournament, and your chosen announcer voice, if you've set one. This is stored locally in your browser and isn't sent to us or anyone else.
               </p>
 
               <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>Information Shared With Your Group</p>
               <p style={{ margin: "0 0 14px" }}>
-                When you create a round or tournament, details like player names, handicaps, avatars, scores, putts, mulligans used, and prize text are saved so your group can access them from different phones using a share code. Anyone with that code can view and enter scores for that round - it isn't a private, individually-authenticated account system. Please only share codes with people you actually want in your group.
+                When you create a round or tournament, details like player names, handicaps, avatars, scores, putts, mulligans used, and prize text are saved so your group can access them from different phones using a share code. Anyone with that code can view and enter scores for that round, regardless of whether they're logged in. Please only share codes with people you actually want in your group.
+              </p>
+
+              <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>Account Information</p>
+              <p style={{ margin: "0 0 14px" }}>
+                Creating a free RipScore account requires an email address and password. Your password is handled by our authentication provider and is never visible to us in plain text. If you choose to save a profile, we also store what you enter there - things like your name, handicap, avatar, and Venmo handle - so it can be filled in automatically next time you play.
               </p>
 
               <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>Feedback Submissions</p>
@@ -11785,7 +11795,7 @@ function computeMatchPlayResult(round, computed) {
 
               <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>Third-Party Services We Use</p>
               <p style={{ margin: "0 0 14px" }}>
-                RipScore relies on a small number of outside services to work: a golf course database (to look up par and yardage when you search for a course), a cloud database (to store and sync round and tournament data across devices), and an email delivery service (to send Feedback submissions). Each of these only receives the specific information needed to perform its part - for example, the course lookup service only ever receives the course name or location you search for, never your scores or player info.
+                RipScore relies on a small number of outside services to work: a golf course database (to look up par and yardage when you search for a course), a cloud database and authentication provider (to store and sync round, tournament, and account data across devices, and to handle account login securely), an email delivery service (to send Feedback submissions), and a text-to-speech service (to power the optional voice announcer feature, which converts scores you choose to announce into spoken audio). Each of these only receives the specific information needed to perform its part - for example, the course lookup service only ever receives the course name or location you search for, never your scores or player info.
               </p>
 
               <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>What We Don't Do</p>
@@ -11795,7 +11805,7 @@ function computeMatchPlayResult(round, computed) {
 
               <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>Data Retention and Deletion</p>
               <p style={{ margin: "0 0 14px" }}>
-                Round and tournament data is kept for as long as needed to support the app's features (like viewing past rounds). Since RipScore doesn't have account logins today, there's no self-service "delete my account" option yet - if you'd like a specific round or tournament's data removed, email us and we'll take care of it.
+                Round and tournament data is kept for as long as needed to support the app's features (like viewing past rounds). If you have a RipScore account, you can delete it at any time from within the app - this removes your account and profile data. Shared round or tournament data tied to a group (rather than to your account specifically) may remain accessible to that group via its share code, since it's shared, collaborative data rather than something exclusively yours. If you'd like a specific round or tournament's data removed, email us and we'll take care of it.
               </p>
 
               <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>Children</p>
@@ -11805,7 +11815,7 @@ function computeMatchPlayResult(round, computed) {
 
               <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>Changes</p>
               <p style={{ margin: "0 0 14px" }}>
-                As RipScore evolves - like if account logins are added in the future - this page will be updated to reflect it, and the date at the top will change accordingly.
+                As RipScore evolves and new features are added, this page will be updated to reflect it, and the date at the top will change accordingly.
               </p>
 
               <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>Contact</p>
