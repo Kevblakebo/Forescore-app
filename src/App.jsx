@@ -16434,12 +16434,15 @@ function computeMatchPlayResult(round, computed) {
                           <img
                             src={holeImage}
                             alt={`Satellite view of hole ${holeIdx + 1}`}
-                            style={{ width: "100%", maxWidth: 300, borderRadius: 10, marginTop: 4, display: "block" }}
+                            onClick={() => setHoleImageOpen(false)}
+                            style={{ width: "100%", maxWidth: 300, borderRadius: 10, marginTop: 4, display: "block", cursor: "pointer" }}
                           />
                         )}
-                        <button className="gsc-link" style={{ fontSize: 11, marginTop: 4 }} onClick={() => setHoleImageOpen(false)}>
-                          Hide
-                        </button>
+                        {(holeImageLoading || holeImageErr) && (
+                          <button className="gsc-link" style={{ fontSize: 11, marginTop: 4 }} onClick={() => setHoleImageOpen(false)}>
+                            Hide
+                          </button>
+                        )}
                       </div>
                     )}
                   </div>
@@ -16465,13 +16468,15 @@ function computeMatchPlayResult(round, computed) {
                     {"\u{1F3B2}"} Side Games{sideGamesHoleSet.has(holeIdx + 1) ? " \u2713" : ""}
                   </button>
                 )}
-                <button
-                  className="gsc-link"
-                  onClick={playGolfClap}
-                  style={{ display: "flex", width: "fit-content", alignItems: "center", gap: 5, fontSize: 13, marginTop: 8, marginLeft: "auto" }}
-                >
-                  {"\u{1F44F}"} Golf Clap
-                </button>
+                {session && (
+                  <button
+                    className="gsc-link"
+                    onClick={playGolfClap}
+                    style={{ display: "flex", width: "fit-content", alignItems: "center", gap: 5, fontSize: 13, marginTop: 8, marginLeft: "auto" }}
+                  >
+                    {"\u{1F44F}"} Golf Clap
+                  </button>
+                )}
               </div>
             </div>
 
