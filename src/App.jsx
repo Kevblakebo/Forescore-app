@@ -177,7 +177,7 @@ const GAMES = {
       "Strokes max: to be agreed on prior to round.",
       "Putts max: to be agreed on prior to round.",
       "Mulligans: to be agreed on prior to round.",
-      "Play OB shots as a lateral drop (1 out, 1 in).",
+      "Play all OB shots per USGA Rules.",
       "Must putt all the way into the hole.",
       "Flagstick can stay in.",
       "Putts start once on the putting green.",
@@ -204,7 +204,7 @@ const GAMES = {
       "Strokes max: to be agreed on prior to round.",
       "Putts max: to be agreed on prior to round.",
       "Mulligans: to be agreed on prior to round.",
-      "Play OB shots as a lateral drop (1 out, 1 in) (to be agreed on).",
+      "Play all OB shots per USGA Rules.",
       "Must putt all the way into the hole.",
       "Flagstick can stay in.",
       "Putts start once on the putting green.",
@@ -235,7 +235,7 @@ const GAMES = {
       "Strokes max: to be agreed on prior to round.",
       "Putts max: to be agreed on prior to round.",
       "Mulligans: to be agreed on prior to round.",
-      "Play OB shots as a lateral drop (1 out, 1 in).",
+      "Play all OB shots per USGA Rules.",
       "Must putt all the way into the hole.",
       "Flagstick can stay in.",
       "Putts start once on the putting green.",
@@ -293,7 +293,7 @@ const GAMES = {
       "Putts max: to be agreed on prior to round.",
       "Mulligans: to be agreed on prior to round.",
       "Per-hole handicapping (net score per hole) is defaulted to On, but can be turned off in game scoring settings.",
-      "Play OB shots as a lateral drop (1 out, 1 in).",
+      "Play all OB shots per USGA Rules.",
       "Must putt all the way into the hole.",
       "Flagstick can stay in.",
       "Putts start once on the putting green.",
@@ -321,7 +321,7 @@ const GAMES = {
       "Strokes max: to be agreed on prior to round.",
       "Putts max: to be agreed on prior to round.",
       "Mulligans: to be agreed on prior to round.",
-      "Play OB shots as a lateral drop (1 out, 1 in).",
+      "Play all OB shots per USGA Rules.",
       "Must putt all the way into the hole.",
       "Flagstick can stay in.",
       "Putts start once on the putting green.",
@@ -360,7 +360,7 @@ const GAMES = {
       "Putts max: to be agreed on prior to round.",
       "Mulligans: to be agreed on prior to round.",
       "Per-hole handicapping (net score per hole) is defaulted to On, but can be turned off in game scoring settings.",
-      "Play OB shots as a lateral drop (1 out, 1 in).",
+      "Play all OB shots per USGA Rules.",
       "Must putt all the way into the hole.",
       "Flagstick can stay in.",
       "Putts start once on the putting green.",
@@ -394,7 +394,7 @@ const GAMES = {
       "Strokes max: to be agreed on prior to round.",
       "Putts max: to be agreed on prior to round.",
       "Mulligans: to be agreed on prior to round.",
-      "Play OB shots as a lateral drop (1 out, 1 in).",
+      "Play all OB shots per USGA Rules.",
       "Must putt all the way into the hole.",
       "Flagstick can stay in.",
       "Putts start once on the putting green.",
@@ -426,7 +426,7 @@ const GAMES = {
       "Strokes max: to be agreed on prior to round.",
       "Putts max: to be agreed on prior to round.",
       "Mulligans: to be agreed on prior to round.",
-      "Play OB shots as a lateral drop (1 out, 1 in).",
+      "Play all OB shots per USGA Rules.",
       "Must putt all the way into the hole.",
       "Flagstick can stay in.",
       "Putts start once on the putting green.",
@@ -458,7 +458,7 @@ const GAMES = {
       "Strokes max: to be agreed on prior to round.",
       "Putts max: to be agreed on prior to round.",
       "Mulligans: to be agreed on prior to round.",
-      "Play OB shots as a lateral drop (1 out, 1 in).",
+      "Play all OB shots per USGA Rules.",
       "Must putt all the way into the hole.",
       "Flagstick can stay in.",
       "Putts start once on the putting green.",
@@ -500,7 +500,7 @@ const GAMES = {
       "Putts max: to be agreed on prior to round.",
       "Mulligans: to be agreed on prior to round.",
       "Per-hole handicapping (net score per hole) is defaulted to On, but can be turned off in game scoring settings. Since this format has just one team score per hole, this works as an average of the 4 players' handicaps, subtracted from the team's total score to determine net score.",
-      "Play OB shots as a lateral drop (1 out, 1 in).",
+      "Play all OB shots per USGA Rules.",
       "Must putt all the way into the hole.",
       "Flagstick can stay in.",
       "Putts start once on the putting green.",
@@ -524,7 +524,7 @@ const GAMES = {
       "Strokes max: to be agreed on prior to round.",
       "Putts max: to be agreed on prior to round.",
       "Mulligans: to be agreed on prior to round.",
-      "Play OB shots as a lateral drop (1 out, 1 in) (to be agreed on)",
+      "Play all OB shots per USGA Rules.",
       "Must putt all the way into the hole.",
       "Flagstick can stay in.",
       "Putts start once on the putting green.",
@@ -553,7 +553,7 @@ const GAMES = {
       "Strokes max: to be agreed on prior to round.",
       "Putts max: to be agreed on prior to round.",
       "Mulligans: to be agreed on prior to round.",
-      "Play OB shots as a lateral drop (1 out, 1 in).",
+      "Play all OB shots per USGA Rules.",
       "Must putt all the way into the hole.",
       "Flagstick can stay in.",
       "Putts start once on the putting green.",
@@ -580,7 +580,7 @@ const GAMES = {
       "Strokes max: to be agreed on prior to round.",
       "Putts max: to be agreed on prior to round.",
       "Mulligans: to be agreed on prior to round.",
-      "Play OB shots as a lateral drop (1 out, 1 in) (to be agreed on).",
+      "Play all OB shots per USGA Rules.",
       "Must putt all the way into the hole.",
       "Flagstick can stay in.",
       "Putts start once on the putting green.",
@@ -613,7 +613,7 @@ const GAMES = {
       "Strokes max: to be agreed on prior to round.",
       "Putts max: to be agreed on prior to round.",
       "Mulligans: to be agreed on prior to round.",
-      "Play OB shots as a lateral drop (1 out, 1 in) (to be agreed on).",
+      "Play all OB shots per USGA Rules.",
       "Must putt all the way into the hole.",
       "Flagstick can stay in.",
       "Putts start once on the putting green.",
@@ -649,7 +649,7 @@ const GAMES = {
       "Strokes max: to be agreed on prior to round.",
       "Putts max: to be agreed on prior to round.",
       "Mulligans: to be agreed on prior to round.",
-      "Play OB shots as a lateral drop (1 out, 1 in) (to be agreed on).",
+      "Play all OB shots per USGA Rules.",
       "Must putt all the way into the hole.",
       "Flagstick can stay in.",
       "Putts start once on the putting green.",
@@ -679,7 +679,7 @@ const GAMES = {
       "Strokes max: to be agreed on prior to round.",
       "Putts max: to be agreed on prior to round.",
       "Mulligans: to be agreed on prior to round.",
-      "Play OB shots as a lateral drop (1 out, 1 in) (to be agreed on).",
+      "Play all OB shots per USGA Rules.",
       "Must putt all the way into the hole.",
       "Flagstick can stay in.",
       "Putts start once on the putting green.",
@@ -715,7 +715,7 @@ const GAMES = {
       "Strokes max: to be agreed on prior to round.",
       "Putts max: to be agreed on prior to round.",
       "Mulligans: to be agreed on prior to round.",
-      "Play OB shots as a lateral drop (1 out, 1 in) (to be agreed on).",
+      "Play all OB shots per USGA Rules.",
       "Must putt all the way into the hole.",
       "Flagstick can stay in.",
       "Putts start once on the putting green.",
@@ -10292,12 +10292,14 @@ function computeMatchPlayResult(round, computed) {
                       </span>
                     )}
                     {g.name}
-                    {locked && (
-                      <span style={{ fontSize: 11, fontWeight: 700, color: "#fff", background: "#8a6a2f", padding: "2px 8px", borderRadius: 20, marginLeft: "auto" }}>
+                  </div>
+                  {locked && (
+                    <div style={{ marginTop: 4 }}>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: "#fff", background: "#8a6a2f", padding: "2px 8px", borderRadius: 20, display: "inline-block" }}>
                         {"\u{1F512}"} Log in to play
                       </span>
-                    )}
-                  </div>
+                    </div>
+                  )}
                   <div className="gsc-tag">{g.tag}</div>
                   {gameSupportsNassau(key) && <div style={{ fontSize: 11, color: "#B08D57", fontWeight: 700, marginTop: 4 }}>*Nassau Avail</div>}
                   {gameSupportsOceans11(key) && <div style={{ fontSize: 11, color: "#B08D57", fontWeight: 700, marginTop: 4 }}>*Oceans 11 Avail</div>}
@@ -10348,12 +10350,14 @@ function computeMatchPlayResult(round, computed) {
                       </span>
                     )}
                     {g.name}
-                    {locked && (
-                      <span style={{ fontSize: 11, fontWeight: 700, color: "#fff", background: "#8a6a2f", padding: "2px 8px", borderRadius: 20, marginLeft: "auto" }}>
+                  </div>
+                  {locked && (
+                    <div style={{ marginTop: 4 }}>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: "#fff", background: "#8a6a2f", padding: "2px 8px", borderRadius: 20, display: "inline-block" }}>
                         {"\u{1F512}"} Log in to play
                       </span>
-                    )}
-                  </div>
+                    </div>
+                  )}
                   <div className="gsc-tag">{g.tag}</div>
                   {gameSupportsNassau(key) && <div style={{ fontSize: 11, color: "#B08D57", fontWeight: 700, marginTop: 4 }}>*Nassau Avail</div>}
                   {gameSupportsOceans11(key) && <div style={{ fontSize: 11, color: "#B08D57", fontWeight: 700, marginTop: 4 }}>*Oceans 11 Avail</div>}
@@ -10409,12 +10413,14 @@ function computeMatchPlayResult(round, computed) {
                       </span>
                     )}
                     {g.tournamentName || g.name}
-                    {locked && (
-                      <span style={{ fontSize: 11, fontWeight: 700, color: "#fff", background: "#8a6a2f", padding: "2px 8px", borderRadius: 20, marginLeft: "auto" }}>
+                  </div>
+                  {locked && (
+                    <div style={{ marginTop: 4 }}>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: "#fff", background: "#8a6a2f", padding: "2px 8px", borderRadius: 20, display: "inline-block" }}>
                         {"\u{1F512}"} Log in to play
                       </span>
-                    )}
-                  </div>
+                    </div>
+                  )}
                   <div className="gsc-tag">{g.tag}</div>
                   <div className="gsc-no-select" style={{ fontSize: 13, marginTop: 8, color: "#4b4b45" }}>{g.desc}</div>
                   {WHY_PLAY[key] && (
