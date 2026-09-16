@@ -4841,15 +4841,15 @@ export default function GolfScorecard() {
           ) : (
             <>
               <div className="gsc-field">
-                <div className="gsc-label">Nassau - Front 9 prize</div>
+                <div className="gsc-label">Front 9 wager per player</div>
                 <input className="gsc-input" placeholder="0" value={c.nassauFrontPrize ?? ""} onChange={(e) => set({ nassauFrontPrize: e.target.value })} />
               </div>
               <div className="gsc-field">
-                <div className="gsc-label">Nassau - Back 9 prize</div>
+                <div className="gsc-label">Back 9 wager per player</div>
                 <input className="gsc-input" placeholder="0" value={c.nassauBackPrize ?? ""} onChange={(e) => set({ nassauBackPrize: e.target.value })} />
               </div>
               <div className="gsc-field">
-                <div className="gsc-label">Nassau - Overall 18 prize</div>
+                <div className="gsc-label">Overall 18 wager per player</div>
                 <input className="gsc-input" placeholder="0" value={c.nassauOverallPrize ?? ""} onChange={(e) => set({ nassauOverallPrize: e.target.value })} />
               </div>
             </>
@@ -12948,15 +12948,15 @@ function computeMatchPlayResult(round, computed) {
                   {activeCfg.nassau && (
                     <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 8 }}>
                       <div>
-                        <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 4 }}>Front 9 wager</div>
+                        <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 4 }}>Front 9 wager per player</div>
                         <input className="gsc-input" placeholder="$5" value={activeCfg.nassauFrontPrize || ""} onChange={(e) => setActiveCfg({ ...activeCfg, nassauFrontPrize: e.target.value })} />
                       </div>
                       <div>
-                        <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 4 }}>Back 9 wager</div>
+                        <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 4 }}>Back 9 wager per player</div>
                         <input className="gsc-input" placeholder="$5" value={activeCfg.nassauBackPrize || ""} onChange={(e) => setActiveCfg({ ...activeCfg, nassauBackPrize: e.target.value })} />
                       </div>
                       <div>
-                        <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 4 }}>Overall 18 wager</div>
+                        <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 4 }}>Overall 18 wager per player</div>
                         <input className="gsc-input" placeholder="$5" value={activeCfg.nassauOverallPrize || ""} onChange={(e) => setActiveCfg({ ...activeCfg, nassauOverallPrize: e.target.value })} />
                       </div>
                     </div>
@@ -13003,15 +13003,15 @@ function computeMatchPlayResult(round, computed) {
                         Splits the round into three separate competitions: front 9, back 9, and overall 18 - each with its own winner, ranked individually rather than in teams.
                       </div>
                       <div>
-                        <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 4 }}>Front 9 wager</div>
+                        <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 4 }}>Front 9 wager per player</div>
                         <input className="gsc-input" placeholder="$5" value={activeCfg.nassauFrontPrize || ""} onChange={(e) => setActiveCfg({ ...activeCfg, nassauFrontPrize: e.target.value })} />
                       </div>
                       <div>
-                        <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 4 }}>Back 9 wager</div>
+                        <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 4 }}>Back 9 wager per player</div>
                         <input className="gsc-input" placeholder="$5" value={activeCfg.nassauBackPrize || ""} onChange={(e) => setActiveCfg({ ...activeCfg, nassauBackPrize: e.target.value })} />
                       </div>
                       <div>
-                        <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 4 }}>Overall 18 wager</div>
+                        <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 4 }}>Overall 18 wager per player</div>
                         <input className="gsc-input" placeholder="$5" value={activeCfg.nassauOverallPrize || ""} onChange={(e) => setActiveCfg({ ...activeCfg, nassauOverallPrize: e.target.value })} />
                       </div>
                     </div>
@@ -13043,15 +13043,15 @@ function computeMatchPlayResult(round, computed) {
                         Splits the round into three separate competitions: front 9, back 9, and overall 18 - each with its own winner, ranked individually rather than in teams.
                       </div>
                       <div>
-                        <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 4 }}>Front 9 wager</div>
+                        <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 4 }}>Front 9 wager per player</div>
                         <input className="gsc-input" placeholder="$5" value={activeCfg.nassauFrontPrize || ""} onChange={(e) => setActiveCfg({ ...activeCfg, nassauFrontPrize: e.target.value })} />
                       </div>
                       <div>
-                        <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 4 }}>Back 9 wager</div>
+                        <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 4 }}>Back 9 wager per player</div>
                         <input className="gsc-input" placeholder="$5" value={activeCfg.nassauBackPrize || ""} onChange={(e) => setActiveCfg({ ...activeCfg, nassauBackPrize: e.target.value })} />
                       </div>
                       <div>
-                        <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 4 }}>Overall 18 wager</div>
+                        <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 4 }}>Overall 18 wager per player</div>
                         <input className="gsc-input" placeholder="$5" value={activeCfg.nassauOverallPrize || ""} onChange={(e) => setActiveCfg({ ...activeCfg, nassauOverallPrize: e.target.value })} />
                       </div>
                     </div>
@@ -14139,15 +14139,15 @@ function computeMatchPlayResult(round, computed) {
                 {cfg.nassau && (
                   <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 8 }}>
                     <div>
-                      <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 4 }}>Front 9 wager</div>
+                      <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 4 }}>Front 9 wager per player</div>
                       <input className="gsc-input" placeholder="$5" value={cfg.nassauFrontPrize || ""} onChange={(e) => setCfg({ ...cfg, nassauFrontPrize: e.target.value })} />
                     </div>
                     <div>
-                      <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 4 }}>Back 9 wager</div>
+                      <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 4 }}>Back 9 wager per player</div>
                       <input className="gsc-input" placeholder="$5" value={cfg.nassauBackPrize || ""} onChange={(e) => setCfg({ ...cfg, nassauBackPrize: e.target.value })} />
                     </div>
                     <div>
-                      <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 4 }}>Overall 18 wager</div>
+                      <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 4 }}>Overall 18 wager per player</div>
                       <input className="gsc-input" placeholder="$5" value={cfg.nassauOverallPrize || ""} onChange={(e) => setCfg({ ...cfg, nassauOverallPrize: e.target.value })} />
                     </div>
                   </div>
@@ -14194,15 +14194,15 @@ function computeMatchPlayResult(round, computed) {
                       Splits the round into three separate competitions: front 9, back 9, and overall 18 - each with its own winner, ranked individually rather than in teams.
                     </div>
                     <div>
-                      <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 4 }}>Front 9 wager</div>
+                      <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 4 }}>Front 9 wager per player</div>
                       <input className="gsc-input" placeholder="$5" value={cfg.nassauFrontPrize || ""} onChange={(e) => setCfg({ ...cfg, nassauFrontPrize: e.target.value })} />
                     </div>
                     <div>
-                      <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 4 }}>Back 9 wager</div>
+                      <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 4 }}>Back 9 wager per player</div>
                       <input className="gsc-input" placeholder="$5" value={cfg.nassauBackPrize || ""} onChange={(e) => setCfg({ ...cfg, nassauBackPrize: e.target.value })} />
                     </div>
                     <div>
-                      <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 4 }}>Overall 18 wager</div>
+                      <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 4 }}>Overall 18 wager per player</div>
                       <input className="gsc-input" placeholder="$5" value={cfg.nassauOverallPrize || ""} onChange={(e) => setCfg({ ...cfg, nassauOverallPrize: e.target.value })} />
                     </div>
                   </div>
@@ -14234,15 +14234,15 @@ function computeMatchPlayResult(round, computed) {
                       Splits the round into three separate competitions: front 9, back 9, and overall 18 - each with its own winner, ranked individually rather than in teams.
                     </div>
                     <div>
-                      <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 4 }}>Front 9 wager</div>
+                      <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 4 }}>Front 9 wager per player</div>
                       <input className="gsc-input" placeholder="$5" value={cfg.nassauFrontPrize || ""} onChange={(e) => setCfg({ ...cfg, nassauFrontPrize: e.target.value })} />
                     </div>
                     <div>
-                      <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 4 }}>Back 9 wager</div>
+                      <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 4 }}>Back 9 wager per player</div>
                       <input className="gsc-input" placeholder="$5" value={cfg.nassauBackPrize || ""} onChange={(e) => setCfg({ ...cfg, nassauBackPrize: e.target.value })} />
                     </div>
                     <div>
-                      <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 4 }}>Overall 18 wager</div>
+                      <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 4 }}>Overall 18 wager per player</div>
                       <input className="gsc-input" placeholder="$5" value={cfg.nassauOverallPrize || ""} onChange={(e) => setCfg({ ...cfg, nassauOverallPrize: e.target.value })} />
                     </div>
                   </div>
