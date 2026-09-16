@@ -6639,12 +6639,14 @@ export default function GolfScorecard() {
       case "vibeFollowup":
         return "confirmGame";
       case "confirmGame":
+        if (Number(answers.playerCount) === 1) return "field_course";
         return "field_name";
       case "field_name":
         return "field_course";
       case "field_course":
         return "field_limits";
       case "field_limits":
+        if (Number(answers.playerCount) === 1) return "field_players";
         if (answers.isTournament) return "field_foursomeCount";
         return cfg.nassau ? "field_venmo" : "field_prize";
       case "field_foursomeCount":
