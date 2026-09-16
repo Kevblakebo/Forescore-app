@@ -4458,6 +4458,22 @@ export default function GolfScorecard() {
     return slots;
   }
 
+  // The one game logged-out users can actually play - every other game
+  // stays visible everywhere (home tiles, Games page, wizards) but shows
+  // as locked, tapping through to login/create-account instead of
+  // starting the round. This is deliberate: seeing what's locked (and
+  // why) is meant to sell the value of creating an account, not just
+  // gate access silently.
+  const FREE_GAME_KEY = "swami";
+  function isGameLocked(gameKey) {
+    return !session && gameKey !== FREE_GAME_KEY;
+  }
+  function handleLockedGameTap(gameKey) {
+    const name = (GAMES[gameKey] && GAMES[gameKey].name) || "this game";
+    setAuthNotice(`Log in or create a free account to play ${name} - you'll unlock every game format, plus Side Games, stats, groups, and more.`);
+    goToScreen("login");
+  }
+
   // Layers a saved Venmo handle on top of a game's normal defaults, if
   // someone's logged in and has one saved - same idea as freshPlayerSlots,
   // just for the round-level Venmo field instead of a player slot.
@@ -4698,8 +4714,15 @@ export default function GolfScorecard() {
 
           {wheelResult ? (
             <>
-              <div style={{ fontSize: 15, fontWeight: 700, color: "#1B4332", margin: "10px 0 4px" }}>
-                {"\u{1F389}"} You got: {vibePlayerCountBucket(wizardAnswers.playerCount) === "tournament" && GAMES[wheelResult].tournamentName ? GAMES[wheelResult].tournamentName : GAMES[wheelResult].name}!
+              <div style={{ fontSize: 15, fontWeight: 700, color: "#1B4332", margin: "10px 0 4px", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, flexWrap: "wrap" }}>
+                <span>
+                  {"\u{1F389}"} You got: {vibePlayerCountBucket(wizardAnswers.playerCount) === "tournament" && GAMES[wheelResult].tournamentName ? GAMES[wheelResult].tournamentName : GAMES[wheelResult].name}!
+                </span>
+                {isGameLocked(wheelResult) && (
+                  <span style={{ fontSize: 10, fontWeight: 700, color: "#fff", background: "#8a6a2f", padding: "1px 7px", borderRadius: 20 }}>
+                    {"\u{1F512}"}
+                  </span>
+                )}
               </div>
               <button
                 className="gsc-btn gsc-btn-primary"
@@ -10062,12 +10085,21 @@ function computeMatchPlayResult(round, computed) {
                 return entries.map((entry, i) => {
                   const { emoji } = GAME_TILE_STYLE[entry.key];
                   const color = colors[i % colors.length];
+                  const locked = isGameLocked(entry.key);
                   return (
                     <div
                       key={entry.isTournament ? `${entry.key}-tournament` : entry.key}
-                      onClick={() => (entry.isTournament || GAMES[entry.key].tournamentOnly ? startTournamentCreateFlow(entry.key) : startNewRound(entry.key))}
+                      onClick={() => {
+                        if (locked) { handleLockedGameTap(entry.key); return; }
+                        entry.isTournament || GAMES[entry.key].tournamentOnly ? startTournamentCreateFlow(entry.key) : startNewRound(entry.key);
+                      }}
                       style={{ position: "relative", background: color, borderRadius: 12, padding: "16px 6px 12px", textAlign: "center", cursor: "pointer", minHeight: 108, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}
                     >
+                      {locked && (
+                        <div style={{ position: "absolute", top: 4, left: 4, width: 20, height: 20, borderRadius: "50%", background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11 }}>
+                          {"\u{1F512}"}
+                        </div>
+                      )}
                       <button
                         onClick={(e) => { e.stopPropagation(); setQuickInfoFor(entry.key); }}
                         title="Quick info"
@@ -10075,8 +10107,8 @@ function computeMatchPlayResult(round, computed) {
                       >
                         i
                       </button>
-                      <div style={{ fontSize: 26, marginBottom: 6 }}>{emoji}</div>
-                      <div style={{ fontSize: 11.5, fontWeight: 700, color: "#fff", lineHeight: 1.3 }}>{entry.isTournament ? GAMES[entry.key].tournamentName : GAMES[entry.key].name}</div>
+                      <div style={{ fontSize: 26, marginBottom: 6, opacity: locked ? 0.6 : 1 }}>{emoji}</div>
+                      <div style={{ fontSize: 11.5, fontWeight: 700, color: "#fff", lineHeight: 1.3, opacity: locked ? 0.6 : 1 }}>{entry.isTournament ? GAMES[entry.key].tournamentName : GAMES[entry.key].name}</div>
                     </div>
                   );
                 });
@@ -10244,8 +10276,15 @@ function computeMatchPlayResult(round, computed) {
             <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>Up to 4 Players</div>
             {["swami", "dstreet", "matchplay", "individualputts", "pontobango", "stableford"]
               .map((key) => [key, GAMES[key]])
-              .map(([key, g]) => (
-                <div key={key} className="gsc-card gsc-game-card" style={{ marginBottom: 10 }} onClick={() => startNewRound(key)}>
+              .map(([key, g]) => {
+                const locked = isGameLocked(key);
+                return (
+                <div
+                  key={key}
+                  className="gsc-card gsc-game-card"
+                  style={{ marginBottom: 10, opacity: locked ? 0.75 : 1 }}
+                  onClick={() => (locked ? handleLockedGameTap(key) : startNewRound(key))}
+                >
                   <div className="gsc-game-title" style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     {GAME_TILE_STYLE[key] && (
                       <span style={{ width: 26, height: 26, borderRadius: 7, background: GAME_TILE_STYLE[key].color, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 14, flexShrink: 0 }}>
@@ -10253,6 +10292,11 @@ function computeMatchPlayResult(round, computed) {
                       </span>
                     )}
                     {g.name}
+                    {locked && (
+                      <span style={{ fontSize: 11, fontWeight: 700, color: "#fff", background: "#8a6a2f", padding: "2px 8px", borderRadius: 20, marginLeft: "auto" }}>
+                        {"\u{1F512}"} Log in to play
+                      </span>
+                    )}
                   </div>
                   <div className="gsc-tag">{g.tag}</div>
                   {gameSupportsNassau(key) && <div style={{ fontSize: 11, color: "#B08D57", fontWeight: 700, marginTop: 4 }}>*Nassau Avail</div>}
@@ -10281,14 +10325,22 @@ function computeMatchPlayResult(round, computed) {
                     View full rules
                   </button>
                 </div>
-              ))}
+                );
+              })}
 
             <div className="gsc-label" style={{ marginTop: 14, marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Team Game Formats</div>
             <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>2 vs 2</div>
             {["teamstrokes", "ponto", "matchplayfourball", "teamputts", "beachside", "seabluffe", "moonlightwolf", "vegas"]
               .map((key) => [key, GAMES[key]])
-              .map(([key, g]) => (
-                <div key={key} className="gsc-card gsc-game-card" style={{ marginBottom: 10 }} onClick={() => startNewRound(key)}>
+              .map(([key, g]) => {
+                const locked = isGameLocked(key);
+                return (
+                <div
+                  key={key}
+                  className="gsc-card gsc-game-card"
+                  style={{ marginBottom: 10, opacity: locked ? 0.75 : 1 }}
+                  onClick={() => (locked ? handleLockedGameTap(key) : startNewRound(key))}
+                >
                   <div className="gsc-game-title" style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     {GAME_TILE_STYLE[key] && (
                       <span style={{ width: 26, height: 26, borderRadius: 7, background: GAME_TILE_STYLE[key].color, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 14, flexShrink: 0 }}>
@@ -10296,6 +10348,11 @@ function computeMatchPlayResult(round, computed) {
                       </span>
                     )}
                     {g.name}
+                    {locked && (
+                      <span style={{ fontSize: 11, fontWeight: 700, color: "#fff", background: "#8a6a2f", padding: "2px 8px", borderRadius: 20, marginLeft: "auto" }}>
+                        {"\u{1F512}"} Log in to play
+                      </span>
+                    )}
                   </div>
                   <div className="gsc-tag">{g.tag}</div>
                   {gameSupportsNassau(key) && <div style={{ fontSize: 11, color: "#B08D57", fontWeight: 700, marginTop: 4 }}>*Nassau Avail</div>}
@@ -10324,7 +10381,8 @@ function computeMatchPlayResult(round, computed) {
                     View full rules
                   </button>
                 </div>
-              ))}
+                );
+              })}
           </div>
 
           <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
@@ -10336,8 +10394,14 @@ function computeMatchPlayResult(round, computed) {
             <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>Multiple Foursomes</div>
             {TOURNAMENT_GAME_KEYS.map((key) => {
               const g = GAMES[key];
+              const locked = isGameLocked(key);
               return (
-                <div key={key} className="gsc-card gsc-game-card" style={{ marginBottom: 10 }} onClick={() => startTournamentCreateFlow(key)}>
+                <div
+                  key={key}
+                  className="gsc-card gsc-game-card"
+                  style={{ marginBottom: 10, opacity: locked ? 0.75 : 1 }}
+                  onClick={() => (locked ? handleLockedGameTap(key) : startTournamentCreateFlow(key))}
+                >
                   <div className="gsc-game-title" style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     {GAME_TILE_STYLE[key] && (
                       <span style={{ width: 26, height: 26, borderRadius: 7, background: GAME_TILE_STYLE[key].color, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 14, flexShrink: 0 }}>
@@ -10345,6 +10409,11 @@ function computeMatchPlayResult(round, computed) {
                       </span>
                     )}
                     {g.tournamentName || g.name}
+                    {locked && (
+                      <span style={{ fontSize: 11, fontWeight: 700, color: "#fff", background: "#8a6a2f", padding: "2px 8px", borderRadius: 20, marginLeft: "auto" }}>
+                        {"\u{1F512}"} Log in to play
+                      </span>
+                    )}
                   </div>
                   <div className="gsc-tag">{g.tag}</div>
                   <div className="gsc-no-select" style={{ fontSize: 13, marginTop: 8, color: "#4b4b45" }}>{g.desc}</div>
@@ -11911,6 +11980,11 @@ function computeMatchPlayResult(round, computed) {
         <style>{STYLE}</style>
         <Header title="Create Account" sub="Save your defaults & unlock stats" onBack={() => goBack("profileTab")} />
         <div className="gsc-body">
+          {authNotice && (
+            <div className="gsc-card" style={{ background: "#EBF0EC", border: "1px solid #1B4332", marginBottom: 4 }}>
+              <div style={{ fontSize: 13, color: "#1B4332" }}>{authNotice}</div>
+            </div>
+          )}
           <div className="gsc-card">
             <div className="gsc-field">
               <div className="gsc-label">Email</div>
@@ -12581,7 +12655,14 @@ function computeMatchPlayResult(round, computed) {
                       style={{ width: "100%", marginBottom: 10, padding: 14, fontSize: 14, textAlign: "left", cursor: "pointer" }}
                       onClick={() => wizardGoNext("vibeFollowup", { resolvedGameKey: key, isTournament: isTourn })}
                     >
-                      <div style={{ fontWeight: 700, marginBottom: 4 }}>{isTourn && GAMES[key].tournamentName ? GAMES[key].tournamentName : GAMES[key].name}</div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                        <div style={{ fontWeight: 700 }}>{isTourn && GAMES[key].tournamentName ? GAMES[key].tournamentName : GAMES[key].name}</div>
+                        {isGameLocked(key) && (
+                          <span style={{ fontSize: 10, fontWeight: 700, color: "#fff", background: "#8a6a2f", padding: "1px 7px", borderRadius: 20 }}>
+                            {"\u{1F512}"}
+                          </span>
+                        )}
+                      </div>
                       <div style={{ fontWeight: 400, fontSize: 12, color: "#6b6b63" }}>{WHY_PLAY[key]}</div>
                     </div>
                   ))}
@@ -12589,10 +12670,19 @@ function computeMatchPlayResult(round, computed) {
               );
             })()}
 
-          {wizardStepId === "confirmGame" && g && (
+          {wizardStepId === "confirmGame" && g && (() => {
+            const locked = isGameLocked(wizardAnswers.resolvedGameKey);
+            return (
             <div className="gsc-card gsc-winner-card">
               <div className="gsc-label">{isTournament ? "Your tournament format" : "Your game format"}</div>
-              <div style={{ fontWeight: 700, fontSize: 19, marginTop: 4 }}>{isTournament && g.tournamentName ? g.tournamentName : g.name}</div>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 4 }}>
+                <div style={{ fontWeight: 700, fontSize: 19 }}>{isTournament && g.tournamentName ? g.tournamentName : g.name}</div>
+                {locked && (
+                  <span style={{ fontSize: 11, fontWeight: 700, color: "#fff", background: "#8a6a2f", padding: "2px 8px", borderRadius: 20 }}>
+                    {"\u{1F512}"} Log in to play
+                  </span>
+                )}
+              </div>
               <div className="gsc-tag" style={{ marginTop: 6 }}>{g.tag}</div>
               <div className="gsc-no-select" style={{ fontSize: 13, marginTop: 10, color: "#4b4b45" }}>{g.desc}</div>
               <button className="gsc-link" style={{ marginTop: 10, fontSize: 13, display: "block" }} onClick={() => openWhyPlay(wizardAnswers.resolvedGameKey)}>
@@ -12601,11 +12691,16 @@ function computeMatchPlayResult(round, computed) {
               <button className="gsc-link" style={{ marginTop: 6, fontSize: 13 }} onClick={() => openRules(wizardAnswers.resolvedGameKey)}>
                 View full rules
               </button>
-              <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 14 }} onClick={() => wizardGoNext("confirmGame", {})}>
-                This is the one - continue
+              <button
+                className="gsc-btn gsc-btn-primary"
+                style={{ width: "100%", marginTop: 14 }}
+                onClick={() => (locked ? handleLockedGameTap(wizardAnswers.resolvedGameKey) : wizardGoNext("confirmGame", {}))}
+              >
+                {locked ? `${"\u{1F512}"} Log in to play this game` : "This is the one - continue"}
               </button>
             </div>
-          )}
+            );
+          })()}
 
           {wizardStepId === "field_name" && (
             <div className="gsc-card">
