@@ -2515,7 +2515,7 @@ export default function GolfScorecard() {
       loadSubscription(session.user.id);
     } else {
       setProfile(null);
-      setProfileForm({ name: "", handicap: "", venmo: "", home_course: "", leaderboard_opt_in: false, avatar: "" });
+      setProfileForm({ full_name: "", name: "", handicap: "", venmo: "", home_course: "", leaderboard_opt_in: false, avatar: "" });
       setSubscription(null);
     }
   }, [session && session.user && session.user.id]);
@@ -2922,7 +2922,7 @@ export default function GolfScorecard() {
   async function signOutUser() {
     if (supabase) await supabase.auth.signOut();
     setProfile(null);
-    setProfileForm({ name: "", handicap: "", venmo: "", home_course: "", leaderboard_opt_in: false, avatar: "" });
+    setProfileForm({ full_name: "", name: "", handicap: "", venmo: "", home_course: "", leaderboard_opt_in: false, avatar: "" });
   }
 
   async function deleteMyAccount() {
@@ -2949,7 +2949,7 @@ export default function GolfScorecard() {
     // and sign out, same as a normal logout, then land back on Home.
     await supabase.auth.signOut();
     setProfile(null);
-    setProfileForm({ name: "", handicap: "", venmo: "", home_course: "", leaderboard_opt_in: false, avatar: "" });
+    setProfileForm({ full_name: "", name: "", handicap: "", venmo: "", home_course: "", leaderboard_opt_in: false, avatar: "" });
     setDeleteAccountBusy(false);
     setDeleteAccountOpen(false);
     setDeleteAccountConfirmText("");
@@ -2968,11 +2968,11 @@ export default function GolfScorecard() {
     }
     if (data) {
       setProfile(data);
-      setProfileForm({ name: data.name || "", handicap: data.handicap || "", venmo: data.venmo || "", home_course: data.home_course || "", leaderboard_opt_in: !!data.leaderboard_opt_in, avatar: data.avatar || "" });
+      setProfileForm({ full_name: data.full_name || "", name: data.name || "", handicap: data.handicap || "", venmo: data.venmo || "", home_course: data.home_course || "", leaderboard_opt_in: !!data.leaderboard_opt_in, avatar: data.avatar || "" });
     } else {
       // First time - no profile row yet, that's expected, just start with a blank form.
       setProfile(null);
-      setProfileForm({ name: "", handicap: "", venmo: "", home_course: "", leaderboard_opt_in: false, avatar: "" });
+      setProfileForm({ full_name: "", name: "", handicap: "", venmo: "", home_course: "", leaderboard_opt_in: false, avatar: "" });
     }
   }
 
@@ -3249,6 +3249,7 @@ export default function GolfScorecard() {
     // browsing their own profile with a date range applied.
     const isOptedIn = overrides && overrides.optIn !== undefined ? overrides.optIn : profile && profile.leaderboard_opt_in;
     const displayName = (overrides && overrides.name) || (profile && profile.name) || "Golfer";
+    const fullName = overrides && overrides.fullName !== undefined ? overrides.fullName : (profile && profile.full_name) || "";
     if (!dateFrom && !dateTo) {
     supabase
       .from("leaderboard_stats")
@@ -3256,6 +3257,7 @@ export default function GolfScorecard() {
         {
           user_id: session.user.id,
           display_name: displayName,
+          full_name: fullName,
           avatar: (overrides && overrides.avatar !== undefined ? overrides.avatar : profile && profile.avatar) || "",
           handicap: (overrides && overrides.handicap !== undefined ? overrides.handicap : profile && profile.handicap) || "",
           opted_in: !!isOptedIn,
@@ -5080,7 +5082,7 @@ export default function GolfScorecard() {
                   <label key={m.user_id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: "1px solid #eee6cf", cursor: "pointer" }}>
                     <input type="checkbox" checked={checked} onChange={() => toggleGroupFillChosen(m.user_id)} disabled={!checked && groupFillChosenIds.length >= (gameKey === "matchplay" ? 2 : 4)} />
                     {m.avatar && <span style={{ fontSize: 18 }}>{m.avatar}</span>}
-                    <span style={{ fontWeight: 600 }}>{m.name}</span>
+                    <span style={{ fontWeight: 600 }}>{m.name}{m.full_name ? ` (${m.full_name})` : ""}</span>
                   </label>
                 );
               })}
@@ -5320,7 +5322,7 @@ export default function GolfScorecard() {
                             style={{ display: "flex", alignItems: "center", gap: 6, width: "100%", textAlign: "left", padding: "5px 0", background: "none", border: "none", borderBottom: "1px solid #eee6cf", cursor: "pointer", fontSize: 12 }}
                           >
                             <span>{mate.avatar || "\u{1F464}"}</span>
-                            <span>{mate.name}{session && mate.user_id === session.user.id ? " (You)" : ""}</span>
+                            <span>{mate.name}{mate.full_name ? ` (${mate.full_name})` : ""}{session && mate.user_id === session.user.id ? " (You)" : ""}</span>
                           </button>
                         ))
                       )}
@@ -6921,9 +6923,9 @@ export default function GolfScorecard() {
     const userIds = [...new Set(members.map((m) => m.user_id))];
     if (userIds.length === 0) return [];
     const { data: stats } = await withJwtRetry(() =>
-      supabase.from("leaderboard_stats").select("user_id, display_name, avatar, handicap").in("user_id", userIds)
+      supabase.from("leaderboard_stats").select("user_id, display_name, full_name, avatar, handicap").in("user_id", userIds)
     );
-    const result = (stats || []).map((s) => ({ user_id: s.user_id, name: s.display_name || "Golfer", avatar: s.avatar || "", handicap: s.handicap || "" }));
+    const result = (stats || []).map((s) => ({ user_id: s.user_id, name: s.display_name || "Golfer", full_name: s.full_name || "", avatar: s.avatar || "", handicap: s.handicap || "" }));
     // leaderboard_stats is a cached copy of your own name/avatar/handicap,
     // only refreshed when you've actually visited Profile or saved it -
     // if that's never happened (or happened before a name was set), this
@@ -6931,7 +6933,7 @@ export default function GolfScorecard() {
     // specifically, use your actual live profile data instead of
     // trusting that cache, and add yourself in if you're not there yet.
     if (session && profile && userIds.includes(session.user.id)) {
-      const me = { user_id: session.user.id, name: profile.name || "Golfer", avatar: profile.avatar || "", handicap: profile.handicap || "" };
+      const me = { user_id: session.user.id, name: profile.name || "Golfer", full_name: profile.full_name || "", avatar: profile.avatar || "", handicap: profile.handicap || "" };
       const myIdx = result.findIndex((r) => r.user_id === session.user.id);
       if (myIdx >= 0) result[myIdx] = me;
       else result.push(me);
@@ -6972,19 +6974,19 @@ export default function GolfScorecard() {
       return;
     }
     const { data: stats, error: statsErr } = await withJwtRetry(() =>
-      supabase.from("leaderboard_stats").select("user_id, display_name, avatar, handicap").in("user_id", memberUserIds)
+      supabase.from("leaderboard_stats").select("user_id, display_name, full_name, avatar, handicap").in("user_id", memberUserIds)
     );
     if (statsErr) {
       setGroupmatesErr(`Couldn't load group members (${statsErr.message}).`);
       setGroupmates([]);
       return;
     }
-    const result = (stats || []).map((s) => ({ user_id: s.user_id, name: s.display_name || "Golfer", avatar: s.avatar || "", handicap: s.handicap || "" }));
+    const result = (stats || []).map((s) => ({ user_id: s.user_id, name: s.display_name || "Golfer", full_name: s.full_name || "", avatar: s.avatar || "", handicap: s.handicap || "" }));
     // Same reasoning as loadOneGroupMembers - leaderboard_stats is a
     // cached copy of your own info that may be stale or not exist yet,
     // so use your live profile data for yourself specifically.
     if (profile) {
-      const me = { user_id: session.user.id, name: profile.name || "Golfer", avatar: profile.avatar || "", handicap: profile.handicap || "" };
+      const me = { user_id: session.user.id, name: profile.name || "Golfer", full_name: profile.full_name || "", avatar: profile.avatar || "", handicap: profile.handicap || "" };
       const myIdx = result.findIndex((r) => r.user_id === session.user.id);
       if (myIdx >= 0) result[myIdx] = me;
       else result.push(me);
@@ -10617,6 +10619,13 @@ function computeMatchPlayResult(round, computed) {
                     </div>
                   </div>
                   <div className="gsc-field" style={{ marginTop: 10 }}>
+                    <div className="gsc-label">Full Name</div>
+                    <input className="gsc-input" value={profileForm.full_name} onChange={(e) => { setProfileSaved(false); setProfileForm({ ...profileForm, full_name: e.target.value }); }} />
+                    <div style={{ fontSize: 11, color: "#8a8a80", marginTop: 6 }}>
+                      Shown alongside your user name when a group member picks you as a player, so they know who they're actually adding.
+                    </div>
+                  </div>
+                  <div className="gsc-field" style={{ marginTop: 10 }}>
                     <div className="gsc-label">User Name (Handle)</div>
                     <input className="gsc-input" value={profileForm.name} onChange={(e) => { setProfileSaved(false); setProfileForm({ ...profileForm, name: e.target.value }); }} />
                   </div>
@@ -12144,6 +12153,10 @@ function computeMatchPlayResult(round, computed) {
               )}
             </div>
             <div className="gsc-field" style={{ marginTop: 10 }}>
+              <div className="gsc-label">Full Name (optional)</div>
+              <input className="gsc-input" value={profileForm.full_name} onChange={(e) => setProfileForm({ ...profileForm, full_name: e.target.value })} />
+            </div>
+            <div className="gsc-field" style={{ marginTop: 10 }}>
               <div className="gsc-label">User Name (Handle) (Required)</div>
               <input className="gsc-input" value={profileForm.name} onChange={(e) => { setProfileErr(""); setProfileForm({ ...profileForm, name: e.target.value }); }} />
             </div>
@@ -13399,7 +13412,7 @@ function computeMatchPlayResult(round, computed) {
                                 style={{ display: "flex", alignItems: "center", gap: 6, width: "100%", textAlign: "left", padding: "5px 0", background: "none", border: "none", borderBottom: "1px solid #eee6cf", cursor: "pointer", fontSize: 12 }}
                               >
                                 <span>{mate.avatar || "\u{1F464}"}</span>
-                                <span>{mate.name}{session && mate.user_id === session.user.id ? " (You)" : ""}</span>
+                                <span>{mate.name}{mate.full_name ? ` (${mate.full_name})` : ""}{session && mate.user_id === session.user.id ? " (You)" : ""}</span>
                               </button>
                             ))
                           )}
@@ -13767,7 +13780,7 @@ function computeMatchPlayResult(round, computed) {
                               style={{ display: "flex", alignItems: "center", gap: 6, width: "100%", textAlign: "left", padding: "5px 0", background: "none", border: "none", borderBottom: "1px solid #eee6cf", cursor: "pointer", fontSize: 12 }}
                             >
                               <span>{mate.avatar || "\u{1F464}"}</span>
-                              <span>{mate.name}{session && mate.user_id === session.user.id ? " (You)" : ""}</span>
+                              <span>{mate.name}{mate.full_name ? ` (${mate.full_name})` : ""}{session && mate.user_id === session.user.id ? " (You)" : ""}</span>
                             </button>
                           ))
                         )}
@@ -14550,7 +14563,7 @@ function computeMatchPlayResult(round, computed) {
                               style={{ display: "flex", alignItems: "center", gap: 6, width: "100%", textAlign: "left", padding: "5px 0", background: "none", border: "none", borderBottom: "1px solid #eee6cf", cursor: "pointer", fontSize: 12 }}
                             >
                               <span>{mate.avatar || "\u{1F464}"}</span>
-                              <span>{mate.name}{session && mate.user_id === session.user.id ? " (You)" : ""}</span>
+                              <span>{mate.name}{mate.full_name ? ` (${mate.full_name})` : ""}{session && mate.user_id === session.user.id ? " (You)" : ""}</span>
                             </button>
                           ))
                         )}
@@ -15180,7 +15193,7 @@ function computeMatchPlayResult(round, computed) {
                                 style={{ display: "flex", alignItems: "center", gap: 6, width: "100%", textAlign: "left", padding: "5px 0", background: "none", border: "none", borderBottom: "1px solid #eee6cf", cursor: "pointer", fontSize: 12 }}
                               >
                                 <span>{mate.avatar || "\u{1F464}"}</span>
-                                <span>{mate.name}{session && mate.user_id === session.user.id ? " (You)" : ""}</span>
+                                <span>{mate.name}{mate.full_name ? ` (${mate.full_name})` : ""}{session && mate.user_id === session.user.id ? " (You)" : ""}</span>
                               </button>
                             ))
                           )}
