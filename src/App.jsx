@@ -3022,9 +3022,11 @@ export default function GolfScorecard() {
     setProfileSaving(true);
     setProfileErr("");
     setProfileSaved(false);
-    const { error } = await supabase
-      .from("profiles")
-      .upsert({ id: session.user.id, ...profileForm, updated_at: new Date().toISOString() }, { onConflict: "id" });
+    const { error } = await withJwtRetry(() =>
+      supabase
+        .from("profiles")
+        .upsert({ id: session.user.id, ...profileForm, updated_at: new Date().toISOString() }, { onConflict: "id" })
+    );
     setProfileSaving(false);
     if (error) {
       setProfileErr(`Couldn't save your profile (${error.message}).`);
@@ -3251,38 +3253,39 @@ export default function GolfScorecard() {
     const displayName = (overrides && overrides.name) || (profile && profile.name) || "Golfer";
     const fullName = overrides && overrides.fullName !== undefined ? overrides.fullName : (profile && profile.full_name) || "";
     if (!dateFrom && !dateTo) {
-    supabase
-      .from("leaderboard_stats")
-      .upsert(
-        {
-          user_id: session.user.id,
-          display_name: displayName,
-          full_name: fullName,
-          avatar: (overrides && overrides.avatar !== undefined ? overrides.avatar : profile && profile.avatar) || "",
-          handicap: (overrides && overrides.handicap !== undefined ? overrides.handicap : profile && profile.handicap) || "",
-          opted_in: !!isOptedIn,
-          rounds_played: roundsPlayed,
-          wins,
-          strokes_sum: strokesSum,
-          strokes_rounds: strokesCount,
-          putts_sum: puttsSum,
-          putts_rounds: puttsCount,
-          birdies,
-          pars,
-          eagles,
-          holes_in_one: holesInOne,
-          gir_hits: girHits,
-          gir_holes: girHoles,
-          fir_hits: firHits,
-          fir_holes: firHoles,
-          best_round_strokes: bestRoundStrokes,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: "user_id" }
-      )
-      .then(({ error: lbError }) => {
-        if (lbError) console.warn("Couldn't update leaderboard stats:", lbError.message);
-      });
+    withJwtRetry(() =>
+      supabase
+        .from("leaderboard_stats")
+        .upsert(
+          {
+            user_id: session.user.id,
+            display_name: displayName,
+            full_name: fullName,
+            avatar: (overrides && overrides.avatar !== undefined ? overrides.avatar : profile && profile.avatar) || "",
+            handicap: (overrides && overrides.handicap !== undefined ? overrides.handicap : profile && profile.handicap) || "",
+            opted_in: !!isOptedIn,
+            rounds_played: roundsPlayed,
+            wins,
+            strokes_sum: strokesSum,
+            strokes_rounds: strokesCount,
+            putts_sum: puttsSum,
+            putts_rounds: puttsCount,
+            birdies,
+            pars,
+            eagles,
+            holes_in_one: holesInOne,
+            gir_hits: girHits,
+            gir_holes: girHoles,
+            fir_hits: firHits,
+            fir_holes: firHoles,
+            best_round_strokes: bestRoundStrokes,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "user_id" }
+        )
+    ).then(({ error: lbError }) => {
+      if (lbError) console.warn("Couldn't update leaderboard stats:", lbError.message);
+    });
     }
   }
 
@@ -3338,13 +3341,17 @@ export default function GolfScorecard() {
     setGroupsErr("");
     setJustCreatedGroupCode("");
     const code = genCode();
-    const { error: groupErr } = await supabase.from("groups").insert({ id: code, name, avatar: createGroupAvatar, created_by: session.user.id });
+    const { error: groupErr } = await withJwtRetry(() =>
+      supabase.from("groups").insert({ id: code, name, avatar: createGroupAvatar, created_by: session.user.id })
+    );
     if (groupErr) {
       setCreateGroupBusy(false);
       setGroupsErr(`Couldn't create the group (${groupErr.message}).`);
       return;
     }
-    const { error: memberErr } = await supabase.from("group_members").insert({ group_id: code, user_id: session.user.id });
+    const { error: memberErr } = await withJwtRetry(() =>
+      supabase.from("group_members").insert({ group_id: code, user_id: session.user.id })
+    );
     setCreateGroupBusy(false);
     if (memberErr) {
       setGroupsErr(`Group created, but couldn't add you as a member (${memberErr.message}).`);
@@ -3354,10 +3361,11 @@ export default function GolfScorecard() {
     // without this, someone who's never visited their own stats before
     // would have no row at all, and simply be missing from this group's
     // leaderboard rather than just showing the wrong name.
-    supabase
-      .from("leaderboard_stats")
-      .upsert({ user_id: session.user.id, display_name: (profile && profile.name) || "Golfer" }, { onConflict: "user_id", ignoreDuplicates: false })
-      .then(({ error: lbError }) => {
+    withJwtRetry(() =>
+      supabase
+        .from("leaderboard_stats")
+        .upsert({ user_id: session.user.id, display_name: (profile && profile.name) || "Golfer" }, { onConflict: "user_id", ignoreDuplicates: false })
+    ).then(({ error: lbError }) => {
         if (lbError) console.warn("Couldn't sync leaderboard name:", lbError.message);
       });
     setCreateGroupName("");
@@ -3374,7 +3382,7 @@ export default function GolfScorecard() {
   async function updateGroupAvatar(groupId, avatar) {
     if (!session || !supabase) return;
     setGroupsErr("");
-    const { error } = await supabase.from("groups").update({ avatar }).eq("id", groupId);
+    const { error } = await withJwtRetry(() => supabase.from("groups").update({ avatar }).eq("id", groupId));
     if (error) {
       setGroupsErr(`Couldn't update the group's avatar (${error.message}).`);
       return;
@@ -3390,7 +3398,7 @@ export default function GolfScorecard() {
     }
     if (!session || !supabase) return;
     setGroupsErr("");
-    const { error } = await supabase.from("groups").update({ name: trimmed }).eq("id", groupId);
+    const { error } = await withJwtRetry(() => supabase.from("groups").update({ name: trimmed }).eq("id", groupId));
     if (error) {
       setGroupsErr(`Couldn't update the group's name (${error.message}).`);
       return;
@@ -3407,13 +3415,13 @@ export default function GolfScorecard() {
     if (!session || !supabase) return;
     setGroupsErr("");
     setDeleteGroupBusy(true);
-    const { error: memErr } = await supabase.from("group_members").delete().eq("group_id", groupId);
+    const { error: memErr } = await withJwtRetry(() => supabase.from("group_members").delete().eq("group_id", groupId));
     if (memErr) {
       setDeleteGroupBusy(false);
       setGroupsErr(`Couldn't delete the group (${memErr.message}).`);
       return;
     }
-    const { error: groupErr } = await supabase.from("groups").delete().eq("id", groupId);
+    const { error: groupErr } = await withJwtRetry(() => supabase.from("groups").delete().eq("id", groupId));
     if (groupErr) {
       setDeleteGroupBusy(false);
       setGroupsErr(`Couldn't delete the group (${groupErr.message}).`);
@@ -3434,7 +3442,7 @@ export default function GolfScorecard() {
     if (!session || !supabase) return;
     setGroupsErr("");
     setLeaveGroupBusy(true);
-    const { error } = await supabase.from("group_members").delete().eq("group_id", groupId).eq("user_id", session.user.id);
+    const { error } = await withJwtRetry(() => supabase.from("group_members").delete().eq("group_id", groupId).eq("user_id", session.user.id));
     setLeaveGroupBusy(false);
     if (error) {
       setGroupsErr(`Couldn't leave the group (${error.message}).`);
@@ -3453,7 +3461,7 @@ export default function GolfScorecard() {
     if (!session || !supabase) return;
     setGroupsErr("");
     setRemoveMemberBusy(true);
-    const { error } = await supabase.from("group_members").delete().eq("group_id", groupId).eq("user_id", userId);
+    const { error } = await withJwtRetry(() => supabase.from("group_members").delete().eq("group_id", groupId).eq("user_id", userId));
     setRemoveMemberBusy(false);
     if (error) {
       setGroupsErr(`Couldn't remove this member (${error.message}).`);
@@ -3480,14 +3488,16 @@ export default function GolfScorecard() {
     setPostRoundGroupErr("");
     const linkedPlayers = r.players.filter((p) => p.user_id);
     const code = genCode();
-    const { error: groupErr } = await supabase.from("groups").insert({ id: code, name, avatar: r.avatar || "", created_by: session.user.id });
+    const { error: groupErr } = await withJwtRetry(() =>
+      supabase.from("groups").insert({ id: code, name, avatar: r.avatar || "", created_by: session.user.id })
+    );
     if (groupErr) {
       setPostRoundGroupBusy(false);
       setPostRoundGroupErr(`Couldn't create the group (${groupErr.message}).`);
       return;
     }
     const memberRows = linkedPlayers.map((p) => ({ group_id: code, user_id: p.user_id }));
-    const { error: memErr } = await supabase.from("group_members").insert(memberRows);
+    const { error: memErr } = await withJwtRetry(() => supabase.from("group_members").insert(memberRows));
     if (memErr) {
       setPostRoundGroupBusy(false);
       setPostRoundGroupErr(`The group was created, but not everyone could be added (${memErr.message}). You can invite them with the code: ${code}`);
@@ -3501,15 +3511,16 @@ export default function GolfScorecard() {
     // player's name as entered in this round (the best information
     // actually available here), same reasoning as the single-user
     // version of this fix used elsewhere.
-    supabase
-      .from("leaderboard_stats")
-      .upsert(
-        linkedPlayers.map((p) => ({ user_id: p.user_id, display_name: p.name || "Golfer" })),
-        { onConflict: "user_id", ignoreDuplicates: false }
-      )
-      .then(({ error: lbError }) => {
-        if (lbError) console.warn("Couldn't sync leaderboard names:", lbError.message);
-      });
+    withJwtRetry(() =>
+      supabase
+        .from("leaderboard_stats")
+        .upsert(
+          linkedPlayers.map((p) => ({ user_id: p.user_id, display_name: p.name || "Golfer" })),
+          { onConflict: "user_id", ignoreDuplicates: false }
+        )
+    ).then(({ error: lbError }) => {
+      if (lbError) console.warn("Couldn't sync leaderboard names:", lbError.message);
+    });
     setPostRoundGroupBusy(false);
     setPostRoundGroupCreated(true);
     loadMyGroups();
@@ -3525,7 +3536,7 @@ export default function GolfScorecard() {
     setJoinGroupBusy(true);
     setJoinGroupErr("");
     setJoinGroupSuccess("");
-    const { error } = await supabase.from("group_members").insert({ group_id: code, user_id: session.user.id });
+    const { error } = await withJwtRetry(() => supabase.from("group_members").insert({ group_id: code, user_id: session.user.id }));
     setJoinGroupBusy(false);
     if (error) {
       if (error.code === "23505") {
@@ -3543,12 +3554,13 @@ export default function GolfScorecard() {
     // Same fix as createGroup - make sure a leaderboard_stats row exists
     // with the correct name, so joining doesn't leave you missing from
     // this group's leaderboard if you'd never visited your own stats.
-    supabase
-      .from("leaderboard_stats")
-      .upsert({ user_id: session.user.id, display_name: (profile && profile.name) || "Golfer" }, { onConflict: "user_id", ignoreDuplicates: false })
-      .then(({ error: lbError }) => {
-        if (lbError) console.warn("Couldn't sync leaderboard name:", lbError.message);
-      });
+    withJwtRetry(() =>
+      supabase
+        .from("leaderboard_stats")
+        .upsert({ user_id: session.user.id, display_name: (profile && profile.name) || "Golfer" }, { onConflict: "user_id", ignoreDuplicates: false })
+    ).then(({ error: lbError }) => {
+      if (lbError) console.warn("Couldn't sync leaderboard name:", lbError.message);
+    });
     setJoinGroupCode("");
     setJoinGroupSuccess("You're in!");
     loadMyGroups();
@@ -3641,15 +3653,16 @@ export default function GolfScorecard() {
       const myRoundsIndex = myRoundsIndexRaw || [];
       if (myRoundsIndex.length === 0 || memberUserIds.length === 0) {
         setGroupRounds([]);
-        await supabase
-          .from("group_member_stats")
-          .upsert(
-            { group_id: groupId, user_id: session.user.id, rounds_played: 0, wins: 0, strokes_sum: 0, strokes_rounds: 0, putts_sum: 0, putts_rounds: 0, birdies: 0, pars: 0, eagles: 0, holes_in_one: 0, updated_at: new Date().toISOString() },
-            { onConflict: "group_id,user_id" }
-          )
-          .then(({ error: gmsError }) => {
-            if (gmsError) console.warn("Couldn't update group stats:", gmsError.message);
-          });
+        await withJwtRetry(() =>
+          supabase
+            .from("group_member_stats")
+            .upsert(
+              { group_id: groupId, user_id: session.user.id, rounds_played: 0, wins: 0, strokes_sum: 0, strokes_rounds: 0, putts_sum: 0, putts_rounds: 0, birdies: 0, pars: 0, eagles: 0, holes_in_one: 0, updated_at: new Date().toISOString() },
+              { onConflict: "group_id,user_id" }
+            )
+        ).then(({ error: gmsError }) => {
+          if (gmsError) console.warn("Couldn't update group stats:", gmsError.message);
+        });
         return;
       }
       const roundResults = await Promise.all(
@@ -3730,33 +3743,34 @@ export default function GolfScorecard() {
       }
       setGroupRounds(shared);
 
-      await supabase
-        .from("group_member_stats")
-        .upsert(
-          {
-            group_id: groupId,
-            user_id: session.user.id,
-            rounds_played: groupRoundsPlayed,
-            wins: groupWins,
-            strokes_sum: groupStrokesSum,
-            strokes_rounds: groupStrokesCount,
-            putts_sum: groupPuttsSum,
-            putts_rounds: groupPuttsCount,
-            birdies: groupBirdies,
-            pars: groupPars,
-            eagles: groupEagles,
-            holes_in_one: groupHolesInOne,
-            gir_hits: groupGirHits,
-            gir_holes: groupGirHoles,
-            fir_hits: groupFirHits,
-            fir_holes: groupFirHoles,
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: "group_id,user_id" }
-        )
-        .then(({ error: gmsError }) => {
-          if (gmsError) console.warn("Couldn't update group stats:", gmsError.message);
-        });
+      await withJwtRetry(() =>
+        supabase
+          .from("group_member_stats")
+          .upsert(
+            {
+              group_id: groupId,
+              user_id: session.user.id,
+              rounds_played: groupRoundsPlayed,
+              wins: groupWins,
+              strokes_sum: groupStrokesSum,
+              strokes_rounds: groupStrokesCount,
+              putts_sum: groupPuttsSum,
+              putts_rounds: groupPuttsCount,
+              birdies: groupBirdies,
+              pars: groupPars,
+              eagles: groupEagles,
+              holes_in_one: groupHolesInOne,
+              gir_hits: groupGirHits,
+              gir_holes: groupGirHoles,
+              fir_hits: groupFirHits,
+              fir_holes: groupFirHoles,
+              updated_at: new Date().toISOString(),
+            },
+            { onConflict: "group_id,user_id" }
+          )
+      ).then(({ error: gmsError }) => {
+        if (gmsError) console.warn("Couldn't update group stats:", gmsError.message);
+      });
     } catch (e) {
       console.error("loadGroupSharedRounds failed:", e);
       setGroupRoundsErr(`Couldn't load rounds played with this group (${(e && e.message) || "unknown error"}).`);
@@ -3931,58 +3945,60 @@ export default function GolfScorecard() {
             yearBirdies += e.birdies || 0;
             yearPars += e.pars || 0;
           }
+          withJwtRetry(() =>
+            supabase
+              .from("group_yearly_recap")
+              .upsert(
+                {
+                  group_id: groupId,
+                  year: Number(year),
+                  user_id: session.user.id,
+                  rounds_played: entries.length,
+                  wins,
+                  best_round_strokes: bestStrokes,
+                  best_round_date: bestDate,
+                  best_round_code: bestCode,
+                  biggest_upset_margin: biggestUpset ? biggestUpset.margin : null,
+                  biggest_upset_date: biggestUpset ? biggestUpset.date : null,
+                  birdies: yearBirdies,
+                  pars: yearPars,
+                  updated_at: new Date().toISOString(),
+                },
+                { onConflict: "group_id,year,user_id" }
+              )
+          ).then(({ error: recapError }) => {
+            if (recapError) console.warn(`Couldn't update ${year} recap for group ${groupId}:`, recapError.message);
+          });
+        }
+
+        withJwtRetry(() =>
           supabase
-            .from("group_yearly_recap")
+            .from("group_member_stats")
             .upsert(
               {
                 group_id: groupId,
-                year: Number(year),
                 user_id: session.user.id,
-                rounds_played: entries.length,
-                wins,
-                best_round_strokes: bestStrokes,
-                best_round_date: bestDate,
-                best_round_code: bestCode,
-                biggest_upset_margin: biggestUpset ? biggestUpset.margin : null,
-                biggest_upset_date: biggestUpset ? biggestUpset.date : null,
-                birdies: yearBirdies,
-                pars: yearPars,
+                rounds_played: groupRoundsPlayed,
+                wins: groupWins,
+                strokes_sum: groupStrokesSum,
+                strokes_rounds: groupStrokesCount,
+                putts_sum: groupPuttsSum,
+                putts_rounds: groupPuttsCount,
+                birdies: groupBirdies,
+                pars: groupPars,
+                eagles: groupEagles,
+                holes_in_one: groupHolesInOne,
+                gir_hits: groupGirHits,
+                gir_holes: groupGirHoles,
+                fir_hits: groupFirHits,
+                fir_holes: groupFirHoles,
                 updated_at: new Date().toISOString(),
               },
-              { onConflict: "group_id,year,user_id" }
+              { onConflict: "group_id,user_id" }
             )
-            .then(({ error: recapError }) => {
-              if (recapError) console.warn(`Couldn't update ${year} recap for group ${groupId}:`, recapError.message);
-            });
-        }
-
-        supabase
-          .from("group_member_stats")
-          .upsert(
-            {
-              group_id: groupId,
-              user_id: session.user.id,
-              rounds_played: groupRoundsPlayed,
-              wins: groupWins,
-              strokes_sum: groupStrokesSum,
-              strokes_rounds: groupStrokesCount,
-              putts_sum: groupPuttsSum,
-              putts_rounds: groupPuttsCount,
-              birdies: groupBirdies,
-              pars: groupPars,
-              eagles: groupEagles,
-              holes_in_one: groupHolesInOne,
-              gir_hits: groupGirHits,
-              gir_holes: groupGirHoles,
-              fir_hits: groupFirHits,
-              fir_holes: groupFirHoles,
-              updated_at: new Date().toISOString(),
-            },
-            { onConflict: "group_id,user_id" }
-          )
-          .then(({ error: gmsError }) => {
-            if (gmsError) console.warn(`Couldn't update stats for group ${groupId}:`, gmsError.message);
-          });
+        ).then(({ error: gmsError }) => {
+          if (gmsError) console.warn(`Couldn't update stats for group ${groupId}:`, gmsError.message);
+        });
       }
 
       // Head-to-head: for every OTHER linked player across all of my
@@ -4057,29 +4073,30 @@ export default function GolfScorecard() {
           else break;
         }
 
-        supabase
-          .from("head_to_head_stats")
-          .upsert(
-            {
-              user_id: session.user.id,
-              opponent_id: opponentId,
-              rounds_played: matchups.length,
-              wins,
-              losses,
-              ties,
-              my_strokes_sum: myStrokesSum,
-              opp_strokes_sum: oppStrokesSum,
-              best_round_strokes: bestRoundStrokes,
-              best_round_date: bestRoundDate,
-              best_round_code: bestRoundCode,
-              current_streak: streak,
-              updated_at: new Date().toISOString(),
-            },
-            { onConflict: "user_id,opponent_id" }
-          )
-          .then(({ error: hthError }) => {
-            if (hthError) console.warn(`Couldn't update head-to-head vs ${opponentId}:`, hthError.message);
-          });
+        withJwtRetry(() =>
+          supabase
+            .from("head_to_head_stats")
+            .upsert(
+              {
+                user_id: session.user.id,
+                opponent_id: opponentId,
+                rounds_played: matchups.length,
+                wins,
+                losses,
+                ties,
+                my_strokes_sum: myStrokesSum,
+                opp_strokes_sum: oppStrokesSum,
+                best_round_strokes: bestRoundStrokes,
+                best_round_date: bestRoundDate,
+                best_round_code: bestRoundCode,
+                current_streak: streak,
+                updated_at: new Date().toISOString(),
+              },
+              { onConflict: "user_id,opponent_id" }
+            )
+        ).then(({ error: hthError }) => {
+          if (hthError) console.warn(`Couldn't update head-to-head vs ${opponentId}:`, hthError.message);
+        });
       }
     } catch (e) {
       console.error("refreshAllMyStats failed:", e);
@@ -4427,11 +4444,13 @@ export default function GolfScorecard() {
     if (!deleteHistoryConfirm || !session || !supabase) return;
     setDeleteHistoryBusy(true);
     setDeleteHistoryErr("");
-    const { error } = await supabase
-      .from("user_rounds")
-      .delete()
-      .eq("user_id", session.user.id)
-      .eq("round_code", deleteHistoryConfirm.code);
+    const { error } = await withJwtRetry(() =>
+      supabase
+        .from("user_rounds")
+        .delete()
+        .eq("user_id", session.user.id)
+        .eq("round_code", deleteHistoryConfirm.code)
+    );
     setDeleteHistoryBusy(false);
     if (error) {
       setDeleteHistoryErr(`Couldn't remove this (${error.message}).`);
@@ -5613,9 +5632,11 @@ export default function GolfScorecard() {
           return data && data.data ? data.data : null;
         },
         save: async (key, value) => {
-          await supabase.from("side_games").upsert(
-            { round_id: key, data: JSON.parse(value), updated_at: new Date().toISOString() },
-            { onConflict: "round_id" }
+          await withJwtRetry(() =>
+            supabase.from("side_games").upsert(
+              { round_id: key, data: JSON.parse(value), updated_at: new Date().toISOString() },
+              { onConflict: "round_id" }
+            )
           );
         },
       }),
@@ -6226,7 +6247,7 @@ export default function GolfScorecard() {
     // this user's own row, same as confirmDeleteFromHistory does -
     // never affects anyone else who was also linked to this same round.
     if (session && supabase) {
-      const { error } = await supabase.from("user_rounds").delete().eq("user_id", session.user.id).eq("round_code", id);
+      const { error } = await withJwtRetry(() => supabase.from("user_rounds").delete().eq("user_id", session.user.id).eq("round_code", id));
       if (!error) {
         loadStats(); // refresh so My Stats and Head-to-Head reflect the removal right away
         supabase.functions.invoke("refresh-all-stats").catch((e) => console.warn("Post-delete stats refresh failed (hourly schedule will catch it):", e));
@@ -7238,19 +7259,25 @@ export default function GolfScorecard() {
     if (session && supabase) {
       // Best-effort - if this fails, the round itself is still fully
       // created and playable, it just won't show up in stats later.
-      supabase
-        .from("user_rounds")
-        .insert({
-          user_id: session.user.id,
-          round_code: code,
-          tournament_id: isTournament ? activeTournament.id : null,
-          game: gameKey,
-          round_date: roundDate,
-          foursome_name: isTournament ? foursomeName : null,
-        })
-        .then(({ error }) => {
-          if (error) console.warn("Couldn't index round for stats:", error.message);
-        });
+      // Error 23505 (unique_violation) specifically means a link for
+      // this exact user+round already exists - that's actually fine,
+      // not a real failure, since the thing this insert was trying to
+      // ensure (a link existing) is already true. Anything else still
+      // gets logged, since that could be a genuinely different problem.
+      withJwtRetry(() =>
+        supabase
+          .from("user_rounds")
+          .insert({
+            user_id: session.user.id,
+            round_code: code,
+            tournament_id: isTournament ? activeTournament.id : null,
+            game: gameKey,
+            round_date: roundDate,
+            foursome_name: isTournament ? foursomeName : null,
+          })
+      ).then(({ error }) => {
+        if (error && error.code !== "23505") console.warn("Couldn't index round for stats:", error.message);
+      });
     }
     // Any other slot linked to a real account via the "pick from group"
     // feature (not just the creator in slot 0) needs this same indexing,
@@ -7259,19 +7286,22 @@ export default function GolfScorecard() {
     if (supabase) {
       cleanPlayers.forEach((p, i) => {
         if (i === 0 || !p.user_id) return;
-        supabase
-          .from("user_rounds")
-          .insert({
-            user_id: p.user_id,
-            round_code: code,
-            tournament_id: isTournament ? activeTournament.id : null,
-            game: gameKey,
-            round_date: roundDate,
-            foursome_name: isTournament ? foursomeName : null,
-          })
-          .then(({ error }) => {
-            if (error) console.warn("Couldn't index round for a linked player's stats:", error.message);
-          });
+        withJwtRetry(() =>
+          supabase
+            .from("user_rounds")
+            .insert({
+              user_id: p.user_id,
+              round_code: code,
+              tournament_id: isTournament ? activeTournament.id : null,
+              game: gameKey,
+              round_date: roundDate,
+              foursome_name: isTournament ? foursomeName : null,
+            })
+        ).then(({ error }) => {
+          // Same reasoning as above - a duplicate link for this exact
+          // player+round is harmless, not a real failure.
+          if (error && error.code !== "23505") console.warn("Couldn't index round for a linked player's stats:", error.message);
+        });
       });
     }
     if (isTournament) {
@@ -7474,19 +7504,20 @@ export default function GolfScorecard() {
         return;
       }
       if (fi === 0 && session && supabase) {
-        supabase
-          .from("user_rounds")
-          .insert({
-            user_id: session.user.id,
-            round_code: foursomeCode,
-            tournament_id: code,
-            game: tournamentGameKey,
-            round_date: tournamentDate,
-            foursome_name: foursomeName,
-          })
-          .then(({ error }) => {
-            if (error) console.warn("Couldn't index round for stats:", error.message);
-          });
+        withJwtRetry(() =>
+          supabase
+            .from("user_rounds")
+            .insert({
+              user_id: session.user.id,
+              round_code: foursomeCode,
+              tournament_id: code,
+              game: tournamentGameKey,
+              round_date: tournamentDate,
+              foursome_name: foursomeName,
+            })
+        ).then(({ error }) => {
+          if (error) console.warn("Couldn't index round for stats:", error.message);
+        });
       }
       foursomeEntries.push({ id: foursomeCode, name: foursomeName });
     }
@@ -7707,19 +7738,20 @@ export default function GolfScorecard() {
     if (supabase) {
       editFoursomePlayers.forEach((p, i) => {
         if (!p.user_id || p.user_id === previousUserIds[i]) return;
-        supabase
-          .from("user_rounds")
-          .insert({
-            user_id: p.user_id,
-            round_code: editFoursomeId,
-            tournament_id: r.tournamentId || null,
-            game: r.game,
-            round_date: r.date,
-            foursome_name: r.tournamentId ? cleanName : null,
-          })
-          .then(({ error }) => {
-            if (error) console.warn("Couldn't index round for a linked player's stats:", error.message);
-          });
+        withJwtRetry(() =>
+          supabase
+            .from("user_rounds")
+            .insert({
+              user_id: p.user_id,
+              round_code: editFoursomeId,
+              tournament_id: r.tournamentId || null,
+              game: r.game,
+              round_date: r.date,
+              foursome_name: r.tournamentId ? cleanName : null,
+            })
+        ).then(({ error }) => {
+          if (error) console.warn("Couldn't index round for a linked player's stats:", error.message);
+        });
       });
     }
     // Keep the tournament's foursome index label in sync too.
@@ -7944,19 +7976,21 @@ export default function GolfScorecard() {
     await saveRound(next);
     // Upsert (not insert) - guards against creating a duplicate history
     // entry if this same round was somehow already linked to this user.
-    const { error } = await supabase
-      .from("user_rounds")
-      .upsert(
-        {
-          user_id: session.user.id,
-          round_code: round.id,
-          tournament_id: round.tournamentId || null,
-          game: round.game,
-          round_date: round.date,
-          foursome_name: round.foursomeName || null,
-        },
-        { onConflict: "user_id,round_code" }
-      );
+    const { error } = await withJwtRetry(() =>
+      supabase
+        .from("user_rounds")
+        .upsert(
+          {
+            user_id: session.user.id,
+            round_code: round.id,
+            tournament_id: round.tournamentId || null,
+            game: round.game,
+            round_date: round.date,
+            foursome_name: round.foursomeName || null,
+          },
+          { onConflict: "user_id,round_code" }
+        )
+    );
     setClaimSlotBusy(false);
     if (error) {
       setClaimSlotErr(`You're marked as this player, but couldn't add it to your history yet (${error.message}).`);
@@ -8078,12 +8112,14 @@ export default function GolfScorecard() {
         }
         const patched = applyPatch(current);
         finalRound = patched;
-        const { data: updated, error: updateErr } = await supabase
-          .from("kv_store")
-          .update({ value: JSON.stringify(patched), version: row.version + 1, updated_at: new Date().toISOString() })
-          .eq("key", key)
-          .eq("version", row.version)
-          .select();
+        const { data: updated, error: updateErr } = await withJwtRetry(() =>
+          supabase
+            .from("kv_store")
+            .update({ value: JSON.stringify(patched), version: row.version + 1, updated_at: new Date().toISOString() })
+            .eq("key", key)
+            .eq("version", row.version)
+            .select()
+        );
         if (updateErr) break; // Genuine error, not just a conflict - fall through to fallback
         if (updated && updated.length > 0) {
           sharedOk = true;
