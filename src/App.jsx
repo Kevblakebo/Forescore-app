@@ -4178,6 +4178,29 @@ export default function GolfScorecard() {
   // old, long-abandoned round someone never actually joined.
   async function loadJoinableGroupRounds() {
     if (!session || !supabase) return;
+    // Reads these two device-local lists directly from storage rather
+    // than trusting dismissedJoinableRounds/openedRoundCodes state -
+    // on a fresh app load, this function can run before that state has
+    // finished loading (both are read fairly late in a long sequence of
+    // startup storage reads), which was causing previously-dismissed or
+    // already-opened rounds to incorrectly reappear as "ready to join"
+    // every time the app was closed and reopened.
+    let dismissed = dismissedJoinableRounds;
+    try {
+      const djRes = await storageGet(DISMISSED_JOINABLE_KEY, false);
+      if (djRes.ok && djRes.value) {
+        dismissed = JSON.parse(djRes.value);
+        setDismissedJoinableRounds(dismissed);
+      }
+    } catch (e) {}
+    let opened = openedRoundCodes;
+    try {
+      const orRes = await storageGet(OPENED_ROUNDS_KEY, false);
+      if (orRes.ok && orRes.value) {
+        opened = JSON.parse(orRes.value);
+        setOpenedRoundCodes(opened);
+      }
+    } catch (e) {}
     const twelveHoursAgo = new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString();
     const { data: links, error } = await withJwtRetry(() =>
       supabase
@@ -4194,7 +4217,7 @@ export default function GolfScorecard() {
     const found = [];
     for (const link of links) {
       if (link.tournament_id) continue;
-      if (dismissedJoinableRounds.includes(link.round_code)) continue;
+      if (dismissed.includes(link.round_code)) continue;
       const res = await storageGet(`golfround:${link.round_code}`, true);
       if (!res.ok || !res.value) continue;
       let r;
@@ -4213,7 +4236,7 @@ export default function GolfScorecard() {
       // well before they've ever seen it - keying off that would (and
       // did) hide the invite from them before they ever had a chance to
       // see it, which defeats the entire point of this feature.
-      if (openedRoundCodes.includes(link.round_code)) continue;
+      if (opened.includes(link.round_code)) continue;
       // Also excludes it if it's already this device's own active
       // round - covers the moment right after tapping "Join round" but
       // before formally claiming a specific name tile, where it would
@@ -10042,7 +10065,7 @@ function computeMatchPlayResult(round, computed) {
                   style={{ flex: "0 0 auto" }}
                   onClick={() => dismissJoinableRound(jr.code)}
                 >
-                  Not now
+                  Dismiss
                 </button>
               </div>
             </div>
