@@ -2366,6 +2366,10 @@ export default function GolfScorecard() {
   const [groupRoundsLoading, setGroupRoundsLoading] = useState(false);
   const [groupRoundsErr, setGroupRoundsErr] = useState("");
   const [groupCategory, setGroupCategory] = useState("wins");
+  const [allGroupsLeaderboard, setAllGroupsLeaderboard] = useState([]);
+  const [allGroupsLeaderboardLoading, setAllGroupsLeaderboardLoading] = useState(false);
+  const [allGroupsLeaderboardErr, setAllGroupsLeaderboardErr] = useState("");
+  const [allGroupsCategory, setAllGroupsCategory] = useState("wins");
 
   // ---- Live GPS for distance-to-green ----
   // This is intentionally provider-independent: it just tracks the
@@ -2568,6 +2572,7 @@ export default function GolfScorecard() {
       // can't (and shouldn't) reach into anyone else's stats just
       // because they're viewing a shared group page.
       loadStats();
+      loadAllGroupsLeaderboard();
     }
   }, [screen, session && session.user && session.user.id]);
 
@@ -7104,6 +7109,83 @@ export default function GolfScorecard() {
     setGroupmates(result);
   }
 
+  // Builds a combined leaderboard across every group the person belongs
+  // to, not scoped to any one group - everyone they share any group
+  // with, deduplicated, ranked by their real, all-time stats (there's
+  // no single group to scope a "shared rounds" number to once you're
+  // combining several groups together, so this uses each person's
+  // overall leaderboard_stats, same source the public leaderboard
+  // uses). Same combine-and-dedupe approach as loadGroupmates, just
+  // pulling full stats columns instead of only name/avatar/handicap,
+  // since this feeds a leaderboard rather than a player picker.
+  async function loadAllGroupsLeaderboard() {
+    if (!session || !supabase) return;
+    setAllGroupsLeaderboardLoading(true);
+    setAllGroupsLeaderboardErr("");
+    const { data: myMemberships, error: memErr } = await withJwtRetry(() =>
+      supabase.from("group_members").select("group_id").eq("user_id", session.user.id)
+    );
+    if (memErr) {
+      setAllGroupsLeaderboardLoading(false);
+      setAllGroupsLeaderboardErr(`Couldn't load your groups (${memErr.message}).`);
+      setAllGroupsLeaderboard([]);
+      return;
+    }
+    const groupIds = [...new Set((myMemberships || []).map((m) => m.group_id))];
+    if (groupIds.length === 0) {
+      setAllGroupsLeaderboardLoading(false);
+      setAllGroupsLeaderboard([]);
+      return;
+    }
+    const { data: allMembers, error: allErr } = await withJwtRetry(() =>
+      supabase.from("group_members").select("user_id").in("group_id", groupIds)
+    );
+    if (allErr) {
+      setAllGroupsLeaderboardLoading(false);
+      setAllGroupsLeaderboardErr(`Couldn't load group members (${allErr.message}).`);
+      setAllGroupsLeaderboard([]);
+      return;
+    }
+    const memberUserIds = [...new Set((allMembers || []).map((m) => m.user_id))];
+    if (memberUserIds.length === 0) {
+      setAllGroupsLeaderboardLoading(false);
+      setAllGroupsLeaderboard([]);
+      return;
+    }
+    const { data: stats, error: statsErr } = await withJwtRetry(() =>
+      supabase.from("leaderboard_stats").select("*").in("user_id", memberUserIds)
+    );
+    setAllGroupsLeaderboardLoading(false);
+    if (statsErr) {
+      setAllGroupsLeaderboardErr(`Couldn't load stats (${statsErr.message}).`);
+      return;
+    }
+    const zeroStats = { rounds_played: 0, wins: 0, strokes_sum: 0, strokes_rounds: 0, putts_sum: 0, putts_rounds: 0, birdies: 0, pars: 0, eagles: 0, holes_in_one: 0 };
+    const result = (stats || []).map((s) => ({ ...zeroStats, ...s }));
+    // Someone who's a member of one of these groups but has never once
+    // visited their own stats page yet (and so has no leaderboard_stats
+    // row at all) still needs to appear here, same reasoning as the
+    // single-group leaderboard - just showing zeros until they have
+    // real numbers of their own.
+    for (const uid of memberUserIds) {
+      if (!result.some((r) => r.user_id === uid)) {
+        result.push({ user_id: uid, display_name: "Golfer", avatar: "", handicap: "", opted_in: false, ...zeroStats });
+      }
+    }
+    // Same reasoning as every other leaderboard here - leaderboard_stats
+    // is a cached copy of your own name/avatar/handicap, only refreshed
+    // when you've actually visited Profile or saved it, so for yourself
+    // specifically, use your live profile data instead of trusting that
+    // cache.
+    if (profile && memberUserIds.includes(session.user.id)) {
+      const myIdx = result.findIndex((r) => r.user_id === session.user.id);
+      if (myIdx >= 0) {
+        result[myIdx] = { ...result[myIdx], display_name: profile.name || "Golfer", avatar: profile.avatar || "", handicap: profile.handicap || "" };
+      }
+    }
+    setAllGroupsLeaderboard(result);
+  }
+
   // Fills a slot with a groupmate's name, avatar, and account link all at
   // once. Per an explicit choice made about this feature, this links
   // their account immediately (their stats count right away) rather than
@@ -11528,6 +11610,82 @@ function computeMatchPlayResult(round, computed) {
                   )}
 
                   {groupsErr && <div style={{ color: "#A42E2D", fontSize: 14, marginBottom: 10 }}>{groupsErr}</div>}
+
+                  {myGroups.length > 0 && (
+                    <div style={{ marginBottom: 16 }}>
+                      <div style={{ fontWeight: 700, fontSize: 16, color: "#1B4332", marginBottom: 8 }}>
+                        All Groups Leaderboard
+                      </div>
+                      <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 10 }}>
+                        Everyone across all your groups, combined - see how you stack up against all your playing partners, not just one group at a time.
+                      </div>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
+                        {Object.entries(LEADERBOARD_CATEGORIES).map(([key, cat]) => (
+                          <button
+                            key={key}
+                            onClick={() => setAllGroupsCategory(key)}
+                            style={{
+                              fontSize: 13,
+                              fontWeight: 700,
+                              padding: "5px 10px",
+                              borderRadius: 20,
+                              border: allGroupsCategory === key ? "1.5px solid #1B4332" : "1.5px solid #d8d2bd",
+                              background: allGroupsCategory === key ? "#1B4332" : "#fff",
+                              color: allGroupsCategory === key ? "#F3EFE0" : "#4b4b45",
+                              cursor: "pointer",
+                            }}
+                          >
+                            {cat.label}
+                          </button>
+                        ))}
+                      </div>
+                      {allGroupsLeaderboardLoading ? (
+                        <div style={{ fontSize: 15, color: "#6b6b63" }}>Loading...</div>
+                      ) : allGroupsLeaderboardErr ? (
+                        <div style={{ color: "#A42E2D", fontSize: 15 }}>{allGroupsLeaderboardErr}</div>
+                      ) : (
+                        (() => {
+                          const cat = LEADERBOARD_CATEGORIES[allGroupsCategory];
+                          const ranked = allGroupsLeaderboard
+                            .map((row) => ({ row, value: cat.valueOf(row) }))
+                            .filter((x) => x.value != null)
+                            .sort((a, b) => (cat.lowerIsBetter ? a.value - b.value : b.value - a.value));
+
+                          if (ranked.length === 0) {
+                            return <div style={{ fontSize: 15, color: "#6b6b63" }}>Nobody across your groups has stats for this category yet.</div>;
+                          }
+
+                          return ranked.map((x, i) => {
+                            const isMe = session && x.row.user_id === session.user.id;
+                            return (
+                              <div
+                                key={x.row.user_id}
+                                onClick={() => !isMe && openHeadToHead(x.row.user_id, x.row.display_name, x.row.avatar)}
+                                style={{
+                                  display: "flex",
+                                  justifyContent: "space-between",
+                                  alignItems: "center",
+                                  padding: "7px 0",
+                                  borderBottom: i === ranked.length - 1 ? "none" : "1px solid #eee6cf",
+                                  background: isMe ? "#EBF0EC" : "transparent",
+                                  borderRadius: isMe ? 6 : 0,
+                                  paddingLeft: isMe ? 8 : 0,
+                                  paddingRight: isMe ? 8 : 0,
+                                  cursor: isMe ? "default" : "pointer",
+                                }}
+                              >
+                                <div style={{ fontSize: 15, fontWeight: isMe ? 700 : 600, color: "#1B4332" }}>
+                                  {i + 1}. {x.row.avatar ? `${x.row.avatar} ` : ""}{x.row.display_name}
+                                  {isMe && <span style={{ fontSize: 11, color: "#B08D57", marginLeft: 6, fontWeight: 700 }}>YOU</span>}
+                                </div>
+                                <div style={{ fontSize: 15, fontWeight: 700, color: "#4b4b45" }}>{cat.format(x.value)}</div>
+                              </div>
+                            );
+                          });
+                        })()
+                      )}
+                    </div>
+                  )}
 
                   <div style={{ fontSize: 13, color: "#8a8a80", textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 700, marginBottom: 6 }}>Create a Group</div>
                   <div className="gsc-row" style={{ marginBottom: 8, alignItems: "center" }}>
