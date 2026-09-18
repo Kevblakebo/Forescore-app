@@ -1345,6 +1345,7 @@ const LAST_TOURNAMENT_KEY = "gsc-last-tournament";
 const FINISHED_TOURNAMENT_INDEX_KEY = "gsc-finished-tournament-index";
 const FINISHED_INDEX_KEY = "gsc-finished-index";
 const DISMISSED_JOINABLE_KEY = "gsc-dismissed-joinable-rounds";
+const OPENED_ROUNDS_KEY = "gsc-opened-round-codes";
 const GPS_EXPLAINED_KEY = "gsc-gps-explained";
 const FINISHED_PREFIX = "gsc-finished-round:";
 const TOURNAMENT_PREFIX = "gsc-tournament:";
@@ -2313,6 +2314,7 @@ export default function GolfScorecard() {
   const [yearlyRecapErr, setYearlyRecapErr] = useState("");
   const [joinableGroupRounds, setJoinableGroupRounds] = useState([]);
   const [dismissedJoinableRounds, setDismissedJoinableRounds] = useState([]);
+  const [openedRoundCodes, setOpenedRoundCodes] = useState([]);
   const [wheelOpen, setWheelOpen] = useState(false);
   const [wheelSpinning, setWheelSpinning] = useState(false);
   const [wheelRotation, setWheelRotation] = useState(0);
@@ -4170,14 +4172,16 @@ export default function GolfScorecard() {
         continue;
       }
       if (r.finished) continue;
-      // Excludes this round if the current user is linked to ANY player
-      // slot, not just slot 0. Slot 0 alone only ever covers "did I
-      // create this round myself" - someone who instead joined an
-      // existing round (claiming slot 1, 2, or 3) would otherwise never
-      // get excluded here at all, leaving the round stuck showing as
-      // "joinable" on their homepage indefinitely even after they'd
-      // already joined it.
-      if (r.players && r.players.some((p) => p.user_id === session.user.id)) continue;
+      // Excludes this round once this device has actually opened it -
+      // whether by creating it, joining it via code, or opening it from
+      // this very "ready to join" card. Deliberately does NOT key off
+      // whether the current user is linked to a player slot in the
+      // round's own data: someone added via "pick from group" gets a
+      // user_id attached to their slot the moment the round is created,
+      // well before they've ever seen it - keying off that would (and
+      // did) hide the invite from them before they ever had a chance to
+      // see it, which defeats the entire point of this feature.
+      if (openedRoundCodes.includes(link.round_code)) continue;
       // Also excludes it if it's already this device's own active
       // round - covers the moment right after tapping "Join round" but
       // before formally claiming a specific name tile, where it would
@@ -5390,6 +5394,21 @@ export default function GolfScorecard() {
     );
   }
   const [activeRound, setActiveRound] = useState(null);
+  // Tracks, per device, which round codes have ever been opened here -
+  // the actual signal for "has this device already seen this round",
+  // as opposed to the round's own shared player data (which gets a
+  // user_id attached the moment someone's added via "pick from group",
+  // long before that person has ever actually opened it themselves).
+  // Used to correctly exclude a round from "ready to join" once it's
+  // been opened, without also excluding it before the linked person
+  // has ever seen it - which was the actual bug.
+  useEffect(() => {
+    if (!activeRound || !activeRound.id) return;
+    if (openedRoundCodes.includes(activeRound.id)) return;
+    const next = [...openedRoundCodes, activeRound.id].slice(-100);
+    setOpenedRoundCodes(next);
+    storageSet(OPENED_ROUNDS_KEY, JSON.stringify(next), false);
+  }, [activeRound && activeRound.id]);
   const [resumeChecked, setResumeChecked] = useState(false);
   const [finishedRounds, setFinishedRounds] = useState([]);
   const finishedRoundsRef = useRef([]);
@@ -5544,6 +5563,12 @@ export default function GolfScorecard() {
       if (djRes.ok && djRes.value) {
         try {
           setDismissedJoinableRounds(JSON.parse(djRes.value));
+        } catch (e) {}
+      }
+      const orRes = await storageGet(OPENED_ROUNDS_KEY, false);
+      if (orRes.ok && orRes.value) {
+        try {
+          setOpenedRoundCodes(JSON.parse(orRes.value));
         } catch (e) {}
       }
       const gpsExplainedRes = await storageGet(GPS_EXPLAINED_KEY, false);
