@@ -3116,6 +3116,38 @@ export default function GolfScorecard() {
     if (!myRoundsIndex || myRoundsIndex.length === 0) {
       setStatsLoading(false);
       setStats({ roundsPlayed: 0, avgStrokes: null, avgPutts: null, wins: 0, eagles: 0, birdies: 0, pars: 0, holesInOne: 0, girHits: 0, girHoles: 0, firHits: 0, firHoles: 0, bestRoundStrokes: null, recent: [] });
+      // Even with zero rounds played, make sure a leaderboard_stats row
+      // exists with this person's real name - without this, anyone who
+      // signs up but hasn't played their first round yet would show up
+      // as the generic "Golfer" placeholder the moment someone tries to
+      // add them as a player from a shared group, despite having a real
+      // name set on their own profile already. Only when viewing
+      // all-time stats (no date filter), same reasoning as the fuller
+      // upsert below - a filtered range with zero rounds in it isn't
+      // this person's real, all-time state.
+      if (!dateFrom && !dateTo && session && supabase) {
+        const isOptedIn = overrides && overrides.optIn !== undefined ? overrides.optIn : profile && profile.leaderboard_opt_in;
+        const displayName = (overrides && overrides.name) || (profile && profile.name) || "Golfer";
+        const fullName = overrides && overrides.fullName !== undefined ? overrides.fullName : (profile && profile.full_name) || "";
+        withJwtRetry(() =>
+          supabase
+            .from("leaderboard_stats")
+            .upsert(
+              {
+                user_id: session.user.id,
+                display_name: displayName,
+                full_name: fullName,
+                avatar: (overrides && overrides.avatar !== undefined ? overrides.avatar : profile && profile.avatar) || "",
+                handicap: (overrides && overrides.handicap !== undefined ? overrides.handicap : profile && profile.handicap) || "",
+                opted_in: !!isOptedIn,
+                updated_at: new Date().toISOString(),
+              },
+              { onConflict: "user_id" }
+            )
+        ).then(({ error: lbError }) => {
+          if (lbError) console.warn("Couldn't update leaderboard stats:", lbError.message);
+        });
+      }
       return;
     }
 
@@ -4474,8 +4506,17 @@ export default function GolfScorecard() {
   // they're the one setting this up) is pre-filled so they don't have to
   // retype their own name and handicap every single time. Everyone else
   // still starts blank, same as before.
-  function freshPlayerSlots(gameKeyArg) {
-    const count = gameKeyArg === "matchplay" ? 2 : 4;
+  function freshPlayerSlots(gameKeyArg, flexible) {
+    const isIndividual = gameKeyArg === "dstreet" || gameKeyArg === "swami" || gameKeyArg === "pontobango" || gameKeyArg === "individualputts" || gameKeyArg === "stableford" || gameKeyArg === "matchplay";
+    const needsTwo = gameKeyArg === "matchplay" || gameKeyArg === "pontobango" || gameKeyArg === "individualputts";
+    // Flexible mode (regular round setup, not a tournament foursome)
+    // starts with only the minimum players actually needed for this
+    // format - most individual games can be, and often are, played
+    // solo or with just a couple people, so pre-filling three empty
+    // slots by default is more clutter than help. Team games always
+    // need their full, fixed count regardless, since a 2v2 format
+    // can't start with fewer.
+    const count = flexible && isIndividual ? (needsTwo ? 2 : 1) : gameKeyArg === "matchplay" ? 2 : 4;
     const slots = Array.from({ length: count }, () => ({ name: "", hcp: "", avatar: "" }));
     if (session && profile && (profile.name || profile.handicap || profile.avatar)) {
       slots[0] = { name: profile.name || "", hcp: profile.handicap || "", avatar: profile.avatar || "" };
@@ -6799,7 +6840,7 @@ export default function GolfScorecard() {
     setCfg(withProfileVenmo({ ...GAMES[key].defaults }));
     setRoundName("");
     setRoundDate(new Date().toISOString().slice(0, 10));
-    setPlayers(freshPlayerSlots(key));
+    setPlayers(freshPlayerSlots(key, true));
     setPontoPairing([[0, 1], [2, 3]]);
     setPar(Array(18).fill(""));
     setYardage(Array(18).fill(""));
@@ -6828,7 +6869,7 @@ export default function GolfScorecard() {
     setCfg(withProfileVenmo({ ...GAMES.swami.defaults }));
     setRoundName("");
     setRoundDate(new Date().toISOString().slice(0, 10));
-    setPlayers(freshPlayerSlots());
+    setPlayers(freshPlayerSlots("swami", true));
     setPar(Array(18).fill(""));
     setYardage(Array(18).fill(""));
     setStrokeIndex(Array(18).fill(""));
@@ -9650,8 +9691,13 @@ function computeMatchPlayResult(round, computed) {
   // the backend proxy - never called with the real API key client-side.
   // Only fetches once per session; the voice list doesn't change often
   // enough to justify re-fetching every time the settings modal opens.
+  // Always returns the current voices array (whether just fetched,
+  // already loaded from an earlier call, or empty on error), so a
+  // caller that needs the actual list right away - like defaulting to
+  // the first available voice - doesn't have to wait on React state.
   async function loadElevenLabsVoices() {
-    if (elevenLabsVoices !== null || elevenLabsVoicesLoading) return;
+    if (elevenLabsVoices !== null) return elevenLabsVoices;
+    if (elevenLabsVoicesLoading) return [];
     setElevenLabsVoicesLoading(true);
     setElevenLabsVoicesErr("");
     try {
@@ -9661,10 +9707,13 @@ function computeMatchPlayResult(round, computed) {
         throw new Error(body.error || `Request failed (${res.status})`);
       }
       const data = await res.json();
-      setElevenLabsVoices(data.voices || []);
+      const voices = data.voices || [];
+      setElevenLabsVoices(voices);
+      return voices;
     } catch (e) {
       setElevenLabsVoicesErr(`Couldn't load voices (${e.message}).`);
       setElevenLabsVoices([]);
+      return [];
     } finally {
       setElevenLabsVoicesLoading(false);
     }
@@ -9712,7 +9761,22 @@ function computeMatchPlayResult(round, computed) {
     if (!announceEnabled) return;
     const text = buildStandingsNarration(round, computed);
     if (!text) return;
-    if (!elevenLabsVoiceId) return;
+    let voiceId = elevenLabsVoiceId;
+    if (!voiceId) {
+      // No voice has ever been explicitly chosen - rather than silently
+      // doing nothing, default to "Sarah" specifically (falling back to
+      // whichever voice loads first if that name isn't available on
+      // this account), and remember that choice the same way picking
+      // one manually would, so this only ever happens once.
+      const voices = await loadElevenLabsVoices();
+      if (!voices || voices.length === 0) return;
+      const sarah = voices.find((v) => (v.name || "").toLowerCase() === "sarah");
+      voiceId = (sarah || voices[0]).voiceId;
+      setElevenLabsVoiceId(voiceId);
+      try {
+        window.localStorage.setItem("ripscore_elevenlabs_voice", voiceId);
+      } catch (e) {}
+    }
     setElevenLabsAnnounceErr("");
     if (currentAnnounceAudioRef.current) {
       currentAnnounceAudioRef.current.pause();
@@ -9723,7 +9787,7 @@ function computeMatchPlayResult(round, computed) {
       const res = await fetch(`${API_BASE}/api/tts`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, voiceId: elevenLabsVoiceId }),
+        body: JSON.stringify({ text, voiceId }),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
@@ -13773,7 +13837,7 @@ function computeMatchPlayResult(round, computed) {
                   </button>
                   <input className="gsc-input" placeholder={`Player ${LETTERS[i]} name`} value={p.name} onChange={(e) => updatePlayer(i, "name", e.target.value)} />
                   <input className="gsc-input" style={{ flex: "0 0 70px" }} placeholder="HCP" value={p.hcp} onChange={(e) => updatePlayer(i, "hcp", e.target.value)} />
-                  {players.length > 1 && (
+                  {players.length > (gameKey === "matchplay" ? 2 : 1) && (
                     <button
                       className="gsc-btn gsc-btn-outline"
                       style={{ flex: "0 0 auto", color: "#A42E2D", borderColor: "#A42E2D", padding: "9px 12px" }}
@@ -14545,7 +14609,7 @@ function computeMatchPlayResult(round, computed) {
                   </button>
                   <input className="gsc-input" placeholder={`Player ${LETTERS[i]} name`} value={p.name} onChange={(e) => updatePlayer(i, "name", e.target.value)} />
                   <input className="gsc-input" style={{ flex: "0 0 70px" }} placeholder="HCP" value={p.hcp} onChange={(e) => updatePlayer(i, "hcp", e.target.value)} />
-                  {(gameKey === "swami" || gameKey === "dstreet" || gameKey === "pontobango" || gameKey === "individualputts" || gameKey === "stableford") && players.length > (gameKey === "pontobango" || gameKey === "individualputts" || gameKey === "stableford" ? 2 : 1) && (
+                  {(gameKey === "swami" || gameKey === "dstreet" || gameKey === "pontobango" || gameKey === "individualputts" || gameKey === "stableford") && players.length > (gameKey === "pontobango" || gameKey === "individualputts" ? 2 : 1) && (
                     <button
                       className="gsc-btn gsc-btn-outline"
                       style={{ flex: "0 0 auto", color: "#A42E2D", borderColor: "#A42E2D", padding: "9px 12px" }}
