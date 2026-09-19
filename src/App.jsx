@@ -16110,7 +16110,8 @@ function computeMatchPlayResult(round, computed) {
             <img src={LOGO_DATA_URI} alt="RipScore logo" style={{ width: 66, height: "auto", marginBottom: 10 }} />
             <div className="gsc-display" style={{ fontSize: 24, fontWeight: 700, color: "#F3EFE0" }}>Round Complete!</div>
             <div style={{ fontSize: 13, color: "#F3EFE0", opacity: 0.8, marginTop: 4 }}>
-              {round.name} - {g.name} - {round.date}
+              {round.name && round.name !== `${g.name} ${round.date}` ? `${round.name} - ` : ""}
+              {g.name} - {round.date}
             </div>
           </div>
         </div>
@@ -16170,60 +16171,6 @@ function computeMatchPlayResult(round, computed) {
                 </div>
                 <div style={{ fontSize: 19, fontWeight: 700 }}>
                   {winners.map((w) => `${w.avatar ? w.avatar + " " : ""}${w.name}`).join(" & ")}
-                </div>
-                <div style={{ fontSize: 13, color: "#6b6b63", marginTop: 4 }}>
-                  {round.cfg.oceans11 ? (() => {
-                    const oceans11 = computeOceans11Results(round, computed);
-                    const winnerIdx = winners[0].idx;
-                    const o11Row = oceans11 && oceans11.rows.find((row) => row.playerIdx === winnerIdx);
-                    const regularScore = computed.playerTotalScore[winnerIdx];
-                    const regularNet = computed.playerTotalNetScore[winnerIdx];
-                    const netLabel = round.cfg.netScoring ? "Net" : "";
-                    return (
-                      <>
-                        Oceans 11: {netLabel} {o11Row ? o11Row.total : "-"} ({o11Row ? o11Row.holesSelected : 0}/11 holes)
-                        <br />
-                        Full round: {regularScore} strokes{round.cfg.netScoring ? ` (net ${regularNet})` : ""}
-                      </>
-                    );
-                  })() : round.cfg.nassau && NASSAU_ALWAYS_TWO_SIDED.includes(round.game) ? (() => {
-                    const nassau = computeNassauResults(round, computed);
-                    const unitLabel = g.puttsOnlyScoring ? "putt" : g.totalScoring ? "stroke" : "point";
-                    const margin = nassau ? Math.abs(nassau.overall.t0 - nassau.overall.t1) : 0;
-                    const winningTeamIdx = nassau ? nassau.overall.winner : null;
-                    const teamRegular = (round.teams[winningTeamIdx] || []).reduce(
-                      (sum, idx) => sum + (round.cfg.netScoring ? computed.playerTotalNetScore[idx] : computed.playerTotalScore[idx]),
-                      0
-                    );
-                    return (
-                      <>
-                        Nassau Overall: won by {margin} {unitLabel}{margin === 1 ? "" : "s"}
-                        <br />
-                        Full round: {teamRegular} {round.cfg.netScoring ? "net " : ""}strokes
-                      </>
-                    );
-                  })() : round.cfg.nassau && INDIVIDUAL_NASSAU_GAMES.includes(round.game) ? (() => {
-                    const indivNassau = computeIndividualNassauResults(round, computed);
-                    const winnerIdx = winners[0].idx;
-                    const row = indivNassau && indivNassau.overall.rows.find((r) => r.playerIdx === winnerIdx);
-                    const overallUnit = round.game === "dstreet" ? "pts" : round.game === "individualputts" ? "putts" : `${round.cfg.netScoring ? "Net " : ""}strokes`;
-                    const regularLine = round.game === "individualputts"
-                      ? `${computed.playerTotalPutts[winnerIdx]} putts (${computed.playerTotalScore[winnerIdx]} strokes)`
-                      : round.game === "dstreet"
-                      ? `${computed.playerPoints[winnerIdx]} pts total (${computed.playerTotalScore[winnerIdx]} strokes / ${computed.playerTotalPutts[winnerIdx]} putts)`
-                      : `${computed.playerTotalScore[winnerIdx]} strokes${round.cfg.netScoring ? ` (net ${computed.playerTotalNetScore[winnerIdx]})` : ""}`;
-                    return (
-                      <>
-                        Nassau Overall: {row ? row.total : "-"} {overallUnit}
-                        <br />
-                        Full round: {regularLine}
-                      </>
-                    );
-                  })() : g.rankByPutts
-                    ? `${winners[0].putts} putts (${winners[0].score} strokes${round.cfg.netScoring ? `, net ${winners[0].netScore}` : ""})`
-                    : g.totalScoring
-                    ? `${winners[0].score} strokes${round.cfg.netScoring ? ` (net ${winners[0].netScore})` : ""} (${winners[0].putts} putts)`
-                    : `${winners[0].points} pts (${winners[0].score}str${round.cfg.netScoring ? `/net ${winners[0].netScore}` : ""}/${winners[0].putts}putt/${formatRelPar(winners[0].relPar)})`}
                 </div>
               </div>
             )
