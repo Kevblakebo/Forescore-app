@@ -4620,7 +4620,7 @@ export default function GolfScorecard() {
   const [claimSlotBusy, setClaimSlotBusy] = useState(false);
   const [claimSlotErr, setClaimSlotErr] = useState("");
   const [editFoursomePlayers, setEditFoursomePlayers] = useState([]);
-  const [editFoursomeCaptainIdx, setEditFoursomeCaptainIdx] = useState(0);
+  const [editFoursomeCaptainIdxs, setEditFoursomeCaptainIdxs] = useState([]);
   const [editFoursomeErr, setEditFoursomeErr] = useState("");
   const [editFoursomeBusy, setEditFoursomeBusy] = useState(false);
   const [boardLoading, setBoardLoading] = useState(false);
@@ -5462,7 +5462,7 @@ export default function GolfScorecard() {
             <div style={{ marginTop: 8, marginBottom: 8 }}>
               <div className="gsc-label" style={{ marginBottom: 6 }}>Who's this foursome's captain?</div>
               <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 8 }}>
-                Only the captain can enter or change scores for this foursome - everyone else can just view.
+                Only captains can enter or change scores for this foursome - everyone else can just view. Tap to toggle who's a captain; defaults to everyone.
               </div>
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                 {editFoursomePlayers.map((p, i) => (
@@ -5473,11 +5473,15 @@ export default function GolfScorecard() {
                       flex: "1 1 auto",
                       padding: "8px 10px",
                       fontSize: 12,
-                      background: editFoursomeCaptainIdx === i ? "#1B4332" : "transparent",
-                      color: editFoursomeCaptainIdx === i ? "#F3EFE0" : "#1B4332",
+                      background: editFoursomeCaptainIdxs.includes(i) ? "#1B4332" : "transparent",
+                      color: editFoursomeCaptainIdxs.includes(i) ? "#F3EFE0" : "#1B4332",
                       border: "1.5px solid #1B4332",
                     }}
-                    onClick={() => setEditFoursomeCaptainIdx(i)}
+                    onClick={() =>
+                      setEditFoursomeCaptainIdxs((idxs) =>
+                        idxs.includes(i) ? (idxs.length > 1 ? idxs.filter((x) => x !== i) : idxs) : [...idxs, i]
+                      )
+                    }
                   >
                     {p.name.trim() || `Player ${LETTERS[i]}`}
                   </button>
@@ -5819,9 +5823,11 @@ export default function GolfScorecard() {
     if (!r.organizerId) return true;
     if (!session) return false;
     if (session.user.id === r.organizerId) return true;
-    const captainIdx = r.captainIdx ?? 0;
-    const captain = r.players && r.players[captainIdx];
-    return !!captain && !!captain.user_id && captain.user_id === session.user.id;
+    const captainIdxs = r.captainIdxs && r.captainIdxs.length > 0 ? r.captainIdxs : [r.captainIdx ?? 0];
+    return captainIdxs.some((idx) => {
+      const captain = r.players && r.players[idx];
+      return !!captain && !!captain.user_id && captain.user_id === session.user.id;
+    });
   }
 
   // Same reasoning as canEditTournamentRound, but for actions that affect
@@ -7576,6 +7582,7 @@ export default function GolfScorecard() {
         name: `${defaultLabel} ${i + 1}`,
         players: i === 0 ? freshPlayerSlots(tournamentGameKey) : Array.from({ length: slotsPerMatch }, () => ({ name: "", hcp: "", avatar: "" })),
         pairing: [[0, 1], [2, 3]],
+        captainIdxs: Array.from({ length: slotsPerMatch }, (_, pi) => pi),
       }))
     );
     goToScreen("tournamentRoster");
@@ -7602,7 +7609,9 @@ export default function GolfScorecard() {
   function setFoursomeDraftCaptain(fi, pi) {
     setTournamentFoursomesDraft((draft) => {
       const next = [...draft];
-      next[fi] = { ...next[fi], captainIdx: pi };
+      const current = next[fi].captainIdxs || [];
+      const nextCaptains = current.includes(pi) ? (current.length > 1 ? current.filter((x) => x !== pi) : current) : [...current, pi];
+      next[fi] = { ...next[fi], captainIdxs: nextCaptains };
       return next;
     });
   }
@@ -7701,7 +7710,8 @@ export default function GolfScorecard() {
         tournamentId: code,
         foursomeName,
         organizerId: session ? session.user.id : null,
-        captainIdx: draft.captainIdx ?? 0,
+        captainIdxs: draft.captainIdxs && draft.captainIdxs.length > 0 ? draft.captainIdxs : draft.players.map((_, i) => i),
+        captainIdx: draft.captainIdxs && draft.captainIdxs.length > 0 ? draft.captainIdxs[0] : 0,
       };
       const rw = await storageSet(`golfround:${foursomeCode}`, JSON.stringify(foursomeRound), true);
       if (!rw.ok) {
@@ -7854,7 +7864,13 @@ export default function GolfScorecard() {
     setEditFoursomeIsTournament(!!roundData.tournamentId);
     setEditFoursomeName(roundData.foursomeName || roundData.name || "");
     setEditFoursomePlayers(roundData.players.map((p) => ({ name: p.name, hcp: p.hcp, originalName: p.name, avatar: p.avatar || "", user_id: p.user_id || null })));
-    setEditFoursomeCaptainIdx(roundData.captainIdx ?? 0);
+    setEditFoursomeCaptainIdxs(
+      roundData.captainIdxs && roundData.captainIdxs.length > 0
+        ? roundData.captainIdxs
+        : roundData.captainIdx != null
+        ? [roundData.captainIdx]
+        : roundData.players.map((_, i) => i)
+    );
     setEditFoursomeOpen(true);
   }
 
@@ -7926,7 +7942,8 @@ export default function GolfScorecard() {
     if (r.tournamentId) {
       r.foursomeName = cleanName;
       r.name = cleanName + (activeTournament ? ` - ${activeTournament.name}` : "");
-      r.captainIdx = editFoursomeCaptainIdx;
+      r.captainIdxs = editFoursomeCaptainIdxs;
+      r.captainIdx = editFoursomeCaptainIdxs[0] ?? 0;
     } else {
       r.name = cleanName;
     }
@@ -15609,8 +15626,8 @@ function computeMatchPlayResult(round, computed) {
                 <div className="gsc-label" style={{ marginBottom: 6 }}>{MATCH_PLAY_GAMES.includes(tournamentGameKey) ? "Who's this match's captain?" : "Who's this foursome's captain?"}</div>
                 <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 8 }}>
                   {MATCH_PLAY_GAMES.includes(tournamentGameKey)
-                    ? "Only the captain can enter or change scores for this match - everyone else can just view. Defaults to Player A if not set."
-                    : "Only the captain can enter or change scores for this foursome - everyone else can just view. Defaults to Player A if not set."}
+                    ? "Only captains can enter or change scores for this match - everyone else can just view. Defaults to everyone; tap to narrow it down."
+                    : "Only captains can enter or change scores for this foursome - everyone else can just view. Defaults to everyone; tap to narrow it down."}
                 </div>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                   {f.players.map((p, pi) => (
@@ -15621,8 +15638,8 @@ function computeMatchPlayResult(round, computed) {
                         flex: "1 1 auto",
                         padding: "8px 10px",
                         fontSize: 12,
-                        background: (f.captainIdx ?? 0) === pi ? "#1B4332" : "transparent",
-                        color: (f.captainIdx ?? 0) === pi ? "#F3EFE0" : "#1B4332",
+                        background: (f.captainIdxs || []).includes(pi) ? "#1B4332" : "transparent",
+                        color: (f.captainIdxs || []).includes(pi) ? "#F3EFE0" : "#1B4332",
                         border: "1.5px solid #1B4332",
                       }}
                       onClick={() => setFoursomeDraftCaptain(fi, pi)}
@@ -16937,7 +16954,7 @@ function computeMatchPlayResult(round, computed) {
 
             {!canEditThisRound && (
               <div style={{ background: "#F8F1E4", border: "1px solid #B08D57", borderRadius: 10, padding: "10px 12px", marginBottom: 10, fontSize: 12, color: "#8a6a2f", textAlign: "center" }}>
-                {"\u{1F441}\u{FE0F}"} View only - only the tournament organizer or this {MATCH_PLAY_GAMES.includes(round.game) ? "match's" : "foursome's"} captain can enter or change scores.
+                {"\u{1F441}\u{FE0F}"} View only - only the tournament organizer or this {MATCH_PLAY_GAMES.includes(round.game) ? "match's" : "foursome's"} captains can enter or change scores.
               </div>
             )}
             <div style={{ pointerEvents: canEditThisRound ? "auto" : "none", opacity: canEditThisRound ? 1 : 0.6 }}>
@@ -17744,7 +17761,7 @@ function computeMatchPlayResult(round, computed) {
               </>
             ) : (
               <div style={{ fontSize: 12, color: "#8a8a80", textAlign: "center", marginTop: 14 }}>
-                Only the tournament organizer or this {MATCH_PLAY_GAMES.includes(round.game) ? "match's" : "foursome's"} captain can finish this round.
+                Only the tournament organizer or this {MATCH_PLAY_GAMES.includes(round.game) ? "match's" : "foursome's"} captains can finish this round.
               </div>
             )
           )}
