@@ -2196,6 +2196,7 @@ export default function GolfScorecard() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   const [recentCodes, setRecentCodes] = useState([]);
+  const [joinCodeGroupSuccess, setJoinCodeGroupSuccess] = useState("");
   const [joinCode, setJoinCode] = useState("");
   const [storageWarning, setStorageWarning] = useState("");
   const [storageBroken, setStorageBroken] = useState(false);
@@ -8063,23 +8064,59 @@ export default function GolfScorecard() {
     }
     // Not a round code - try it as a tournament code instead.
     const tournamentRes = await storageGet(`${TOURNAMENT_PREFIX}${code}`, true);
-    setBusy(false);
+    if (tournamentRes.ok && tournamentRes.value) {
+      setBusy(false);
+      let tournament;
+      try {
+        tournament = JSON.parse(tournamentRes.value);
+      } catch (e) {
+        setErr("That tournament's data looks corrupted.");
+        return;
+      }
+      startTournamentFoursome(tournament);
+      return;
+    }
     if (!tournamentRes.ok) {
+      setBusy(false);
       setErr(`Couldn't reach shared rounds (${tournamentRes.error}). Please try again in a moment.`);
       return;
     }
-    if (!tournamentRes.value) {
-      setErr("No round or tournament found with that code.");
-      return;
+    // Not a round or tournament code either - last try, as a group code.
+    // Joining a group needs an account, same as every other group
+    // feature, so this path is skipped entirely when logged out rather
+    // than attempting a join that would only fail.
+    if (session && supabase) {
+      const { error: groupErr } = await withJwtRetry(() => supabase.from("group_members").insert({ group_id: code, user_id: session.user.id }));
+      if (!groupErr || groupErr.code === "23505") {
+        // Either a fresh join, or already a member (duplicate key) -
+        // both land here, since both mean they're genuinely in this
+        // group and the same confirmation applies either way.
+        withJwtRetry(() =>
+          supabase
+            .from("leaderboard_stats")
+            .upsert({ user_id: session.user.id, display_name: (profile && profile.name) || "Golfer" }, { onConflict: "user_id", ignoreDuplicates: false })
+        ).then(({ error: lbError }) => {
+          if (lbError) console.warn("Couldn't sync leaderboard name:", lbError.message);
+        });
+        const { data: groupRow } = await withJwtRetry(() => supabase.from("groups").select("name").eq("id", code).maybeSingle());
+        setBusy(false);
+        setJoinCode("");
+        setJoinCodeGroupSuccess(`You're in ${(groupRow && groupRow.name) || "the group"}!`);
+        loadMyGroups();
+        return;
+      }
+      if (groupErr.code !== "23503") {
+        // Some other, genuine failure - not just "not a real code".
+        setBusy(false);
+        setErr(`Couldn't join that group (${groupErr.message}).`);
+        return;
+      }
+      // Foreign key violation - falls through to the generic
+      // not-found message below, since none of round, tournament, or
+      // group matched this code.
     }
-    let tournament;
-    try {
-      tournament = JSON.parse(tournamentRes.value);
-    } catch (e) {
-      setErr("That tournament's data looks corrupted.");
-      return;
-    }
-    startTournamentFoursome(tournament);
+    setBusy(false);
+    setErr("No round, tournament, or group found with that code.");
   }
 
   async function loadRound(code) {
@@ -10315,15 +10352,16 @@ function computeMatchPlayResult(round, computed) {
           <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
               <span style={{ fontSize: 18 }}>{"\u26F3"}</span>
-              <div style={{ fontWeight: 800, fontSize: 17, color: "#8a6a2f" }}>Join Existing Round</div>
+              <div style={{ fontWeight: 800, fontSize: 17, color: "#8a6a2f" }}>Join Existing Round or Group</div>
             </div>
             <div className="gsc-row">
-              <input className="gsc-input gsc-mono" id="join-code-home" name="join-code-home" autoComplete="off" placeholder="ENTER GAME CODE HERE" value={joinCode} onChange={(e) => setJoinCode(e.target.value.toUpperCase())} maxLength={6} />
+              <input className="gsc-input gsc-mono" id="join-code-home" name="join-code-home" autoComplete="off" placeholder="ENTER CODE HERE" value={joinCode} onChange={(e) => { setJoinCode(e.target.value.toUpperCase()); setJoinCodeGroupSuccess(""); }} maxLength={6} />
               <button className="gsc-btn gsc-btn-primary" style={{ flex: "0 0 auto" }} disabled={busy || !joinCode} onClick={() => joinRoundOrTournament(joinCode)}>
                 Join
               </button>
             </div>
             {err && <div style={{ color: "#A42E2D", fontSize: 13, marginTop: 8 }}>{err}</div>}
+            {joinCodeGroupSuccess && <div style={{ color: "#3F6B54", fontWeight: 700, fontSize: 13, marginTop: 8 }}>{"\u2713"} {joinCodeGroupSuccess}</div>}
             {recentCodes.length > 0 && (
               <div style={{ marginTop: 14 }}>
                 <div className="gsc-label">Recent rounds this session</div>
