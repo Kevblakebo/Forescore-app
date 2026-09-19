@@ -10339,7 +10339,7 @@ function computeMatchPlayResult(round, computed) {
           <div className="gsc-card" style={{ cursor: "pointer", border: "2px solid #A42E2D" }} onClick={startQuickStart}>
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
               <span style={{ fontSize: 18 }}>{"\u26A1"}</span>
-              <div style={{ fontWeight: 800, fontSize: 16, color: "#A42E2D" }}>Quick Start a Game</div>
+              <div style={{ fontWeight: 800, fontSize: 16, color: "#A42E2D" }}>Quick Start a New Round</div>
             </div>
             <div style={{ fontSize: 13, color: "#4b4b45", marginTop: 3 }}>
               Just want to track scores? Search your course, add your players, and go - no formats or wagers to set up.
@@ -13861,7 +13861,7 @@ function computeMatchPlayResult(round, computed) {
               <div style={{ fontWeight: 800, fontSize: 16, color: "#8a6a2f" }}>Quick Start</div>
             </div>
             <div style={{ fontSize: 13, color: "#4b4b45" }}>
-              Just track everyone's strokes and putts - no wagers, no formats to pick, nothing else to configure. Search your course, say yes or no to handicapping, add your players, and go.
+              Just track everyone's strokes and putts - no wagers, no formats to pick, nothing else to configure. Search your course, add your players, and go.
             </div>
           </div>
 
@@ -14038,29 +14038,6 @@ function computeMatchPlayResult(round, computed) {
             )}
               </>
             )}
-          </div>
-
-          <div className="gsc-card">
-            <div className="gsc-label">Use per-hole handicapping (net scoring)?</div>
-            <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 6 }}>
-              Strokes are given to higher-handicap players on the hardest holes, and net scores are used for scoring and standings.
-            </div>
-            <div style={{ display: "flex", gap: 8 }}>
-              <button
-                className="gsc-btn"
-                style={{ flex: 1, background: cfg.netScoring ? "#A42E2D" : "transparent", color: cfg.netScoring ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
-                onClick={() => setCfg({ ...cfg, netScoring: true })}
-              >
-                Yes
-              </button>
-              <button
-                className="gsc-btn"
-                style={{ flex: 1, background: !cfg.netScoring ? "#A42E2D" : "transparent", color: !cfg.netScoring ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
-                onClick={() => setCfg({ ...cfg, netScoring: false })}
-              >
-                No
-              </button>
-            </div>
           </div>
 
           <div className="gsc-card">
