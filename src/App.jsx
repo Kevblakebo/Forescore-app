@@ -4203,7 +4203,12 @@ export default function GolfScorecard() {
     try {
       const djRes = await storageGet(DISMISSED_JOINABLE_KEY, false);
       if (djRes.ok && djRes.value) {
-        dismissed = JSON.parse(djRes.value);
+        // Merges with existing state rather than replacing it outright -
+        // right after dismissing something, the write to storage may
+        // not have landed yet, so a plain overwrite here could revert
+        // React state to a stale, older list and undo the dismissal
+        // that was just made.
+        dismissed = [...new Set([...dismissedJoinableRounds, ...JSON.parse(djRes.value)])];
         setDismissedJoinableRounds(dismissed);
       }
     } catch (e) {}
@@ -4211,7 +4216,14 @@ export default function GolfScorecard() {
     try {
       const orRes = await storageGet(OPENED_ROUNDS_KEY, false);
       if (orRes.ok && orRes.value) {
-        opened = JSON.parse(orRes.value);
+        // Same reasoning as above - right after creating or opening a
+        // round, React state already correctly includes it, but the
+        // write to storage may still be in flight. Overwriting state
+        // with a stale storage read at that exact moment was the actual
+        // bug: it made a just-created round's own organizer see it as
+        // "ready to join" on their own homepage, since the fresh-write
+        // hadn't landed yet and got wiped from state by the read.
+        opened = [...new Set([...openedRoundCodes, ...JSON.parse(orRes.value)])];
         setOpenedRoundCodes(opened);
       }
     } catch (e) {}
