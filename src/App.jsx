@@ -4254,6 +4254,18 @@ export default function GolfScorecard() {
         continue;
       }
       if (r.finished) continue;
+      // Excludes this round if the current user is specifically its
+      // creator (slot 0). This is deliberately narrower than "linked to
+      // any player slot" - slot 0 is always, unconditionally set to
+      // whoever is actively creating the round at that moment, unlike
+      // other slots, which can be pre-linked via "pick from group" long
+      // before that person has ever actually seen the round. So this
+      // check can never incorrectly hide a genuine invite for someone
+      // else, while reliably catching the organizer's own round -
+      // derived directly from the round's own shared data (already
+      // fetched above), rather than a separate, storage-tracked list
+      // that's proven to have its own timing edge cases.
+      if (r.players && r.players[0] && session && r.players[0].user_id === session.user.id) continue;
       // Excludes this round once this device has actually opened it -
       // whether by creating it, joining it via code, or opening it from
       // this very "ready to join" card. Deliberately does NOT key off
