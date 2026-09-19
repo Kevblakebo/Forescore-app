@@ -2201,6 +2201,12 @@ export default function GolfScorecard() {
   const [storageBroken, setStorageBroken] = useState(false);
   const failCountRef = useRef(0);
   const lastLocalEditRef = useRef(0);
+  // Tracks the highest kv_store version number that has actually been
+  // applied to local round state, across every in-flight saveRoundPatch
+  // call for the current round. See saveRoundPatch for why this exists -
+  // it's what actually decides whether a given save's result is safe to
+  // show, not which edit happened most recently.
+  const highestAppliedVersionRef = useRef(0);
   const currentAnnounceAudioRef = useRef(null);
   const golfClapAudioRef = useRef(null);
   const wolfHowlAudioRef = useRef(null);
@@ -2612,6 +2618,9 @@ export default function GolfScorecard() {
 
   // active round
   const [round, setRound] = useState(null); // full round object once loaded/created
+  useEffect(() => {
+    highestAppliedVersionRef.current = 0;
+  }, [round && round.id]);
   const [holeIdx, setHoleIdx] = useState(0);
   const holeStripRef = useRef(null);
   useEffect(() => {
@@ -8252,16 +8261,6 @@ export default function GolfScorecard() {
   // their change. Verified against a real, simulated race with dozens
   // of genuine conflicts before shipping this - every write survived.
   const saveRoundPatch = useCallback(async (localRound, applyPatch) => {
-    // Snapshot which edit triggered this specific call, at the moment it
-    // starts (before any awaiting). Rapid taps (e.g. mashing the + button)
-    // each fire their own independent, unawaited saveRoundPatch call, and
-    // network timing means they can resolve out of order - an earlier
-    // tap's slow response finishing after a later tap's fast one would
-    // otherwise overwrite local state with its own, now-stale result,
-    // visibly reverting a change the person just made. This timestamp
-    // lets the local-state update below apply only from whichever call
-    // is actually the most recent edit, once it resolves.
-    const callStartedAt = lastLocalEditRef.current;
     try {
       window.localStorage.setItem(`gsc-local-backup:${localRound.id}`, JSON.stringify(localRound));
     } catch (e) {}
@@ -8320,11 +8319,28 @@ export default function GolfScorecard() {
       // The server-confirmed, merged result may include another
       // player's change that landed during a retry cycle - update this
       // device's own local state to reflect it immediately, rather
-      // than waiting for a separate, later poll to pick it up. Only do
-      // this from whichever call is actually the most recent edit -
-      // otherwise a slow-resolving earlier tap could overwrite a faster,
-      // newer tap's already-applied change with its own stale result.
-      if (lastLocalEditRef.current === callStartedAt) {
+      // than waiting for a separate, later poll to pick it up.
+      //
+      // Critical: this must only happen if THIS call's result is
+      // actually the freshest one seen so far - not just "the most
+      // recently started edit". Rapid edits (e.g. mashing a +/-
+      // stepper, or entering strokes then putts in quick succession)
+      // each fire their own independent, unawaited saveRoundPatch call,
+      // and network timing means an earlier-started call can genuinely
+      // finish LATER than a newer one - after retrying past a version
+      // conflict, its merged result is actually MORE complete than the
+      // newer call's (since its retry re-fetched and re-applied on top
+      // of whatever the newer call had already written). Blocking that
+      // result from ever reaching local state - which an "only the
+      // most-recently-started call wins" check would do - permanently
+      // leaves the screen showing a stale or wrong value even though
+      // the server has the correct one. Comparing the actual version
+      // number each call produced avoids this: whichever call produced
+      // the highest version is unambiguously the freshest, regardless
+      // of which one started first or finished first.
+      const newVersion = row.version + 1;
+      if (newVersion > highestAppliedVersionRef.current) {
+        highestAppliedVersionRef.current = newVersion;
         setRound((r) => (r && r.id === finalRound.id ? finalRound : r));
       }
     }
@@ -8729,9 +8745,13 @@ export default function GolfScorecard() {
     // goes through guarantees Refresh can never see anything other than
     // exactly what the last save actually wrote.
     let value = null;
+    let fetchedVersion = null;
     if (supabase) {
-      const { data: row, error: fetchErr } = await supabase.from("kv_store").select("value").eq("key", `golfround:${round.id}`).maybeSingle();
-      if (!fetchErr && row) value = row.value;
+      const { data: row, error: fetchErr } = await supabase.from("kv_store").select("value, version").eq("key", `golfround:${round.id}`).maybeSingle();
+      if (!fetchErr && row) {
+        value = row.value;
+        fetchedVersion = row.version;
+      }
     }
     if (value == null) {
       const res = await storageGet(`golfround:${round.id}`, true);
@@ -8746,6 +8766,15 @@ export default function GolfScorecard() {
     }
     try {
       const fresh = JSON.parse(value);
+      // Same protection saveRoundPatch uses, and for the same reason:
+      // this device's own edit might still be mid-retry (which can take
+      // a few seconds under contention) when this poll fires, so a
+      // version fetched from the server here could actually be older
+      // than what's already showing locally. Applying it anyway would
+      // revert a still-in-flight edit. Comparing the version - not just
+      // the 3-second edit-recency check below - guarantees this can
+      // never apply data older than what's already on screen.
+      if (fetchedVersion == null || fetchedVersion >= highestAppliedVersionRef.current) {
       if (Date.now() - lastLocalEditRef.current > 3000) {
         let justBecameFinished = false;
         setRound((prev) => {
@@ -8764,12 +8793,16 @@ export default function GolfScorecard() {
           if (fresh.finished && !prev.finished) justBecameFinished = true;
           return { ...prev, scores: fresh.scores, players: fresh.players, teams: fresh.teams, cfg: fresh.cfg, par: fresh.par, finished: fresh.finished, winnerUserIds: fresh.winnerUserIds };
         });
+        if (fetchedVersion != null && fetchedVersion > highestAppliedVersionRef.current) {
+          highestAppliedVersionRef.current = fetchedVersion;
+        }
         // If someone else just finished this round while this device was
         // still actively scoring it, don't leave them stuck on a
         // now-stale hole view - take them straight to the results.
         if (justBecameFinished && screen === "card") {
           goToScreen("roundComplete");
         }
+      }
       }
       if (isManual) {
         setSyncStatus("synced");
@@ -8784,14 +8817,14 @@ export default function GolfScorecard() {
   }
 
   // Background auto-sync while actively viewing the scorecard - checks for
-  // other players' updates every 8 seconds. This is polling, not a true
+  // other players' updates every 1 second. This is polling, not a true
   // realtime push, so there's a small delay rather than instant sync, but
   // it needs no extra setup and works with the storage already in place.
   useEffect(() => {
     if (screen !== "card" || !round) return;
     const interval = setInterval(() => {
       syncRoundFromServer(false);
-    }, 8000);
+    }, 1000);
     return () => clearInterval(interval);
   }, [screen, round && round.id]);
 
