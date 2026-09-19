@@ -110,6 +110,8 @@ const LEADERBOARD_CATEGORIES = {
   wins: { label: "Wins", lowerIsBetter: false, valueOf: (r) => r.wins, format: (v) => String(v) },
   avg_strokes: { label: "Avg Strokes", lowerIsBetter: true, valueOf: (r) => (r.strokes_rounds > 0 ? r.strokes_sum / r.strokes_rounds : null), format: (v) => v.toFixed(1) },
   avg_putts: { label: "Avg Putts", lowerIsBetter: true, valueOf: (r) => (r.putts_rounds > 0 ? r.putts_sum / r.putts_rounds : null), format: (v) => v.toFixed(1) },
+  avg_pars: { label: "Avg Pars", lowerIsBetter: false, valueOf: (r) => (r.rounds_played > 0 ? r.pars / r.rounds_played : null), format: (v) => v.toFixed(1) },
+  avg_birdies: { label: "Avg Birdies", lowerIsBetter: false, valueOf: (r) => (r.rounds_played > 0 ? r.birdies / r.rounds_played : null), format: (v) => v.toFixed(1) },
   birdies: { label: "Birdies", lowerIsBetter: false, valueOf: (r) => r.birdies, format: (v) => String(v) },
   pars: { label: "Pars", lowerIsBetter: false, valueOf: (r) => r.pars, format: (v) => String(v) },
   eagles: { label: "Eagles", lowerIsBetter: false, valueOf: (r) => r.eagles, format: (v) => String(v) },
