@@ -10299,7 +10299,7 @@ function computeMatchPlayResult(round, computed) {
                   <div style={{ marginBottom: 4 }}>{"\u{1F4B5}"} Settle Up Without the Argument</div>
                 </div>
                 <div style={{ marginTop: 8 }}>
-                  Whether it's a casual Saturday game or a full club tournament, RipScore keeps the math out of your golf - so all that's left is golf.
+                  Whether it's a casual Saturday game or a special group tournament, RipScore keeps the math out of your golf - so all that's left is golf.
                 </div>
               </>
             )}
