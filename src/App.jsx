@@ -657,6 +657,7 @@ const GAMES = {
   },
   matchplay: {
     name: "Individual Match Play",
+    tournamentName: "Match Play Tournament",
     tag: "Head-to-head, 1 vs 1 - exactly 2 players",
     desc: "The classic hole-by-hole format - two players go head-to-head, winning, losing, or halving each hole based on net score. Whoever's ahead by more holes than remain wins the match early; otherwise it's decided after 18.",
     rotates: false,
@@ -687,7 +688,6 @@ const GAMES = {
   },
   matchplayfourball: {
     name: "Team Match Play",
-    tournamentName: "Team Match Play Tournament",
     tag: "Team head-to-head, 2 vs 2 - exactly 4 players",
     desc: "Team match play, better-ball style - two 2-person teams go head-to-head, each hole decided by whichever side's better net score (between its own two players) is lower. Winning, losing, or halving each hole is tracked just like Individual Match Play, including a match that can end before the 18th hole.",
     rotates: false,
@@ -809,7 +809,7 @@ const VIBE_GAME_MAP = {
   tournament: {
     simple: "tourneygg",
     mixedSkill: ["avoscramble", "tourneybb"],
-    highDrama: ["tourneybb", "matchplayfourball"],
+    highDrama: ["tourneybb", "matchplay"],
   },
 };
 
@@ -1355,12 +1355,12 @@ const TOURNAMENT_PREFIX = "gsc-tournament:";
 // Explicit order (not auto-derived from GAMES) so display order is
 // deliberate and controllable - remember to add any new tournamentOnly
 // game here too, or it won't show up in the Tournament Game Formats list.
-const TOURNAMENT_GAME_KEYS = ["avoscramble", "tourneybb", "tourneygg", "matchplayfourball"];
+const TOURNAMENT_GAME_KEYS = ["avoscramble", "tourneybb", "tourneygg", "matchplay"];
 // Games playable as both a regular, standalone round AND, separately, as
 // a tournament - unlike the tournament-only games above, one homepage
 // tile can't route to both actions, so these get a second, dedicated
 // tournament tile alongside their existing regular-round one.
-const DUAL_TOURNAMENT_TILE_KEYS = ["matchplayfourball"];
+const DUAL_TOURNAMENT_TILE_KEYS = ["matchplay"];
 
 function genCode() {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -7558,9 +7558,10 @@ export default function GolfScorecard() {
     const count = tournamentFoursomeCount === "" || tournamentFoursomeCount == null || isNaN(Number(tournamentFoursomeCount)) ? 2 : Math.max(1, Number(tournamentFoursomeCount));
     setTournamentFoursomeCount(count);
     const slotsPerMatch = tournamentGameKey === "matchplay" ? 2 : 4;
+    const defaultLabel = MATCH_PLAY_GAMES.includes(tournamentGameKey) ? "Match" : "Foursome";
     setTournamentFoursomesDraft(
       Array.from({ length: count }, (_, i) => ({
-        name: `Foursome ${i + 1}`,
+        name: `${defaultLabel} ${i + 1}`,
         players: i === 0 ? freshPlayerSlots(tournamentGameKey) : Array.from({ length: slotsPerMatch }, () => ({ name: "", hcp: "", avatar: "" })),
         pairing: [[0, 1], [2, 3]],
       }))
@@ -12075,10 +12076,10 @@ function computeMatchPlayResult(round, computed) {
               ))}
               <div style={{ marginBottom: 20 }}>
                 <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px", fontSize: 14 }}>
-                  {"\u{1F93A}"} Team Match Play Tournament
+                  {"\u2694\uFE0F"} Match Play Tournament
                 </p>
                 <p style={{ margin: 0 }}>
-                  Running Four-Ball as a tournament captures how the format is actually played at events like the Ryder Cup - several pairs going head-to-head at once, all under one shared event, with no bracket or advancement to worry about. Every match is entirely its own contest, decided hole by hole, so a lopsided match at one table never affects anyone else's - and with everyone's status visible in one place, it's easy to see how the whole group is doing without having to track down each pair individually. It's a natural fit for a club outing or group event where several pairs want real head-to-head competition happening side by side.
+                  Running Individual Match Play as a tournament captures how singles are actually played at events like the Ryder Cup - a whole bracket of 1-on-1 matches going at once, all under one shared event, with no advancement to worry about. Every match is entirely its own contest, decided hole by hole, so a blowout at one match never affects anyone else's - and with everyone's status visible in one place, it's easy to see how the whole group is doing without having to track down each pairing individually. It's a natural fit for a club outing or group event where everyone wants real, personal head-to-head bragging rights, not just a shared team result.
                 </p>
               </div>
               <div style={{ marginBottom: 20 }}>
