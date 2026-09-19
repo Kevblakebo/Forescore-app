@@ -13412,7 +13412,7 @@ function computeMatchPlayResult(round, computed) {
                 <div className="gsc-field" style={{ marginTop: 10 }}>
                   <div className="gsc-label">Track putts?</div>
                   <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 6 }}>
-                    This game is more fun with putting included - turn off only if your group would rather skip it.
+                    Track putts and include in the game scoring as defined in the game rules.
                   </div>
                   <div style={{ display: "flex", gap: 8 }}>
                     <button
@@ -14527,7 +14527,7 @@ function computeMatchPlayResult(round, computed) {
               <div className="gsc-field">
                 <div className="gsc-label">Track putts?</div>
                 <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 6 }}>
-                  This game is more fun with putting included - turn off only if your group would rather skip it.
+                  Track putts and include in the game scoring as defined in the game rules.
                 </div>
                 <div style={{ display: "flex", gap: 8 }}>
                   <button
@@ -15273,7 +15273,7 @@ function computeMatchPlayResult(round, computed) {
               <div className="gsc-field">
                 <div className="gsc-label">Track putts?</div>
                 <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 6 }}>
-                  This game is more fun with putting included - turn off only if your group would rather skip it.
+                  Track putts and include in the game scoring as defined in the game rules.
                 </div>
                 <div style={{ display: "flex", gap: 8 }}>
                   <button
