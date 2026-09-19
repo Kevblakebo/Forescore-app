@@ -4978,6 +4978,16 @@ export default function GolfScorecard() {
             <input className="gsc-input" placeholder="Not set" value={c.mulliganChallenge ?? ""} onChange={(e) => set({ mulliganChallenge: e.target.value })} />
           </div>
 
+          {g && g.tracksDrives && (
+            <div className="gsc-field">
+              <div className="gsc-label">Minimum drives per player</div>
+              <input className="gsc-input" type="number" min="0" placeholder="0" value={c.minDrives ?? ""} onChange={(e) => set({ minDrives: cleanNumericText(e.target.value) })} />
+              <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 6 }}>
+                Each player's tee shot must be used at least this many times over the round.
+              </div>
+            </div>
+          )}
+
           {round && (round.game === "dstreet" || round.game === "ponto") && !c.nassau ? (
             <div className="gsc-field">
               <div className="gsc-label">Stakes per skin, per player</div>
@@ -7673,7 +7683,7 @@ export default function GolfScorecard() {
       maxPutts: tournamentCfg.maxPutts === "" || tournamentCfg.maxPutts == null || isNaN(Number(tournamentCfg.maxPutts)) ? null : Number(tournamentCfg.maxPutts),
       mulliganSegment:
         tournamentCfg.mulliganSegment === "" || tournamentCfg.mulliganSegment == null || isNaN(Number(tournamentCfg.mulliganSegment)) ? 0 : Number(tournamentCfg.mulliganSegment),
-      minDrives: tournamentCfg.minDrives === "" || tournamentCfg.minDrives == null || isNaN(Number(tournamentCfg.minDrives)) ? 3 : Number(tournamentCfg.minDrives),
+      minDrives: tournamentCfg.minDrives === "" || tournamentCfg.minDrives == null || isNaN(Number(tournamentCfg.minDrives)) ? 0 : Number(tournamentCfg.minDrives),
     };
 
     setTournamentBusy(true);
@@ -15393,7 +15403,7 @@ function computeMatchPlayResult(round, computed) {
                   className="gsc-input"
                   type="number"
                   min="0"
-                  placeholder="3"
+                  placeholder="0"
                   value={tournamentCfg.minDrives}
                   onChange={(e) => {
                     const raw = cleanNumericText(e.target.value);
