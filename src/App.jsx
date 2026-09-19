@@ -10383,7 +10383,7 @@ function computeMatchPlayResult(round, computed) {
               <span style={{ fontSize: 18 }}>{"\u26F3"}</span>
               <div style={{ fontWeight: 800, fontSize: 17, color: "#8a6a2f" }}>Start a New Round</div>
             </div>
-            <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 10 }}>Quick Pick Game List</div>
+            <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 10 }}>Game Formats</div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
               {(() => {
                 const baseKeys = Object.keys(GAME_TILE_STYLE);
