@@ -3770,7 +3770,16 @@ export default function GolfScorecard() {
         if (!playedWithGroup) continue;
 
         let holesPlayed = 0, myStrokesTotal = 0, myPuttsTotal = 0;
-        let myParsThisRound = 0, myBirdiesThisRound = 0;
+        // Per-round local counters for everything below - deliberately
+        // NOT added to the group's running totals until after this round
+        // passes the finished/18-holes check further down. Incrementing
+        // the group totals directly inside this loop was the actual bug:
+        // an abandoned, never-finished round (even just a couple of
+        // holes entered) could permanently leak a birdie/par/etc. into
+        // this group's stats, even though that same round is correctly
+        // excluded from rounds played, strokes, and putts.
+        let myParsThisRound = 0, myBirdiesThisRound = 0, myEaglesThisRound = 0, myHolesInOneThisRound = 0;
+        let myGirHitsThisRound = 0, myGirHolesThisRound = 0, myFirHitsThisRound = 0, myFirHolesThisRound = 0;
         for (let h = 0; h < 18; h++) {
           const entry = r.scores && r.scores[h] ? r.scores[h][myIdx] : null;
           const parH = r.par ? r.par[h] : null;
@@ -3779,28 +3788,36 @@ export default function GolfScorecard() {
             const strokesVal = Number(entry.strokes);
             myStrokesTotal += strokesVal;
             if (strokesVal === 1) {
-              groupHolesInOne++;
+              myHolesInOneThisRound++;
             } else if (parH != null) {
               const diff = strokesVal - parH;
-              if (diff <= -2) groupEagles++;
-              else if (diff === -1) { groupBirdies++; myBirdiesThisRound++; }
-              else if (diff === 0) { groupPars++; myParsThisRound++; }
+              if (diff <= -2) myEaglesThisRound++;
+              else if (diff === -1) myBirdiesThisRound++;
+              else if (diff === 0) myParsThisRound++;
             }
           }
           if (entry && entry.putts != null && entry.putts !== "") myPuttsTotal += Number(entry.putts);
           if (entry && entry.strokes != null && entry.strokes !== "") {
             if (r.cfg && r.cfg.trackGir) {
-              groupGirHoles++;
-              if (entry.gir) groupGirHits++;
+              myGirHolesThisRound++;
+              if (entry.gir) myGirHitsThisRound++;
             }
             if (r.cfg && r.cfg.trackFir && (parH === 4 || parH === 5)) {
-              groupFirHoles++;
-              if (entry.fir) groupFirHits++;
+              myFirHolesThisRound++;
+              if (entry.fir) myFirHitsThisRound++;
             }
           }
         }
         if (holesPlayed === 0) continue;
         if (!(r.finished || holesPlayed === 18)) continue;
+        groupBirdies += myBirdiesThisRound;
+        groupPars += myParsThisRound;
+        groupEagles += myEaglesThisRound;
+        groupHolesInOne += myHolesInOneThisRound;
+        groupGirHits += myGirHitsThisRound;
+        groupGirHoles += myGirHolesThisRound;
+        groupFirHits += myFirHitsThisRound;
+        groupFirHoles += myFirHolesThisRound;
 
         groupRoundsPlayed++;
         const scale = holesPlayed < 18 ? 18 / holesPlayed : 1;
@@ -3929,7 +3946,15 @@ export default function GolfScorecard() {
           if (!playedWithGroup) continue;
 
           let holesPlayed = 0, myStrokesTotal = 0, myPuttsTotal = 0;
-          let roundBirdies = 0, roundPars = 0;
+          // Per-round local counters - deliberately NOT added to the
+          // group's running totals until after this round passes the
+          // finished/18-holes check further down. Same fix as
+          // loadGroupSharedRounds: an abandoned, never-finished round
+          // could otherwise permanently leak a birdie/par/etc. into this
+          // group's stats even though it's correctly excluded from
+          // rounds played, strokes, and putts.
+          let roundBirdies = 0, roundPars = 0, roundEagles = 0, roundHolesInOne = 0;
+          let roundGirHits = 0, roundGirHoles = 0, roundFirHits = 0, roundFirHoles = 0;
           for (let h = 0; h < 18; h++) {
             const entry = r.scores && r.scores[h] ? r.scores[h][myIdx] : null;
             const parH = r.par ? r.par[h] : null;
@@ -3938,32 +3963,35 @@ export default function GolfScorecard() {
               const strokesVal = Number(entry.strokes);
               myStrokesTotal += strokesVal;
               if (strokesVal === 1) {
-                groupHolesInOne++;
+                roundHolesInOne++;
               } else if (parH != null) {
                 const diff = strokesVal - parH;
-                if (diff <= -2) groupEagles++;
-                else if (diff === -1) {
-                  groupBirdies++;
-                  roundBirdies++;
-                } else if (diff === 0) {
-                  groupPars++;
-                  roundPars++;
-                }
+                if (diff <= -2) roundEagles++;
+                else if (diff === -1) roundBirdies++;
+                else if (diff === 0) roundPars++;
               }
             }
             if (entry && entry.putts != null && entry.putts !== "") myPuttsTotal += Number(entry.putts);
             if (entry && entry.strokes != null && entry.strokes !== "") {
               if (r.cfg && r.cfg.trackGir) {
-                groupGirHoles++;
-                if (entry.gir) groupGirHits++;
+                roundGirHoles++;
+                if (entry.gir) roundGirHits++;
               }
               if (r.cfg && r.cfg.trackFir && (parH === 4 || parH === 5)) {
-                groupFirHoles++;
-                if (entry.fir) groupFirHits++;
+                roundFirHoles++;
+                if (entry.fir) roundFirHits++;
               }
             }
           }
           if (holesPlayed === 0 || !(r.finished || holesPlayed === 18)) continue;
+          groupBirdies += roundBirdies;
+          groupPars += roundPars;
+          groupEagles += roundEagles;
+          groupHolesInOne += roundHolesInOne;
+          groupGirHits += roundGirHits;
+          groupGirHoles += roundGirHoles;
+          groupFirHits += roundFirHits;
+          groupFirHoles += roundFirHoles;
 
           groupRoundsPlayed++;
           const scale = holesPlayed < 18 ? 18 / holesPlayed : 1;
