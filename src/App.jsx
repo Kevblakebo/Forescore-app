@@ -110,8 +110,8 @@ const LEADERBOARD_CATEGORIES = {
   wins: { label: "Wins", lowerIsBetter: false, valueOf: (r) => r.wins, format: (v) => String(v) },
   avg_strokes: { label: "Avg Strokes", lowerIsBetter: true, valueOf: (r) => (r.strokes_rounds > 0 ? r.strokes_sum / r.strokes_rounds : null), format: (v) => v.toFixed(1) },
   avg_putts: { label: "Avg Putts", lowerIsBetter: true, valueOf: (r) => (r.putts_rounds > 0 ? r.putts_sum / r.putts_rounds : null), format: (v) => v.toFixed(1) },
-  avg_pars: { label: "Avg Pars", lowerIsBetter: false, valueOf: (r) => (r.rounds_played > 0 ? r.pars / r.rounds_played : null), format: (v) => v.toFixed(1) },
-  avg_birdies: { label: "Avg Birdies", lowerIsBetter: false, valueOf: (r) => (r.rounds_played > 0 ? r.birdies / r.rounds_played : null), format: (v) => v.toFixed(1) },
+  avg_pars: { label: "Avg Pars", lowerIsBetter: false, valueOf: (r) => (r.rounds_played > 0 ? (r.pars_scaled_sum ?? r.pars) / r.rounds_played : null), format: (v) => v.toFixed(1) },
+  avg_birdies: { label: "Avg Birdies", lowerIsBetter: false, valueOf: (r) => (r.rounds_played > 0 ? (r.birdies_scaled_sum ?? r.birdies) / r.rounds_played : null), format: (v) => v.toFixed(1) },
   birdies: { label: "Birdies", lowerIsBetter: false, valueOf: (r) => r.birdies, format: (v) => String(v) },
   pars: { label: "Pars", lowerIsBetter: false, valueOf: (r) => r.pars, format: (v) => String(v) },
   eagles: { label: "Eagles", lowerIsBetter: false, valueOf: (r) => r.eagles, format: (v) => String(v) },
@@ -3173,6 +3173,10 @@ export default function GolfScorecard() {
     let puttsSum = 0, puttsCount = 0;
     let wins = 0;
     let eagles = 0, birdies = 0, pars = 0, holesInOne = 0;
+    // Separate, scaled sums used only for Avg Pars/Avg Birdies - kept
+    // apart from the raw pars/birdies totals above, which should stay
+    // actual, real counts for the Pars/Birdies leaderboard categories.
+    let parsScaledSum = 0, birdiesScaledSum = 0;
     let girHits = 0, girHoles = 0, firHits = 0, firHoles = 0;
     let bestRoundStrokes = null;
     const recent = [];
@@ -3206,6 +3210,7 @@ export default function GolfScorecard() {
       let holesPlayed = 0;
       let myStrokesTotal = 0;
       let myPuttsTotal = 0;
+      let myParsThisRound = 0, myBirdiesThisRound = 0;
       for (let h = 0; h < 18; h++) {
         const entry = r.scores && r.scores[h] ? r.scores[h][myIdx] : null;
         const parH = r.par ? r.par[h] : null;
@@ -3221,8 +3226,8 @@ export default function GolfScorecard() {
           } else if (parH != null) {
             const diff = strokesVal - parH;
             if (diff <= -2) eagles++;
-            else if (diff === -1) birdies++;
-            else if (diff === 0) pars++;
+            else if (diff === -1) { birdies++; myBirdiesThisRound++; }
+            else if (diff === 0) { pars++; myParsThisRound++; }
           }
         }
         if (entry && entry.putts != null && entry.putts !== "") {
@@ -3255,8 +3260,25 @@ export default function GolfScorecard() {
         const scale = holesPlayed < 18 ? 18 / holesPlayed : 1;
         strokesSum += myStrokesTotal * scale;
         strokesCount++;
-        puttsSum += myPuttsTotal * scale;
-        puttsCount++;
+        // Only counts toward the putts average - both the total and the
+        // denominator - if this specific round actually tracked putts.
+        // Otherwise a round with putts turned off would still increment
+        // the round count while contributing 0 to the sum, silently
+        // dragging the average down toward 0 instead of being excluded
+        // from it entirely, which is what "didn't track putts" actually
+        // means.
+        if (r.cfg && r.cfg.trackPutts !== false) {
+          puttsSum += myPuttsTotal * scale;
+          puttsCount++;
+        }
+        // Same scaling reasoning as strokes/putts above - a 9-hole
+        // round naturally has fewer chances to make a par or birdie
+        // than an 18-hole one, purely from having fewer holes, not from
+        // worse play. Scaling keeps Avg Pars/Avg Birdies an
+        // apples-to-apples comparison the same way it already does for
+        // Avg Strokes/Avg Putts.
+        parsScaledSum += myParsThisRound * scale;
+        birdiesScaledSum += myBirdiesThisRound * scale;
         if (holesPlayed === 18 && (bestRoundStrokes === null || myStrokesTotal < bestRoundStrokes)) {
           bestRoundStrokes = myStrokesTotal;
         }
@@ -3323,6 +3345,8 @@ export default function GolfScorecard() {
             putts_rounds: puttsCount,
             birdies,
             pars,
+            pars_scaled_sum: parsScaledSum,
+            birdies_scaled_sum: birdiesScaledSum,
             eagles,
             holes_in_one: holesInOne,
             gir_hits: girHits,
@@ -3657,7 +3681,7 @@ export default function GolfScorecard() {
       return;
     }
     const groupStatsByUser = new Map((groupStats || []).map((gs) => [gs.user_id, gs]));
-    const zeroStats = { rounds_played: 0, wins: 0, strokes_sum: 0, strokes_rounds: 0, putts_sum: 0, putts_rounds: 0, birdies: 0, pars: 0, eagles: 0, holes_in_one: 0 };
+    const zeroStats = { rounds_played: 0, wins: 0, strokes_sum: 0, strokes_rounds: 0, putts_sum: 0, putts_rounds: 0, birdies: 0, pars: 0, pars_scaled_sum: 0, birdies_scaled_sum: 0, eagles: 0, holes_in_one: 0 };
     const result = (stats || []).map((s) => ({ ...s, ...zeroStats, ...(groupStatsByUser.get(s.user_id) || {}) }));
     // Someone who's a group member but has never once visited this
     // specific group's page yet (and so has no leaderboard_stats row
@@ -3729,6 +3753,7 @@ export default function GolfScorecard() {
       // all-time totals repeated everywhere.
       let groupRoundsPlayed = 0, groupWins = 0, groupBirdies = 0, groupPars = 0, groupEagles = 0, groupHolesInOne = 0;
       let groupStrokesSum = 0, groupStrokesCount = 0, groupPuttsSum = 0, groupPuttsCount = 0;
+      let groupParsScaledSum = 0, groupBirdiesScaledSum = 0;
       let groupGirHits = 0, groupGirHoles = 0, groupFirHits = 0, groupFirHoles = 0;
       for (const { ur, res } of roundResults) {
         if (!res.ok || !res.value) continue;
@@ -3745,6 +3770,7 @@ export default function GolfScorecard() {
         if (!playedWithGroup) continue;
 
         let holesPlayed = 0, myStrokesTotal = 0, myPuttsTotal = 0;
+        let myParsThisRound = 0, myBirdiesThisRound = 0;
         for (let h = 0; h < 18; h++) {
           const entry = r.scores && r.scores[h] ? r.scores[h][myIdx] : null;
           const parH = r.par ? r.par[h] : null;
@@ -3757,8 +3783,8 @@ export default function GolfScorecard() {
             } else if (parH != null) {
               const diff = strokesVal - parH;
               if (diff <= -2) groupEagles++;
-              else if (diff === -1) groupBirdies++;
-              else if (diff === 0) groupPars++;
+              else if (diff === -1) { groupBirdies++; myBirdiesThisRound++; }
+              else if (diff === 0) { groupPars++; myParsThisRound++; }
             }
           }
           if (entry && entry.putts != null && entry.putts !== "") myPuttsTotal += Number(entry.putts);
@@ -3780,8 +3806,16 @@ export default function GolfScorecard() {
         const scale = holesPlayed < 18 ? 18 / holesPlayed : 1;
         groupStrokesSum += myStrokesTotal * scale;
         groupStrokesCount++;
-        groupPuttsSum += myPuttsTotal * scale;
-        groupPuttsCount++;
+        // Same reasoning as loadStats - only counts toward the putts
+        // average if this round actually tracked putts, so a round with
+        // putts turned off is excluded entirely rather than silently
+        // dragging the average down as a "0 putts" round.
+        if (r.cfg && r.cfg.trackPutts !== false) {
+          groupPuttsSum += myPuttsTotal * scale;
+          groupPuttsCount++;
+        }
+        groupParsScaledSum += myParsThisRound * scale;
+        groupBirdiesScaledSum += myBirdiesThisRound * scale;
         const computedForRound = computeRoundScoring(r);
         let wonThisRound = null;
         if (computedForRound) {
@@ -3809,6 +3843,8 @@ export default function GolfScorecard() {
               putts_rounds: groupPuttsCount,
               birdies: groupBirdies,
               pars: groupPars,
+              pars_scaled_sum: groupParsScaledSum,
+              birdies_scaled_sum: groupBirdiesScaledSum,
               eagles: groupEagles,
               holes_in_one: groupHolesInOne,
               gir_hits: groupGirHits,
@@ -3883,6 +3919,7 @@ export default function GolfScorecard() {
         const memberSet = new Set(membersByGroup[groupId] || []);
         let groupRoundsPlayed = 0, groupWins = 0, groupBirdies = 0, groupPars = 0, groupEagles = 0, groupHolesInOne = 0;
         let groupStrokesSum = 0, groupStrokesCount = 0, groupPuttsSum = 0, groupPuttsCount = 0;
+        let groupParsScaledSum = 0, groupBirdiesScaledSum = 0;
         let groupGirHits = 0, groupGirHoles = 0, groupFirHits = 0, groupFirHoles = 0;
         const byYear = {}; // year -> array of { strokes, date, code, won, myHcp, upsetMargin }
         for (const { r, code } of parsedRounds) {
@@ -3932,8 +3969,18 @@ export default function GolfScorecard() {
           const scale = holesPlayed < 18 ? 18 / holesPlayed : 1;
           groupStrokesSum += myStrokesTotal * scale;
           groupStrokesCount++;
-          groupPuttsSum += myPuttsTotal * scale;
-          groupPuttsCount++;
+          // Same reasoning as above - only counts toward the putts
+          // average if this round actually tracked putts.
+          if (r.cfg && r.cfg.trackPutts !== false) {
+            groupPuttsSum += myPuttsTotal * scale;
+            groupPuttsCount++;
+          }
+          // Same scaling reasoning as strokes/putts - keeps Avg
+          // Pars/Avg Birdies an apples-to-apples comparison for rounds
+          // shorter than 18 holes, reusing the roundPars/roundBirdies
+          // counts already tracked above for the yearly recap.
+          groupParsScaledSum += roundPars * scale;
+          groupBirdiesScaledSum += roundBirdies * scale;
           const computedForRound = computeRoundScoring(r);
           let wonRound = false;
           if (computedForRound) {
@@ -4037,6 +4084,8 @@ export default function GolfScorecard() {
                 putts_rounds: groupPuttsCount,
                 birdies: groupBirdies,
                 pars: groupPars,
+                pars_scaled_sum: groupParsScaledSum,
+                birdies_scaled_sum: groupBirdiesScaledSum,
                 eagles: groupEagles,
                 holes_in_one: groupHolesInOne,
                 gir_hits: groupGirHits,
@@ -7212,7 +7261,7 @@ export default function GolfScorecard() {
       setAllGroupsLeaderboardErr(`Couldn't load stats (${statsErr.message}).`);
       return;
     }
-    const zeroStats = { rounds_played: 0, wins: 0, strokes_sum: 0, strokes_rounds: 0, putts_sum: 0, putts_rounds: 0, birdies: 0, pars: 0, eagles: 0, holes_in_one: 0 };
+    const zeroStats = { rounds_played: 0, wins: 0, strokes_sum: 0, strokes_rounds: 0, putts_sum: 0, putts_rounds: 0, birdies: 0, pars: 0, pars_scaled_sum: 0, birdies_scaled_sum: 0, eagles: 0, holes_in_one: 0 };
     const result = (stats || []).map((s) => ({ ...zeroStats, ...s }));
     // Someone who's a member of one of these groups but has never once
     // visited their own stats page yet (and so has no leaderboard_stats
