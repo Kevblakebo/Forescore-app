@@ -2297,6 +2297,14 @@ export default function GolfScorecard() {
   const [selectedPlan, setSelectedPlan] = useState("yearly");
   const [profileForm, setProfileForm] = useState({ name: "", handicap: "", venmo: "", home_course: "", leaderboard_opt_in: false, avatar: "" });
   const [profileLoading, setProfileLoading] = useState(false);
+  // Distinct from profileLoading: starts false and only ever flips true
+  // once loadProfile has genuinely completed at least once for the
+  // current session. Other effects that need profile.leaderboard_opt_in
+  // (or any other profile field) to be reliably settled - not just "not
+  // currently mid-fetch" - gate on this instead, since profileLoading
+  // alone can still read as its initial false on the very same render
+  // where the fetch is only just being kicked off.
+  const [profileFetched, setProfileFetched] = useState(false);
   const [profileSaving, setProfileSaving] = useState(false);
   const [deleteAccountOpen, setDeleteAccountOpen] = useState(false);
   const [deleteAccountConfirmText, setDeleteAccountConfirmText] = useState("");
@@ -2531,6 +2539,7 @@ export default function GolfScorecard() {
     } else {
       setProfile(null);
       setProfileForm({ full_name: "", name: "", handicap: "", venmo: "", home_course: "", leaderboard_opt_in: false, avatar: "" });
+      setProfileFetched(false);
       setSubscription(null);
     }
   }, [session && session.user && session.user.id]);
@@ -2553,10 +2562,10 @@ export default function GolfScorecard() {
   }, []);
 
   useEffect(() => {
-    if (screen === "profileTab" && session && session.user) {
+    if (screen === "profileTab" && session && session.user && profileFetched) {
       loadStats();
     }
-  }, [screen, session && session.user && session.user.id]);
+  }, [screen, session && session.user && session.user.id, profileFetched]);
 
   useEffect(() => {
     if (screen === "profileTab" && session && session.user) {
@@ -2573,17 +2582,29 @@ export default function GolfScorecard() {
   useEffect(() => {
     if (screen === "groupsTab" && session && session.user) {
       loadMyGroups();
-      // Also refresh this user's own cached leaderboard entry here, not
-      // just on Profile - someone checking a group's leaderboard right
-      // after playing shouldn't need to know that a completely different
-      // page is what actually refreshes their numbers. This can only
-      // ever update this person's own row, using their own session - it
-      // can't (and shouldn't) reach into anyone else's stats just
-      // because they're viewing a shared group page.
-      loadStats();
       loadAllGroupsLeaderboard();
     }
   }, [screen, session && session.user && session.user.id]);
+
+  useEffect(() => {
+    // Also refreshes this user's own cached leaderboard entry when
+    // visiting the Groups tab, not just Profile - someone checking a
+    // group's leaderboard right after playing shouldn't need to know
+    // that a completely different page is what actually refreshes their
+    // numbers. This can only ever update this person's own row, using
+    // their own session - it can't (and shouldn't) reach into anyone
+    // else's stats just because they're viewing a shared group page.
+    // Split into its own effect, gated on profileFetched: loadStats
+    // reads profile.leaderboard_opt_in, and without this guard it could
+    // run before the separate profile fetch (triggered by session
+    // changing, not by visiting this screen) has actually completed -
+    // reading profile as still null and incorrectly writing
+    // opted_in: false even for someone who genuinely opted in on a
+    // different session.
+    if ((screen === "groupsTab" || screen === "home") && session && session.user && profileFetched) {
+      loadStats();
+    }
+  }, [screen, session && session.user && session.user.id, profileFetched]);
 
   useEffect(() => {
     if (screen === "home" && session && session.user) {
@@ -2592,7 +2613,6 @@ export default function GolfScorecard() {
       // at all should be enough to catch someone up, without them ever
       // needing to know that a stats refresh is even a thing, let alone
       // which specific page triggers it.
-      loadStats();
       loadMyGroups();
       refreshAllMyStats();
       loadJoinableGroupRounds();
@@ -2981,6 +3001,7 @@ export default function GolfScorecard() {
     setProfileErr("");
     const { data, error } = await withJwtRetry(() => supabase.from("profiles").select("*").eq("id", userId).maybeSingle());
     setProfileLoading(false);
+    setProfileFetched(true);
     if (error) {
       setProfileErr(`Couldn't load your profile (${error.message}).`);
       return;
