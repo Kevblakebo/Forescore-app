@@ -5109,6 +5109,35 @@ export default function GolfScorecard() {
             </div>
           )}
 
+          {round && oceans11Eligible(round.game, round.players.length) && (
+            <div className="gsc-field">
+              <div className="gsc-label">Scoring method</div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button className="gsc-btn" style={{ flex: 1, background: !c.oceans11 && !c.nassau ? "#A42E2D" : "transparent", color: !c.oceans11 && !c.nassau ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }} onClick={() => set({ oceans11: false, nassau: false })}>Overall</button>
+                <button className="gsc-btn" style={{ flex: 1, background: c.oceans11 ? "#A42E2D" : "transparent", color: c.oceans11 ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }} onClick={() => set({ oceans11: true, nassau: false })}>Oceans 11</button>
+                <button className="gsc-btn" style={{ flex: 1, background: c.nassau ? "#A42E2D" : "transparent", color: c.nassau ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }} onClick={() => set({ nassau: true, oceans11: false })}>Nassau</button>
+              </div>
+              {c.oceans11 && (
+                <div style={{ fontSize: 11, color: "#8a8a80", marginTop: 6 }}>
+                  Each player picks their own best 11 holes as they play - lowest total across those 11 wins. Choices can be changed anytime as the round is played.
+                </div>
+              )}
+            </div>
+          )}
+
+          {round && !oceans11Eligible(round.game, round.players.length) && (nassauEligible(round.game, round.players.length) || nassauOnlyEligible(round.game, round.players.length)) && (
+            <div className="gsc-field">
+              <div className="gsc-label">Scoring method</div>
+              <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 6 }}>
+                Nassau splits the round into three separate bets: front 9, back 9, and overall 18 - each its own winner.
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button className="gsc-btn" style={{ flex: 1, background: !c.nassau ? "#A42E2D" : "transparent", color: !c.nassau ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }} onClick={() => set({ nassau: false })}>Overall</button>
+                <button className="gsc-btn" style={{ flex: 1, background: c.nassau ? "#A42E2D" : "transparent", color: c.nassau ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }} onClick={() => set({ nassau: true })}>Nassau</button>
+              </div>
+            </div>
+          )}
+
           {round && (round.game === "dstreet" || round.game === "ponto") && !c.nassau ? (
             <div className="gsc-field">
               <div className="gsc-label">Stakes per skin, per player</div>
