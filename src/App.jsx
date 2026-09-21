@@ -661,7 +661,10 @@ const GAMES = {
     name: "Individual Match Play",
     tournamentName: "Match Play Tournament",
     tag: "Head-to-head, 1 vs 1 - exactly 2 players",
+    tournamentTag: "Multiple 1 vs 1 matches, all in one shared tournament",
     desc: "The classic hole-by-hole format - two players go head-to-head, winning, losing, or halving each hole based on net score. Whoever's ahead by more holes than remain wins the match early; otherwise it's decided after 18.",
+    tournamentDesc: "Runs Individual Match Play as a tournament - add as many 1-on-1 matches as you want, all under one shared event with a single leaderboard. Each match is its own, independent hole-by-hole contest, decided by net score, so one match's outcome never affects any other's.",
+    tournamentWhyPlay: "Running Individual Match Play as a tournament captures how singles are actually played at events like the Ryder Cup - a whole bracket of 1-on-1 matches going at once, all under one shared event, with no advancement to worry about. Every match is entirely its own contest, decided hole by hole, so a blowout at one match never affects anyone else's - and with everyone's status visible in one place, it's easy to see how the whole group is doing without having to track down each pairing individually. It's a natural fit for a club outing or group event where everyone wants real, personal head-to-head bragging rights, not just a shared team result.",
     rotates: false,
     hasScore: true,
     hasPutts: true,
@@ -682,6 +685,21 @@ const GAMES = {
       "Strokes max: to be agreed on prior to round.",
       "Putts max: to be agreed on prior to round.",
       "Mulligans: to be agreed on prior to round.",
+      "Play all OB shots per USGA Rules.",
+      "Must putt all the way into the hole.",
+      "Flagstick can stay in.",
+      "Putts start once on the putting green.",
+    ],
+    tournamentRules: [
+      "A tournament made up of any number of individual 1 vs 1 matches, all sharing one event and one leaderboard.",
+      "Each match is entirely its own contest between its 2 players - the outcome of one match never affects any other match in the tournament.",
+      "Within a match, each hole is its own contest: whoever has the lower net score wins that hole. Equal net scores halve the hole - nobody wins it.",
+      "A match is tracked hole by hole as holes won, not total strokes - a big blow-up hole only ever costs that one hole, same as a narrow loss would.",
+      "A match ends the moment a player is ahead by more holes than remain to be played - for example, 3 up with only 2 holes left ends the match \"3 and 2.\" The pair can still keep entering scores for fun if they'd like to play out the full round.",
+      "If a match is still all square after 18 holes, it's declared halved - this app doesn't currently support extra playoff holes.",
+      "Per-hole handicapping (net score per hole) is defaulted to On for every match, but can be turned off in game scoring settings. Match play handicap strokes are based on the difference between the two players in that specific match.",
+      "Every player in a match can enter scores by default - the organizer can narrow this down to one or more specific captains per match if they'd rather restrict who can edit.",
+      "Putts are tracked but don't affect who wins any match.",
       "Play all OB shots per USGA Rules.",
       "Must putt all the way into the hole.",
       "Flagstick can stay in.",
@@ -2668,8 +2686,11 @@ export default function GolfScorecard() {
   const [viewingRoundFromStats, setViewingRoundFromStats] = useState(false);
   const [roundViewReturnScreen, setRoundViewReturnScreen] = useState("home");
   const [rulesOpenFor, setRulesOpenFor] = useState(null);
+  const [rulesOpenForIsTournament, setRulesOpenForIsTournament] = useState(false);
   const [whyPlayOpenFor, setWhyPlayOpenFor] = useState(null);
+  const [whyPlayOpenForIsTournament, setWhyPlayOpenForIsTournament] = useState(false);
   const [quickInfoFor, setQuickInfoFor] = useState(null);
+  const [quickInfoForIsTournament, setQuickInfoForIsTournament] = useState(false);
   const [mulliganAwardedFlash, setMulliganAwardedFlash] = useState(null);
 
   // ---- Tournament (multi-foursome) state ----
@@ -4725,14 +4746,16 @@ export default function GolfScorecard() {
   const [editFoursomeBusy, setEditFoursomeBusy] = useState(false);
   const [boardLoading, setBoardLoading] = useState(false);
 
-  function openRules(key) {
+  function openRules(key, isTournament) {
     setRulesOpenFor(key);
+    setRulesOpenForIsTournament(!!isTournament);
   }
   function closeRules() {
     setRulesOpenFor(null);
   }
-  function openWhyPlay(key) {
+  function openWhyPlay(key, isTournament) {
     setWhyPlayOpenFor(key);
+    setWhyPlayOpenForIsTournament(!!isTournament);
   }
   function closeWhyPlay() {
     setWhyPlayOpenFor(null);
@@ -5227,12 +5250,15 @@ export default function GolfScorecard() {
     if (!rulesOpenFor) return null;
     const rg = GAMES[rulesOpenFor];
     if (!rg) return null;
+    const showTournament = rulesOpenForIsTournament && rg.tournamentRules;
+    const rules = showTournament ? rg.tournamentRules : rg.rules;
+    const title = showTournament ? rg.tournamentName || rg.name : rg.name;
     return (
       <div className="gsc-modal-backdrop" onClick={closeRules}>
         <div className="gsc-modal" style={{ maxWidth: 440, maxHeight: "80vh", overflowY: "auto" }} onClick={(e) => e.stopPropagation()}>
-          <div className="gsc-modal-title">{rg.name} - Full Rules</div>
+          <div className="gsc-modal-title">{title} - Full Rules</div>
           <ul className="gsc-no-select" style={{ fontSize: 13, color: "#4b4b45", lineHeight: 1.6, paddingLeft: 18, margin: "0 0 16px" }}>
-            {rg.rules.map((r, i) =>
+            {rules.map((r, i) =>
               typeof r === "string" ? (
                 <li key={i} style={{ marginBottom: 6 }}>{r}</li>
               ) : (
@@ -5258,12 +5284,16 @@ export default function GolfScorecard() {
   function WhyPlayModal() {
     if (!whyPlayOpenFor) return null;
     const rg = GAMES[whyPlayOpenFor];
-    if (!rg || !WHY_PLAY[whyPlayOpenFor]) return null;
+    if (!rg) return null;
+    const showTournament = whyPlayOpenForIsTournament && rg.tournamentWhyPlay;
+    const text = showTournament ? rg.tournamentWhyPlay : WHY_PLAY[whyPlayOpenFor];
+    if (!text) return null;
+    const title = showTournament ? rg.tournamentName || rg.name : rg.name;
     return (
       <div className="gsc-modal-backdrop" onClick={closeWhyPlay}>
         <div className="gsc-modal" style={{ maxWidth: 440, maxHeight: "80vh", overflowY: "auto" }} onClick={(e) => e.stopPropagation()}>
-          <div className="gsc-modal-title">Why People Love {rg.name}</div>
-          <div style={{ fontSize: 13, color: "#4b4b45", lineHeight: 1.6, marginBottom: 16 }}>{WHY_PLAY[whyPlayOpenFor]}</div>
+          <div className="gsc-modal-title">Why People Love {title}</div>
+          <div style={{ fontSize: 13, color: "#4b4b45", lineHeight: 1.6, marginBottom: 16 }}>{text}</div>
           <button className="gsc-btn gsc-btn-primary" style={{ width: "100%" }} onClick={closeWhyPlay}>
             Close
           </button>
@@ -5464,19 +5494,23 @@ export default function GolfScorecard() {
     if (!quickInfoFor) return null;
     const qg = GAMES[quickInfoFor];
     if (!qg) return null;
+    const showTournament = quickInfoForIsTournament;
+    const title = showTournament ? qg.tournamentName || qg.name : qg.name;
+    const tag = showTournament ? qg.tournamentTag || qg.tag : qg.tag;
+    const desc = showTournament ? qg.tournamentDesc || qg.desc : qg.desc;
     return (
       <div className="gsc-modal-backdrop" onClick={() => setQuickInfoFor(null)}>
         <div className="gsc-modal" style={{ maxWidth: 400 }} onClick={(e) => e.stopPropagation()}>
-          <div className="gsc-modal-title">{qg.name}</div>
-          {qg.tag && <div className="gsc-tag" style={{ marginBottom: 14 }}>{qg.tag}</div>}
-          <div style={{ fontSize: 14, color: "#4b4b45", lineHeight: 1.6, marginBottom: 16 }}>{qg.desc}</div>
-          {WHY_PLAY[quickInfoFor] && (
+          <div className="gsc-modal-title">{title}</div>
+          {tag && <div className="gsc-tag" style={{ marginBottom: 14 }}>{tag}</div>}
+          <div style={{ fontSize: 14, color: "#4b4b45", lineHeight: 1.6, marginBottom: 16 }}>{desc}</div>
+          {(showTournament ? qg.tournamentWhyPlay || WHY_PLAY[quickInfoFor] : WHY_PLAY[quickInfoFor]) && (
             <button
               className="gsc-link"
               style={{ fontSize: 13, fontWeight: 700, marginBottom: 10, display: "block" }}
               onClick={() => {
                 setQuickInfoFor(null);
-                openWhyPlay(quickInfoFor);
+                openWhyPlay(quickInfoFor, showTournament);
               }}
             >
               Why people love this game
@@ -5487,7 +5521,7 @@ export default function GolfScorecard() {
             style={{ fontSize: 13, fontWeight: 700, marginBottom: 16, display: "block" }}
             onClick={() => {
               setQuickInfoFor(null);
-              openRules(quickInfoFor);
+              openRules(quickInfoFor, showTournament);
             }}
           >
             View full rules
@@ -10544,7 +10578,7 @@ function computeMatchPlayResult(round, computed) {
                         </div>
                       )}
                       <button
-                        onClick={(e) => { e.stopPropagation(); setQuickInfoFor(entry.key); }}
+                        onClick={(e) => { e.stopPropagation(); setQuickInfoFor(entry.key); setQuickInfoForIsTournament(entry.isTournament); }}
                         title="Quick info"
                         style={{ position: "absolute", top: 4, right: 4, width: 20, height: 20, borderRadius: "50%", background: "rgba(255,255,255,0.25)", border: "none", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
                       >
@@ -10864,15 +10898,15 @@ function computeMatchPlayResult(round, computed) {
                       </span>
                     </div>
                   )}
-                  <div className="gsc-tag">{g.tag}</div>
-                  <div className="gsc-no-select" style={{ fontSize: 13, marginTop: 8, color: "#4b4b45" }}>{g.desc}</div>
-                  {WHY_PLAY[key] && (
+                  <div className="gsc-tag">{g.tournamentTag || g.tag}</div>
+                  <div className="gsc-no-select" style={{ fontSize: 13, marginTop: 8, color: "#4b4b45" }}>{g.tournamentDesc || g.desc}</div>
+                  {(g.tournamentWhyPlay || WHY_PLAY[key]) && (
                     <button
                       className="gsc-link"
                       style={{ marginTop: 8, fontSize: 12, display: "block" }}
                       onClick={(e) => {
                         e.stopPropagation();
-                        openWhyPlay(key);
+                        openWhyPlay(key, true);
                       }}
                     >
                       Why people love this game
@@ -10883,7 +10917,7 @@ function computeMatchPlayResult(round, computed) {
                     style={{ marginTop: 8, fontSize: 12, display: "block" }}
                     onClick={(e) => {
                       e.stopPropagation();
-                      openRules(key);
+                      openRules(key, true);
                     }}
                   >
                     View full rules
@@ -13101,12 +13135,12 @@ function computeMatchPlayResult(round, computed) {
                   </span>
                 )}
               </div>
-              <div className="gsc-tag" style={{ marginTop: 6 }}>{g.tag}</div>
-              <div className="gsc-no-select" style={{ fontSize: 13, marginTop: 10, color: "#4b4b45" }}>{g.desc}</div>
-              <button className="gsc-link" style={{ marginTop: 10, fontSize: 13, display: "block" }} onClick={() => openWhyPlay(wizardAnswers.resolvedGameKey)}>
+              <div className="gsc-tag" style={{ marginTop: 6 }}>{isTournament ? g.tournamentTag || g.tag : g.tag}</div>
+              <div className="gsc-no-select" style={{ fontSize: 13, marginTop: 10, color: "#4b4b45" }}>{isTournament ? g.tournamentDesc || g.desc : g.desc}</div>
+              <button className="gsc-link" style={{ marginTop: 10, fontSize: 13, display: "block" }} onClick={() => openWhyPlay(wizardAnswers.resolvedGameKey, isTournament)}>
                 Why people love this game
               </button>
-              <button className="gsc-link" style={{ marginTop: 6, fontSize: 13 }} onClick={() => openRules(wizardAnswers.resolvedGameKey)}>
+              <button className="gsc-link" style={{ marginTop: 6, fontSize: 13 }} onClick={() => openRules(wizardAnswers.resolvedGameKey, isTournament)}>
                 View full rules
               </button>
               <button
@@ -14186,7 +14220,7 @@ function computeMatchPlayResult(round, computed) {
           }}
         />
         <div className="gsc-body">
-          <button className="gsc-link" style={{ marginBottom: 12, fontSize: 13 }} onClick={() => openRules(gameKey)}>
+          <button className="gsc-link" style={{ marginBottom: 12, fontSize: 13 }} onClick={() => openRules(gameKey, !!activeTournament)}>
             View full rules for {g.name}
           </button>
           {activeTournament && (
@@ -14994,7 +15028,7 @@ function computeMatchPlayResult(round, computed) {
         <style>{STYLE}</style>
         <Header title={tg.tournamentName || tg.name} sub={MATCH_PLAY_GAMES.includes(tournamentGameKey) ? "Tournament setup - every match plays this format" : "Tournament setup - every foursome plays this format"} onBack={() => goBack("roundsTab")} />
         <div className="gsc-body">
-          <button className="gsc-link" style={{ marginBottom: 12, fontSize: 13 }} onClick={() => openRules(tournamentGameKey)}>
+          <button className="gsc-link" style={{ marginBottom: 12, fontSize: 13 }} onClick={() => openRules(tournamentGameKey, true)}>
             View full rules for {tg.tournamentName || tg.name}
           </button>
           <div className="gsc-card">
@@ -15716,7 +15750,7 @@ function computeMatchPlayResult(round, computed) {
             t && (
               <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6, alignSelf: "flex-start", marginRight: 10 }}>
                 <div className="gsc-code" style={{ width: 84, textAlign: "center" }}>{t.id}</div>
-                <button className="gsc-link" style={{ color: "#F3EFE0", fontSize: 11, textDecoration: "underline" }} onClick={() => openRules(t.game)}>
+                <button className="gsc-link" style={{ color: "#F3EFE0", fontSize: 11, textDecoration: "underline" }} onClick={() => openRules(t.game, true)}>
                   Rules
                 </button>
                 <button className="gsc-link" style={{ color: "#F3EFE0", fontSize: 11, textDecoration: "underline" }} onClick={() => setGameDetailsOpen(true)}>
@@ -16650,7 +16684,7 @@ function computeMatchPlayResult(round, computed) {
           right={
             <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6, alignSelf: "flex-start", marginRight: 10 }}>
               <div className="gsc-code" style={{ width: 84, textAlign: "center" }}>{round.id}</div>
-              <button className="gsc-link" style={{ color: "#F3EFE0", fontSize: 11, textDecoration: "underline" }} onClick={() => openRules(round.game)}>
+              <button className="gsc-link" style={{ color: "#F3EFE0", fontSize: 11, textDecoration: "underline" }} onClick={() => openRules(round.game, !!round.tournamentId)}>
                 Rules
               </button>
               <button className="gsc-link" style={{ color: "#F3EFE0", fontSize: 11, textDecoration: "underline" }} onClick={() => setGameDetailsOpen(true)}>
