@@ -4691,15 +4691,13 @@ export default function GolfScorecard() {
   // still starts blank, same as before.
   function freshPlayerSlots(gameKeyArg, flexible) {
     const isIndividual = gameKeyArg === "dstreet" || gameKeyArg === "swami" || gameKeyArg === "pontobango" || gameKeyArg === "individualputts" || gameKeyArg === "stableford" || gameKeyArg === "matchplay";
-    const needsTwo = gameKeyArg === "matchplay" || gameKeyArg === "pontobango" || gameKeyArg === "individualputts";
     // Flexible mode (regular round setup, not a tournament foursome)
-    // starts with only the minimum players actually needed for this
-    // format - most individual games can be, and often are, played
-    // solo or with just a couple people, so pre-filling three empty
-    // slots by default is more clutter than help. Team games always
-    // need their full, fixed count regardless, since a 2v2 format
-    // can't start with fewer.
-    const count = flexible && isIndividual ? (needsTwo ? 2 : 1) : gameKeyArg === "matchplay" ? 2 : 4;
+    // starts with the minimum players actually needed for this format -
+    // most individual games can be, and often are, played with just a
+    // couple people, so pre-filling three empty slots by default is more
+    // clutter than help. Team games always need their full, fixed count
+    // regardless, since a 2v2 format can't start with fewer.
+    const count = flexible && isIndividual ? 2 : gameKeyArg === "matchplay" ? 2 : 4;
     const slots = Array.from({ length: count }, () => ({ name: "", hcp: "", avatar: "" }));
     if (session && profile && (profile.name || profile.handicap || profile.avatar)) {
       slots[0] = { name: profile.name || "", hcp: profile.handicap || "", avatar: profile.avatar || "" };
@@ -11951,82 +11949,83 @@ function computeMatchPlayResult(round, computed) {
 
                   {groupsErr && <div style={{ color: "#A42E2D", fontSize: 14, marginBottom: 10 }}>{groupsErr}</div>}
 
-                  {myGroups.length > 0 && (
-                    <div style={{ marginBottom: 16 }}>
-                      <div style={{ fontWeight: 700, fontSize: 16, color: "#1B4332", marginBottom: 8 }}>
-                        All Groups Leaderboard
-                      </div>
-                      <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 10 }}>
-                        Everyone across all your groups, combined - see how you stack up against all your playing partners, not just one group at a time.
-                      </div>
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
-                        {Object.entries(LEADERBOARD_CATEGORIES).map(([key, cat]) => (
-                          <button
-                            key={key}
-                            onClick={() => setAllGroupsCategory(key)}
-                            style={{
-                              fontSize: 13,
-                              fontWeight: 700,
-                              padding: "5px 10px",
-                              borderRadius: 20,
-                              border: allGroupsCategory === key ? "1.5px solid #1B4332" : "1.5px solid #d8d2bd",
-                              background: allGroupsCategory === key ? "#1B4332" : "#fff",
-                              color: allGroupsCategory === key ? "#F3EFE0" : "#4b4b45",
-                              cursor: "pointer",
-                            }}
-                          >
-                            {cat.label}
-                          </button>
-                        ))}
-                      </div>
-                      {allGroupsLeaderboardLoading ? (
-                        <div style={{ fontSize: 15, color: "#6b6b63" }}>Loading...</div>
-                      ) : allGroupsLeaderboardErr ? (
-                        <div style={{ color: "#A42E2D", fontSize: 15 }}>{allGroupsLeaderboardErr}</div>
-                      ) : (
-                        (() => {
-                          const cat = LEADERBOARD_CATEGORIES[allGroupsCategory];
-                          const ranked = allGroupsLeaderboard
-                            .map((row) => ({ row, value: cat.valueOf(row) }))
-                            .filter((x) => x.value != null)
-                            .sort((a, b) => (cat.lowerIsBetter ? a.value - b.value : b.value - a.value));
-
-                          if (ranked.length === 0) {
-                            return <div style={{ fontSize: 15, color: "#6b6b63" }}>Nobody across your groups has stats for this category yet.</div>;
-                          }
-
-                          return ranked.map((x, i) => {
-                            const isMe = session && x.row.user_id === session.user.id;
-                            return (
-                              <div
-                                key={x.row.user_id}
-                                onClick={() => !isMe && openHeadToHead(x.row.user_id, x.row.display_name, x.row.avatar)}
-                                style={{
-                                  display: "flex",
-                                  justifyContent: "space-between",
-                                  alignItems: "center",
-                                  padding: "7px 0",
-                                  borderBottom: i === ranked.length - 1 ? "none" : "1px solid #eee6cf",
-                                  background: isMe ? "#EBF0EC" : "transparent",
-                                  borderRadius: isMe ? 6 : 0,
-                                  paddingLeft: isMe ? 8 : 0,
-                                  paddingRight: isMe ? 8 : 0,
-                                  cursor: isMe ? "default" : "pointer",
-                                }}
-                              >
-                                <div style={{ fontSize: 15, fontWeight: isMe ? 700 : 600, color: "#1B4332" }}>
-                                  {i + 1}. {x.row.avatar ? `${x.row.avatar} ` : ""}{x.row.display_name}
-                                  {isMe && <span style={{ fontSize: 11, color: "#B08D57", marginLeft: 6, fontWeight: 700 }}>YOU</span>}
-                                </div>
-                                <div style={{ fontSize: 15, fontWeight: 700, color: "#4b4b45" }}>{cat.format(x.value)}</div>
-                              </div>
-                            );
-                          });
-                        })()
-                      )}
-                    </div>
-                  )}
                 </>
+              )}
+            </div>
+          )}
+          {session && !selectedGroupId && myGroups.length > 0 && (
+            <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+                <span style={{ fontSize: 18 }}>{"\u{1F3C6}"}</span>
+                <div style={{ fontWeight: 800, fontSize: 17, color: "#8a6a2f" }}>All Groups Leaderboard</div>
+              </div>
+              <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 10 }}>
+                Everyone across all your groups, combined - see how you stack up against all your playing partners, not just one group at a time.
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
+                {Object.entries(LEADERBOARD_CATEGORIES).map(([key, cat]) => (
+                  <button
+                    key={key}
+                    onClick={() => setAllGroupsCategory(key)}
+                    style={{
+                      fontSize: 13,
+                      fontWeight: 700,
+                      padding: "5px 10px",
+                      borderRadius: 20,
+                      border: allGroupsCategory === key ? "1.5px solid #1B4332" : "1.5px solid #d8d2bd",
+                      background: allGroupsCategory === key ? "#1B4332" : "#fff",
+                      color: allGroupsCategory === key ? "#F3EFE0" : "#4b4b45",
+                      cursor: "pointer",
+                    }}
+                  >
+                    {cat.label}
+                  </button>
+                ))}
+              </div>
+              {allGroupsLeaderboardLoading ? (
+                <div style={{ fontSize: 15, color: "#6b6b63" }}>Loading...</div>
+              ) : allGroupsLeaderboardErr ? (
+                <div style={{ color: "#A42E2D", fontSize: 15 }}>{allGroupsLeaderboardErr}</div>
+              ) : (
+                (() => {
+                  const cat = LEADERBOARD_CATEGORIES[allGroupsCategory];
+                  const ranked = allGroupsLeaderboard
+                    .map((row) => ({ row, value: cat.valueOf(row) }))
+                    .filter((x) => x.value != null)
+                    .sort((a, b) => (cat.lowerIsBetter ? a.value - b.value : b.value - a.value));
+
+                  if (ranked.length === 0) {
+                    return <div style={{ fontSize: 15, color: "#6b6b63" }}>Nobody across your groups has stats for this category yet.</div>;
+                  }
+
+                  return ranked.map((x, i) => {
+                    const isMe = session && x.row.user_id === session.user.id;
+                    return (
+                      <div
+                        key={x.row.user_id}
+                        onClick={() => !isMe && openHeadToHead(x.row.user_id, x.row.display_name, x.row.avatar)}
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          padding: "7px 0",
+                          borderBottom: i === ranked.length - 1 ? "none" : "1px solid #eee6cf",
+                          background: isMe ? "#EBF0EC" : "transparent",
+                          borderRadius: isMe ? 6 : 0,
+                          paddingLeft: isMe ? 8 : 0,
+                          paddingRight: isMe ? 8 : 0,
+                          cursor: isMe ? "default" : "pointer",
+                        }}
+                      >
+                        <div style={{ fontSize: 15, fontWeight: isMe ? 700 : 600, color: "#1B4332" }}>
+                          {i + 1}. {x.row.avatar ? `${x.row.avatar} ` : ""}{x.row.display_name}
+                          {isMe && <span style={{ fontSize: 11, color: "#B08D57", marginLeft: 6, fontWeight: 700 }}>YOU</span>}
+                        </div>
+                        <div style={{ fontSize: 15, fontWeight: 700, color: "#4b4b45" }}>{cat.format(x.value)}</div>
+                      </div>
+                    );
+                  });
+                })()
               )}
             </div>
           )}
