@@ -6854,16 +6854,6 @@ export default function GolfScorecard() {
     goToScreen("gameWizard");
   }
 
-  // Homepage-specific entry point only - same reset as startWizard, but
-  // begins on the new groupStep instead of playerCount, so someone
-  // coming from "Not sure how to get started?" is offered a group and a
-  // game/round choice first. The Games page's own wizard box still calls
-  // startWizard() directly and is unaffected by this.
-  function startWizardFromHome() {
-    startWizard();
-    setWizardStepId("groupStep");
-  }
-
   // Same reset as startWizard, but scoped to only ever produce a Round
   // format - the "More than 4 (a tournament)" option gets hidden on the
   // player-count question, so this path can never end up in a tournament.
@@ -6885,10 +6875,6 @@ export default function GolfScorecard() {
 
   function wizardNextStepId(stepId, answers) {
     switch (stepId) {
-      case "groupStep":
-        return "gameStep";
-      case "gameStep":
-        return "playerCount";
       case "playerCount":
         if (Number(answers.playerCount) === 1) return "confirmGame";
         return "vibe";
@@ -6943,7 +6929,7 @@ export default function GolfScorecard() {
     if (fieldIdx >= 0) return Math.round(38 + (60 * fieldIdx) / fields.length);
     if (wizardStepId === "confirmGame") return 35;
     if (wizardStepId === "finish") return 100;
-    const branchOrder = ["groupStep", "gameStep", "playerCount", "vibe", "roundMode", "vibeFollowup"];
+    const branchOrder = ["playerCount", "vibe", "roundMode", "vibeFollowup"];
     const idx = branchOrder.indexOf(wizardStepId);
     return Math.min(30, 8 + Math.max(0, idx) * 7);
   }
@@ -10573,7 +10559,7 @@ function computeMatchPlayResult(round, computed) {
             </div>
           </div>
 
-          <div className="gsc-card gsc-winner-card" style={{ cursor: "pointer" }} onClick={startWizardFromHome}>
+          <div className="gsc-card gsc-winner-card" style={{ cursor: "pointer" }} onClick={startWizard}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <div>
                 <div style={{ fontWeight: 700, fontSize: 16 }}>{"\u{1F9D9}"} Not sure which format to pick?</div>
@@ -10582,7 +10568,7 @@ function computeMatchPlayResult(round, computed) {
                 </div>
               </div>
             </div>
-            <button className="gsc-btn gsc-btn-gold" style={{ width: "100%", marginTop: 10 }} onClick={startWizardFromHome}>
+            <button className="gsc-btn gsc-btn-gold" style={{ width: "100%", marginTop: 10 }} onClick={startWizard}>
               Start the Game Wizard
             </button>
           </div>
@@ -12983,137 +12969,6 @@ function computeMatchPlayResult(round, computed) {
           <div style={{ height: "100%", width: `${progress}%`, background: "#A42E2D", transition: "width 0.25s ease" }} />
         </div>
         <div className="gsc-body">
-          {wizardStepId === "groupStep" && (
-            <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
-              {!session && (
-                <div style={{ fontWeight: 800, fontSize: 17, color: "#8a6a2f", marginBottom: 6 }}>
-                  Create a New Group or Join an Existing Group
-                </div>
-              )}
-              <div style={{ fontSize: 13, color: "#6b6b63", marginBottom: 14 }}>
-                {session
-                  ? "Groups let you and your regulars share a leaderboard across every round you play together. Join one with a code below, start a new one, or skip this and just start a game. (Optional)"
-                  : "Groups let you and your regulars share a leaderboard across every round you play together. (Optional)"}
-              </div>
-
-              {session ? (
-              <>
-              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
-                <span style={{ fontSize: 18 }}>{"\u{1F465}"}</span>
-                <div style={{ fontWeight: 800, fontSize: 17, color: "#8a6a2f" }}>Create a New Group</div>
-              </div>
-              {groupsErr && <div style={{ color: "#A42E2D", fontSize: 13, marginBottom: 8 }}>{groupsErr}</div>}
-              <div className="gsc-row" style={{ marginBottom: 8, alignItems: "center" }}>
-                <button
-                  onClick={() => setCreateGroupAvatarPickerOpen((v) => !v)}
-                  style={{ width: 40, height: 40, borderRadius: "50%", border: "1.5px solid #d8d2bd", background: "#fff", fontSize: 20, cursor: "pointer", flex: "0 0 auto", position: "relative" }}
-                >
-                  {createGroupAvatar || "\u{1F465}"}
-                  {!createGroupAvatar && (
-                    <span style={{ position: "absolute", bottom: -2, right: -2, width: 14, height: 14, borderRadius: "50%", background: "#A42E2D", color: "#fff", fontSize: 11, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", border: "1.5px solid #F3EFE0" }}>
-                      +
-                    </span>
-                  )}
-                </button>
-                <input className="gsc-input" placeholder="Group name" value={createGroupName} onChange={(e) => setCreateGroupName(e.target.value)} />
-                <button className="gsc-btn gsc-btn-primary" style={{ flex: "0 0 auto" }} disabled={createGroupBusy || !createGroupName.trim()} onClick={createGroup}>
-                  {createGroupBusy ? "Creating..." : "Create"}
-                </button>
-              </div>
-              {justCreatedGroupCode && (
-                <div style={{ background: "#EBF0EC", borderRadius: 8, padding: "10px 12px", marginBottom: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <div>
-                    <div style={{ fontSize: 11, color: "#3F6B54", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px" }}>Group created! Share this code</div>
-                    <div className="gsc-mono" style={{ fontSize: 20, fontWeight: 800, color: "#1B4332", letterSpacing: "1px" }}>{justCreatedGroupCode}</div>
-                  </div>
-                  <button
-                    className="gsc-btn gsc-btn-outline"
-                    style={{ flex: "0 0 auto" }}
-                    onClick={() => {
-                      navigator.clipboard.writeText(justCreatedGroupCode).catch(() => {});
-                      setCopiedGroupCode(true);
-                      setTimeout(() => setCopiedGroupCode(false), 1500);
-                    }}
-                  >
-                    {copiedGroupCode ? "Copied!" : "Copy"}
-                  </button>
-                </div>
-              )}
-              {createGroupAvatarPickerOpen && (
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 8, padding: "4px 0 10px" }}>
-                  {AVATAR_OPTIONS.map((emoji) => (
-                    <button
-                      key={emoji}
-                      onClick={() => {
-                        setCreateGroupAvatar(createGroupAvatar === emoji ? "" : emoji);
-                        setCreateGroupAvatarPickerOpen(false);
-                      }}
-                      style={{ width: 32, height: 32, borderRadius: "50%", border: createGroupAvatar === emoji ? "2px solid #A42E2D" : "1.5px solid #d8d2bd", background: "#fff", fontSize: 18, cursor: "pointer" }}
-                    >
-                      {emoji}
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              <div style={{ marginBottom: 14, borderTop: "1px solid rgba(176,141,87,0.3)" }} />
-              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
-                <span style={{ fontSize: 18 }}>{"\u{1F511}"}</span>
-                <div style={{ fontWeight: 800, fontSize: 17, color: "#8a6a2f" }}>Join Existing Group</div>
-              </div>
-              <div className="gsc-row">
-                <input className="gsc-input gsc-mono" placeholder="ENTER GROUP CODE HERE" value={joinGroupCode} onChange={(e) => { setJoinGroupCode(e.target.value.toUpperCase()); setJoinGroupSuccess(""); }} />
-                <button className="gsc-btn gsc-btn-primary" style={{ flex: "0 0 auto" }} disabled={joinGroupBusy || !joinGroupCode.trim()} onClick={joinGroup}>
-                  {joinGroupBusy ? "Joining..." : "Join"}
-                </button>
-              </div>
-              {joinGroupErr && <div style={{ color: "#A42E2D", fontSize: 13, marginTop: 8 }}>{joinGroupErr}</div>}
-              {joinGroupSuccess && <div style={{ color: "#3F6B54", fontWeight: 700, fontSize: 13, marginTop: 8 }}>{"\u2713"} {joinGroupSuccess}</div>}
-              </>
-              ) : (
-                <button
-                  onClick={() => goToScreen("login")}
-                  style={{ display: "block", width: "100%", textAlign: "left", fontSize: 12, color: "#6b6b63", padding: "8px 10px", background: "#F8F1E4", border: "none", borderRadius: 8, cursor: "pointer" }}
-                >
-                  {"\u{1F465}"} Log in to unlock create or join a group. <span style={{ textDecoration: "underline", fontWeight: 700 }}>Tap to log in</span>
-                </button>
-              )}
-
-              <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 16 }} onClick={() => wizardGoNext("groupStep", {})}>
-                Next
-              </button>
-            </div>
-          )}
-
-          {wizardStepId === "gameStep" && (
-            <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
-              <div style={{ fontSize: 13, color: "#6b6b63", marginBottom: 14 }}>
-                Have a game code from someone else? Enter it below to jump straight in. Otherwise, start a new one and we'll walk you through setting it up.
-              </div>
-
-              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
-                <span style={{ fontSize: 18 }}>{"\u26F3"}</span>
-                <div style={{ fontWeight: 800, fontSize: 17, color: "#8a6a2f" }}>Join Existing Game</div>
-              </div>
-              <div className="gsc-row">
-                <input className="gsc-input gsc-mono" placeholder="ENTER GAME CODE HERE" value={joinCode} onChange={(e) => setJoinCode(e.target.value.toUpperCase())} maxLength={6} />
-                <button className="gsc-btn gsc-btn-primary" style={{ flex: "0 0 auto" }} disabled={busy || !joinCode} onClick={() => joinRoundOrTournament(joinCode)}>
-                  Join
-                </button>
-              </div>
-              {err && <div style={{ color: "#A42E2D", fontSize: 13, marginTop: 8 }}>{err}</div>}
-
-              <div style={{ marginTop: 20, marginBottom: 14, borderTop: "1px solid rgba(176,141,87,0.3)" }} />
-              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
-                <span style={{ fontSize: 18 }}>{"\u{1F195}"}</span>
-                <div style={{ fontWeight: 800, fontSize: 17, color: "#8a6a2f" }}>Start a New Game</div>
-              </div>
-              <button className="gsc-btn gsc-btn-primary" style={{ width: "100%" }} onClick={() => wizardGoNext("gameStep", {})}>
-                Start a New Game
-              </button>
-            </div>
-          )}
-
           {wizardStepId === "playerCount" && (
             <div className="gsc-card">
               <div className="gsc-label" style={{ marginBottom: 10, fontSize: 16 }}>How many players are in your group?</div>
