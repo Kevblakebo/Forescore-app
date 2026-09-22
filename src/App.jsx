@@ -10724,54 +10724,71 @@ function computeMatchPlayResult(round, computed) {
               <span style={{ fontSize: 18 }}>{"\u26F3"}</span>
               <div style={{ fontWeight: 800, fontSize: 17, color: "#8a6a2f" }}>Start a New Round</div>
             </div>
-            <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 10 }}>Game Formats</div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
-              {(() => {
-                const baseKeys = Object.keys(GAME_TILE_STYLE);
-                const insertBeforeIdx = baseKeys.indexOf("avoscramble");
-                // Regular tiles in their usual order, with each dual-purpose
-                // game's tournament-variant tile inserted right before the
-                // tournament-only games begin - so the whole run of colors
-                // (regular tiles through tournament tiles) cycles and
-                // alternates naturally, with no manual color override needed.
-                const entries = [
-                  ...baseKeys.slice(0, insertBeforeIdx).map((key) => ({ key, isTournament: false })),
-                  ...DUAL_TOURNAMENT_TILE_KEYS.map((key) => ({ key, isTournament: true })),
-                  ...baseKeys.slice(insertBeforeIdx).map((key) => ({ key, isTournament: false })),
-                ];
-                const colors = ["#1B4332", "#3A7352", "#B08D57", "#2A5B42", "#8A6A2F", "#719A82"];
-                return entries.map((entry, i) => {
-                  const { emoji } = GAME_TILE_STYLE[entry.key];
-                  const color = colors[i % colors.length];
-                  const locked = isGameLocked(entry.key);
-                  return (
-                    <div
-                      key={entry.isTournament ? `${entry.key}-tournament` : entry.key}
-                      onClick={() => {
-                        if (locked) { handleLockedGameTap(entry.key); return; }
-                        entry.isTournament || GAMES[entry.key].tournamentOnly ? startTournamentCreateFlow(entry.key) : startNewRound(entry.key);
-                      }}
-                      style={{ position: "relative", background: color, borderRadius: 12, padding: "16px 6px 12px", textAlign: "center", cursor: "pointer", minHeight: 108, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}
+            <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 10 }}>Individual Game Formats</div>
+            {(() => {
+              const colors = ["#1B4332", "#3A7352", "#B08D57", "#2A5B42", "#8A6A2F", "#719A82"];
+              const renderTile = (entry, color) => {
+                const { emoji } = GAME_TILE_STYLE[entry.key];
+                const locked = isGameLocked(entry.key);
+                return (
+                  <div
+                    key={entry.isTournament ? `${entry.key}-tournament` : entry.key}
+                    onClick={() => {
+                      if (locked) { handleLockedGameTap(entry.key); return; }
+                      entry.isTournament || GAMES[entry.key].tournamentOnly ? startTournamentCreateFlow(entry.key) : startNewRound(entry.key);
+                    }}
+                    style={{ position: "relative", background: color, borderRadius: 12, padding: "16px 6px 12px", textAlign: "center", cursor: "pointer", minHeight: 108, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}
+                  >
+                    {locked && (
+                      <div style={{ position: "absolute", top: 4, left: 4, width: 20, height: 20, borderRadius: "50%", background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11 }}>
+                        {"\u{1F512}"}
+                      </div>
+                    )}
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setQuickInfoFor(entry.key); setQuickInfoForIsTournament(entry.isTournament); }}
+                      title="Quick info"
+                      style={{ position: "absolute", top: 4, right: 4, width: 20, height: 20, borderRadius: "50%", background: "rgba(255,255,255,0.25)", border: "none", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
                     >
-                      {locked && (
-                        <div style={{ position: "absolute", top: 4, left: 4, width: 20, height: 20, borderRadius: "50%", background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11 }}>
-                          {"\u{1F512}"}
-                        </div>
-                      )}
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setQuickInfoFor(entry.key); setQuickInfoForIsTournament(entry.isTournament); }}
-                        title="Quick info"
-                        style={{ position: "absolute", top: 4, right: 4, width: 20, height: 20, borderRadius: "50%", background: "rgba(255,255,255,0.25)", border: "none", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
-                      >
-                        i
-                      </button>
-                      <div style={{ fontSize: 26, marginBottom: 6, opacity: locked ? 0.6 : 1 }}>{emoji}</div>
-                      <div style={{ fontSize: 11.5, fontWeight: 700, color: "#fff", lineHeight: 1.3, opacity: locked ? 0.6 : 1 }}>{entry.isTournament ? GAMES[entry.key].tournamentName : GAMES[entry.key].name}</div>
-                    </div>
-                  );
-                });
-              })()}
-            </div>
+                      i
+                    </button>
+                    <div style={{ fontSize: 26, marginBottom: 6, opacity: locked ? 0.6 : 1 }}>{emoji}</div>
+                    <div style={{ fontSize: 11.5, fontWeight: 700, color: "#fff", lineHeight: 1.3, opacity: locked ? 0.6 : 1 }}>{entry.isTournament ? GAMES[entry.key].tournamentName : GAMES[entry.key].name}</div>
+                  </div>
+                );
+              };
+              const baseKeys = Object.keys(GAME_TILE_STYLE);
+              const tourneyOnlyStartIdx = baseKeys.indexOf("avoscramble");
+              const individualKeys = baseKeys.slice(0, 6);
+              const teamKeys = baseKeys.slice(6, tourneyOnlyStartIdx);
+              // Match Play Tournament is grouped with the other tournament-only
+              // tiles here, right after Scramble Tournament, rather than
+              // inserted before them - it's the one dual-purpose game among
+              // otherwise tournament-only tiles in this section.
+              const tournamentEntries = [
+                { key: "avoscramble", isTournament: false },
+                ...DUAL_TOURNAMENT_TILE_KEYS.map((key) => ({ key, isTournament: true })),
+                ...baseKeys.slice(tourneyOnlyStartIdx + 1).map((key) => ({ key, isTournament: false })),
+              ];
+              return (
+                <>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
+                    {individualKeys.map((key, i) => renderTile({ key, isTournament: false }, colors[i % colors.length]))}
+                  </div>
+
+                  <div style={{ borderTop: "1px solid #eee6cf", margin: "16px 0 10px" }} />
+                  <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 10 }}>Team Game Formats</div>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
+                    {teamKeys.map((key, i) => renderTile({ key, isTournament: false }, colors[(individualKeys.length + i) % colors.length]))}
+                  </div>
+
+                  <div style={{ borderTop: "1px solid #eee6cf", margin: "16px 0 10px" }} />
+                  <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 10 }}>Tournament Game Formats</div>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
+                    {tournamentEntries.map((entry, i) => renderTile(entry, colors[(individualKeys.length + teamKeys.length + i) % colors.length]))}
+                  </div>
+                </>
+              );
+            })()}
           </div>
 
           <div className="gsc-card gsc-winner-card" style={{ cursor: "pointer" }} onClick={startWizard}>
