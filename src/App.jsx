@@ -11095,6 +11095,7 @@ function computeMatchPlayResult(round, computed) {
 
             <div className="gsc-label" style={{ marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Individual Game Formats</div>
             <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>Up to 4 Players</div>
+            <div style={{ display: "flex", overflowX: "auto", gap: 10, paddingBottom: 6, WebkitOverflowScrolling: "touch" }}>
             {["swami", "dstreet", "matchplay", "individualputts", "pontobango", "stableford"]
               .map((key) => [key, GAMES[key]])
               .map(([key, g]) => {
@@ -11103,7 +11104,7 @@ function computeMatchPlayResult(round, computed) {
                 <div
                   key={key}
                   className="gsc-card gsc-game-card"
-                  style={{ marginBottom: 10, opacity: locked ? 0.75 : 1 }}
+                  style={{ width: 250, flexShrink: 0, opacity: locked ? 0.75 : 1 }}
                   onClick={() => (locked ? handleLockedGameTap(key) : startNewRound(key))}
                 >
                   <div className="gsc-game-title" style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -11150,9 +11151,11 @@ function computeMatchPlayResult(round, computed) {
                 </div>
                 );
               })}
+            </div>
 
             <div className="gsc-label" style={{ marginTop: 14, marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Team Game Formats</div>
             <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>2 vs 2</div>
+            <div style={{ display: "flex", overflowX: "auto", gap: 10, paddingBottom: 6, WebkitOverflowScrolling: "touch" }}>
             {["teamstrokes", "ponto", "matchplayfourball", "teamputts", "beachside", "seabluffe", "moonlightwolf", "vegas", "teamoceans11"]
               .map((key) => [key, GAMES[key]])
               .map(([key, g]) => {
@@ -11161,7 +11164,7 @@ function computeMatchPlayResult(round, computed) {
                 <div
                   key={key}
                   className="gsc-card gsc-game-card"
-                  style={{ marginBottom: 10, opacity: locked ? 0.75 : 1 }}
+                  style={{ width: 250, flexShrink: 0, opacity: locked ? 0.75 : 1 }}
                   onClick={() => (locked ? handleLockedGameTap(key) : startNewRound(key))}
                 >
                   <div className="gsc-game-title" style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -11208,6 +11211,7 @@ function computeMatchPlayResult(round, computed) {
                 </div>
                 );
               })}
+            </div>
           </div>
 
           <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
@@ -11223,6 +11227,7 @@ function computeMatchPlayResult(round, computed) {
                 not TOURNAMENT_GAME_KEYS' own order (that constant is also
                 used elsewhere as a default fallback game, so its order is
                 left alone). */}
+            <div style={{ display: "flex", overflowX: "auto", gap: 10, paddingBottom: 6, WebkitOverflowScrolling: "touch" }}>
             {["tourneygg", "avoscramble", "tourneybb", "matchplay", "matchplayfourball", "altshot"].map((key) => {
               const g = GAMES[key];
               const locked = isGameLocked(key);
@@ -11230,7 +11235,7 @@ function computeMatchPlayResult(round, computed) {
                 <div
                   key={key}
                   className="gsc-card gsc-game-card"
-                  style={{ marginBottom: 10, opacity: locked ? 0.75 : 1 }}
+                  style={{ width: 250, flexShrink: 0, opacity: locked ? 0.75 : 1 }}
                   onClick={() => (locked ? handleLockedGameTap(key) : startTournamentCreateFlow(key))}
                 >
                   <div className="gsc-game-title" style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -11275,6 +11280,7 @@ function computeMatchPlayResult(round, computed) {
                 </div>
               );
             })}
+            </div>
           </div>
 
           <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
