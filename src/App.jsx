@@ -16623,7 +16623,7 @@ function computeMatchPlayResult(round, computed) {
                   {copiedPostRoundGroupCode ? "Copied!" : "Copy"}
                 </button>
               </div>
-              <div style={{ fontSize: 12, color: "#3F6B54", marginTop: 8 }}>Find it on your Profile page anytime.</div>
+              <div style={{ fontSize: 12, color: "#3F6B54", marginTop: 8 }}>Find it on your Groups page anytime.</div>
             </div>
           )}
 
