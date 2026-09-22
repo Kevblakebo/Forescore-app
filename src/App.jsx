@@ -7004,13 +7004,11 @@ export default function GolfScorecard() {
       case "field_limits":
         if (Number(answers.playerCount) === 1) return "field_players";
         if (answers.isTournament) return "field_foursomeCount";
-        return cfg.nassau ? "field_venmo" : "field_prize";
+        return "field_prize";
       case "field_foursomeCount":
         return "field_prize";
       case "field_prize":
-        return answers.isTournament ? "finish" : "field_venmo";
-      case "field_venmo":
-        return "field_players";
+        return answers.isTournament ? "finish" : "field_players";
       case "field_players":
         return "finish";
       default:
@@ -7025,7 +7023,7 @@ export default function GolfScorecard() {
   // that is an approximation, since the total step count isn't knowable
   // until enough questions are answered.
   function wizardProgress() {
-    const roundFields = ["field_name", "field_course", "field_limits", "field_prize", "field_venmo", "field_players"];
+    const roundFields = ["field_name", "field_course", "field_limits", "field_prize", "field_players"];
     const tournamentFields = ["field_name", "field_course", "field_limits", "field_foursomeCount", "field_prize"];
     const fields = wizardAnswers.isTournament ? tournamentFields : roundFields;
     const fieldIdx = fields.indexOf(wizardStepId);
@@ -13880,30 +13878,39 @@ function computeMatchPlayResult(round, computed) {
 
           {wizardStepId === "field_prize" && (
             <div className="gsc-card">
-              {gameKey === "dstreet" || gameKey === "ponto" ? (
-                <>
-                  <div className="gsc-label" style={{ marginBottom: 6, fontSize: 16 }}>Stakes per skin, per player? (optional)</div>
-                  <div style={{ fontSize: 12, color: "#8a8a80", marginBottom: 10 }}>
-                    For every skin won, whoever won it collects this amount from everyone else - carried-over skins count as multiple. Leave blank to just play for points, no money tracked.
-                  </div>
-                  <div style={{ position: "relative" }}>
-                    <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#6b6b63", fontSize: 15, pointerEvents: "none" }}>$</span>
+              {!cfg.nassau &&
+                (gameKey === "dstreet" || gameKey === "ponto" ? (
+                  <>
+                    <div className="gsc-label" style={{ marginBottom: 6, fontSize: 16 }}>Stakes per skin, per player? (optional)</div>
+                    <div style={{ fontSize: 12, color: "#8a8a80", marginBottom: 10 }}>
+                      For every skin won, whoever won it collects this amount from everyone else - carried-over skins count as multiple. Leave blank to just play for points, no money tracked.
+                    </div>
+                    <div style={{ position: "relative", marginBottom: 14 }}>
+                      <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#6b6b63", fontSize: 15, pointerEvents: "none" }}>$</span>
+                      <input
+                        className="gsc-input"
+                        style={{ paddingLeft: 24 }}
+                        inputMode="decimal"
+                        placeholder="0.50"
+                        value={activeCfg.skinStake || ""}
+                        onChange={(e) => setActiveCfg({ ...activeCfg, skinStake: e.target.value })}
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="gsc-label" style={{ marginBottom: 10, fontSize: 16 }}>What's the prize for winning? (optional)</div>
                     <input
                       className="gsc-input"
-                      style={{ paddingLeft: 24 }}
-                      inputMode="decimal"
-                      placeholder="0.50"
-                      value={activeCfg.skinStake || ""}
-                      onChange={(e) => setActiveCfg({ ...activeCfg, skinStake: e.target.value })}
+                      style={{ marginBottom: 14 }}
+                      placeholder="e.g. Losers buy winners a drink at the 19th hole"
+                      value={activeCfg.prize}
+                      onChange={(e) => setActiveCfg({ ...activeCfg, prize: e.target.value })}
                     />
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="gsc-label" style={{ marginBottom: 10, fontSize: 16 }}>What's the prize for winning? (optional)</div>
-                  <input className="gsc-input" placeholder="e.g. Losers buy winners a drink at the 19th hole" value={activeCfg.prize} onChange={(e) => setActiveCfg({ ...activeCfg, prize: e.target.value })} />
-                </>
-              )}
+                  </>
+                ))}
+              <div className="gsc-label" style={{ marginBottom: 10, fontSize: 16 }}>Venmo handle for settling up? (optional)</div>
+              <input className="gsc-input" placeholder="@your-venmo" value={cfg.venmo || ""} onChange={(e) => setCfg({ ...cfg, venmo: e.target.value })} />
               <button
                 className="gsc-btn gsc-btn-primary"
                 style={{ width: "100%", marginTop: 14 }}
@@ -13916,32 +13923,9 @@ function computeMatchPlayResult(round, computed) {
             </div>
           )}
 
-          {wizardStepId === "field_venmo" && (
-            <div className="gsc-card">
-              <div className="gsc-label" style={{ marginBottom: 10, fontSize: 16 }}>Venmo handle for settling up? (optional)</div>
-              <input className="gsc-input" placeholder="@your-venmo" value={cfg.venmo || ""} onChange={(e) => setCfg({ ...cfg, venmo: e.target.value })} />
-              <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 14 }} onClick={() => wizardGoNext("field_venmo", {})}>
-                Continue
-              </button>
-            </div>
-          )}
-
           {wizardStepId === "field_players" && (
             <div className="gsc-card">
               <div className="gsc-label" style={{ marginBottom: 10, fontSize: 16 }}>Who's playing? Add names and handicaps (optional)</div>
-              {session && (
-                <button className="gsc-link" style={{ fontSize: 13, fontWeight: 700, marginBottom: 10, display: "inline-block" }} onClick={() => openGroupFillPicker("players")}>
-                  {"\u{1F465}"} Fill players from a group
-                </button>
-              )}
-              {!session && (
-                <button
-                  onClick={() => goToScreen("login")}
-                  style={{ display: "block", width: "100%", textAlign: "left", fontSize: 12, color: "#6b6b63", padding: "8px 10px", background: "#F8F1E4", border: "none", borderRadius: 8, cursor: "pointer", marginBottom: 10 }}
-                >
-                  {"\u{1F465}"} Log in to unlock one-tap group and player adding. <span style={{ textDecoration: "underline", fontWeight: 700 }}>Tap to log in</span>
-                </button>
-              )}
               <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 10, fontWeight: 700 }}>
                 Tap the circle next to a player's name to pick a fun avatar (optional).
               </div>
@@ -14255,11 +14239,6 @@ function computeMatchPlayResult(round, computed) {
 
           <div className="gsc-card">
             <div className="gsc-label" style={{ marginBottom: 10 }}>Players</div>
-            {session && (
-              <button className="gsc-link" style={{ fontSize: 13, fontWeight: 700, marginBottom: 10, display: "inline-block" }} onClick={() => openGroupFillPicker("players")}>
-                {"\u{1F465}"} Fill players from a group
-              </button>
-            )}
             <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 10 }}>
               1-4 players - add or remove below to match who's actually playing.
             </div>
@@ -15014,19 +14993,6 @@ function computeMatchPlayResult(round, computed) {
 
           <div className="gsc-card">
             <div className="gsc-label" style={{ marginBottom: 10 }}>Players Names and Handicaps (Optional)</div>
-            {session && (
-              <button className="gsc-link" style={{ fontSize: 13, fontWeight: 700, marginBottom: 10, display: "inline-block" }} onClick={() => openGroupFillPicker("players")}>
-                {"\u{1F465}"} Fill players from a group
-              </button>
-            )}
-            {!session && (
-              <button
-                onClick={() => goToScreen("login")}
-                style={{ display: "block", width: "100%", textAlign: "left", fontSize: 12, color: "#6b6b63", padding: "8px 10px", background: "#F8F1E4", border: "none", borderRadius: 8, cursor: "pointer", marginBottom: 10 }}
-              >
-                {"\u{1F465}"} Log in to unlock one-tap group and player adding. <span style={{ textDecoration: "underline", fontWeight: 700 }}>Tap to log in</span>
-              </button>
-            )}
             {(gameKey === "swami" || gameKey === "dstreet" || gameKey === "pontobango" || gameKey === "individualputts" || gameKey === "stableford") && (
               <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 10 }}>
                 This format supports {gameKey === "pontobango" || gameKey === "individualputts" ? "2-4" : "1-4"} players - add or remove players below to match who's actually playing.
