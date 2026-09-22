@@ -3605,52 +3605,62 @@ export default function GolfScorecard() {
     }
     setPostRoundGroupBusy(true);
     setPostRoundGroupErr("");
-    const linkedPlayers = r.players.filter((p) => p.user_id);
-    const code = genCode();
-    const { error: groupErr } = await withJwtRetry(() =>
-      supabase.from("groups").insert({ id: code, name, avatar: r.avatar || "", created_by: session.user.id })
-    );
-    if (groupErr) {
+    // Wrapped in try/finally so postRoundGroupBusy is guaranteed to
+    // reset no matter what happens below - including any error this
+    // hasn't specifically anticipated - rather than depending on every
+    // individual code path remembering to reset it. A prior version of
+    // this function had exactly that problem: an unexpected error could
+    // leave the button permanently stuck showing "Creating..." with no
+    // way to recover short of leaving the screen.
+    try {
+      const linkedPlayers = r.players.filter((p) => p.user_id);
+      const code = genCode();
+      const { error: groupErr } = await withJwtRetry(() =>
+        supabase.from("groups").insert({ id: code, name, avatar: r.avatar || "", created_by: session.user.id })
+      );
+      if (groupErr) {
+        setPostRoundGroupErr(`Couldn't create the group (${groupErr.message}).`);
+        return;
+      }
+      // Only ever inserts a group_members row for the current session's
+      // own user_id - same as every other group-creation path in the
+      // app. Directly inserting rows for other players' user_ids here
+      // used to hang indefinitely, since the RLS policy on this table
+      // only permits inserting your own membership row, not someone
+      // else's. Other linked players join with the code below instead,
+      // the same way anyone joins any group.
+      const { error: memErr } = await withJwtRetry(() => supabase.from("group_members").insert({ group_id: code, user_id: session.user.id }));
+      if (memErr) {
+        setPostRoundGroupErr(`Couldn't create the group (${memErr.message}).`);
+        return;
+      }
+      // Pre-syncs a leaderboard_stats row with a real name for every
+      // linked player in this round, not just the creator - without
+      // this, anyone who joins later before ever visiting their own
+      // stats page would show up as the generic "Golfer" placeholder to
+      // everyone else in the group. Uses each player's name as entered
+      // in this round (the best information actually available here),
+      // same reasoning as the single-user version of this fix used
+      // elsewhere. This upserts by user_id, not a group_members insert,
+      // so it isn't subject to the same restriction above.
+      withJwtRetry(() =>
+        supabase
+          .from("leaderboard_stats")
+          .upsert(
+            linkedPlayers.map((p) => ({ user_id: p.user_id, display_name: p.name || "Golfer" })),
+            { onConflict: "user_id", ignoreDuplicates: false }
+          )
+      ).then(({ error: lbError }) => {
+        if (lbError) console.warn("Couldn't sync leaderboard names:", lbError.message);
+      });
+      setPostRoundGroupCreated(true);
+      setPostRoundGroupCode(code);
+      loadMyGroups();
+    } catch (e) {
+      setPostRoundGroupErr(`Couldn't create the group (${(e && e.message) || "something went wrong"}).`);
+    } finally {
       setPostRoundGroupBusy(false);
-      setPostRoundGroupErr(`Couldn't create the group (${groupErr.message}).`);
-      return;
     }
-    // Only ever inserts a group_members row for the current session's
-    // own user_id - same as every other group-creation path in the
-    // app. Directly inserting rows for other players' user_ids here
-    // used to hang indefinitely, since the RLS policy on this table
-    // only permits inserting your own membership row, not someone
-    // else's. Other linked players join with the code below instead,
-    // the same way anyone joins any group.
-    const { error: memErr } = await withJwtRetry(() => supabase.from("group_members").insert({ group_id: code, user_id: session.user.id }));
-    if (memErr) {
-      setPostRoundGroupBusy(false);
-      setPostRoundGroupErr(`Couldn't create the group (${memErr.message}).`);
-      return;
-    }
-    // Pre-syncs a leaderboard_stats row with a real name for every
-    // linked player in this round, not just the creator - without
-    // this, anyone who joins later before ever visiting their own
-    // stats page would show up as the generic "Golfer" placeholder to
-    // everyone else in the group. Uses each player's name as entered
-    // in this round (the best information actually available here),
-    // same reasoning as the single-user version of this fix used
-    // elsewhere. This upserts by user_id, not a group_members insert,
-    // so it isn't subject to the same restriction above.
-    withJwtRetry(() =>
-      supabase
-        .from("leaderboard_stats")
-        .upsert(
-          linkedPlayers.map((p) => ({ user_id: p.user_id, display_name: p.name || "Golfer" })),
-          { onConflict: "user_id", ignoreDuplicates: false }
-        )
-    ).then(({ error: lbError }) => {
-      if (lbError) console.warn("Couldn't sync leaderboard names:", lbError.message);
-    });
-    setPostRoundGroupBusy(false);
-    setPostRoundGroupCreated(true);
-    setPostRoundGroupCode(code);
-    loadMyGroups();
   }
 
   async function joinGroup() {
@@ -5746,6 +5756,7 @@ export default function GolfScorecard() {
     setPostRoundGroupCreated(false);
     setPostRoundGroupDismissed(false);
     setPostRoundGroupCode("");
+    setPostRoundGroupBusy(false);
   }, [round && round.id]);
 
   // If a course was already picked while logged out, GPS couldn't fetch
@@ -16580,7 +16591,7 @@ function computeMatchPlayResult(round, computed) {
                 </div>
                 <div className="gsc-row">
                   <input className="gsc-input" placeholder="Group name" value={postRoundGroupName} onChange={(e) => setPostRoundGroupName(e.target.value)} />
-                  <button className="gsc-btn gsc-btn-primary" style={{ flex: "0 0 auto" }} disabled={postRoundGroupBusy || !postRoundGroupName.trim()} onClick={createGroupFromRound}>
+                  <button className="gsc-btn gsc-btn-primary" style={{ flex: "0 0 auto" }} disabled={postRoundGroupBusy || !postRoundGroupName.trim()} onClick={() => createGroupFromRound()}>
                     {postRoundGroupBusy ? "Creating..." : "Create"}
                   </button>
                 </div>
