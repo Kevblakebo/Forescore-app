@@ -11152,8 +11152,15 @@ function computeMatchPlayResult(round, computed) {
                 );
               })}
             </div>
+          </div>
 
-            <div className="gsc-label" style={{ marginTop: 14, marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Team Game Formats</div>
+          <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+              <span style={{ fontSize: 18 }}>{"\u26F3"}</span>
+              <div style={{ fontWeight: 800, fontSize: 17, color: "#8a6a2f" }}>Start a New Round</div>
+            </div>
+
+            <div className="gsc-label" style={{ marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Team Game Formats</div>
             <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>2 vs 2</div>
             <div style={{ display: "flex", overflowX: "auto", gap: 10, paddingBottom: 6, WebkitOverflowScrolling: "touch" }}>
             {["teamstrokes", "ponto", "matchplayfourball", "teamputts", "beachside", "seabluffe", "moonlightwolf", "vegas", "teamoceans11"]
