@@ -708,8 +708,12 @@ const GAMES = {
   },
   matchplayfourball: {
     name: "Team Match Play",
+    tournamentName: "Team Match Play Tournament",
     tag: "Team head-to-head, 2 vs 2 - exactly 4 players",
+    tournamentTag: "Multiple 2 vs 2 matches, all in one shared tournament",
     desc: "Team match play, better-ball style - two 2-person teams go head-to-head, each hole decided by whichever side's better net score (between its own two players) is lower. Winning, losing, or halving each hole is tracked just like Individual Match Play, including a match that can end before the 18th hole.",
+    tournamentDesc: "Runs Team Match Play as a tournament - add as many 2-on-2 matches as you want, all under one shared event with a single leaderboard. Each match is its own, independent hole-by-hole contest, decided by better ball between the two partners, so one match's outcome never affects any other's.",
+    tournamentWhyPlay: "Running Four-Ball as a tournament captures how the format is actually played at events like the Ryder Cup - several pairs going head-to-head at once, all under one shared event, with no bracket or advancement to worry about. Every match is entirely its own contest, decided hole by hole, so a lopsided match at one table never affects anyone else's - and with everyone's status visible in one place, it's easy to see how the whole group is doing without having to track down each pair individually. It's a natural fit for a club outing or group event where several pairs want real head-to-head competition happening side by side.",
     rotates: false,
     hasScore: true,
     hasPutts: true,
@@ -735,6 +739,27 @@ const GAMES = {
       "Strokes max: to be agreed on prior to round.",
       "Putts max: to be agreed on prior to round.",
       "Mulligans: to be agreed on prior to round.",
+      "Play all OB shots per USGA Rules.",
+      "Must putt all the way into the hole.",
+      "Flagstick can stay in.",
+      "Putts start once on the putting green.",
+    ],
+    tournamentRules: [
+      "A tournament made up of any number of 2 vs 2 matches, all sharing one event and one leaderboard.",
+      "Each match is entirely its own contest between its 2 fixed teams - the outcome of one match never affects any other match in the tournament.",
+      {
+        text: "Within a match, each hole is its own contest, decided by better ball:",
+        sub: [
+          "Each side's score for the hole is whichever of its own two players has the lower net score",
+          "The side with the lower of those two better-ball scores wins the hole - equal scores halve it, nobody wins",
+        ],
+      },
+      "A match is tracked hole by hole as holes won, not total strokes - a big blow-up hole only ever costs that team that one hole, since a strong score from either partner still counts.",
+      "A match ends the moment a team is ahead by more holes than remain to be played - for example, 3 up with only 2 holes left ends the match \"3 and 2.\" The group can still keep entering scores for fun if they'd like to play out the full round.",
+      "If a match is still all square after 18 holes, it's declared halved - this app doesn't currently support extra playoff holes.",
+      "Per-hole handicapping (net score per hole) is defaulted to On for every match, but can be turned off in game scoring settings. Handicap strokes are based on each player's own handicap, relative to the lowest handicap among that match's own 4 players.",
+      "Every player in a match can enter scores by default - the organizer can narrow this down to one or more specific captains per match if they'd rather restrict who can edit.",
+      "Putts are tracked but don't affect who wins any match.",
       "Play all OB shots per USGA Rules.",
       "Must putt all the way into the hole.",
       "Flagstick can stay in.",
@@ -829,7 +854,7 @@ const VIBE_GAME_MAP = {
   tournament: {
     simple: "tourneygg",
     mixedSkill: ["avoscramble", "tourneybb"],
-    highDrama: ["tourneybb", "matchplay"],
+    highDrama: ["tourneybb", "matchplay", "matchplayfourball"],
   },
 };
 
@@ -1375,12 +1400,12 @@ const TOURNAMENT_PREFIX = "gsc-tournament:";
 // Explicit order (not auto-derived from GAMES) so display order is
 // deliberate and controllable - remember to add any new tournamentOnly
 // game here too, or it won't show up in the Tournament Game Formats list.
-const TOURNAMENT_GAME_KEYS = ["avoscramble", "tourneybb", "tourneygg", "matchplay"];
+const TOURNAMENT_GAME_KEYS = ["avoscramble", "tourneybb", "tourneygg", "matchplay", "matchplayfourball"];
 // Games playable as both a regular, standalone round AND, separately, as
 // a tournament - unlike the tournament-only games above, one homepage
 // tile can't route to both actions, so these get a second, dedicated
 // tournament tile alongside their existing regular-round one.
-const DUAL_TOURNAMENT_TILE_KEYS = ["matchplay"];
+const DUAL_TOURNAMENT_TILE_KEYS = ["matchplay", "matchplayfourball"];
 
 function genCode() {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -10760,10 +10785,11 @@ function computeMatchPlayResult(round, computed) {
               const tourneyOnlyStartIdx = baseKeys.indexOf("avoscramble");
               const individualKeys = baseKeys.slice(0, 6);
               const teamKeys = baseKeys.slice(6, tourneyOnlyStartIdx);
-              // Match Play Tournament is grouped with the other tournament-only
-              // tiles here, right after Scramble Tournament, rather than
-              // inserted before them - it's the one dual-purpose game among
-              // otherwise tournament-only tiles in this section.
+              // Match Play Tournament and Team Match Play Tournament are
+              // grouped with the other tournament-only tiles here, right
+              // after Scramble Tournament, rather than inserted before them -
+              // they're the dual-purpose games among otherwise
+              // tournament-only tiles in this section.
               const tournamentEntries = [
                 { key: "avoscramble", isTournament: false },
                 ...DUAL_TOURNAMENT_TILE_KEYS.map((key) => ({ key, isTournament: true })),
@@ -12438,6 +12464,14 @@ function computeMatchPlayResult(round, computed) {
                 </p>
                 <p style={{ margin: 0 }}>
                   Running Individual Match Play as a tournament captures how singles are actually played at events like the Ryder Cup - a whole bracket of 1-on-1 matches going at once, all under one shared event, with no advancement to worry about. Every match is entirely its own contest, decided hole by hole, so a blowout at one match never affects anyone else's - and with everyone's status visible in one place, it's easy to see how the whole group is doing without having to track down each pairing individually. It's a natural fit for a club outing or group event where everyone wants real, personal head-to-head bragging rights, not just a shared team result.
+                </p>
+              </div>
+              <div style={{ marginBottom: 20 }}>
+                <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px", fontSize: 14 }}>
+                  {"\u{1F93A}"} Team Match Play Tournament
+                </p>
+                <p style={{ margin: 0 }}>
+                  Running Four-Ball as a tournament captures how the format is actually played at events like the Ryder Cup - several pairs going head-to-head at once, all under one shared event, with no bracket or advancement to worry about. Every match is entirely its own contest, decided hole by hole, so a lopsided match at one table never affects anyone else's - and with everyone's status visible in one place, it's easy to see how the whole group is doing without having to track down each pair individually. It's a natural fit for a club outing or group event where several pairs want real head-to-head competition happening side by side.
                 </p>
               </div>
               <div style={{ marginBottom: 20 }}>
