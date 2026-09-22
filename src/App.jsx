@@ -6011,10 +6011,30 @@ export default function GolfScorecard() {
     return !!session && session.user.id === t.organizerId;
   }
 
-  function resumeActiveRound() {
-    setRound(activeRound);
-    setGameKey(activeRound.game);
-    setHoleIdx(firstOpenHole(activeRound));
+  async function resumeActiveRound() {
+    setBusy(true);
+    // Fetches the genuinely current shared state before deciding which
+    // hole to land on and what to show - activeRound is only ever this
+    // device's last-known snapshot, which can be many minutes stale if
+    // this device was away while others kept entering scores. Using it
+    // directly here was exactly what caused landing on an
+    // already-completed hole, showing scores as still missing when
+    // they'd actually already been entered by someone else.
+    let fresh = activeRound;
+    if (supabase && activeRound && activeRound.id) {
+      try {
+        const { data: row } = await supabase.from("kv_store").select("value").eq("key", `golfround:${activeRound.id}`).maybeSingle();
+        if (row && row.value) fresh = JSON.parse(row.value);
+      } catch (e) {
+        // Fetch failed (offline, etc.) - fall back to the local
+        // snapshot below rather than leaving the screen stuck loading.
+      }
+    }
+    setBusy(false);
+    setRound(fresh);
+    setGameKey(fresh.game);
+    setHoleIdx(firstOpenHole(fresh));
+    if (fresh !== activeRound) setActiveRound(fresh);
     goToScreen("card");
   }
 
@@ -8415,6 +8435,52 @@ export default function GolfScorecard() {
     setClaimSlotDismissed(true);
   }
 
+  // Merges r (what's about to be saved) on top of current (the server's
+  // actual, latest state right now) - never the reverse. For scores
+  // specifically, this is cell by cell: wherever current already has a
+  // non-empty value for a given hole/player/field, that value always
+  // wins, no matter what r has there. r's value only ever gets used to
+  // fill a cell current doesn't already have. This is deliberately
+  // field-agnostic (not hardcoded to just strokes/putts), so it equally
+  // protects any other per-entry field a game stores, like Bingo Bango
+  // Bongo points. Mulligans-used counts only ever increase during play,
+  // so those are merged by taking whichever side used more, per player
+  // per segment - never a straight "one side's array wins" that could
+  // undo a mulligan someone already spent. Everything outside these two
+  // fields (players, cfg, etc.) comes from r, since those change far
+  // less often mid-round and the caller usually has a specific, genuine
+  // reason to be setting them.
+  function mergeRoundForSafeSave(current, r) {
+    const mergedScores = {};
+    for (let h = 0; h < 18; h++) {
+      const currentHole = (current.scores && current.scores[h]) || {};
+      const rHole = (r.scores && r.scores[h]) || {};
+      const holeResult = {};
+      const allPlayerIdxs = new Set([...Object.keys(currentHole), ...Object.keys(rHole)]);
+      for (const pi of allPlayerIdxs) {
+        const currentEntry = currentHole[pi] || {};
+        const rEntry = rHole[pi] || {};
+        const allFields = new Set([...Object.keys(currentEntry), ...Object.keys(rEntry)]);
+        const mergedEntry = {};
+        for (const field of allFields) {
+          const currentVal = currentEntry[field];
+          const currentHasValue = currentVal != null && currentVal !== "";
+          mergedEntry[field] = currentHasValue ? currentVal : rEntry[field];
+        }
+        holeResult[pi] = mergedEntry;
+      }
+      mergedScores[h] = holeResult;
+    }
+    let mergedMulligans = r.bonusMulligans;
+    if (Array.isArray(current.bonusMulligans) && Array.isArray(r.bonusMulligans)) {
+      mergedMulligans = r.bonusMulligans.map((rSegs, pi) => {
+        const currentSegs = current.bonusMulligans[pi] || [];
+        return (rSegs || []).map((rVal, si) => Math.max(Number(rVal) || 0, Number(currentSegs[si]) || 0));
+      });
+    }
+    return { ...r, scores: mergedScores, bonusMulligans: mergedMulligans };
+  }
+
   const saveRound = useCallback(async (r) => {
     // Written synchronously, immediately, before anything network-
     // dependent below - this is the one part of saving that's genuinely
@@ -8436,20 +8502,88 @@ export default function GolfScorecard() {
       // every tap. Wait for a manual retry instead.
       return;
     }
-    const complete = isRoundDone(r);
-    const writes = [storageSet(`golfround:${r.id}`, JSON.stringify(r), true)];
-    if (!complete) {
-      // A finished round should never become (or stay) the "in progress"
-      // pointer - the explicit "Finish & exit" flow already clears this
-      // pointer on its own, so this is purely about not re-writing a
-      // stale, already-done round back into it any other time saveRound
-      // gets called (e.g. just glancing at a finished round from stats).
-      writes.push(storageSet(ACTIVE_KEY, JSON.stringify(r), false));
+    // Fixes a real, confirmed bug: this function's callers (loading a
+    // round, resuming after being away, recovering an offline-only
+    // local backup, claiming a player slot, joining by code) don't
+    // always have the genuinely latest shared data in hand - r can be
+    // an entire round's worth of state that's minutes old. Previously
+    // this blindly overwrote the shared round with r regardless,
+    // which could and did wipe out real scores other players/devices
+    // had entered in the meantime, since whichever save landed last
+    // completely replaced everything. Now this fetches the actual
+    // current server state right before writing and safely merges r on
+    // top of it (see mergeRoundForSafeSave) rather than replacing it
+    // outright, retrying if someone else's save lands in between - same
+    // safe pattern saveRoundPatch already uses for live score entry,
+    // now applied here too.
+    let sharedOk = false;
+    let finalRound = r;
+    if (supabase) {
+      const key = `golfround:${r.id}`;
+      for (let attempt = 0; attempt < 12; attempt++) {
+        const { data: row, error: fetchErr } = await supabase.from("kv_store").select("value, version").eq("key", key).maybeSingle();
+        if (fetchErr) break; // Genuine error - fall through to the whole-object fallback below
+        if (!row) {
+          // No existing server row at all - nothing to merge against,
+          // so r is written as-is (this is the normal, expected path
+          // for a genuinely brand-new round that's never been saved).
+          const { error: insertErr } = await withJwtRetry(() =>
+            supabase.from("kv_store").insert({ key, value: JSON.stringify(r), version: 1 })
+          );
+          if (!insertErr) {
+            sharedOk = true;
+            finalRound = r;
+          }
+          break;
+        }
+        let current;
+        try {
+          current = JSON.parse(row.value);
+        } catch (e) {
+          break; // Corrupted data on the server - don't make it worse, fall through to fallback
+        }
+        const merged = mergeRoundForSafeSave(current, r);
+        finalRound = merged;
+        const { data: updated, error: updateErr } = await withJwtRetry(() =>
+          supabase
+            .from("kv_store")
+            .update({ value: JSON.stringify(merged), version: row.version + 1, updated_at: new Date().toISOString() })
+            .eq("key", key)
+            .eq("version", row.version)
+            .select()
+        );
+        if (updateErr) break; // Genuine error, not just a conflict - fall through to fallback
+        if (updated && updated.length > 0) {
+          sharedOk = true;
+          break; // Success
+        }
+        // 0 rows affected means someone else's save landed in between -
+        // loop again to re-fetch their now-current data and re-merge
+        // on top of it, rather than losing this change or overwriting
+        // theirs.
+        await sleep(120 + Math.random() * 180);
+      }
     }
-    const results = await Promise.all(writes);
-    const sharedRes = results[0];
-    const personalRes = results[1] || { ok: true };
-    if (sharedRes.ok) {
+    if (!sharedOk) {
+      // Fallback for: every retry genuinely exhausted under extreme
+      // contention, or Supabase isn't configured at all (a local-only
+      // session). The old, whole-object write is still the right
+      // fallback here - something saving is better than nothing saving
+      // at all - but this path is now rare, since the merge above
+      // handles the normal case safely.
+      const res = await storageSet(`golfround:${r.id}`, JSON.stringify(r), true);
+      sharedOk = res.ok;
+      finalRound = r;
+    } else if (finalRound !== r) {
+      // The merged, server-confirmed result may include scores from
+      // another device that this save's own r didn't have - reflect
+      // that in local state right away rather than waiting for a
+      // separate poll to pick it up, same reasoning as saveRoundPatch.
+      setRound((cur) => (cur && cur.id === finalRound.id ? finalRound : cur));
+    }
+    const complete = isRoundDone(finalRound);
+    const personalRes = complete ? { ok: true } : await storageSet(ACTIVE_KEY, JSON.stringify(finalRound), false);
+    if (sharedOk) {
       // The shared round data is the source of truth once it's actually
       // synced - the local backup was only ever standing in for it, so
       // there's no reason to keep it around and let these accumulate
@@ -8458,11 +8592,11 @@ export default function GolfScorecard() {
         window.localStorage.removeItem(`gsc-local-backup:${r.id}`);
       } catch (e) {}
     }
-    if (!sharedRes.ok && !personalRes.ok) {
+    if (!sharedOk && !personalRes.ok) {
       failCountRef.current += 1;
       setStorageBroken(true);
       setStorageWarning("");
-    } else if (!sharedRes.ok) {
+    } else if (!sharedOk) {
       failCountRef.current = 0;
       setStorageBroken(false);
       setStorageWarning(`Saved on this device, but group sync isn't working right now.`);
