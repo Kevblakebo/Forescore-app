@@ -368,6 +368,34 @@ const GAMES = {
       "Putts start once on the putting green.",
     ],
   },
+  teamoceans11: {
+    name: "Team Oceans 11",
+    tag: "Fixed teams, best 11 holes - 4 players",
+    desc: "A 4-person, 2 vs 2 team format built entirely around Oceans 11 scoring. Each player plays their own ball and picks their own best 11 holes as the round goes - lowest combined total across both partners' selected holes wins. No other scoring method is available for this format.",
+    rotates: false,
+    hasScore: true,
+    hasPutts: true,
+    totalScoring: true,
+    rankByTeamTotal: true,
+    defaults: { maxOver: "", maxPutts: "", mulliganSegment: "", mulliganChallenge: "", prize: "", netScoring: true, oceans11: true },
+    rules: [
+      "4-person, 2 vs 2 team format, built entirely around Oceans 11 scoring - no other scoring method is available here.",
+      "Each player plays their own ball and records their own strokes and putts, same as Team Stroke Play.",
+      "As the round is played, each player individually chooses which 11 of their own 18 holes to \"take\" toward their side of the team's total - the other 7 holes played don't count at all.",
+      "A team's total is both partners' own selected-11 totals added together - lowest combined total wins.",
+      "Choices can be changed anytime as the round is played, for either player, right up until they've locked in all 11 of their own holes.",
+      "Prize: to be agreed on prior to round.",
+      "Strokes max: to be agreed on prior to round.",
+      "Putts max: to be agreed on prior to round.",
+      "Mulligans: to be agreed on prior to round.",
+      "Play all OB shots per USGA Rules.",
+      "Must putt all the way into the hole.",
+      "Flagstick can stay in.",
+      "Putts start once on the putting green.",
+      "Per-hole handicapping (net score per hole) is defaulted to On, but can be turned off in game scoring settings.",
+      "Great for mixed handicaps.",
+    ],
+  },
   beachside: {
     name: "Team Best Ball",
     tag: "Best-ball teams - 4 players",
@@ -806,12 +834,12 @@ const GAMES = {
 const GAME_TILE_STYLE = (() => {
   const order = [
     "swami", "dstreet", "matchplay", "individualputts", "pontobango", "stableford",
-    "teamstrokes", "ponto", "matchplayfourball", "teamputts", "beachside", "seabluffe", "moonlightwolf", "vegas",
+    "teamstrokes", "ponto", "matchplayfourball", "teamputts", "beachside", "seabluffe", "moonlightwolf", "vegas", "teamoceans11",
     "avoscramble", "tourneybb", "tourneygg", "altshot",
   ];
   const emoji = {
     dstreet: "\u{1F4B0}", swami: "\u26F3", individualputts: "\u{1F3AF}", pontobango: "\u{1F3B2}", stableford: "\u{1F4C8}", matchplay: "\u2694\uFE0F",
-    ponto: "\u{1F91D}", teamstrokes: "\u{1F3CC}\u{FE0F}", teamputts: "\u{1F573}\u{FE0F}", beachside: "\u2B50", seabluffe: "\u{1F504}", moonlightwolf: "\u{1F43A}", vegas: "\u{1F3B0}", matchplayfourball: "\u{1F93A}",
+    ponto: "\u{1F91D}", teamstrokes: "\u{1F3CC}\u{FE0F}", teamputts: "\u{1F573}\u{FE0F}", beachside: "\u2B50", seabluffe: "\u{1F504}", moonlightwolf: "\u{1F43A}", vegas: "\u{1F3B0}", matchplayfourball: "\u{1F93A}", teamoceans11: "\u{1F30A}",
     avoscramble: "\u{1F500}", tourneybb: "\u{1F3C6}", tourneygg: "\u{1F3C5}", altshot: "\u{1F501}",
   };
   const colors = ["#1B4332", "#3A7352", "#B08D57", "#2A5B42", "#8A6A2F", "#719A82"];
@@ -835,6 +863,7 @@ const WHY_PLAY = {
   moonlightwolf: "Wolf appeals to golfers of every skill level because it blends individual play with team dynamics - letting someone showcase their own game when they're the Wolf, while also rewarding smart, in-the-moment strategy about when to team up versus go it alone. It keeps players engaged on every single hole, since each one presents a brand-new decision about whether to partner up or bet on yourself. The lone-wolf option is what gives it real teeth - going alone against the other three isn't easy, but the risk-reward of pulling it off is exactly what makes people love the format.",
   ponto: "Skins is beloved for its simplicity and the competitive edge it adds to every hole, since the focus shifts entirely to who performs best on that specific hole rather than an aggregate score. Ties rolling over to the next hole create real suspense and the potential for big swings in fortune, which is what keeps the format exciting from the first tee to the last green. As a team version, it adds a layer of shared responsibility - winning (or losing) a skin now reflects on the pair, not just one player's day.",
   vegas: "What makes Vegas different is that a team's two scores aren't added together - they're combined into a single two-digit number, meaning a single bad hole can swing the result wildly, and a well-timed birdie can be worth a fortune. That volatility is exactly why it's considered one of the most exciting partner formats in golf - every hole can shift dramatically depending on how the two scores combine. It also rewards genuine teamwork and consistency over raw individual talent, since it's rarely just the best player who wins - it's the pair that best manages the format's ups and downs together.",
+  teamoceans11: "This takes Oceans 11's own hole-by-hole tension - bank a good score now, or hold out hoping for something even better later - and adds a real partner to share it with. Each player is still making that same personal, in-the-moment decision on their own 18 holes, but now it's in service of a shared team total, which turns \"should I take this one\" into a conversation, not just a private call. It's a natural next step for a group that already knows and likes Oceans 11 individually, since it keeps every single hole meaningful for both players without ever turning the round into a simple stroke-count race.",
   beachside: "Best Ball turns an individual sport into something that feels like a team sport - golfers can be bailed out during a rough stretch by a teammate, and everyone stays motivated to contribute since only the best score on the team counts each hole. People love that it lets them focus on their own game while still being part of something bigger - if you have a bad hole, you don't have to dwell on it, knowing your partner might still post a good score for the team.",
   tourneybb: "The same core appeal as Best Ball carries over into a tournament setting, just at a larger scale. It's a format that works cleanly with two, three, or four-person teams, and it's genuinely popular in bigger events because every player still gets to record their own individual score for the day, even while playing as part of a team. It's also a natural fit for events with a wide range of skill levels in the field, since it combines individual accountability with the safety net of a team.",
   tourneygg: "This format works well for larger events for the same reason it works in a smaller group: every player's score genuinely counts toward the team total, so nobody can quietly coast through a round. That mirrors why stroke-based formats resonate broadly in the first place - they reward full-round consistency, and everyone can track exactly how their own game held up. In a tournament setting, that shared stake across a whole team gives teammates a natural reason to encourage (and lightly needle) each other all day.",
@@ -875,7 +904,7 @@ const VIBE_GAME_MAP = {
     // instead of two - team, individual, or Wolf's own team/lone-wolf
     // mix, decided per hole rather than up front.
     maxStrategy: {
-      team: ["teamstrokes", "ponto", "beachside", "matchplayfourball"],
+      team: ["teamoceans11", "ponto", "beachside", "matchplayfourball"],
       individual: ["swami", "dstreet", "individualputts"],
       mixed: "moonlightwolf",
     },
@@ -6473,7 +6502,7 @@ export default function GolfScorecard() {
       //
       // Also compute and save who actually won, right now, using this
       // app's own real, format-specific winner logic - the same logic
-      // that's already correct for every one of the 18 game formats
+      // that's already correct for every one of the 21 game formats
       // (team games, points-based games, stroke play, all of it). Saving
       // the answer here means nothing downstream (including any future
       // server-side stats calculation) ever needs to re-derive "who won"
@@ -7661,7 +7690,7 @@ export default function GolfScorecard() {
     }
     const code = genCode();
     const teams =
-      gameKey === "ponto" || gameKey === "vegas" || gameKey === "beachside" || gameKey === "teamputts" || gameKey === "teamstrokes" || gameKey === "matchplayfourball"
+      gameKey === "ponto" || gameKey === "vegas" || gameKey === "beachside" || gameKey === "teamputts" || gameKey === "teamstrokes" || gameKey === "matchplayfourball" || gameKey === "teamoceans11"
         ? pontoPairing
         : isIndividual
         ? cleanPlayers.map((_, i) => [i]) // individual - each player is their own "team" of one, however many were entered
@@ -9084,13 +9113,22 @@ export default function GolfScorecard() {
     });
   }
 
-  // Same idea as updateTeamHoleEntry, but scoped to just one side's
-  // players instead of the whole round - needed for alternate-shot
-  // formats, where two independent teams each share one score per hole
-  // (not the whole round sharing a single score, the way Scramble does).
-  function updateSideHoleEntry(sidePlayerIdxs, field, value) {
+  // Same "smart default" stepping logic as updateHoleEntryStep (so the
+  // first tap lands on a sensible starting value, like par, rather than
+  // 1), but writing that value to every player on one side (team)
+  // instead of a single player - needed for alternate-shot's shared,
+  // per-team steppers, where two independent teams each share one score
+  // per hole (not the whole round sharing a single score, the way
+  // Scramble's oneTeamScore does).
+  function updateSideHoleEntryStep(sidePlayerIdxs, field, delta, minValue, defaultValue = 0) {
     lastLocalEditRef.current = Date.now();
     const applyPatch = (r) => {
+      const anchorIdx = sidePlayerIdxs[0];
+      const currentEntry = ((r.scores[holeIdx] || {})[anchorIdx]) || {};
+      const current = currentEntry[field];
+      const n = current === "" || current == null ? defaultValue : Number(current);
+      const raw = n + delta;
+      const value = raw < minValue ? "" : raw;
       const next = { ...r, scores: { ...r.scores } };
       const holeScores = { ...(next.scores[holeIdx] || {}) };
       sidePlayerIdxs.forEach((idx) => {
@@ -9797,7 +9835,33 @@ function computeOceans11Results(round, computed) {
   });
 
   const allComplete = rows.every((r) => r.isComplete);
-  return { rows, allComplete };
+
+  // Team-level totals, only for games with genuine multi-player teams
+  // (not swami's individual "team of one" per player) - each partner
+  // still picks their own best 11 holes independently, the same as an
+  // individual Oceans 11 round, but the team's combined total is what's
+  // actually compared against the other team, same as Team Stroke Play
+  // already combines both partners' full totals.
+  let teamRows = null;
+  if (round.teams && round.teams.length >= 2 && round.teams.some((t) => t.length > 1)) {
+    teamRows = round.teams.map((team, teamIdx) => {
+      const memberRows = team.map((pi) => rows.find((r) => r.playerIdx === pi));
+      const total = memberRows.reduce((sum, r) => sum + (r ? r.total : 0), 0);
+      const holesSelected = memberRows.reduce((sum, r) => sum + (r ? r.holesSelected : 0), 0);
+      const isComplete = memberRows.every((r) => r && r.isComplete);
+      const name = team.map((pi) => round.players[pi] && round.players[pi].name).join(" & ");
+      const anySelected = memberRows.some((r) => r && r.holesSelected > 0);
+      return { teamIdx, playerIdxs: team, name, total, holesSelected, isComplete, anySelected };
+    });
+    teamRows.sort((a, b) => {
+      if (!a.anySelected && !b.anySelected) return 0;
+      if (!a.anySelected) return 1;
+      if (!b.anySelected) return -1;
+      return a.total - b.total;
+    });
+  }
+
+  return { rows, allComplete, teamRows };
 }
 
 // Per-skin, per-player stakes for Individual Skins and Team Skins - for
@@ -10669,7 +10733,7 @@ function computeMatchPlayResult(round, computed) {
                 RipScore is the golf app built for every group you play with.
                 <div style={{ margin: "8px 0 0" }}>
                   <div style={{ marginBottom: 4 }}>{"\u{1F465}"} Set Up Your Group Once</div>
-                  <div style={{ marginBottom: 4 }}>{"\u26F3"} 18 Game Formats + Side Games, for Every Kind of Day</div>
+                  <div style={{ marginBottom: 4 }}>{"\u26F3"} 21 Game Formats + Side Games, for Every Kind of Day</div>
                   <div style={{ marginBottom: 4 }}>{"\u{1F4CD}"} Live Distance to the Green GPS</div>
                   <div style={{ marginBottom: 4 }}>{"\u{1F3CC}\u{FE0F}"} Optional Handicapping, Done Right</div>
                   <div style={{ marginBottom: 4 }}>{"\u{1F4CA}"} A Leaderboard Just for Your Group</div>
@@ -10838,15 +10902,18 @@ function computeMatchPlayResult(round, computed) {
               const tourneyOnlyStartIdx = baseKeys.indexOf("avoscramble");
               const individualKeys = baseKeys.slice(0, 6);
               const teamKeys = baseKeys.slice(6, tourneyOnlyStartIdx);
-              // Match Play Tournament and Team Match Play Tournament are
-              // grouped with the other tournament-only tiles here, right
-              // after Scramble Tournament, rather than inserted before them -
-              // they're the dual-purpose games among otherwise
-              // tournament-only tiles in this section.
+              // Explicit order requested for this section: Stroke Play,
+              // Scramble, Best Ball, Match Play, Team Match Play, Foursomes -
+              // not derived from GAME_TILE_STYLE's order like the two
+              // sections above, since this section's order doesn't follow
+              // that list's ordering.
               const tournamentEntries = [
+                { key: "tourneygg", isTournament: false },
                 { key: "avoscramble", isTournament: false },
-                ...DUAL_TOURNAMENT_TILE_KEYS.map((key) => ({ key, isTournament: true })),
-                ...baseKeys.slice(tourneyOnlyStartIdx + 1).map((key) => ({ key, isTournament: false })),
+                { key: "tourneybb", isTournament: false },
+                { key: "matchplay", isTournament: true },
+                { key: "matchplayfourball", isTournament: true },
+                { key: "altshot", isTournament: false },
               ];
               return (
                 <>
@@ -11086,7 +11153,7 @@ function computeMatchPlayResult(round, computed) {
 
             <div className="gsc-label" style={{ marginTop: 14, marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Team Game Formats</div>
             <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>2 vs 2</div>
-            {["teamstrokes", "ponto", "matchplayfourball", "teamputts", "beachside", "seabluffe", "moonlightwolf", "vegas"]
+            {["teamstrokes", "ponto", "matchplayfourball", "teamputts", "beachside", "seabluffe", "moonlightwolf", "vegas", "teamoceans11"]
               .map((key) => [key, GAMES[key]])
               .map(([key, g]) => {
                 const locked = isGameLocked(key);
@@ -11150,7 +11217,13 @@ function computeMatchPlayResult(round, computed) {
             </div>
             <div className="gsc-label" style={{ marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Tournament Game Formats</div>
             <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>Multiple Foursomes</div>
-            {TOURNAMENT_GAME_KEYS.map((key) => {
+            {/* Explicit display order requested for this list: Stroke
+                Play, Scramble, Best Ball, Match Play, Team Match Play,
+                Foursomes - same order as the homepage tournament tiles,
+                not TOURNAMENT_GAME_KEYS' own order (that constant is also
+                used elsewhere as a default fallback game, so its order is
+                left alone). */}
+            {["tourneygg", "avoscramble", "tourneybb", "matchplay", "matchplayfourball", "altshot"].map((key) => {
               const g = GAMES[key];
               const locked = isGameLocked(key);
               return (
@@ -12303,7 +12376,7 @@ function computeMatchPlayResult(round, computed) {
               <div style={{ fontWeight: 800, fontSize: 16, color: "#8a6a2f" }}>Why People Love These Games</div>
             </div>
             <div style={{ fontSize: 13, color: "#4b4b45" }}>
-              What makes each of the 18 formats worth playing, straight from the golfers who love them.
+              What makes each of the 21 formats worth playing, straight from the golfers who love them.
             </div>
             <button className="gsc-link" style={{ marginTop: 8, fontSize: 12 }} onClick={() => goToScreen("whyPlay")}>
               Read more
@@ -12440,7 +12513,7 @@ function computeMatchPlayResult(round, computed) {
                 Save your regular playing partners as a group. Next time you play, fill in everyone's name, avatar, and handicap with one tap - no retyping names round after round.
               </p>
 
-              <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>{"\u26F3"} 18 Game Formats + Side Games, for Every Kind of Day</p>
+              <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>{"\u26F3"} 21 Game Formats + Side Games, for Every Kind of Day</p>
               <p style={{ margin: "0 0 14px" }}>
                 Skins, Wolf, Vegas, Stableford, Bingo Bango Bongo, Best Ball, Round Robin, Match Play, and more - for individuals, teams, and full multi-foursome tournaments. Pick a format, and RipScore keeps score, tracks mulligans, and shows exactly who's winning, hole by hole.
               </p>
@@ -13835,7 +13908,7 @@ function computeMatchPlayResult(round, computed) {
                   )}
                   {activeCfg.oceans11 && (
                     <div style={{ fontSize: 11, color: "#8a8a80", marginTop: 6 }}>
-                      Each player picks their own best 11 holes as they play - lowest total across those 11 wins. Choices can be changed anytime as the round is played.
+                      Each player picks their own best 11 holes as they play - lowest total across those 11 wins.
                     </div>
                   )}
                   {activeCfg.nassau && (
@@ -14482,7 +14555,7 @@ function computeMatchPlayResult(round, computed) {
 
   if (screen === "setup") {
     const g = GAMES[gameKey];
-    const isTeamGame = gameKey === "seabluffe" || gameKey === "ponto" || gameKey === "vegas" || gameKey === "beachside" || gameKey === "teamputts" || gameKey === "teamstrokes" || gameKey === "matchplayfourball";
+    const isTeamGame = gameKey === "seabluffe" || gameKey === "ponto" || gameKey === "vegas" || gameKey === "beachside" || gameKey === "teamputts" || gameKey === "teamstrokes" || gameKey === "matchplayfourball" || gameKey === "teamoceans11";
     return (
       <div className="gsc">
         <style>{STYLE}</style>
@@ -14984,7 +15057,7 @@ function computeMatchPlayResult(round, computed) {
                 )}
                 {cfg.oceans11 && (
                   <div style={{ fontSize: 11, color: "#8a8a80", marginTop: 6 }}>
-                    Each player picks their own best 11 holes as they play - lowest total across those 11 wins. Choices can be changed anytime as the round is played.
+                    Each player picks their own best 11 holes as they play - lowest total across those 11 wins.
                   </div>
                 )}
                 {cfg.nassau && (
@@ -15243,7 +15316,7 @@ function computeMatchPlayResult(round, computed) {
                 Rotation: Holes 1-6 {LETTERS[0]}+{LETTERS[1]} vs {LETTERS[2]}+{LETTERS[3]} - Holes 7-12 {LETTERS[0]}+{LETTERS[2]} vs {LETTERS[1]}+{LETTERS[3]} - Holes 13-18 {LETTERS[0]}+{LETTERS[3]} vs {LETTERS[1]}+{LETTERS[2]}
               </div>
             )}
-            {(gameKey === "ponto" || gameKey === "vegas" || gameKey === "beachside" || gameKey === "teamputts" || gameKey === "teamstrokes" || gameKey === "matchplayfourball" || gameKey === "altshot") && (
+            {(gameKey === "ponto" || gameKey === "vegas" || gameKey === "beachside" || gameKey === "teamputts" || gameKey === "teamstrokes" || gameKey === "matchplayfourball" || gameKey === "altshot" || gameKey === "teamoceans11") && (
               <div style={{ marginTop: 10 }}>
                 <div className="gsc-label">Teams</div>
                 <div className="gsc-row">
@@ -16168,6 +16241,20 @@ function computeMatchPlayResult(round, computed) {
     // lowest total for the whole round.
     if (r && r.cfg.oceans11) {
       const oceans11 = computeOceans11Results(r, c);
+      if (oceans11 && oceans11.teamRows) {
+        // Team game (e.g. Team Oceans 11) - the winning side is whichever
+        // team's combined total (both partners' own selected-11 totals
+        // added together) is lowest, same reasoning as the individual
+        // case below but comparing teams instead of single players.
+        const contenders = oceans11.teamRows.filter((row) => row.anySelected);
+        if (contenders.length > 0) {
+          const bestTotal = contenders[0].total;
+          return contenders
+            .filter((row) => row.total === bestTotal)
+            .flatMap((row) => row.playerIdxs.map((pi) => ({ ...r.players[pi], idx: pi })));
+        }
+        return [];
+      }
       if (oceans11 && oceans11.rows.length > 0) {
         const contenders = oceans11.rows.filter((row) => row.holesSelected > 0);
         if (contenders.length > 0) {
@@ -17248,35 +17335,21 @@ function computeMatchPlayResult(round, computed) {
                       <div>
                         <div style={{ fontSize: 11, color: "#6b6b63", marginBottom: 3, textAlign: "center" }}>STROKES</div>
                         <div className="gsc-stepper">
-                          <button
-                            disabled={sideEntry.strokes === "" || sideEntry.strokes == null}
-                            onClick={() => {
-                              if (sideEntry.strokes === "" || sideEntry.strokes == null) return;
-                              const n = Number(sideEntry.strokes);
-                              updateSideHoleEntry(side, "strokes", n <= 1 ? "" : n - 1);
-                            }}
-                          >
-                            -
-                          </button>
-                          <div className="gsc-stepper-val">{sideEntry.strokes === "" || sideEntry.strokes == null ? "-" : sideEntry.strokes}</div>
-                          <button onClick={() => updateSideHoleEntry(side, "strokes", (Number(sideEntry.strokes) || 0) + 1)}>+</button>
+                          <button onClick={() => updateSideHoleEntryStep(side, "strokes", -1, 1, round.par[holeIdx] - 1)}>-</button>
+                          <div className="gsc-stepper-val" style={sideEntry.strokes === "" || sideEntry.strokes == null ? { opacity: 0.4 } : undefined}>
+                            {sideEntry.strokes === "" || sideEntry.strokes == null ? round.par[holeIdx] - 1 : sideEntry.strokes}
+                          </div>
+                          <button onClick={() => updateSideHoleEntryStep(side, "strokes", 1, 1, round.par[holeIdx] - 1)}>+</button>
                         </div>
                       </div>
                       <div>
                         <div style={{ fontSize: 11, color: "#6b6b63", marginBottom: 3, textAlign: "center" }}>PUTTS</div>
                         <div className="gsc-stepper">
-                          <button
-                            disabled={sideEntry.putts === "" || sideEntry.putts == null}
-                            onClick={() => {
-                              if (sideEntry.putts === "" || sideEntry.putts == null) return;
-                              const n = Number(sideEntry.putts);
-                              updateSideHoleEntry(side, "putts", n <= 0 ? "" : n - 1);
-                            }}
-                          >
-                            -
-                          </button>
-                          <div className="gsc-stepper-val">{sideEntry.putts === "" || sideEntry.putts == null ? "-" : sideEntry.putts}</div>
-                          <button onClick={() => updateSideHoleEntry(side, "putts", (Number(sideEntry.putts) || 0) + 1)}>+</button>
+                          <button onClick={() => updateSideHoleEntryStep(side, "putts", -1, 0, 1)}>-</button>
+                          <div className="gsc-stepper-val" style={sideEntry.putts === "" || sideEntry.putts == null ? { opacity: 0.4 } : undefined}>
+                            {sideEntry.putts === "" || sideEntry.putts == null ? 1 : sideEntry.putts}
+                          </div>
+                          <button onClick={() => updateSideHoleEntryStep(side, "putts", 1, 0, 1)}>+</button>
                         </div>
                       </div>
                     </div>
@@ -17831,22 +17904,26 @@ function computeMatchPlayResult(round, computed) {
             const oceans11 = computeOceans11Results(round, computed);
             if (!oceans11) return null;
             const netLabel = round.cfg.netScoring ? "Net" : "";
+            const displayRows = oceans11.teamRows || oceans11.rows;
+            const selectedCount = (row) => row.holesSelected;
+            const selectedMax = oceans11.teamRows ? 22 : 11;
+            const hasSelection = (row) => (oceans11.teamRows ? row.anySelected : row.holesSelected > 0);
             return (
               <div className="gsc-card" style={{ marginTop: 10 }}>
                 <div className="gsc-label" style={{ marginBottom: 8, fontSize: 15, color: "#1B4332", fontWeight: 800 }}>Oceans 11 Standings</div>
-                {oceans11.rows.map((row, idx) => (
-                  <div key={row.playerIdx} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: idx < oceans11.rows.length - 1 ? "1px solid #eee6cf" : "none" }}>
+                {displayRows.map((row, idx) => (
+                  <div key={oceans11.teamRows ? row.teamIdx : row.playerIdx} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: idx < displayRows.length - 1 ? "1px solid #eee6cf" : "none" }}>
                     <div>
                       <div style={{ fontWeight: 700, fontSize: 13 }}>{row.name || `Player ${idx + 1}`}</div>
-                      <div style={{ fontSize: 11, color: "#8a8a80" }}>{row.holesSelected}/11 selected</div>
+                      <div style={{ fontSize: 11, color: "#8a8a80" }}>{selectedCount(row)}/{selectedMax} selected</div>
                       {oceans11.allComplete && idx === 0 && (
                         <div style={{ marginTop: 3 }}>
                           <span className="gsc-chip gsc-lead">WINNER</span>
                         </div>
                       )}
                     </div>
-                    <div className="gsc-mono" style={{ fontWeight: 700, fontSize: 16, color: row.holesSelected === 0 ? "#8a8a80" : "#1B4332" }}>
-                      {row.holesSelected === 0 ? "-" : `${netLabel} ${row.total}`}
+                    <div className="gsc-mono" style={{ fontWeight: 700, fontSize: 16, color: hasSelection(row) ? "#1B4332" : "#8a8a80" }}>
+                      {hasSelection(row) ? `${netLabel} ${row.total}` : "-"}
                     </div>
                   </div>
                 ))}
