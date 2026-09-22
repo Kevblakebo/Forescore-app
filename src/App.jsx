@@ -766,6 +766,35 @@ const GAMES = {
       "Putts start once on the putting green.",
     ],
   },
+  altshot: {
+    name: "Foursomes (Alternate Shot) Tournament",
+    tag: "Alternate shot, 2 vs 2 - Tournaments only",
+    desc: "A tournament made up of 2 vs 2 alternate-shot matches - the format used for Ryder Cup Foursomes. Each team plays just one ball: partners alternate who hits every shot, including tee shots, which alternate hole to hole. Winning, losing, or halving each hole is tracked the same way as every other match play format here, including a match that can end before the 18th hole.",
+    rotates: false,
+    hasScore: true,
+    hasPutts: true,
+    totalScoring: true,
+    isMatchPlay: true,
+    alternateShot: true,
+    tournamentOnly: true,
+    defaults: { maxOver: "", maxPutts: "", mulliganSegment: "", mulliganChallenge: "", prize: "", netScoring: true },
+    rules: [
+      "A tournament made up of any number of 2 vs 2 alternate-shot matches, all sharing one event and one leaderboard - the format used for Ryder Cup Foursomes.",
+      "Each team plays just one ball the whole hole, not two - partners alternate who hits each shot for their side.",
+      "Tee shots alternate hole to hole between the two partners - whoever didn't tee off hits the team's second shot, and so on, all the way to the hole.",
+      "Each hole is its own contest: whoever's team has the lower net score wins that hole. Equal net scores halve the hole - nobody wins it.",
+      "A match is tracked hole by hole as holes won, not total strokes - a big blow-up hole only ever costs that team that one hole, same as a narrow loss would.",
+      "A match ends the moment a team is ahead by more holes than remain to be played - for example, 3 up with only 2 holes left ends the match \"3 and 2.\" The group can still keep entering scores for fun if they'd like to play out the full round.",
+      "If a match is still all square after 18 holes, it's declared halved - this app doesn't currently support extra playoff holes.",
+      "Per-hole handicapping (net score per hole) is defaulted to On for every match, but can be turned off in game scoring settings. Since each team has just one shared score per hole, handicap strokes are based on the average of that team's own two players' handicaps, relative to the other team.",
+      "Every player in a match can enter scores by default - the organizer can narrow this down to one or more specific captains per match if they'd rather restrict who can edit.",
+      "Putts are tracked as one shared total per team per hole, same as strokes, but don't affect who wins any match.",
+      "Play all OB shots per USGA Rules.",
+      "Must putt all the way into the hole.",
+      "Flagstick can stay in.",
+      "Putts start once on the putting green.",
+    ],
+  },
 };
 
 // Single source of truth for each game's small visual identity (emoji +
@@ -778,12 +807,12 @@ const GAME_TILE_STYLE = (() => {
   const order = [
     "swami", "dstreet", "matchplay", "individualputts", "pontobango", "stableford",
     "teamstrokes", "ponto", "matchplayfourball", "teamputts", "beachside", "seabluffe", "moonlightwolf", "vegas",
-    "avoscramble", "tourneybb", "tourneygg",
+    "avoscramble", "tourneybb", "tourneygg", "altshot",
   ];
   const emoji = {
     dstreet: "\u{1F4B0}", swami: "\u26F3", individualputts: "\u{1F3AF}", pontobango: "\u{1F3B2}", stableford: "\u{1F4C8}", matchplay: "\u2694\uFE0F",
     ponto: "\u{1F91D}", teamstrokes: "\u{1F3CC}\u{FE0F}", teamputts: "\u{1F573}\u{FE0F}", beachside: "\u2B50", seabluffe: "\u{1F504}", moonlightwolf: "\u{1F43A}", vegas: "\u{1F3B0}", matchplayfourball: "\u{1F93A}",
-    avoscramble: "\u{1F500}", tourneybb: "\u{1F3C6}", tourneygg: "\u{1F3C5}",
+    avoscramble: "\u{1F500}", tourneybb: "\u{1F3C6}", tourneygg: "\u{1F3C5}", altshot: "\u{1F501}",
   };
   const colors = ["#1B4332", "#3A7352", "#B08D57", "#2A5B42", "#8A6A2F", "#719A82"];
   const map = {};
@@ -854,7 +883,7 @@ const VIBE_GAME_MAP = {
   tournament: {
     simple: "tourneygg",
     mixedSkill: ["avoscramble", "tourneybb"],
-    highDrama: ["tourneybb", "matchplay", "matchplayfourball"],
+    highDrama: ["tourneybb", "matchplay", "matchplayfourball", "altshot"],
   },
 };
 
@@ -1400,7 +1429,7 @@ const TOURNAMENT_PREFIX = "gsc-tournament:";
 // Explicit order (not auto-derived from GAMES) so display order is
 // deliberate and controllable - remember to add any new tournamentOnly
 // game here too, or it won't show up in the Tournament Game Formats list.
-const TOURNAMENT_GAME_KEYS = ["avoscramble", "tourneybb", "tourneygg", "matchplay", "matchplayfourball"];
+const TOURNAMENT_GAME_KEYS = ["avoscramble", "tourneybb", "tourneygg", "matchplay", "matchplayfourball", "altshot"];
 // Games playable as both a regular, standalone round AND, separately, as
 // a tournament - unlike the tournament-only games above, one homepage
 // tile can't route to both actions, so these get a second, dedicated
@@ -7920,7 +7949,7 @@ export default function GolfScorecard() {
         course: tournamentCourseName.trim(),
         cfg: cleanCfg,
         players: cleanPlayers,
-        teams: tournamentGameKey === "matchplay" ? [[0], [1]] : tournamentGameKey === "matchplayfourball" ? (draft.pairing || [[0, 1], [2, 3]]) : [[0, 1, 2, 3]],
+        teams: tournamentGameKey === "matchplay" ? [[0], [1]] : tournamentGameKey === "matchplayfourball" || tournamentGameKey === "altshot" ? (draft.pairing || [[0, 1], [2, 3]]) : [[0, 1, 2, 3]],
         par: cleanPar,
         yardage: cleanYardage,
         strokeIndex: cleanStrokeIndex,
@@ -9055,6 +9084,30 @@ export default function GolfScorecard() {
     });
   }
 
+  // Same idea as updateTeamHoleEntry, but scoped to just one side's
+  // players instead of the whole round - needed for alternate-shot
+  // formats, where two independent teams each share one score per hole
+  // (not the whole round sharing a single score, the way Scramble does).
+  function updateSideHoleEntry(sidePlayerIdxs, field, value) {
+    lastLocalEditRef.current = Date.now();
+    const applyPatch = (r) => {
+      const next = { ...r, scores: { ...r.scores } };
+      const holeScores = { ...(next.scores[holeIdx] || {}) };
+      sidePlayerIdxs.forEach((idx) => {
+        const entry = { ...(holeScores[idx] || {}) };
+        entry[field] = value;
+        holeScores[idx] = entry;
+      });
+      next.scores[holeIdx] = holeScores;
+      return next;
+    };
+    setRound((r) => {
+      const next = applyPatch(r);
+      saveRoundPatch(next, applyPatch);
+      return next;
+    });
+  }
+
   // Records which player's tee shot was used on this hole - a single
   // shared choice for the whole team, so it's stored as a hole-level
   // property (driveUsedBy) rather than nested inside any one player's own
@@ -9881,7 +9934,7 @@ function computeIndividualNassauResults(round, computed) {
 // lowest handicap in the group" (what strokesOffForHole already does
 // for every game) is mathematically identical to match play's own
 // "based on the difference between the two sides" rule.
-const MATCH_PLAY_GAMES = ["matchplay", "matchplayfourball"];
+const MATCH_PLAY_GAMES = ["matchplay", "matchplayfourball", "altshot"];
 function computeMatchPlayResult(round, computed) {
   if (!round || !MATCH_PLAY_GAMES.includes(round.game)) return null;
   if (!computed) return null;
@@ -12472,6 +12525,14 @@ function computeMatchPlayResult(round, computed) {
                 </p>
                 <p style={{ margin: 0 }}>
                   Running Four-Ball as a tournament captures how the format is actually played at events like the Ryder Cup - several pairs going head-to-head at once, all under one shared event, with no bracket or advancement to worry about. Every match is entirely its own contest, decided hole by hole, so a lopsided match at one table never affects anyone else's - and with everyone's status visible in one place, it's easy to see how the whole group is doing without having to track down each pair individually. It's a natural fit for a club outing or group event where several pairs want real head-to-head competition happening side by side.
+                </p>
+              </div>
+              <div style={{ marginBottom: 20 }}>
+                <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px", fontSize: 14 }}>
+                  {"\u{1F501}"} Foursomes (Alternate Shot) Tournament
+                </p>
+                <p style={{ margin: 0 }}>
+                  Foursomes is the Ryder Cup format most golfers only ever watch, never play - the whole team plays one ball, alternating every shot, which turns a single mis-hit into something both partners genuinely feel together. Running it as a tournament captures the same energy the pros bring to it: several alternate-shot matches going at once under one shared event, each one entirely its own contest, so a rough patch at one table never touches how anyone else's match is going. It rewards a completely different kind of teamwork than Four-Ball does - momentum and trust in a shared ball, not just picking the better of two - and it's a memorable change of pace for a group that's already played the usual formats together.
                 </p>
               </div>
               <div style={{ marginBottom: 20 }}>
@@ -15182,7 +15243,7 @@ function computeMatchPlayResult(round, computed) {
                 Rotation: Holes 1-6 {LETTERS[0]}+{LETTERS[1]} vs {LETTERS[2]}+{LETTERS[3]} - Holes 7-12 {LETTERS[0]}+{LETTERS[2]} vs {LETTERS[1]}+{LETTERS[3]} - Holes 13-18 {LETTERS[0]}+{LETTERS[3]} vs {LETTERS[1]}+{LETTERS[2]}
               </div>
             )}
-            {(gameKey === "ponto" || gameKey === "vegas" || gameKey === "beachside" || gameKey === "teamputts" || gameKey === "teamstrokes" || gameKey === "matchplayfourball") && (
+            {(gameKey === "ponto" || gameKey === "vegas" || gameKey === "beachside" || gameKey === "teamputts" || gameKey === "teamstrokes" || gameKey === "matchplayfourball" || gameKey === "altshot") && (
               <div style={{ marginTop: 10 }}>
                 <div className="gsc-label">Teams</div>
                 <div className="gsc-row">
@@ -15628,7 +15689,7 @@ function computeMatchPlayResult(round, computed) {
             <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 8 }}>
               {tournamentGameKey === "matchplay"
                 ? "You'll add each match's name and its 2 players next. More matches can always join later with the tournament code."
-                : tournamentGameKey === "matchplayfourball"
+                : tournamentGameKey === "matchplayfourball" || tournamentGameKey === "altshot"
                 ? "You'll add each match's name and its 4 players (2 vs 2) next. More matches can always join later with the tournament code."
                 : "You'll add each foursome's name and 4 players next. More foursomes can always join later with the tournament code."}
             </div>
@@ -15649,12 +15710,12 @@ function computeMatchPlayResult(round, computed) {
     return (
       <div className="gsc">
         <style>{STYLE}</style>
-        <Header title={tournamentName || "New Tournament"} sub={tournamentGameKey === "matchplay" ? "Add each match" : tournamentGameKey === "matchplayfourball" ? "Add each match" : "Add each foursome"} onBack={() => goBack("tournamentCreate")} />
+        <Header title={tournamentName || "New Tournament"} sub={MATCH_PLAY_GAMES.includes(tournamentGameKey) ? "Add each match" : "Add each foursome"} onBack={() => goBack("tournamentCreate")} />
         <div className="gsc-body">
           <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 12 }}>
             {tournamentGameKey === "matchplay"
               ? "Enter each match's name and its 2 players. You can always add more matches later with the tournament code."
-              : tournamentGameKey === "matchplayfourball"
+              : tournamentGameKey === "matchplayfourball" || tournamentGameKey === "altshot"
               ? "Enter each match's name and its 4 players (2 vs 2). You can always add more matches later with the tournament code."
               : "Enter each foursome's name and its 4 players. You can always add more foursomes later with the tournament code."}
           </div>
@@ -15803,7 +15864,7 @@ function computeMatchPlayResult(round, computed) {
                 </div>
                 );
               })}
-              {tournamentGameKey === "matchplayfourball" && (
+              {(tournamentGameKey === "matchplayfourball" || tournamentGameKey === "altshot") && (
                 <div style={{ marginTop: 10 }}>
                   <div className="gsc-label">Teams</div>
                   <div className="gsc-row">
@@ -17176,7 +17237,53 @@ function computeMatchPlayResult(round, computed) {
               </div>
             )}
             <div style={{ pointerEvents: canEditThisRound ? "auto" : "none", opacity: canEditThisRound ? 1 : 0.6 }}>
-            {g.oneTeamScore ? (
+            {g.alternateShot ? (
+              (round.teams || []).map((side, sideIdx) => {
+                const sideEntry = hs[side[0]] || {};
+                const sideNames = side.map((pi) => round.players[pi] && round.players[pi].name).join(" & ");
+                return (
+                  <div key={sideIdx} className="gsc-player-row">
+                    <div className="gsc-player-name">{sideNames}</div>
+                    <div style={{ display: "flex", gap: 22, marginTop: 8, flexWrap: "wrap" }}>
+                      <div>
+                        <div style={{ fontSize: 11, color: "#6b6b63", marginBottom: 3, textAlign: "center" }}>STROKES</div>
+                        <div className="gsc-stepper">
+                          <button
+                            disabled={sideEntry.strokes === "" || sideEntry.strokes == null}
+                            onClick={() => {
+                              if (sideEntry.strokes === "" || sideEntry.strokes == null) return;
+                              const n = Number(sideEntry.strokes);
+                              updateSideHoleEntry(side, "strokes", n <= 1 ? "" : n - 1);
+                            }}
+                          >
+                            -
+                          </button>
+                          <div className="gsc-stepper-val">{sideEntry.strokes === "" || sideEntry.strokes == null ? "-" : sideEntry.strokes}</div>
+                          <button onClick={() => updateSideHoleEntry(side, "strokes", (Number(sideEntry.strokes) || 0) + 1)}>+</button>
+                        </div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 11, color: "#6b6b63", marginBottom: 3, textAlign: "center" }}>PUTTS</div>
+                        <div className="gsc-stepper">
+                          <button
+                            disabled={sideEntry.putts === "" || sideEntry.putts == null}
+                            onClick={() => {
+                              if (sideEntry.putts === "" || sideEntry.putts == null) return;
+                              const n = Number(sideEntry.putts);
+                              updateSideHoleEntry(side, "putts", n <= 0 ? "" : n - 1);
+                            }}
+                          >
+                            -
+                          </button>
+                          <div className="gsc-stepper-val">{sideEntry.putts === "" || sideEntry.putts == null ? "-" : sideEntry.putts}</div>
+                          <button onClick={() => updateSideHoleEntry(side, "putts", (Number(sideEntry.putts) || 0) + 1)}>+</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            ) : g.oneTeamScore ? (
               (() => {
                 const teamEntry = hs[0] || {};
                 const driveUsedBy = hs.driveUsedBy;
