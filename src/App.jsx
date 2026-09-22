@@ -2280,6 +2280,8 @@ export default function GolfScorecard() {
   const [postRoundGroupBusy, setPostRoundGroupBusy] = useState(false);
   const [postRoundGroupErr, setPostRoundGroupErr] = useState("");
   const [postRoundGroupCreated, setPostRoundGroupCreated] = useState(false);
+  const [postRoundGroupCode, setPostRoundGroupCode] = useState("");
+  const [copiedPostRoundGroupCode, setCopiedPostRoundGroupCode] = useState(false);
   const [saveAsNewGroup, setSaveAsNewGroup] = useState(false);
   const [postRoundGroupDismissed, setPostRoundGroupDismissed] = useState(false);
   const [profileAvatarPickerOpen, setProfileAvatarPickerOpen] = useState(false);
@@ -3613,21 +3615,28 @@ export default function GolfScorecard() {
       setPostRoundGroupErr(`Couldn't create the group (${groupErr.message}).`);
       return;
     }
-    const memberRows = linkedPlayers.map((p) => ({ group_id: code, user_id: p.user_id }));
-    const { error: memErr } = await withJwtRetry(() => supabase.from("group_members").insert(memberRows));
+    // Only ever inserts a group_members row for the current session's
+    // own user_id - same as every other group-creation path in the
+    // app. Directly inserting rows for other players' user_ids here
+    // used to hang indefinitely, since the RLS policy on this table
+    // only permits inserting your own membership row, not someone
+    // else's. Other linked players join with the code below instead,
+    // the same way anyone joins any group.
+    const { error: memErr } = await withJwtRetry(() => supabase.from("group_members").insert({ group_id: code, user_id: session.user.id }));
     if (memErr) {
       setPostRoundGroupBusy(false);
-      setPostRoundGroupErr(`The group was created, but not everyone could be added (${memErr.message}). You can invite them with the code: ${code}`);
+      setPostRoundGroupErr(`Couldn't create the group (${memErr.message}).`);
       return;
     }
-    // Make sure EVERY linked player added has a leaderboard_stats row
-    // with a real name, not just the person creating the group - without
-    // this, anyone who's never visited their own stats page would show
-    // up as the generic "Golfer" placeholder to everyone else in the
-    // group, even though they do have a real name set. Uses each
-    // player's name as entered in this round (the best information
-    // actually available here), same reasoning as the single-user
-    // version of this fix used elsewhere.
+    // Pre-syncs a leaderboard_stats row with a real name for every
+    // linked player in this round, not just the creator - without
+    // this, anyone who joins later before ever visiting their own
+    // stats page would show up as the generic "Golfer" placeholder to
+    // everyone else in the group. Uses each player's name as entered
+    // in this round (the best information actually available here),
+    // same reasoning as the single-user version of this fix used
+    // elsewhere. This upserts by user_id, not a group_members insert,
+    // so it isn't subject to the same restriction above.
     withJwtRetry(() =>
       supabase
         .from("leaderboard_stats")
@@ -3640,6 +3649,7 @@ export default function GolfScorecard() {
     });
     setPostRoundGroupBusy(false);
     setPostRoundGroupCreated(true);
+    setPostRoundGroupCode(code);
     loadMyGroups();
   }
 
@@ -5735,6 +5745,7 @@ export default function GolfScorecard() {
     setPostRoundGroupErr("");
     setPostRoundGroupCreated(false);
     setPostRoundGroupDismissed(false);
+    setPostRoundGroupCode("");
   }, [round && round.id]);
 
   // If a course was already picked while logged out, GPS couldn't fetch
@@ -16583,7 +16594,25 @@ function computeMatchPlayResult(round, computed) {
 
           {postRoundGroupCreated && (
             <div className="gsc-card" style={{ background: "#EBF0EC" }}>
-              <div style={{ fontSize: 13, color: "#1B4332", fontWeight: 700 }}>{"\u2713"} Group created! Find it on your Profile page anytime.</div>
+              <div style={{ fontSize: 13, color: "#1B4332", fontWeight: 700, marginBottom: 10 }}>{"\u2713"} Group created!</div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div>
+                  <div style={{ fontSize: 11, color: "#3F6B54", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px" }}>Share this code so others can join</div>
+                  <div className="gsc-mono" style={{ fontSize: 20, fontWeight: 800, color: "#1B4332", letterSpacing: "1px" }}>{postRoundGroupCode}</div>
+                </div>
+                <button
+                  className="gsc-btn gsc-btn-outline"
+                  style={{ flex: "0 0 auto" }}
+                  onClick={() => {
+                    navigator.clipboard.writeText(postRoundGroupCode).catch(() => {});
+                    setCopiedPostRoundGroupCode(true);
+                    setTimeout(() => setCopiedPostRoundGroupCode(false), 1500);
+                  }}
+                >
+                  {copiedPostRoundGroupCode ? "Copied!" : "Copy"}
+                </button>
+              </div>
+              <div style={{ fontSize: 12, color: "#3F6B54", marginTop: 8 }}>Find it on your Profile page anytime.</div>
             </div>
           )}
 
