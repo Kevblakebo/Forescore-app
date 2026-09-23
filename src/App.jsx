@@ -11645,6 +11645,9 @@ function computeMatchPlayResult(round, computed) {
                   </div>
                 </>
               )}
+              <button className="gsc-link" style={{ marginTop: 8, fontSize: 12 }} onClick={() => goToScreen("ripscoreIndexInfo")}>
+                How this is calculated
+              </button>
             </div>
           )}
 
@@ -12517,6 +12520,19 @@ function computeMatchPlayResult(round, computed) {
             </button>
           </div>
 
+          <div className="gsc-card" style={{ cursor: "pointer", background: "#FDF6E9", border: "2px solid #B08D57" }} onClick={() => goToScreen("ripscoreIndexInfo")}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+              <span style={{ fontSize: 16 }}>{"\u26F3"}</span>
+              <div style={{ fontWeight: 800, fontSize: 16, color: "#8a6a2f" }}>RipScore Index Explained</div>
+            </div>
+            <div style={{ fontSize: 13, color: "#4b4b45" }}>
+              How the unofficial score on your Profile page is actually calculated, hole by hole and round by round.
+            </div>
+            <button className="gsc-link" style={{ marginTop: 8, fontSize: 12 }} onClick={() => goToScreen("ripscoreIndexInfo")}>
+              Read more
+            </button>
+          </div>
+
           <div className="gsc-card" style={{ cursor: "pointer", background: "#FDF6E9", border: "2px solid #B08D57" }} onClick={() => goToScreen("feedback")}>
             <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
               <span style={{ fontSize: 16 }}>{"\u{1F4AC}"}</span>
@@ -12670,6 +12686,96 @@ function computeMatchPlayResult(round, computed) {
 
               <p style={{ margin: 0 }}>
                 Whether it's a casual Saturday game or a full club tournament, RipScore keeps the math out of your golf - so all that's left is golf.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (screen === "ripscoreIndexInfo") {
+    return (
+      <div className="gsc">
+        <style>{STYLE}</style>
+        <Header title="RipScore Index Explained" sub="How the unofficial score is calculated" onBack={() => goBack("libraryTab")} />
+        <div className="gsc-body">
+          <div className="gsc-card gsc-no-select">
+            <div style={{ fontSize: 13, color: "#4b4b45", lineHeight: 1.6 }}>
+              <p style={{ margin: "0 0 14px" }}>
+                RipScore Index is a number shown on your Profile page that estimates where your game is trending, built from the same public formula real handicap systems use. It's an unofficial, in-app estimate only - not a USGA Handicap Index, and not connected to GHIN in any way. See the Terms of Service for the full disclaimer.
+              </p>
+
+              <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>{"\u26F3"} Which Rounds Count</p>
+              <p style={{ margin: "0 0 14px" }}>
+                A round only counts toward your RipScore Index if all of the following are true:
+              </p>
+              <ul style={{ margin: "0 0 14px", paddingLeft: 20 }}>
+                <li style={{ marginBottom: 6 }}>It's a full, finished 18-hole round, with your own score entered for every hole</li>
+                <li style={{ marginBottom: 6 }}>It was played at a course you searched for and selected - not one where par was entered manually, since that's what gives us the course rating and slope the formula needs</li>
+                <li style={{ marginBottom: 6 }}>You were genuinely playing your own ball the whole way - Scramble and Foursomes rounds don't count, since those don't reflect just your own play</li>
+              </ul>
+              <p style={{ margin: "0 0 14px" }}>
+                You need at least 3 counting rounds before any number shows up at all - below that, your Profile page shows an explanation instead of a number.
+              </p>
+
+              <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>{"\u{1F9EE}"} How One Round's Score Is Calculated</p>
+              <p style={{ margin: "0 0 14px" }}>
+                Each counting round produces its own "score differential" - a single number representing how you played relative to the difficulty of that specific course and tee. Before totaling your score, any one hole is capped at Net Double Bogey (par, plus 2, plus any handicap strokes you'd normally get on that hole) - so one blow-up hole can't single-handedly wreck your number, the same protection official handicap systems build in. That capped total is then compared against the course's rating and slope: an easier course needs a lower score to produce the same differential as a harder one, and vice versa.
+              </p>
+
+              <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>{"\u2753"} Q&A: How Net Double Bogey Capping Actually Works</p>
+              <p style={{ fontWeight: 700, margin: "0 0 4px" }}>How does RipScore decide how many extra strokes I get on a specific hole?</p>
+              <p style={{ margin: "0 0 12px" }}>
+                First, your index is converted into a Course Handicap for that specific course and tee: Index &times; (Slope / 113) + (Rating &minus; Par). That number is then spread across the 18 holes using the course's published Stroke Index, which ranks every hole 1 (hardest) through 18 (easiest) - a ranking set by the course, not by RipScore. Everyone gets a "base" number of strokes on every hole (Course Handicap &divide; 18, rounded down), and then one extra stroke goes to however many of the hardest-ranked holes match the remainder. A hole ranked comfortably within that top group gets you one extra stroke; a hole outside it doesn't.
+              </p>
+              <p style={{ fontWeight: 700, margin: "0 0 4px" }}>Is that based on who I'm playing against? What if I'm playing by myself?</p>
+              <p style={{ margin: "0 0 14px" }}>
+                No - it has nothing to do with opponents at all. It's entirely about you and the course: your own index, and that specific hole's difficulty. Whether you're in a group, in a head-to-head match, or playing completely solo, the calculation is identical every time. That's different from the "handicap strokes" people sometimes talk about in a match-play bet against a specific opponent - this is purely a protection against one disastrous hole distorting an otherwise fair round, and that protection works the same no matter who else is on the course with you.
+              </p>
+              <p style={{ fontWeight: 700, margin: "0 0 4px" }}>Is this the same handicapping used when I turn on "Use per-hole handicapping" in a regular round?</p>
+              <p style={{ margin: "0 0 14px" }}>
+                No, and this one's worth knowing. That's a separate feature, used for actual game scoring rather than the RipScore Index, and it works differently: it takes each player's own entered handicap and gives everyone strokes relative to the lowest handicap in that specific group - the lowest plays scratch, and everyone else gets the difference, on their hardest holes first. That's a standard, legitimate way to handicap casual and match-style games (Nassau, Skins, Match Play, and similar), but it uses the handicap number as entered, without first converting it into a Course Handicap for that specific course and tee the way the RipScore Index does above. For friendly, casual rounds that's a common, widely-used simplification - just not the same calculation.
+              </p>
+
+              <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>{"\u{1F4C8}"} How Multiple Rounds Become One Number</p>
+              <p style={{ margin: "0 0 14px" }}>
+                Your RipScore Index isn't just your average round - it's the average of your best few rounds out of your most recent 20, the same weighting real handicap systems use. Exactly how many "best" rounds get averaged depends on how many counting rounds you have on file:
+              </p>
+              <div style={{ fontSize: 12, marginBottom: 14, border: "1px solid #eee6cf", borderRadius: 8, overflow: "hidden" }}>
+                <div style={{ display: "flex", fontWeight: 700, background: "#F8F6EE", padding: "6px 10px" }}>
+                  <div style={{ flex: 1 }}>Rounds on file</div>
+                  <div style={{ flex: 1 }}>Best rounds averaged</div>
+                </div>
+                {[
+                  ["3", "1"],
+                  ["4 - 5", "1"],
+                  ["6", "2"],
+                  ["7 - 8", "2"],
+                  ["9 - 11", "3"],
+                  ["12 - 14", "4"],
+                  ["15 - 16", "5"],
+                  ["17 - 19", "6 - 7"],
+                  ["20+", "8 (out of your most recent 20)"],
+                ].map(([rounds, best], i) => (
+                  <div key={rounds} style={{ display: "flex", padding: "6px 10px", borderTop: "1px solid #eee6cf" }}>
+                    <div style={{ flex: 1 }}>{rounds}</div>
+                    <div style={{ flex: 1 }}>{best}</div>
+                  </div>
+                ))}
+              </div>
+              <p style={{ margin: "0 0 14px" }}>
+                Once you're past 20 rounds, older rounds naturally drop out of the calculation as new ones come in.
+              </p>
+
+              <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>{"\u{1F504}"} When It Updates</p>
+              <p style={{ margin: "0 0 14px" }}>
+                Your RipScore Index is calculated in the background, not the instant you finish a round - it can take a few minutes to reflect a round you just played. If you delete a round from your history, the same background process removes it from the calculation too.
+              </p>
+
+              <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>{"\u2753"} Why It Might Look Different From Your Official Handicap</p>
+              <p style={{ margin: 0 }}>
+                If you also carry an official USGA Handicap Index through GHIN, don't be surprised if your RipScore Index looks noticeably different at first, especially early on. With only a handful of RipScore rounds on file, the table above means just your single best round (or two) can carry the entire number - one strong or rough round has an outsized effect on a small sample. As you log more real, complete rounds in RipScore, the number draws from more data and should settle into something more representative of your typical game.
               </p>
             </div>
           </div>
