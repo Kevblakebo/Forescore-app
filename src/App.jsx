@@ -369,7 +369,7 @@ const GAMES = {
     ],
   },
   teamoceans11: {
-    name: "Oceans 11",
+    name: "Team Oceans 11",
     tag: "Fixed teams, best 11 holes - 4 players",
     desc: "A 4-person, 2 vs 2 team format built entirely around Oceans 11 scoring. Each player plays their own ball and picks their own best 11 holes as the round goes - lowest combined total across both partners' selected holes wins. No other scoring method is available for this format.",
     rotates: false,
@@ -16255,11 +16255,10 @@ function computeMatchPlayResult(round, computed) {
     if (r && r.cfg.oceans11) {
       const oceans11 = computeOceans11Results(r, c);
       if (oceans11 && oceans11.teamRows) {
-        // Team game (the team version of Oceans 11) - the winning side is
-        // whichever team's combined total (both partners' own selected-11
-        // totals added together) is lowest, same reasoning as the
-        // individual case below but comparing teams instead of single
-        // players.
+        // Team game (e.g. Team Oceans 11) - the winning side is whichever
+        // team's combined total (both partners' own selected-11 totals
+        // added together) is lowest, same reasoning as the individual
+        // case below but comparing teams instead of single players.
         const contenders = oceans11.teamRows.filter((row) => row.anySelected);
         if (contenders.length > 0) {
           const bestTotal = contenders[0].total;
