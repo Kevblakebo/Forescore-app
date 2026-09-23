@@ -2447,6 +2447,15 @@ export default function GolfScorecard() {
 
   // ---- Stats (Phase 5) ----
   const [stats, setStats] = useState(null);
+  // RipScore Index - an unofficial, in-app score differential estimate
+  // (not an official USGA Handicap Index or GHIN number). Fetched
+  // separately from stats above: it's computed server-side by the
+  // refresh-all-stats Edge Function, on its own schedule, as a single
+  // "right now" number - unlike the rest of My Stats, it deliberately
+  // doesn't respect the date-range filter, since a handicap-style index
+  // isn't something people expect to view "for January through March."
+  const [ripscoreIndex, setRipscoreIndex] = useState(null);
+  const [ripscoreIndexLoading, setRipscoreIndexLoading] = useState(false);
   const [headToHeadList, setHeadToHeadList] = useState([]);
   const [headToHeadLoading, setHeadToHeadLoading] = useState(false);
   const [headToHeadModal, setHeadToHeadModal] = useState(null); // { opponentId, opponentName, opponentAvatar } while open
@@ -2696,6 +2705,7 @@ export default function GolfScorecard() {
   useEffect(() => {
     if (screen === "profileTab" && session && session.user && profileFetched) {
       loadStats();
+      loadRipscoreIndex();
     }
   }, [screen, session && session.user && session.user.id, profileFetched]);
 
@@ -3518,6 +3528,63 @@ export default function GolfScorecard() {
       if (lbError) console.warn("Couldn't update leaderboard stats:", lbError.message);
     });
     }
+  }
+
+  // Same WHS sliding-scale table refresh-all-stats uses server-side to
+  // roll a sequence of differentials up into one index - duplicated
+  // here (rather than the rest of the differential math) because this
+  // part is small, self-contained, and needed client-side to compute
+  // the number fresh from score_differentials on every read.
+  function ripscoreBestCountAndAdjustment(n) {
+    if (n < 3) return null;
+    if (n === 3) return { count: 1, adjustment: -2.0 };
+    if (n === 4) return { count: 1, adjustment: -1.0 };
+    if (n === 5) return { count: 1, adjustment: 0 };
+    if (n === 6) return { count: 2, adjustment: -1.0 };
+    if (n <= 8) return { count: 2, adjustment: 0 };
+    if (n <= 11) return { count: 3, adjustment: 0 };
+    if (n <= 14) return { count: 4, adjustment: 0 };
+    if (n <= 16) return { count: 5, adjustment: 0 };
+    if (n <= 18) return { count: 6, adjustment: 0 };
+    if (n === 19) return { count: 7, adjustment: 0 };
+    return { count: 8, adjustment: 0 };
+  }
+
+  // RipScore Index - an unofficial, in-app score differential estimate,
+  // never an official USGA Handicap Index or GHIN number. Reads
+  // score_differentials directly (each row already computed and saved
+  // by the refresh-all-stats Edge Function) and rolls the most recent
+  // 20 up into a single number here, on read - deliberately NOT stored
+  // as a column on leaderboard_stats, since this table's own loadStats
+  // upsert above could otherwise put it at risk of being silently wiped
+  // (see the comment in create-score-differentials-table.sql for why).
+  async function loadRipscoreIndex() {
+    if (!session || !supabase) { setRipscoreIndex(null); return; }
+    setRipscoreIndexLoading(true);
+    const { data, error } = await withJwtRetry(() =>
+      supabase
+        .from("score_differentials")
+        .select("differential, played_at")
+        .eq("user_id", session.user.id)
+        .order("played_at", { ascending: false })
+        .limit(20)
+    );
+    if (error || !data || data.length === 0) {
+      setRipscoreIndex(null);
+      setRipscoreIndexLoading(false);
+      return;
+    }
+    const spec = ripscoreBestCountAndAdjustment(data.length);
+    if (!spec) {
+      setRipscoreIndex(null);
+      setRipscoreIndexLoading(false);
+      return;
+    }
+    const sorted = [...data].sort((a, b) => a.differential - b.differential);
+    const best = sorted.slice(0, spec.count);
+    const avg = best.reduce((sum, d) => sum + d.differential, 0) / best.length;
+    setRipscoreIndex(Math.round((avg + spec.adjustment) * 10) / 10);
+    setRipscoreIndexLoading(false);
   }
 
   // Fetches everyone who's opted in - RLS on the leaderboard_stats table
@@ -11554,6 +11621,29 @@ function computeMatchPlayResult(round, computed) {
                     </button>
                   </div>
                 </div>
+              )}
+            </div>
+          )}
+
+          {session && (
+            <div className="gsc-card gsc-no-select" style={{ background: "#FDF6E9", border: "2px solid #B08D57", textAlign: "center" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, marginBottom: 6 }}>
+                <span style={{ fontSize: 16 }}>{"\u26F3"}</span>
+                <div style={{ fontWeight: 800, fontSize: 16, color: "#8a6a2f" }}>RipScore Index</div>
+              </div>
+              {ripscoreIndexLoading ? (
+                <div style={{ fontSize: 13, color: "#6b6b63", padding: "6px 0" }}>Loading...</div>
+              ) : ripscoreIndex == null ? (
+                <div style={{ fontSize: 13, color: "#6b6b63", padding: "6px 0", lineHeight: 1.5 }}>
+                  Play at least 3 full 18-hole rounds at a course you searched for (not manually entered) to see your RipScore Index.
+                </div>
+              ) : (
+                <>
+                  <div style={{ fontSize: 36, fontWeight: 800, color: "#1B4332" }}>{ripscoreIndex.toFixed(1)}</div>
+                  <div style={{ fontSize: 11, color: "#8a8a80", marginTop: 4 }}>
+                    Unofficial - an in-app estimate only, not a USGA Handicap Index or GHIN number.
+                  </div>
+                </>
               )}
             </div>
           )}
