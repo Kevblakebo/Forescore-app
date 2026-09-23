@@ -17926,7 +17926,7 @@ function computeMatchPlayResult(round, computed) {
               <div className="gsc-card" style={{ marginTop: 10 }}>
                 <div className="gsc-label" style={{ marginBottom: 8, fontSize: 15, color: "#1B4332", fontWeight: 800 }}>Oceans 11 Standings</div>
                 {displayRows.map((row, idx) => (
-                  <div key={oceans11.teamRows ? row.teamIdx : row.playerIdx} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: idx < displayRows.length - 1 ? "1px solid #eee6cf" : "none" }}>
+                  <div key={oceans11.teamRows ? row.teamIdx : row.playerIdx} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "8px 0", borderBottom: idx < displayRows.length - 1 ? "1px solid #eee6cf" : "none" }}>
                     <div>
                       <div style={{ fontWeight: 700, fontSize: 13 }}>{row.name || `Player ${idx + 1}`}</div>
                       <div style={{ fontSize: 11, color: "#8a8a80" }}>{selectedCount(row)}/{selectedMax} selected</div>
@@ -17936,8 +17936,21 @@ function computeMatchPlayResult(round, computed) {
                         </div>
                       )}
                     </div>
-                    <div className="gsc-mono" style={{ fontWeight: 700, fontSize: 16, color: hasSelection(row) ? "#1B4332" : "#8a8a80" }}>
+                    <div className="gsc-mono" style={{ fontWeight: 700, fontSize: 16, textAlign: "right", color: hasSelection(row) ? "#1B4332" : "#8a8a80" }}>
                       {hasSelection(row) ? `${netLabel} ${row.total}` : "-"}
+                      {oceans11.teamRows && (
+                        <div style={{ fontWeight: 700, fontSize: 12, color: "#6b6b63" }}>
+                          {row.playerIdxs.map((pi) => {
+                            const memberRow = oceans11.rows.find((r) => r.playerIdx === pi);
+                            if (!memberRow) return null;
+                            return (
+                              <div key={pi} style={{ whiteSpace: "nowrap" }}>
+                                {memberRow.name}: {memberRow.holesSelected > 0 ? memberRow.total : "-"} ({memberRow.holesSelected}/11)
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
