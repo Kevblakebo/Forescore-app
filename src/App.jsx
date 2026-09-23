@@ -11133,7 +11133,6 @@ function computeMatchPlayResult(round, computed) {
                   )}
                   <div className="gsc-tag">{g.tag}</div>
                   {gameSupportsNassau(key) && <div style={{ fontSize: 11, color: "#B08D57", fontWeight: 700, marginTop: 4 }}>*Nassau Avail</div>}
-                  {gameSupportsOceans11(key) && <div style={{ fontSize: 11, color: "#B08D57", fontWeight: 700, marginTop: 4 }}>*Oceans 11 Avail</div>}
                   <div className="gsc-no-select" style={{ fontSize: 13, marginTop: 8, color: "#4b4b45" }}>{g.desc}</div>
                   {WHY_PLAY[key] && (
                     <button
@@ -11200,7 +11199,6 @@ function computeMatchPlayResult(round, computed) {
                   )}
                   <div className="gsc-tag">{g.tag}</div>
                   {gameSupportsNassau(key) && <div style={{ fontSize: 11, color: "#B08D57", fontWeight: 700, marginTop: 4 }}>*Nassau Avail</div>}
-                  {gameSupportsOceans11(key) && <div style={{ fontSize: 11, color: "#B08D57", fontWeight: 700, marginTop: 4 }}>*Oceans 11 Avail</div>}
                   <div className="gsc-no-select" style={{ fontSize: 13, marginTop: 8, color: "#4b4b45" }}>{g.desc}</div>
                   {WHY_PLAY[key] && (
                     <button
@@ -11306,16 +11304,6 @@ function computeMatchPlayResult(round, computed) {
             </div>
             <div style={{ fontSize: 13, color: "#4b4b45" }}>
               Nassau is a scoring method you can turn on for the team formats marked *Nassau Avail above, all of which are 4-player, 2 vs 2 formats. Instead of one winner for the whole round, it splits things into three separate bets: front 9, back 9, and overall 18 - each with its own winner and its own wager, so a rough front 9 doesn't have to spoil the whole day. Turn it on from the "Set your game limits and scoring" step during setup.
-            </div>
-          </div>
-
-          <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
-              <span style={{ fontSize: 16 }}>{"\u{1F30A}"}</span>
-              <div style={{ fontWeight: 800, fontSize: 15, color: "#8a6a2f" }}>Oceans 11</div>
-            </div>
-            <div style={{ fontSize: 13, color: "#4b4b45" }}>
-              Oceans 11 is a scoring method you can turn on for the Individual Stroke Play game, marked *Oceans 11 Avail above. Instead of counting all 18 holes, each player selects their own best 11 as they go, visible to the whole group - lowest total across just those 11 wins. Once a hole is taken as one of your 11, that choice is meant to stick; the option to change it is only there in case of a mistake, not to freely reconsider your strategy mid-round. Turn it on from the "Set your game limits and scoring" step during setup.
             </div>
           </div>
 
@@ -12479,11 +12467,8 @@ function computeMatchPlayResult(round, computed) {
     return (
       <div className="gsc">
         <style>{STYLE}</style>
-        <Header title="Golf Games Library" sub="Other popular formats to try" onBack={() => goBack("libraryTab")} />
+        <Header title="Golf Games Library" sub="Popular formats to try" onBack={() => goBack("libraryTab")} />
         <div className="gsc-body">
-          <div style={{ fontSize: 12, color: "#8a8a80", marginBottom: 4 }}>
-            These are for reference only - they aren't trackable in this app, just handy to have on hand.
-          </div>
           {GAME_LIBRARY.map((cat) => (
             <div key={cat.category} className="gsc-card gsc-no-select">
               <div className="gsc-label" style={{ marginBottom: 10 }}>{cat.category}</div>
@@ -12591,53 +12576,59 @@ function computeMatchPlayResult(round, computed) {
   }
 
   if (screen === "whyPlay") {
+    const baseKeys = Object.keys(GAME_TILE_STYLE);
+    const individualKeys = baseKeys.slice(0, 7);
+    const teamKeys = baseKeys.slice(7, baseKeys.indexOf("avoscramble"));
+    // Same explicit tournament order used on the Games page: Stroke Play,
+    // Scramble, Best Ball, Match Play, Team Match Play, Foursomes. Match
+    // Play and Team Match Play are dual-purpose games, so their
+    // tournament-specific name/why-play text (already defined on the
+    // game itself) is used here instead of their regular one.
+    const tournamentKeys = ["tourneygg", "avoscramble", "tourneybb", "matchplay", "matchplayfourball", "altshot"];
+    const scrollRow = (keys, getEntry) => (
+      <div style={{ display: "flex", overflowX: "auto", gap: 10, paddingBottom: 6, WebkitOverflowScrolling: "touch" }}>
+        {keys.map((key) => {
+          const entry = getEntry(key);
+          return (
+            <div key={key} className="gsc-card gsc-game-card" style={{ width: 260, flexShrink: 0, marginBottom: 0 }}>
+              <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px", fontSize: 14 }}>
+                {entry.emoji} {entry.name}
+              </p>
+              <p style={{ margin: 0, fontSize: 13, color: "#4b4b45" }}>{entry.text}</p>
+            </div>
+          );
+        })}
+      </div>
+    );
     return (
       <div className="gsc">
         <style>{STYLE}</style>
         <Header title="Why People Love These Games" sub="What makes each format worth trying" onBack={() => goBack("libraryTab")} />
         <div className="gsc-body">
-          <div className="gsc-card gsc-no-select">
-            <div style={{ fontSize: 13, color: "#4b4b45", lineHeight: 1.6 }}>
-              {Object.keys(GAME_TILE_STYLE).map((key, i) => (
-                <div key={key} style={{ marginBottom: 20 }}>
-                  <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px", fontSize: 14 }}>
-                    {GAME_TILE_STYLE[key].emoji} {GAMES[key].name}
-                  </p>
-                  <p style={{ margin: 0 }}>{WHY_PLAY[key]}</p>
-                </div>
-              ))}
-              <div style={{ marginBottom: 20 }}>
-                <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px", fontSize: 14 }}>
-                  {"\u2694\uFE0F"} Match Play Tournament
-                </p>
-                <p style={{ margin: 0 }}>
-                  Running Individual Match Play as a tournament captures how singles are actually played at events like the Ryder Cup - a whole bracket of 1-on-1 matches going at once, all under one shared event, with no advancement to worry about. Every match is entirely its own contest, decided hole by hole, so a blowout at one match never affects anyone else's - and with everyone's status visible in one place, it's easy to see how the whole group is doing without having to track down each pairing individually. It's a natural fit for a club outing or group event where everyone wants real, personal head-to-head bragging rights, not just a shared team result.
-                </p>
-              </div>
-              <div style={{ marginBottom: 20 }}>
-                <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px", fontSize: 14 }}>
-                  {"\u{1F93A}"} Team Match Play Tournament
-                </p>
-                <p style={{ margin: 0 }}>
-                  Running Four-Ball as a tournament captures how the format is actually played at events like the Ryder Cup - several pairs going head-to-head at once, all under one shared event, with no bracket or advancement to worry about. Every match is entirely its own contest, decided hole by hole, so a lopsided match at one table never affects anyone else's - and with everyone's status visible in one place, it's easy to see how the whole group is doing without having to track down each pair individually. It's a natural fit for a club outing or group event where several pairs want real head-to-head competition happening side by side.
-                </p>
-              </div>
-              <div style={{ marginBottom: 20 }}>
-                <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px", fontSize: 14 }}>
-                  {"\u{1F501}"} Foursomes (Alternate Shot) Tournament
-                </p>
-                <p style={{ margin: 0 }}>
-                  Foursomes is the Ryder Cup format most golfers only ever watch, never play - the whole team plays one ball, alternating every shot, which turns a single mis-hit into something both partners genuinely feel together. Running it as a tournament captures the same energy the pros bring to it: several alternate-shot matches going at once under one shared event, each one entirely its own contest, so a rough patch at one table never touches how anyone else's match is going. It rewards a completely different kind of teamwork than Four-Ball does - momentum and trust in a shared ball, not just picking the better of two - and it's a memorable change of pace for a group that's already played the usual formats together.
-                </p>
-              </div>
-              <div style={{ marginBottom: 0 }}>
-                <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px", fontSize: 14 }}>
-                  {"\u26F3"} Nassau
-                </p>
-                <p style={{ margin: 0 }}>
-                  Nassau's whole appeal is built into its structure - by splitting the round into three separate bets instead of one, a bad front 9 doesn't have to ruin the day, since the back 9 and the overall match are still fully in play. That built-in "second chance" is exactly why it's stayed the standard wager in casual and club golf for generations - it keeps every single hole meaningful, right up through the 18th, instead of a round quietly turning into a formality once someone gets too far ahead too early.
-                </p>
-              </div>
+          <div className="gsc-label" style={{ marginBottom: 10, color: "#1B4332", fontSize: 15 }}>Individual Games</div>
+          {scrollRow(individualKeys, (key) => ({ emoji: GAME_TILE_STYLE[key].emoji, name: GAMES[key].name, text: WHY_PLAY[key] }))}
+
+          <div style={{ borderTop: "1px solid #eee6cf", margin: "16px 0 10px" }} />
+          <div className="gsc-label" style={{ marginBottom: 10, color: "#1B4332", fontSize: 15 }}>Team Games</div>
+          {scrollRow(teamKeys, (key) => ({ emoji: GAME_TILE_STYLE[key].emoji, name: GAMES[key].name, text: WHY_PLAY[key] }))}
+
+          <div style={{ borderTop: "1px solid #eee6cf", margin: "16px 0 10px" }} />
+          <div className="gsc-label" style={{ marginBottom: 10, color: "#1B4332", fontSize: 15 }}>Tournament Games</div>
+          {scrollRow(tournamentKeys, (key) => {
+            const g = GAMES[key];
+            return { emoji: GAME_TILE_STYLE[key].emoji, name: g.tournamentName || g.name, text: g.tournamentWhyPlay || WHY_PLAY[key] };
+          })}
+
+          <div style={{ borderTop: "1px solid #eee6cf", margin: "16px 0 10px" }} />
+          <div className="gsc-label" style={{ marginBottom: 10, color: "#1B4332", fontSize: 15 }}>Scoring Formats</div>
+          <div style={{ display: "flex", overflowX: "auto", gap: 10, paddingBottom: 6, WebkitOverflowScrolling: "touch" }}>
+            <div className="gsc-card gsc-game-card" style={{ width: 260, flexShrink: 0, marginBottom: 0 }}>
+              <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px", fontSize: 14 }}>
+                {"\u26F3"} Nassau
+              </p>
+              <p style={{ margin: 0, fontSize: 13, color: "#4b4b45" }}>
+                Nassau's whole appeal is built into its structure - by splitting the round into three separate bets instead of one, a bad front 9 doesn't have to ruin the day, since the back 9 and the overall match are still fully in play. That built-in "second chance" is exactly why it's stayed the standard wager in casual and club golf for generations - it keeps every single hole meaningful, right up through the 18th, instead of a round quietly turning into a formality once someone gets too far ahead too early.
+              </p>
             </div>
           </div>
         </div>
