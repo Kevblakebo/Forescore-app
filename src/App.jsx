@@ -12609,30 +12609,35 @@ function computeMatchPlayResult(round, computed) {
         <style>{STYLE}</style>
         <Header title="Why People Love These Games" sub="What makes each format worth trying" onBack={() => goBack("libraryTab")} />
         <div className="gsc-body">
-          <div className="gsc-label" style={{ marginBottom: 10, color: "#1B4332", fontSize: 15 }}>Individual Games</div>
-          {scrollRow(individualKeys, (key) => ({ emoji: GAME_TILE_STYLE[key].emoji, name: GAMES[key].name, text: WHY_PLAY[key] }))}
+          <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
+            <div className="gsc-label" style={{ marginBottom: 10, color: "#1B4332", fontSize: 15 }}>Individual Games</div>
+            {scrollRow(individualKeys, (key) => ({ emoji: GAME_TILE_STYLE[key].emoji, name: GAMES[key].name, text: WHY_PLAY[key] }))}
+          </div>
 
-          <div style={{ borderTop: "1px solid #eee6cf", margin: "16px 0 10px" }} />
-          <div className="gsc-label" style={{ marginBottom: 10, color: "#1B4332", fontSize: 15 }}>Team Games</div>
-          {scrollRow(teamKeys, (key) => ({ emoji: GAME_TILE_STYLE[key].emoji, name: GAMES[key].name, text: WHY_PLAY[key] }))}
+          <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
+            <div className="gsc-label" style={{ marginBottom: 10, color: "#1B4332", fontSize: 15 }}>Team Games</div>
+            {scrollRow(teamKeys, (key) => ({ emoji: GAME_TILE_STYLE[key].emoji, name: GAMES[key].name, text: WHY_PLAY[key] }))}
+          </div>
 
-          <div style={{ borderTop: "1px solid #eee6cf", margin: "16px 0 10px" }} />
-          <div className="gsc-label" style={{ marginBottom: 10, color: "#1B4332", fontSize: 15 }}>Tournament Games</div>
-          {scrollRow(tournamentKeys, (key) => {
-            const g = GAMES[key];
-            return { emoji: GAME_TILE_STYLE[key].emoji, name: g.tournamentName || g.name, text: g.tournamentWhyPlay || WHY_PLAY[key] };
-          })}
+          <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
+            <div className="gsc-label" style={{ marginBottom: 10, color: "#1B4332", fontSize: 15 }}>Tournament Games</div>
+            {scrollRow(tournamentKeys, (key) => {
+              const g = GAMES[key];
+              return { emoji: GAME_TILE_STYLE[key].emoji, name: g.tournamentName || g.name, text: g.tournamentWhyPlay || WHY_PLAY[key] };
+            })}
+          </div>
 
-          <div style={{ borderTop: "1px solid #eee6cf", margin: "16px 0 10px" }} />
-          <div className="gsc-label" style={{ marginBottom: 10, color: "#1B4332", fontSize: 15 }}>Other Scoring Formats</div>
-          <div style={{ display: "flex", overflowX: "auto", gap: 10, paddingBottom: 6, WebkitOverflowScrolling: "touch" }}>
-            <div className="gsc-card gsc-game-card" style={{ width: 260, flexShrink: 0, marginBottom: 0 }}>
-              <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px", fontSize: 14 }}>
-                {"\u26F3"} Nassau
-              </p>
-              <p style={{ margin: 0, fontSize: 13, color: "#4b4b45" }}>
-                Nassau's whole appeal is built into its structure - by splitting the round into three separate bets instead of one, a bad front 9 doesn't have to ruin the day, since the back 9 and the overall match are still fully in play. That built-in "second chance" is exactly why it's stayed the standard wager in casual and club golf for generations - it keeps every single hole meaningful, right up through the 18th, instead of a round quietly turning into a formality once someone gets too far ahead too early.
-              </p>
+          <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
+            <div className="gsc-label" style={{ marginBottom: 10, color: "#1B4332", fontSize: 15 }}>Other Scoring Formats</div>
+            <div style={{ display: "flex", overflowX: "auto", gap: 10, paddingBottom: 6, WebkitOverflowScrolling: "touch" }}>
+              <div className="gsc-card gsc-game-card" style={{ width: 260, flexShrink: 0, marginBottom: 0 }}>
+                <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px", fontSize: 14 }}>
+                  {"\u26F3"} Nassau
+                </p>
+                <p style={{ margin: 0, fontSize: 13, color: "#4b4b45" }}>
+                  Nassau's whole appeal is built into its structure - by splitting the round into three separate bets instead of one, a bad front 9 doesn't have to ruin the day, since the back 9 and the overall match are still fully in play. That built-in "second chance" is exactly why it's stayed the standard wager in casual and club golf for generations - it keeps every single hole meaningful, right up through the 18th, instead of a round quietly turning into a formality once someone gets too far ahead too early.
+                </p>
+              </div>
             </div>
           </div>
         </div>
