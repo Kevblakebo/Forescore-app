@@ -6971,13 +6971,17 @@ export default function GolfScorecard() {
       setTournamentYardage(nextYardage);
       setTournamentStrokeIndex(nextStrokeIndex);
       setTournamentCourseName(courseLabel);
-      setTournamentCfg((c) => ({ ...c, teeName: tee.teeName || "", selectedCourseId: courseID }));
+      // slope/courseRating (from this tee's Men ratings, same default the
+      // app already uses for par/stroke index above) are captured here
+      // for the RipScore Index feature - an unofficial, in-app score
+      // differential estimate, not an official USGA Handicap Index.
+      setTournamentCfg((c) => ({ ...c, teeName: tee.teeName || "", selectedCourseId: courseID, slope: tee.slopeMen ?? null, courseRating: tee.courseRatingMen ?? null }));
     } else {
       setPar(next);
       setYardage(nextYardage);
       setStrokeIndex(nextStrokeIndex);
       setCourseName(courseLabel);
-      setCfg((c) => ({ ...c, teeName: tee.teeName || "", selectedCourseId: courseID }));
+      setCfg((c) => ({ ...c, teeName: tee.teeName || "", selectedCourseId: courseID, slope: tee.slopeMen ?? null, courseRating: tee.courseRatingMen ?? null }));
     }
     if (holeCount !== 18) {
       setCourseMsg(`Loaded ${holeCount} of 18 holes from "${courseLabel}" (${tee.teeName}) - fill in the rest manually.`);
