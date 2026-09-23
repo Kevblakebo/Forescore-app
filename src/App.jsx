@@ -10895,6 +10895,9 @@ function computeMatchPlayResult(round, computed) {
                     </button>
                     <div style={{ fontSize: 26, marginBottom: 6, opacity: locked ? 0.6 : 1 }}>{emoji}</div>
                     <div style={{ fontSize: 11.5, fontWeight: 700, color: "#fff", lineHeight: 1.3, opacity: locked ? 0.6 : 1 }}>{entry.isTournament ? GAMES[entry.key].tournamentName : GAMES[entry.key].name}</div>
+                    {gameSupportsOceans11(entry.key) && (
+                      <div style={{ fontSize: 8.5, fontWeight: 700, color: "rgba(255,255,255,0.85)", marginTop: 3, opacity: locked ? 0.6 : 1 }}>*Oceans 11 Avail</div>
+                    )}
                   </div>
                 );
               };
