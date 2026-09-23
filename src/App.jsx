@@ -918,7 +918,10 @@ const VIBE_GAME_MAP = {
     highDrama: "dstreet",
     // Every Nassau/Oceans-11-eligible individual format - same list used
     // at 4 players for the "every player for themselves" branch below.
-    maxStrategy: ["swami", "oceans11", "dstreet", "individualputts"],
+    // Putting-only games are deliberately excluded here even though they
+    // can technically use Nassau, since they don't fit the "maximum
+    // strategy" vibe.
+    maxStrategy: ["swami", "oceans11", "dstreet"],
   },
   "4": {
     simple: { team: ["teamstrokes", "teamputts"], individual: ["swami", "individualputts"] },
@@ -930,7 +933,7 @@ const VIBE_GAME_MAP = {
     // mix, decided per hole rather than up front.
     maxStrategy: {
       team: ["teamoceans11", "ponto", "beachside", "matchplayfourball"],
-      individual: ["swami", "oceans11", "dstreet", "individualputts"],
+      individual: ["swami", "oceans11", "dstreet"],
       mixed: "moonlightwolf",
     },
   },
