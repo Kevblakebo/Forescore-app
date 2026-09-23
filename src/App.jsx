@@ -685,6 +685,32 @@ const GAMES = {
       "Putts start once on the putting green.",
     ],
   },
+  oceans11: {
+    name: "Oceans 11",
+    tag: "Individual best 11 holes - up to 4 players",
+    desc: "A 4-player individual format built entirely around Oceans 11 scoring. As the round is played, each player picks their own best 11 of their 18 holes - lowest total across those 11 selected holes wins. No other scoring method is available for this format.",
+    rotates: false,
+    hasScore: true,
+    hasPutts: true,
+    totalScoring: true,
+    defaults: { maxOver: "", maxPutts: "", mulliganSegment: "", mulliganChallenge: "", prize: "", netScoring: true, oceans11: true },
+    rules: [
+      "Individual format for up to 4 players, built entirely around Oceans 11 scoring - no other scoring method is available here.",
+      "Every player plays all 18 holes and records strokes and putts as normal.",
+      "As the round is played, each player individually chooses which 11 of their own 18 holes to \"take\" toward their score - the other 7 holes played don't count at all.",
+      "Choices can be changed anytime as the round is played, right up until a player has locked in all 11 of their own holes.",
+      "Lowest total across a player's own selected 11 holes wins - not lowest total for the whole round.",
+      "Prize: to be agreed on prior to round.",
+      "Strokes max: to be agreed on prior to round.",
+      "Putts max: to be agreed on prior to round.",
+      "Mulligans: to be agreed on prior to round.",
+      "Play all OB shots per USGA Rules.",
+      "Must putt all the way into the hole.",
+      "Flagstick can stay in.",
+      "Putts start once on the putting green.",
+      "Per-hole handicapping (net score per hole) is defaulted to On, but can be turned off in game scoring settings.",
+    ],
+  },
   matchplay: {
     name: "Individual Match Play",
     tournamentName: "Match Play Tournament",
@@ -833,12 +859,12 @@ const GAMES = {
 // this is a refactor of already-existing colors, not a new palette.
 const GAME_TILE_STYLE = (() => {
   const order = [
-    "swami", "dstreet", "matchplay", "individualputts", "pontobango", "stableford",
+    "swami", "dstreet", "matchplay", "individualputts", "pontobango", "stableford", "oceans11",
     "teamstrokes", "ponto", "matchplayfourball", "teamputts", "beachside", "seabluffe", "moonlightwolf", "vegas", "teamoceans11",
     "avoscramble", "tourneybb", "tourneygg", "altshot",
   ];
   const emoji = {
-    dstreet: "\u{1F4B0}", swami: "\u26F3", individualputts: "\u{1F3AF}", pontobango: "\u{1F3B2}", stableford: "\u{1F4C8}", matchplay: "\u2694\uFE0F",
+    dstreet: "\u{1F4B0}", swami: "\u26F3", individualputts: "\u{1F3AF}", pontobango: "\u{1F3B2}", stableford: "\u{1F4C8}", matchplay: "\u2694\uFE0F", oceans11: "\u{1F30A}",
     ponto: "\u{1F91D}", teamstrokes: "\u{1F3CC}\u{FE0F}", teamputts: "\u{1F573}\u{FE0F}", beachside: "\u2B50", seabluffe: "\u{1F504}", moonlightwolf: "\u{1F43A}", vegas: "\u{1F3B0}", matchplayfourball: "\u{1F93A}", teamoceans11: "\u{1F30A}",
     avoscramble: "\u{1F500}", tourneybb: "\u{1F3C6}", tourneygg: "\u{1F3C5}", altshot: "\u{1F501}",
   };
@@ -873,6 +899,7 @@ const WHY_PLAY = {
   individualputts: "Putting-only formats put a specific skill on trial, separate from anything to do with distance off the tee, which is exactly why they're seen as a fair test even in mixed-ability groups. It's a natural fit for anyone who feels their actual scoring ability doesn't always show up in a full 18-hole total - this format lets that specific strength (or weakness) stand entirely on its own.",
   pontobango: "What makes this format special is that none of its three points is about who hits the ball the furthest - each one rewards a completely different skill, including simply being in the right position to play first. Because the player farthest from the hole always plays first, shorter hitters get the first real shot at points on plenty of holes, and the golfer with the toughest position on the green gets a fair chance too. That built-in leveling is exactly why it's so popular among groups with a real spread of handicaps playing together.",
   stableford: "Stableford's biggest draw is that a single poor hole can't ruin an entire round - it only ever costs zero points, which keeps the pressure low and the format genuinely relaxed and enjoyable for casual and club play alike. It also rewards aggressive play in a way stroke play doesn't, letting golfers go after a spectacular shot without the same fear of a blown-up score. It was originally created specifically to help the average club golfer enjoy a competitive round more - and that founding idea is still exactly why it remains so popular today.",
+  oceans11: "Oceans 11 turns every single hole into its own small decision, not just a number to add up. Take a good score now, and you're locked in - safe, but maybe leaving something better on the table. Pass on it hoping for even lower later, and you're gambling that the back nine treats you kindly, with fewer holes left to recover if it doesn't. That constant \"bank it or hold out\" tension is what people end up talking about after the round - it rewards reading your own game in the moment, not just playing steady, and it means even a rough start doesn't have to be the whole story.",
   matchplay: "Match play is the original form of the game, and it stays popular because a disastrous hole only ever costs you that one hole, not your entire round - a blow-up on 14 is forgotten the moment you tee off on 15. That head-to-head, hole-by-hole tension is exactly why it's the format the Ryder Cup, Presidents Cup, and Solheim Cup are all built on - it rewards clutch play and course management under direct pressure from a single opponent, not just a good scorecard. A match can also be won before the 18th hole is ever played, which gives it a different, often more dramatic pace than counting strokes all the way to the end.",
   matchplayfourball: "Four-Ball takes match play's core appeal - a bad hole only costs you that one hole, not the round - and adds the safety net of a partner on top of it, which is exactly why it's one of the most popular team formats at the Ryder Cup, Presidents Cup, and Solheim Cup. Since only the better of the two partners' scores counts each hole, both players can play aggressively without the fear of a single bad swing sinking the team, and a struggling partner never has to feel like they're letting the side down. That built-in cushion is what makes it a genuine crowd favorite for pairs who want real head-to-head competition without needing two flawless rounds to win it.",
 };
@@ -893,7 +920,7 @@ const VIBE_GAME_MAP = {
     highDrama: "dstreet",
     // Every Nassau/Oceans-11-eligible individual format - same list used
     // at 4 players for the "every player for themselves" branch below.
-    maxStrategy: ["swami", "dstreet", "individualputts"],
+    maxStrategy: ["swami", "oceans11", "dstreet", "individualputts"],
   },
   "4": {
     simple: { team: ["teamstrokes", "teamputts"], individual: ["swami", "individualputts"] },
@@ -905,7 +932,7 @@ const VIBE_GAME_MAP = {
     // mix, decided per hole rather than up front.
     maxStrategy: {
       team: ["teamoceans11", "ponto", "beachside", "matchplayfourball"],
-      individual: ["swami", "dstreet", "individualputts"],
+      individual: ["swami", "oceans11", "dstreet", "individualputts"],
       mixed: "moonlightwolf",
     },
   },
@@ -4793,7 +4820,7 @@ export default function GolfScorecard() {
   // retype their own name and handicap every single time. Everyone else
   // still starts blank, same as before.
   function freshPlayerSlots(gameKeyArg, flexible) {
-    const isIndividual = gameKeyArg === "dstreet" || gameKeyArg === "swami" || gameKeyArg === "pontobango" || gameKeyArg === "individualputts" || gameKeyArg === "stableford" || gameKeyArg === "matchplay";
+    const isIndividual = gameKeyArg === "dstreet" || gameKeyArg === "swami" || gameKeyArg === "oceans11" || gameKeyArg === "pontobango" || gameKeyArg === "individualputts" || gameKeyArg === "stableford" || gameKeyArg === "matchplay";
     // Flexible mode (regular round setup, not a tournament foursome)
     // starts with the minimum players actually needed for this format -
     // most individual games can be, and often are, played with just a
@@ -6502,7 +6529,7 @@ export default function GolfScorecard() {
       //
       // Also compute and save who actually won, right now, using this
       // app's own real, format-specific winner logic - the same logic
-      // that's already correct for every one of the 21 game formats
+      // that's already correct for every one of the 22 game formats
       // (team games, points-based games, stroke play, all of it). Saving
       // the answer here means nothing downstream (including any future
       // server-side stats calculation) ever needs to re-derive "who won"
@@ -7136,8 +7163,8 @@ export default function GolfScorecard() {
         setTournamentFoursomeCount(Math.max(2, Math.ceil((Number(nextAnswers.playerCount) || 8) / 4)));
       } else {
         setGameKey(key);
-        setCfg(withProfileVenmo({ ...GAMES[key].defaults, ...(nextAnswers.wantsNassau && !["swami", "dstreet", "individualputts"].includes(key) ? { nassau: true } : {}) }));
-        const count = key === "swami" || key === "dstreet" || key === "pontobango" || key === "individualputts" || key === "stableford" || key === "matchplay" ? Math.max(1, Math.min(4, Number(nextAnswers.playerCount) || 4)) : 4;
+        setCfg(withProfileVenmo({ ...GAMES[key].defaults, ...(nextAnswers.wantsNassau && !["swami", "dstreet", "individualputts", "oceans11"].includes(key) ? { nassau: true } : {}) }));
+        const count = key === "swami" || key === "dstreet" || key === "pontobango" || key === "individualputts" || key === "stableford" || key === "matchplay" || key === "oceans11" ? Math.max(1, Math.min(4, Number(nextAnswers.playerCount) || 4)) : 4;
         setPlayers((p) => {
           const base = [...p];
           while (base.length < count) base.push({ name: "", hcp: "", avatar: "" });
@@ -7664,7 +7691,7 @@ export default function GolfScorecard() {
       avatar: p.avatar || "",
       ...(i === 0 && session ? { user_id: session.user.id } : p.user_id ? { user_id: p.user_id } : {}),
     }));
-    const isIndividual = gameKey === "dstreet" || gameKey === "swami" || gameKey === "pontobango" || gameKey === "individualputts" || gameKey === "stableford" || gameKey === "matchplay";
+    const isIndividual = gameKey === "dstreet" || gameKey === "swami" || gameKey === "oceans11" || gameKey === "pontobango" || gameKey === "individualputts" || gameKey === "stableford" || gameKey === "matchplay";
     if (gameKey === "matchplay") {
       if (cleanPlayers.length !== 2) {
         setErr("Individual Match Play needs exactly 2 players.");
@@ -10733,7 +10760,7 @@ function computeMatchPlayResult(round, computed) {
                 RipScore is the golf app built for every group you play with.
                 <div style={{ margin: "8px 0 0" }}>
                   <div style={{ marginBottom: 4 }}>{"\u{1F465}"} Set Up Your Group Once</div>
-                  <div style={{ marginBottom: 4 }}>{"\u26F3"} 21 Game Formats + Side Games, for Every Kind of Day</div>
+                  <div style={{ marginBottom: 4 }}>{"\u26F3"} 22 Game Formats + Side Games, for Every Kind of Day</div>
                   <div style={{ marginBottom: 4 }}>{"\u{1F4CD}"} Live Distance to the Green GPS</div>
                   <div style={{ marginBottom: 4 }}>{"\u{1F3CC}\u{FE0F}"} Optional Handicapping, Done Right</div>
                   <div style={{ marginBottom: 4 }}>{"\u{1F4CA}"} A Leaderboard Just for Your Group</div>
@@ -10895,16 +10922,16 @@ function computeMatchPlayResult(round, computed) {
                     </button>
                     <div style={{ fontSize: 26, marginBottom: 6, opacity: locked ? 0.6 : 1 }}>{emoji}</div>
                     <div style={{ fontSize: 11.5, fontWeight: 700, color: "#fff", lineHeight: 1.3, opacity: locked ? 0.6 : 1 }}>{entry.isTournament ? GAMES[entry.key].tournamentName : GAMES[entry.key].name}</div>
-                    {gameSupportsOceans11(entry.key) && (
-                      <div style={{ fontSize: 8.5, fontWeight: 700, color: "rgba(255,255,255,0.85)", marginTop: 3, opacity: locked ? 0.6 : 1 }}>*Oceans 11 Avail</div>
+                    {!entry.isTournament && gameSupportsNassau(entry.key) && (
+                      <div style={{ fontSize: 8.5, fontWeight: 700, color: "rgba(255,255,255,0.85)", marginTop: 3, opacity: locked ? 0.6 : 1 }}>*Nassau Avail</div>
                     )}
                   </div>
                 );
               };
               const baseKeys = Object.keys(GAME_TILE_STYLE);
               const tourneyOnlyStartIdx = baseKeys.indexOf("avoscramble");
-              const individualKeys = baseKeys.slice(0, 6);
-              const teamKeys = baseKeys.slice(6, tourneyOnlyStartIdx);
+              const individualKeys = baseKeys.slice(0, 7);
+              const teamKeys = baseKeys.slice(7, tourneyOnlyStartIdx);
               // Explicit order requested for this section: Stroke Play,
               // Scramble, Best Ball, Match Play, Team Match Play, Foursomes -
               // not derived from GAME_TILE_STYLE's order like the two
@@ -11099,7 +11126,7 @@ function computeMatchPlayResult(round, computed) {
             <div className="gsc-label" style={{ marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Individual Game Formats</div>
             <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>Up to 4 Players</div>
             <div style={{ display: "flex", overflowX: "auto", gap: 10, paddingBottom: 6, WebkitOverflowScrolling: "touch" }}>
-            {["swami", "dstreet", "matchplay", "individualputts", "pontobango", "stableford"]
+            {["swami", "dstreet", "matchplay", "individualputts", "pontobango", "stableford", "oceans11"]
               .map((key) => [key, GAMES[key]])
               .map(([key, g]) => {
                 const locked = isGameLocked(key);
@@ -12392,7 +12419,7 @@ function computeMatchPlayResult(round, computed) {
               <div style={{ fontWeight: 800, fontSize: 16, color: "#8a6a2f" }}>Why People Love These Games</div>
             </div>
             <div style={{ fontSize: 13, color: "#4b4b45" }}>
-              What makes each of the 21 formats worth playing, straight from the golfers who love them.
+              What makes each of the 22 formats worth playing, straight from the golfers who love them.
             </div>
             <button className="gsc-link" style={{ marginTop: 8, fontSize: 12 }} onClick={() => goToScreen("whyPlay")}>
               Read more
@@ -12529,7 +12556,7 @@ function computeMatchPlayResult(round, computed) {
                 Save your regular playing partners as a group. Next time you play, fill in everyone's name, avatar, and handicap with one tap - no retyping names round after round.
               </p>
 
-              <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>{"\u26F3"} 21 Game Formats + Side Games, for Every Kind of Day</p>
+              <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>{"\u26F3"} 22 Game Formats + Side Games, for Every Kind of Day</p>
               <p style={{ margin: "0 0 14px" }}>
                 Skins, Wolf, Vegas, Stableford, Bingo Bango Bongo, Best Ball, Round Robin, Match Play, and more - for individuals, teams, and full multi-foursome tournaments. Pick a format, and RipScore keeps score, tracks mulligans, and shows exactly who's winning, hole by hole.
               </p>
@@ -15194,7 +15221,7 @@ function computeMatchPlayResult(round, computed) {
 
           <div className="gsc-card">
             <div className="gsc-label" style={{ marginBottom: 10 }}>Players Names and Handicaps (Optional)</div>
-            {(gameKey === "swami" || gameKey === "dstreet" || gameKey === "pontobango" || gameKey === "individualputts" || gameKey === "stableford") && (
+            {(gameKey === "swami" || gameKey === "dstreet" || gameKey === "pontobango" || gameKey === "individualputts" || gameKey === "stableford" || gameKey === "oceans11") && (
               <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 10 }}>
                 This format supports {gameKey === "pontobango" || gameKey === "individualputts" ? "2-4" : "1-4"} players - add or remove players below to match who's actually playing.
               </div>
@@ -15233,7 +15260,7 @@ function computeMatchPlayResult(round, computed) {
                   </button>
                   <input className="gsc-input" placeholder={`Player ${LETTERS[i]} name`} value={p.name} onChange={(e) => updatePlayer(i, "name", e.target.value)} />
                   <input className="gsc-input" style={{ flex: "0 0 70px" }} placeholder="HCP" value={p.hcp} onChange={(e) => updatePlayer(i, "hcp", e.target.value)} />
-                  {(gameKey === "swami" || gameKey === "dstreet" || gameKey === "pontobango" || gameKey === "individualputts" || gameKey === "stableford") && players.length > (gameKey === "pontobango" || gameKey === "individualputts" ? 2 : 1) && (
+                  {(gameKey === "swami" || gameKey === "dstreet" || gameKey === "pontobango" || gameKey === "individualputts" || gameKey === "stableford" || gameKey === "oceans11") && players.length > (gameKey === "pontobango" || gameKey === "individualputts" ? 2 : 1) && (
                     <button
                       className="gsc-btn gsc-btn-outline"
                       style={{ flex: "0 0 auto", color: "#A42E2D", borderColor: "#A42E2D", padding: "9px 12px" }}
@@ -15322,7 +15349,7 @@ function computeMatchPlayResult(round, computed) {
                 )}
               </div>
             ))}
-            {(gameKey === "swami" || gameKey === "dstreet" || gameKey === "pontobango" || gameKey === "individualputts" || gameKey === "stableford") && players.length < 4 && (
+            {(gameKey === "swami" || gameKey === "dstreet" || gameKey === "pontobango" || gameKey === "individualputts" || gameKey === "stableford" || gameKey === "oceans11") && players.length < 4 && (
               <button className="gsc-btn gsc-btn-outline" style={{ width: "100%", marginTop: 4 }} onClick={addPlayerSlot}>
                 + Add another player
               </button>
