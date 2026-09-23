@@ -10860,7 +10860,7 @@ function computeMatchPlayResult(round, computed) {
           </div>
           {!session && (
             <div style={{ fontSize: 12, color: "#8a8a80", margin: "-8px 0 16px" }}>
-              No account needed to play, create one anytime to access premium features including GPS, Side Games, course info, stats, groups, leaderboards, and prior saved rounds.
+              No account needed to play, create one anytime to access premium features including GPS, Side Games, course info, stats, your RipScore Index, groups, leaderboards, and prior saved rounds.
               <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 10 }} onClick={() => { setAuthErr(""); goToScreen("login"); }}>
                 Log In or Create Account
               </button>
@@ -11458,7 +11458,7 @@ function computeMatchPlayResult(round, computed) {
               <UserIcon size={28} color="#8FA998" style={{ marginBottom: 10 }} />
               <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 6 }}>You're not logged in</div>
               <div style={{ fontSize: 13, color: "#6b6b63", lineHeight: 1.5, marginBottom: 16 }}>
-                Log in to save your defaults (avatar, name, handicap, Venmo, home course) and unlock GPS, Side Games, course info, stats, groups, leaderboards, GHIN link, and prior saved rounds. Logging in is always optional - you can keep playing instantly with just a round or tournament code. Your round will only be added to your personal history if you're logged in when you play it.
+                Log in to save your defaults (avatar, name, handicap, Venmo, home course) and unlock GPS, Side Games, course info, stats, your RipScore Index, groups, leaderboards, GHIN link, and prior saved rounds. Logging in is always optional - you can keep playing instantly with just a round or tournament code. Your round will only be added to your personal history if you're logged in when you play it.
               </div>
               <button className="gsc-btn gsc-btn-primary" style={{ width: "100%" }} onClick={() => { setAuthErr(""); goToScreen("login"); }}>
                 Log In
@@ -12630,7 +12630,7 @@ function computeMatchPlayResult(round, computed) {
 
               <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>{"\u{1F517}"} Join a Round Without Downloading Anything</p>
               <p style={{ margin: "0 0 14px" }}>
-                Start a round and share a simple code. Anyone can join instantly from a browser - no download required to play along. Individual Stroke Play is playable without an account, as is joining an existing round or tournament with a share code; every other format, along with GPS, satellite hole views, Side Games, stats, and groups, is unlocked with an account. Everyone sees the same live scorecard update in real time.
+                Start a round and share a simple code. Anyone can join instantly from a browser - no download required to play along. Individual Stroke Play is playable without an account, as is joining an existing round or tournament with a share code; every other format, along with GPS, satellite hole views, Side Games, stats, the RipScore Index, and groups, is unlocked with an account. Everyone sees the same live scorecard update in real time.
               </p>
 
               <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>{"\u{1F4CD}"} Live Distance to the Green</p>
@@ -12646,6 +12646,11 @@ function computeMatchPlayResult(round, computed) {
               <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>{"\u{1F3CC}\u{FE0F}"} Optional Handicapping, Done Right</p>
               <p style={{ margin: "0 0 14px" }}>
                 Turn on net scoring and RipScore calculates each player's strokes per hole automatically, based on real handicaps - fair games for mixed-skill groups, without anyone doing math.
+              </p>
+
+              <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>{"\u26F3"} RipScore Index</p>
+              <p style={{ margin: "0 0 14px" }}>
+                Log in and play eligible rounds (full 18 holes, at a course you searched for) to build your RipScore Index - an unofficial, in-app estimate of where your game is trending, calculated using the same public formula real handicap systems use. It's for fun, not a replacement for an official USGA Handicap Index or GHIN number.
               </p>
 
               <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>{"\u{1F4CA}"} A Leaderboard Just for Your Group</p>
@@ -12759,12 +12764,12 @@ function computeMatchPlayResult(round, computed) {
 
               <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>Not an Official Handicap Service</p>
               <p style={{ margin: "0 0 14px" }}>
-                RipScore is not affiliated with, endorsed by, or connected to the USGA, GHIN, or any official handicapping body. Any link to GHIN.com is provided only as a convenience. Posting scores for handicap purposes is entirely your own responsibility, done directly through GHIN or your club - RipScore does not submit anything on your behalf.
+                RipScore is not affiliated with, endorsed by, or connected to the USGA, GHIN, or any official handicapping body. Any link to GHIN.com is provided only as a convenience. Posting scores for handicap purposes is entirely your own responsibility, done directly through GHIN or your club - RipScore does not submit anything on your behalf. The "RipScore Index" shown on your Profile page, if you're logged in and have enough eligible rounds, is an unofficial, in-app estimate only - it is not, and is not a substitute for, an official USGA Handicap Index or GHIN number, and can't be used anywhere an official handicap is required.
               </p>
 
               <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>Accounts and Share Codes</p>
               <p style={{ margin: "0 0 14px" }}>
-                Individual Stroke Play is free to play without creating an account, as is joining an existing round or tournament with a share code. Every other game format, along with GPS, satellite hole views, Side Games, stats, and groups, requires a RipScore account. Once a round or tournament is created, it's accessed using a share code - anyone with that code can view or enter scores for it, regardless of whether they're logged in, so treat your codes the way you'd treat access to a shared document, and only share them with people you actually want in your group.
+                Individual Stroke Play is free to play without creating an account, as is joining an existing round or tournament with a share code. Every other game format, along with GPS, satellite hole views, Side Games, stats, the RipScore Index, and groups, requires a RipScore account. Once a round or tournament is created, it's accessed using a share code - anyone with that code can view or enter scores for it, regardless of whether they're logged in, so treat your codes the way you'd treat access to a shared document, and only share them with people you actually want in your group.
               </p>
 
               <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>Your Account</p>
@@ -12832,6 +12837,11 @@ function computeMatchPlayResult(round, computed) {
                 Creating a RipScore account requires an email address and password. Your password is handled by our authentication provider and is never visible to us in plain text. If you choose to save a profile, we also store what you enter there - things like your name, handicap, avatar, and Venmo handle - so it can be filled in automatically next time you play.
               </p>
 
+              <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>RipScore Index</p>
+              <p style={{ margin: "0 0 14px" }}>
+                If you're logged in, eligible rounds you finish (full 18 holes, at a course you searched for) are used to calculate a score, called a differential, for that round, which is saved against your account. These are used to calculate your RipScore Index, an unofficial, in-app estimate - see the Terms of Service for what it is and isn't. This calculation only ever uses your own scores and publicly available course data; it's never shared with anyone else, and isn't calculated at all if you're not logged in.
+              </p>
+
               <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>Feedback Submissions</p>
               <p style={{ margin: "0 0 14px" }}>
                 If you use the in-app Feedback form, your answers are sent to the person maintaining RipScore via email. The form is intentionally built to not ask for your name or contact info, so submissions are anonymous on our end.
@@ -12839,7 +12849,7 @@ function computeMatchPlayResult(round, computed) {
 
               <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>Third-Party Services We Use</p>
               <p style={{ margin: "0 0 14px" }}>
-                RipScore relies on a small number of outside services to work: a golf course database (to look up par and yardage when you search for a course), a cloud database and authentication provider (to store and sync round, tournament, and account data across devices, and to handle account login securely), an email delivery service (to send Feedback submissions), and a text-to-speech service (to power the optional voice announcer feature, which converts scores you choose to announce into spoken audio). Each of these only receives the specific information needed to perform its part - for example, the course lookup service only ever receives the course name or location you search for, never your scores or player info.
+                RipScore relies on a small number of outside services to work: a golf course database (to look up par, yardage, and - for the RipScore Index - slope and course rating, when you search for a course), a cloud database and authentication provider (to store and sync round, tournament, and account data across devices, and to handle account login securely), an email delivery service (to send Feedback submissions), and a text-to-speech service (to power the optional voice announcer feature, which converts scores you choose to announce into spoken audio). Each of these only receives the specific information needed to perform its part - for example, the course lookup service only ever receives the course name or location you search for, never your scores or player info.
               </p>
 
               <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>What We Don't Do</p>
