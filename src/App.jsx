@@ -10954,13 +10954,13 @@ function computeMatchPlayResult(round, computed) {
                   <div style={{ borderTop: "1px solid #eee6cf", margin: "16px 0 10px" }} />
                   <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 10 }}>Team Game Formats</div>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
-                    {teamKeys.map((key, i) => renderTile({ key, isTournament: false }, colors[(individualKeys.length + i) % colors.length]))}
+                    {teamKeys.map((key, i) => renderTile({ key, isTournament: false }, colors[i % colors.length]))}
                   </div>
 
                   <div style={{ borderTop: "1px solid #eee6cf", margin: "16px 0 10px" }} />
                   <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 10 }}>Tournament Game Formats</div>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
-                    {tournamentEntries.map((entry, i) => renderTile(entry, colors[(individualKeys.length + teamKeys.length + i) % colors.length]))}
+                    {tournamentEntries.map((entry, i) => renderTile(entry, colors[i % colors.length]))}
                   </div>
                 </>
               );
