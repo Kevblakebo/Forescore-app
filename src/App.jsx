@@ -539,7 +539,7 @@ const GAMES = {
   swami: {
     name: "Individual Stroke Play",
     tag: "Individual stroke play - up to 4 players",
-    desc: "A standard, no-frills stroke play game for up to 4 players. Lowest total strokes wins; total putts breaks a tie. Great for players who just want to keep an honest scorecard. Overall, Nassau, and Oceans 11 scoring methods available.",
+    desc: "A standard, no-frills stroke play game for up to 4 players. Lowest total strokes wins; total putts breaks a tie. Great for players who just want to keep an honest scorecard. Overall and Nassau scoring methods available.",
     rotates: false,
     hasScore: true,
     hasPutts: true,
@@ -1429,11 +1429,12 @@ function gameSupportsNassau(gameKey) {
   return NASSAU_ALWAYS_TWO_SIDED.includes(gameKey) || NASSAU_INDIVIDUAL_GAMES.includes(gameKey) || gameKey === "swami" || gameKey === "dstreet" || gameKey === "individualputts";
 }
 
-// Oceans 11 - an alternate scoring method for Individual Stroke Play only,
-// where each player picks their own best 11 holes to count toward their
-// total, following the same "toggle in game variables" pattern as
-// Nassau above.
-const OCEANS11_GAMES = ["swami"];
+// Oceans 11 used to be an alternate scoring method toggle for Individual
+// Stroke Play, but it's now its own standalone game (the "oceans11" key)
+// instead, so no game offers this toggle anymore - kept empty rather
+// than removed outright in case a future format wants a similar
+// "toggle in game variables" pattern to Nassau above.
+const OCEANS11_GAMES = [];
 function oceans11Eligible(gameKey, playerCount) {
   return OCEANS11_GAMES.includes(gameKey) && playerCount >= 2 && playerCount <= 4;
 }
@@ -1441,10 +1442,10 @@ function gameSupportsOceans11(gameKey) {
   return OCEANS11_GAMES.includes(gameKey);
 }
 
-// Individual Skins and Individual Putts get a simpler, 2-way version of
-// the same "scoring method" toggle - just Overall or Nassau, no Oceans
-// 11 option (that stays exclusive to Individual Stroke Play).
-const NASSAU_ONLY_INDIVIDUAL_GAMES = ["dstreet", "individualputts"];
+// Individual Stroke Play, Individual Skins, and Individual Putts all get
+// this simpler, 2-way version of the "scoring method" toggle - just
+// Overall or Nassau.
+const NASSAU_ONLY_INDIVIDUAL_GAMES = ["swami", "dstreet", "individualputts"];
 function nassauOnlyEligible(gameKey, playerCount) {
   return NASSAU_ONLY_INDIVIDUAL_GAMES.includes(gameKey) && playerCount >= 2 && playerCount <= 4;
 }
@@ -2337,7 +2338,6 @@ export default function GolfScorecard() {
   // show, not which edit happened most recently.
   const highestAppliedVersionRef = useRef(0);
   const currentAnnounceAudioRef = useRef(null);
-  const golfClapAudioRef = useRef(null);
   const wolfHowlAudioRef = useRef(null);
   const victoryFanfareAudioRef = useRef(null);
   const crowdCheerAudioRef = useRef(null);
@@ -5232,22 +5232,6 @@ export default function GolfScorecard() {
               <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 6 }}>
                 Each player's tee shot must be used at least this many times over the round.
               </div>
-            </div>
-          )}
-
-          {round && oceans11Eligible(round.game, round.players.length) && (
-            <div className="gsc-field">
-              <div className="gsc-label">Scoring method</div>
-              <div style={{ display: "flex", gap: 8 }}>
-                <button className="gsc-btn" style={{ flex: 1, background: !c.oceans11 && !c.nassau ? "#A42E2D" : "transparent", color: !c.oceans11 && !c.nassau ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }} onClick={() => set({ oceans11: false, nassau: false })}>Overall</button>
-                <button className="gsc-btn" style={{ flex: 1, background: c.oceans11 ? "#A42E2D" : "transparent", color: c.oceans11 ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }} onClick={() => set({ oceans11: true, nassau: false })}>Oceans 11</button>
-                <button className="gsc-btn" style={{ flex: 1, background: c.nassau ? "#A42E2D" : "transparent", color: c.nassau ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }} onClick={() => set({ nassau: true, oceans11: false })}>Nassau</button>
-              </div>
-              {c.oceans11 && (
-                <div style={{ fontSize: 11, color: "#8a8a80", marginTop: 6 }}>
-                  Each player picks their own best 11 holes as they play - lowest total across those 11 wins. Choices can be changed anytime as the round is played.
-                </div>
-              )}
             </div>
           )}
 
@@ -10435,9 +10419,6 @@ function computeMatchPlayResult(round, computed) {
     ref.current = audio;
     audio.play().catch(() => {});
   }
-  function playGolfClap() {
-    playSound(golfClapAudioRef, "/sounds/golf-clap.mp3");
-  }
   function playWolfHowl() {
     playSound(wolfHowlAudioRef, "/sounds/wolf-howl.mp3");
   }
@@ -12649,20 +12630,12 @@ function computeMatchPlayResult(round, computed) {
                   Foursomes is the Ryder Cup format most golfers only ever watch, never play - the whole team plays one ball, alternating every shot, which turns a single mis-hit into something both partners genuinely feel together. Running it as a tournament captures the same energy the pros bring to it: several alternate-shot matches going at once under one shared event, each one entirely its own contest, so a rough patch at one table never touches how anyone else's match is going. It rewards a completely different kind of teamwork than Four-Ball does - momentum and trust in a shared ball, not just picking the better of two - and it's a memorable change of pace for a group that's already played the usual formats together.
                 </p>
               </div>
-              <div style={{ marginBottom: 20 }}>
+              <div style={{ marginBottom: 0 }}>
                 <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px", fontSize: 14 }}>
                   {"\u26F3"} Nassau
                 </p>
                 <p style={{ margin: 0 }}>
                   Nassau's whole appeal is built into its structure - by splitting the round into three separate bets instead of one, a bad front 9 doesn't have to ruin the day, since the back 9 and the overall match are still fully in play. That built-in "second chance" is exactly why it's stayed the standard wager in casual and club golf for generations - it keeps every single hole meaningful, right up through the 18th, instead of a round quietly turning into a formality once someone gets too far ahead too early.
-                </p>
-              </div>
-              <div style={{ marginBottom: 0 }}>
-                <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px", fontSize: 14 }}>
-                  {"\u{1F30A}"} Oceans 11
-                </p>
-                <p style={{ margin: 0 }}>
-                  Oceans 11 turns every single hole into its own small decision, not just a number to add up. Take a good score now, and you're locked in - safe, but maybe leaving something better on the table. Pass on it hoping for even lower later, and you're gambling that the back nine treats you kindly, with fewer holes left to recover if it doesn't. That constant "bank it or hold out" tension is what people end up talking about after the round - it rewards reading your own game in the moment, not just playing steady, and it means even a rough start doesn't have to be the whole story.
                 </p>
               </div>
             </div>
@@ -15067,61 +15040,6 @@ function computeMatchPlayResult(round, computed) {
                 )}
               </div>
             )}
-            {oceans11Eligible(gameKey, players.length) && (
-              <div className="gsc-field">
-                <div className="gsc-label">Scoring method</div>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <button
-                    className="gsc-btn"
-                    style={{ flex: 1, background: !cfg.oceans11 && !cfg.nassau ? "#A42E2D" : "transparent", color: !cfg.oceans11 && !cfg.nassau ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
-                    onClick={() => setCfg({ ...cfg, oceans11: false, nassau: false })}
-                  >
-                    Overall
-                  </button>
-                  <button
-                    className="gsc-btn"
-                    style={{ flex: 1, background: cfg.oceans11 ? "#A42E2D" : "transparent", color: cfg.oceans11 ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
-                    onClick={() => setCfg({ ...cfg, oceans11: true, nassau: false })}
-                  >
-                    Oceans 11
-                  </button>
-                  <button
-                    className="gsc-btn"
-                    style={{ flex: 1, background: cfg.nassau ? "#A42E2D" : "transparent", color: cfg.nassau ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
-                    onClick={() => setCfg({ ...cfg, nassau: true, oceans11: false })}
-                  >
-                    Nassau
-                  </button>
-                </div>
-                {!cfg.oceans11 && !cfg.nassau && (
-                  <div style={{ fontSize: 11, color: "#8a8a80", marginTop: 6 }}>Standard stroke play across the full round.</div>
-                )}
-                {cfg.oceans11 && (
-                  <div style={{ fontSize: 11, color: "#8a8a80", marginTop: 6 }}>
-                    Each player picks their own best 11 holes as they play - lowest total across those 11 wins.
-                  </div>
-                )}
-                {cfg.nassau && (
-                  <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 8 }}>
-                    <div style={{ fontSize: 11, color: "#8a8a80" }}>
-                      Splits the round into three separate competitions: front 9, back 9, and overall 18 - each with its own winner, ranked individually rather than in teams.
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 4 }}>Front 9 wager per player</div>
-                      <input className="gsc-input" placeholder="$5" value={cfg.nassauFrontPrize || ""} onChange={(e) => setCfg({ ...cfg, nassauFrontPrize: e.target.value })} />
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 4 }}>Back 9 wager per player</div>
-                      <input className="gsc-input" placeholder="$5" value={cfg.nassauBackPrize || ""} onChange={(e) => setCfg({ ...cfg, nassauBackPrize: e.target.value })} />
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 4 }}>Overall 18 wager per player</div>
-                      <input className="gsc-input" placeholder="$5" value={cfg.nassauOverallPrize || ""} onChange={(e) => setCfg({ ...cfg, nassauOverallPrize: e.target.value })} />
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
             {nassauOnlyEligible(gameKey, players.length) && (
               <div className="gsc-field">
                 <div className="gsc-label">Scoring method</div>
@@ -17290,7 +17208,7 @@ function computeMatchPlayResult(round, computed) {
               <button className="gsc-btn gsc-btn-outline" disabled={holeIdx === 17} onClick={() => requestHoleChange(holeIdx + 1, g)}>Next</button>
             </div>
 
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10, marginBottom: 10 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 10, marginBottom: 10 }}>
               <div style={{ flex: 1 }}>
                 {session && round.holeGPS && round.holeGPS[holeIdx] && round.holeGPS[holeIdx].length > 0 && (
                   <div>
@@ -17326,16 +17244,6 @@ function computeMatchPlayResult(round, computed) {
                     )}
                   </div>
                 )}
-                {session && (
-                  <button
-                    className="gsc-link"
-                    disabled={!announceEnabled || elevenLabsBusy}
-                    onClick={announceStandings}
-                    style={{ display: "flex", width: "fit-content", alignItems: "center", gap: 5, fontSize: 13, opacity: announceEnabled && !elevenLabsBusy ? 1 : 0.5, marginTop: 8 }}
-                  >
-                    {"\u{1F4E2}"} {elevenLabsBusy ? "Generating..." : "Announce Scores"}
-                  </button>
-                )}
               </div>
               <div style={{ flex: "0 0 auto" }}>
                 {session && (
@@ -17345,15 +17253,6 @@ function computeMatchPlayResult(round, computed) {
                     style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 13, color: sideGamesHoleSet.has(holeIdx + 1) ? "#A42E2D" : "#1B4332" }}
                   >
                     {"\u{1F3B2}"} Side Games{sideGamesHoleSet.has(holeIdx + 1) ? " \u2713" : ""}
-                  </button>
-                )}
-                {session && (
-                  <button
-                    className="gsc-link"
-                    onClick={playGolfClap}
-                    style={{ display: "flex", width: "fit-content", alignItems: "center", gap: 5, fontSize: 13, marginTop: 8, marginLeft: "auto" }}
-                  >
-                    {"\u{1F44F}"} Golf Clap
                   </button>
                 )}
               </div>
@@ -18027,9 +17926,21 @@ function computeMatchPlayResult(round, computed) {
             <div className="gsc-card">
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                 <div className="gsc-label" style={{ marginBottom: 0 }}>Tournament Leaderboard</div>
-                <button className="gsc-btn gsc-btn-outline" style={{ padding: "6px 10px", fontSize: 12, minHeight: "auto" }} disabled={boardLoading} onClick={() => loadTournamentBoard(round.tournamentId)}>
-                  {boardLoading ? "Refreshing..." : "Refresh leaderboard"}
-                </button>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  {session && (
+                    <button
+                      className="gsc-link"
+                      disabled={!announceEnabled || elevenLabsBusy}
+                      onClick={announceStandings}
+                      style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, opacity: announceEnabled && !elevenLabsBusy ? 1 : 0.5 }}
+                    >
+                      {"\u{1F4E2}"} {elevenLabsBusy ? "Generating..." : "Announce Scores"}
+                    </button>
+                  )}
+                  <button className="gsc-btn gsc-btn-outline" style={{ padding: "6px 10px", fontSize: 12, minHeight: "auto" }} disabled={boardLoading} onClick={() => loadTournamentBoard(round.tournamentId)}>
+                    {boardLoading ? "Refreshing..." : "Refresh leaderboard"}
+                  </button>
+                </div>
               </div>
               {boardErr && <div style={{ color: "#A42E2D", fontSize: 12, marginBottom: 8 }}>{boardErr}</div>}
               {board && board.tournament && board.tournament.id === round.tournamentId ? (
@@ -18066,11 +17977,23 @@ function computeMatchPlayResult(round, computed) {
             <div className="gsc-card gsc-winner-card" style={{ textAlign: "center" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                 <div className="gsc-label" style={{ marginBottom: 0, fontSize: 15, color: "#1B4332", fontWeight: 800 }}>Match Status</div>
-                {session && (
-                  <button className="gsc-link" style={{ fontSize: 12 }} onClick={() => setVoicePickerOpen(true)}>
-                    {"\u{1F50A}"} Voice
-                  </button>
-                )}
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  {session && (
+                    <button
+                      className="gsc-link"
+                      disabled={!announceEnabled || elevenLabsBusy}
+                      onClick={announceStandings}
+                      style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, opacity: announceEnabled && !elevenLabsBusy ? 1 : 0.5 }}
+                    >
+                      {"\u{1F4E2}"} {elevenLabsBusy ? "Generating..." : "Announce Scores"}
+                    </button>
+                  )}
+                  {session && (
+                    <button className="gsc-link" style={{ fontSize: 12 }} onClick={() => setVoicePickerOpen(true)}>
+                      {"\u{1F50A}"} Voice
+                    </button>
+                  )}
+                </div>
               </div>
               <div style={{ fontSize: 22, fontWeight: 800, color: "#1B4332" }}>{matchPlayResult.statusText}</div>
               {matchPlayResult.isDecided && (
@@ -18101,11 +18024,23 @@ function computeMatchPlayResult(round, computed) {
           <div className="gsc-card">
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
               <div className="gsc-label" style={{ marginBottom: 0, fontSize: 15, color: "#1B4332", fontWeight: 800 }}>Standings</div>
-              {session && (
-                <button className="gsc-link" style={{ fontSize: 12 }} onClick={() => setVoicePickerOpen(true)}>
-                  {"\u{1F50A}"} Voice
-                </button>
-              )}
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                {session && (
+                  <button
+                    className="gsc-link"
+                    disabled={!announceEnabled || elevenLabsBusy}
+                    onClick={announceStandings}
+                    style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, opacity: announceEnabled && !elevenLabsBusy ? 1 : 0.5 }}
+                  >
+                    {"\u{1F4E2}"} {elevenLabsBusy ? "Generating..." : "Announce Scores"}
+                  </button>
+                )}
+                {session && (
+                  <button className="gsc-link" style={{ fontSize: 12 }} onClick={() => setVoicePickerOpen(true)}>
+                    {"\u{1F50A}"} Voice
+                  </button>
+                )}
+              </div>
             </div>
             {ranks.map((p, idx) => (
               <div key={p.idx} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "6px 0", borderBottom: "1px solid #eee6cf", fontSize: 13 }}>
