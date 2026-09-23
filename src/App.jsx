@@ -383,7 +383,6 @@ const GAMES = {
       "Each player plays their own ball and records their own strokes and putts, same as Team Stroke Play.",
       "As the round is played, each player individually chooses which 11 of their own 18 holes to \"take\" toward their side of the team's total - the other 7 holes played don't count at all.",
       "A team's total is both partners' own selected-11 totals added together - lowest combined total wins.",
-      "Choices can be changed anytime as the round is played, for either player, right up until they've locked in all 11 of their own holes.",
       "Prize: to be agreed on prior to round.",
       "Strokes max: to be agreed on prior to round.",
       "Putts max: to be agreed on prior to round.",
@@ -698,7 +697,6 @@ const GAMES = {
       "Individual format for up to 4 players, built entirely around Oceans 11 scoring - no other scoring method is available here.",
       "Every player plays all 18 holes and records strokes and putts as normal.",
       "As the round is played, each player individually chooses which 11 of their own 18 holes to \"take\" toward their score - the other 7 holes played don't count at all.",
-      "Choices can be changed anytime as the round is played, right up until a player has locked in all 11 of their own holes.",
       "Lowest total across a player's own selected 11 holes wins - not lowest total for the whole round.",
       "Prize: to be agreed on prior to round.",
       "Strokes max: to be agreed on prior to round.",
@@ -10906,7 +10904,7 @@ function computeMatchPlayResult(round, computed) {
                       if (locked) { handleLockedGameTap(entry.key); return; }
                       entry.isTournament || GAMES[entry.key].tournamentOnly ? startTournamentCreateFlow(entry.key) : startNewRound(entry.key);
                     }}
-                    style={{ position: "relative", background: color, borderRadius: 12, padding: "16px 6px 12px", textAlign: "center", cursor: "pointer", minHeight: 108, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}
+                    style={{ position: "relative", background: color, borderRadius: 12, padding: "16px 6px 20px", textAlign: "center", cursor: "pointer", minHeight: 108, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}
                   >
                     {locked && (
                       <div style={{ position: "absolute", top: 4, left: 4, width: 20, height: 20, borderRadius: "50%", background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11 }}>
@@ -10923,7 +10921,7 @@ function computeMatchPlayResult(round, computed) {
                     <div style={{ fontSize: 26, marginBottom: 6, opacity: locked ? 0.6 : 1 }}>{emoji}</div>
                     <div style={{ fontSize: 11.5, fontWeight: 700, color: "#fff", lineHeight: 1.3, opacity: locked ? 0.6 : 1 }}>{entry.isTournament ? GAMES[entry.key].tournamentName : GAMES[entry.key].name}</div>
                     {!entry.isTournament && gameSupportsNassau(entry.key) && (
-                      <div style={{ fontSize: 8.5, fontWeight: 700, color: "rgba(255,255,255,0.85)", marginTop: 3, opacity: locked ? 0.6 : 1 }}>*Nassau Avail</div>
+                      <div style={{ position: "absolute", bottom: 6, left: 0, right: 0, textAlign: "center", fontSize: 8.5, fontWeight: 700, color: "rgba(255,255,255,0.85)", opacity: locked ? 0.6 : 1 }}>*Nassau Avail</div>
                     )}
                   </div>
                 );
