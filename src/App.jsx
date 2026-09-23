@@ -900,6 +900,7 @@ const WHY_PLAY = {
   oceans11: "Oceans 11 turns every single hole into its own small decision, not just a number to add up. Take a good score now, and you're locked in - safe, but maybe leaving something better on the table. Pass on it hoping for even lower later, and you're gambling that the back nine treats you kindly, with fewer holes left to recover if it doesn't. That constant \"bank it or hold out\" tension is what people end up talking about after the round - it rewards reading your own game in the moment, not just playing steady, and it means even a rough start doesn't have to be the whole story.",
   matchplay: "Match play is the original form of the game, and it stays popular because a disastrous hole only ever costs you that one hole, not your entire round - a blow-up on 14 is forgotten the moment you tee off on 15. That head-to-head, hole-by-hole tension is exactly why it's the format the Ryder Cup, Presidents Cup, and Solheim Cup are all built on - it rewards clutch play and course management under direct pressure from a single opponent, not just a good scorecard. A match can also be won before the 18th hole is ever played, which gives it a different, often more dramatic pace than counting strokes all the way to the end.",
   matchplayfourball: "Four-Ball takes match play's core appeal - a bad hole only costs you that one hole, not the round - and adds the safety net of a partner on top of it, which is exactly why it's one of the most popular team formats at the Ryder Cup, Presidents Cup, and Solheim Cup. Since only the better of the two partners' scores counts each hole, both players can play aggressively without the fear of a single bad swing sinking the team, and a struggling partner never has to feel like they're letting the side down. That built-in cushion is what makes it a genuine crowd favorite for pairs who want real head-to-head competition without needing two flawless rounds to win it.",
+  altshot: "Foursomes is the Ryder Cup format most golfers only ever watch, never play - the whole team plays one ball, alternating every shot, which turns a single mis-hit into something both partners genuinely feel together. Running it as a tournament captures the same energy the pros bring to it: several alternate-shot matches going at once under one shared event, each one entirely its own contest, so a rough patch at one table never touches how anyone else's match is going. It rewards a completely different kind of teamwork than Four-Ball does - momentum and trust in a shared ball, not just picking the better of two - and it's a memorable change of pace for a group that's already played the usual formats together.",
 };
 
 // Maps a "what matters most" vibe answer to actual game(s), grouped by
@@ -11306,7 +11307,7 @@ function computeMatchPlayResult(round, computed) {
               <div style={{ fontWeight: 800, fontSize: 15, color: "#8a6a2f" }}>Nassau</div>
             </div>
             <div style={{ fontSize: 13, color: "#4b4b45" }}>
-              Nassau is a scoring method you can turn on for the team formats marked *Nassau Avail above, all of which are 4-player, 2 vs 2 formats. Instead of one winner for the whole round, it splits things into three separate bets: front 9, back 9, and overall 18 - each with its own winner and its own wager, so a rough front 9 doesn't have to spoil the whole day. Turn it on from the "Set your game limits and scoring" step during setup.
+              Nassau is a scoring method you can turn on for any of the 7 formats marked *Nassau Avail above - both individual formats (Individual Stroke Play, Individual Skins, Individual Putts) and 4-player, 2 vs 2 team formats (Team Stroke Play, Team Skins, Team Putts, Team Best Ball). Instead of one winner for the whole round, it splits things into three separate bets: front 9, back 9, and overall 18 - each with its own winner and its own wager, so a rough front 9 doesn't have to spoil the whole day. Turn it on from the "Set your game limits and scoring" step during setup.
             </div>
           </div>
 
@@ -12623,7 +12624,7 @@ function computeMatchPlayResult(round, computed) {
           })}
 
           <div style={{ borderTop: "1px solid #eee6cf", margin: "16px 0 10px" }} />
-          <div className="gsc-label" style={{ marginBottom: 10, color: "#1B4332", fontSize: 15 }}>Scoring Formats</div>
+          <div className="gsc-label" style={{ marginBottom: 10, color: "#1B4332", fontSize: 15 }}>Other Scoring Formats</div>
           <div style={{ display: "flex", overflowX: "auto", gap: 10, paddingBottom: 6, WebkitOverflowScrolling: "touch" }}>
             <div className="gsc-card gsc-game-card" style={{ width: 260, flexShrink: 0, marginBottom: 0 }}>
               <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px", fontSize: 14 }}>
