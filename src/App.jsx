@@ -709,6 +709,44 @@ const GAMES = {
       "Per-hole handicapping (net score per hole) is defaulted to On, but can be turned off in game scoring settings.",
     ],
   },
+  ninepoint: {
+    name: "9-Point",
+    tag: "Points vs. each other - exactly 3 players",
+    desc: "Also known as Nines or 5-3-1. Exactly 3 players, and every hole is worth 9 points total, split based on how you compare to the other two - not against par. Highest total points at the end wins.",
+    rotates: false,
+    hasScore: true,
+    hasPutts: true,
+    tracksNinePoint: true,
+    defaults: { maxOver: "", maxPutts: "", mulliganSegment: "", mulliganChallenge: "", prize: "", netScoring: true },
+    rules: [
+      "Exactly 3 players - this format doesn't work with 2 or 4.",
+      {
+        text: "Every hole is worth 9 total points, split among the 3 players based on net score relative to each other:",
+        sub: [
+          "All 3 players tie: 3 points each",
+          "One player alone in last, other 2 tie for the win: 4 points each to the tied pair, 1 to the player alone in last",
+          "One player alone in the lead, other 2 tie behind them: 5 points to the leader, 2 points each to the tied pair",
+          "All 3 scores are different: 5 points to the lowest, 3 to the middle, 1 to the highest",
+        ],
+      },
+      {
+        text: "If one player's net score beats both other players by 2 strokes or more, that player takes all 9 points for the hole instead of the standard split - the other two get 0. This is a fixed part of the format, not optional.",
+        sub: ["A net 3 against a net 5 and a net 6 is a 2-stroke win over the closer opponent, so it's 9-0-0 instead of 5-3-1."],
+      },
+      "Highest total points at the end of the round wins.",
+      "Putts are tracked but don't count toward the standings.",
+      "No carry-overs on ties.",
+      "Prize: to be agreed on prior to round.",
+      "Strokes max: to be agreed on prior to round.",
+      "Putts max: to be agreed on prior to round.",
+      "Mulligans: to be agreed on prior to round.",
+      "Per-hole handicapping (net score per hole) is defaulted to On, but can be turned off in game scoring settings.",
+      "Play all OB shots per USGA Rules.",
+      "Must putt all the way into the hole.",
+      "Flagstick can stay in.",
+      "Putts start once on the putting green.",
+    ],
+  },
   matchplay: {
     name: "Individual Match Play",
     tournamentName: "Match Play Tournament",
@@ -857,12 +895,12 @@ const GAMES = {
 // this is a refactor of already-existing colors, not a new palette.
 const GAME_TILE_STYLE = (() => {
   const order = [
-    "swami", "dstreet", "matchplay", "individualputts", "pontobango", "stableford", "oceans11",
+    "swami", "dstreet", "matchplay", "individualputts", "pontobango", "stableford", "oceans11", "ninepoint",
     "teamstrokes", "ponto", "matchplayfourball", "teamputts", "beachside", "seabluffe", "moonlightwolf", "vegas", "teamoceans11",
     "avoscramble", "tourneybb", "tourneygg", "altshot",
   ];
   const emoji = {
-    dstreet: "\u{1F4B0}", swami: "\u26F3", individualputts: "\u{1F3AF}", pontobango: "\u{1F3B2}", stableford: "\u{1F4C8}", matchplay: "\u2694\uFE0F", oceans11: "\u{1F30A}",
+    dstreet: "\u{1F4B0}", swami: "\u26F3", individualputts: "\u{1F3AF}", pontobango: "\u{1F3B2}", stableford: "\u{1F4C8}", matchplay: "\u2694\uFE0F", oceans11: "\u{1F30A}", ninepoint: "9\uFE0F\u20E3",
     ponto: "\u{1F91D}", teamstrokes: "\u{1F3CC}\u{FE0F}", teamputts: "\u{1F573}\u{FE0F}", beachside: "\u2B50", seabluffe: "\u{1F504}", moonlightwolf: "\u{1F43A}", vegas: "\u{1F3B0}", matchplayfourball: "\u{1F93A}", teamoceans11: "\u{1F30A}",
     avoscramble: "\u{1F500}", tourneybb: "\u{1F3C6}", tourneygg: "\u{1F3C5}", altshot: "\u{1F501}",
   };
@@ -898,6 +936,7 @@ const WHY_PLAY = {
   pontobango: "What makes this format special is that none of its three points is about who hits the ball the furthest - each one rewards a completely different skill, including simply being in the right position to play first. Because the player farthest from the hole always plays first, shorter hitters get the first real shot at points on plenty of holes, and the golfer with the toughest position on the green gets a fair chance too. That built-in leveling is exactly why it's so popular among groups with a real spread of handicaps playing together.",
   stableford: "Stableford's biggest draw is that a single poor hole can't ruin an entire round - it only ever costs zero points, which keeps the pressure low and the format genuinely relaxed and enjoyable for casual and club play alike. It also rewards aggressive play in a way stroke play doesn't, letting golfers go after a spectacular shot without the same fear of a blown-up score. It was originally created specifically to help the average club golfer enjoy a competitive round more - and that founding idea is still exactly why it remains so popular today.",
   oceans11: "Oceans 11 turns every single hole into its own small decision, not just a number to add up. Take a good score now, and you're locked in - safe, but maybe leaving something better on the table. Pass on it hoping for even lower later, and you're gambling that the back nine treats you kindly, with fewer holes left to recover if it doesn't. That constant \"bank it or hold out\" tension is what people end up talking about after the round - it rewards reading your own game in the moment, not just playing steady, and it means even a rough start doesn't have to be the whole story.",
+  ninepoint: "9-Point is the answer to the age-old problem of a fourth player bailing on the tee sheet - it turns a threesome from a compromise into the actual best way to play. Since every hole is its own fresh 9-point pot, one bad hole is never a disaster, and a great hole is worth chasing on its own terms, not just as part of an 18-hole grind. Comparing net scores hole by hole, rather than tallying strokes against par, keeps it personal and immediate - you're always thinking about where you stand against these two specific people, right now, not some abstract number. And the win-by-2 rule gives a truly great hole real teeth - nail one and you take the whole pot instead of splitting it, which is exactly the kind of moment golfers replay in the clubhouse afterward.",
   matchplay: "Match play is the original form of the game, and it stays popular because a disastrous hole only ever costs you that one hole, not your entire round - a blow-up on 14 is forgotten the moment you tee off on 15. That head-to-head, hole-by-hole tension is exactly why it's the format the Ryder Cup, Presidents Cup, and Solheim Cup are all built on - it rewards clutch play and course management under direct pressure from a single opponent, not just a good scorecard. A match can also be won before the 18th hole is ever played, which gives it a different, often more dramatic pace than counting strokes all the way to the end.",
   matchplayfourball: "Four-Ball takes match play's core appeal - a bad hole only costs you that one hole, not the round - and adds the safety net of a partner on top of it, which is exactly why it's one of the most popular team formats at the Ryder Cup, Presidents Cup, and Solheim Cup. Since only the better of the two partners' scores counts each hole, both players can play aggressively without the fear of a single bad swing sinking the team, and a struggling partner never has to feel like they're letting the side down. That built-in cushion is what makes it a genuine crowd favorite for pairs who want real head-to-head competition without needing two flawless rounds to win it.",
   altshot: "Foursomes is the Ryder Cup format most golfers only ever watch, never play - the whole team plays one ball, alternating every shot, which turns a single mis-hit into something both partners genuinely feel together. Running it as a tournament captures the same energy the pros bring to it: several alternate-shot matches going at once under one shared event, each one entirely its own contest, so a rough patch at one table never touches how anyone else's match is going. It rewards a completely different kind of teamwork than Four-Ball does - momentum and trust in a shared ball, not just picking the better of two - and it's a memorable change of pace for a group that's already played the usual formats together.",
@@ -965,6 +1004,11 @@ function resolveVibeEntry(playerCount, vibe, roundMode) {
   // for one format.
   if (bucket === "2-3" && vibe === "highDrama" && Number(playerCount) === 2) {
     return { candidates: ["dstreet", "matchplay"] };
+  }
+  // 9-Point needs exactly 3 players, not 2 - same reasoning as the Match
+  // Play special case just above, just for the other end of this bucket.
+  if (bucket === "2-3" && vibe === "highDrama" && Number(playerCount) === 3) {
+    return { candidates: ["dstreet", "ninepoint"] };
   }
   let entry = VIBE_GAME_MAP[bucket] ? VIBE_GAME_MAP[bucket][vibe] : null;
   if (!entry) return {};
@@ -4895,8 +4939,11 @@ export default function GolfScorecard() {
     // most individual games can be, and often are, played with just a
     // couple people, so pre-filling three empty slots by default is more
     // clutter than help. Team games always need their full, fixed count
-    // regardless, since a 2v2 format can't start with fewer.
-    const count = flexible && isIndividual ? 2 : gameKeyArg === "matchplay" ? 2 : 4;
+    // regardless, since a 2v2 format can't start with fewer. 9-Point is
+    // its own fixed count too - exactly 3, never fewer or more, so it's
+    // deliberately left out of isIndividual above (which would let
+    // players be added/removed) in favor of a hardcoded 3 here.
+    const count = gameKeyArg === "ninepoint" ? 3 : flexible && isIndividual ? 2 : gameKeyArg === "matchplay" ? 2 : 4;
     const slots = Array.from({ length: count }, () => ({ name: "", hcp: "", avatar: "" }));
     if (session && profile && (profile.name || profile.handicap || profile.avatar)) {
       slots[0] = { name: profile.name || "", hcp: profile.handicap || "", avatar: profile.avatar || "" };
@@ -7221,7 +7268,7 @@ export default function GolfScorecard() {
       } else {
         setGameKey(key);
         setCfg(withProfileVenmo({ ...GAMES[key].defaults, ...(nextAnswers.wantsNassau && !["swami", "dstreet", "individualputts", "oceans11"].includes(key) ? { nassau: true } : {}) }));
-        const count = key === "swami" || key === "dstreet" || key === "pontobango" || key === "individualputts" || key === "stableford" || key === "matchplay" || key === "oceans11" ? Math.max(1, Math.min(4, Number(nextAnswers.playerCount) || 4)) : 4;
+        const count = key === "ninepoint" ? 3 : key === "swami" || key === "dstreet" || key === "pontobango" || key === "individualputts" || key === "stableford" || key === "matchplay" || key === "oceans11" ? Math.max(1, Math.min(4, Number(nextAnswers.playerCount) || 4)) : 4;
         setPlayers((p) => {
           const base = [...p];
           while (base.length < count) base.push({ name: "", hcp: "", avatar: "" });
@@ -7748,10 +7795,15 @@ export default function GolfScorecard() {
       avatar: p.avatar || "",
       ...(i === 0 && session ? { user_id: session.user.id } : p.user_id ? { user_id: p.user_id } : {}),
     }));
-    const isIndividual = gameKey === "dstreet" || gameKey === "swami" || gameKey === "oceans11" || gameKey === "pontobango" || gameKey === "individualputts" || gameKey === "stableford" || gameKey === "matchplay";
+    const isIndividual = gameKey === "dstreet" || gameKey === "swami" || gameKey === "oceans11" || gameKey === "pontobango" || gameKey === "individualputts" || gameKey === "stableford" || gameKey === "matchplay" || gameKey === "ninepoint";
     if (gameKey === "matchplay") {
       if (cleanPlayers.length !== 2) {
         setErr("Individual Match Play needs exactly 2 players.");
+        return;
+      }
+    } else if (gameKey === "ninepoint") {
+      if (cleanPlayers.length !== 3) {
+        setErr("9-Point needs exactly 3 players.");
         return;
       }
     } else if (isIndividual) {
@@ -9761,11 +9813,44 @@ function computeRoundScoring(round) {
         const net = capStrokeNet(hs[p] && hs[p].strokes, p);
         if (net != null) ptsAwarded[ti].score = stablefordPoints(net - parH);
       });
+    } else if (g.tracksNinePoint) {
+      // 9-Point (also known as Nines or 5-3-1): exactly 3 players, 9
+      // points split every hole based on how the three players compare
+      // to EACH OTHER on net score - not an absolute comparison to par
+      // like Stableford. If one player's net score beats both others by
+      // 2 or more strokes, they take all 9 instead of the standard
+      // split - a fixed part of this format, not a toggle.
+      const sums = teamRes.map((t) => t.scoreSum);
+      if (sums.every((v) => v != null)) {
+        const sorted = [...sums].sort((a, b) => a - b);
+        const [low, mid, high] = sorted;
+        let points;
+        if (low === mid && mid === high) {
+          points = sums.map(() => 3); // all three tie
+        } else if (low === mid) {
+          // two tie for low, one alone on high - no single winner, so
+          // the win-by-2 bonus never applies here.
+          points = sums.map((s) => (s === low ? 4 : 1));
+        } else if (mid === high) {
+          // one alone on low, two tied behind them
+          const winsBig = low <= mid - 2;
+          points = sums.map((s) => (s === low ? (winsBig ? 9 : 5) : winsBig ? 0 : 2));
+        } else {
+          // all three distinct
+          const winsBig = low <= mid - 2;
+          points = sums.map((s) => {
+            if (s === low) return winsBig ? 9 : 5;
+            if (s === mid) return winsBig ? 0 : 3;
+            return winsBig ? 0 : 1;
+          });
+        }
+        points.forEach((v, i) => (ptsAwarded[i].score = v));
+      }
     } else if (g.hasScore && !g.totalScoring && !g.puttsOnlyScoring) {
       const sums = teamRes.map((t) => t.scoreSum);
       awardLowest(sums, "score").forEach((v, i) => (ptsAwarded[i].score = v));
     }
-    if (!g.tracksPontoBangoBongo && !g.tracksWolf && !g.tracksVegas && !g.tracksStableford && g.hasPutts && !g.totalScoring && round.cfg.trackPutts !== false) {
+    if (!g.tracksPontoBangoBongo && !g.tracksWolf && !g.tracksVegas && !g.tracksStableford && !g.tracksNinePoint && g.hasPutts && !g.totalScoring && round.cfg.trackPutts !== false) {
       const sums = teamRes.map((t) => t.puttSum);
       awardLowest(sums, "putt").forEach((v, i) => (ptsAwarded[i].putt = v));
     }
@@ -10984,8 +11069,8 @@ function computeMatchPlayResult(round, computed) {
               };
               const baseKeys = Object.keys(GAME_TILE_STYLE);
               const tourneyOnlyStartIdx = baseKeys.indexOf("avoscramble");
-              const individualKeys = baseKeys.slice(0, 7);
-              const teamKeys = baseKeys.slice(7, tourneyOnlyStartIdx);
+              const individualKeys = baseKeys.slice(0, 8);
+              const teamKeys = baseKeys.slice(8, tourneyOnlyStartIdx);
               // Explicit order requested for this section: Stroke Play,
               // Scramble, Best Ball, Match Play, Team Match Play, Foursomes -
               // not derived from GAME_TILE_STYLE's order like the two
@@ -11180,7 +11265,7 @@ function computeMatchPlayResult(round, computed) {
             <div className="gsc-label" style={{ marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Individual Game Formats</div>
             <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>Up to 4 Players</div>
             <div style={{ display: "flex", overflowX: "auto", gap: 10, paddingBottom: 6, WebkitOverflowScrolling: "touch" }}>
-            {["swami", "dstreet", "matchplay", "individualputts", "pontobango", "stableford", "oceans11"]
+            {["swami", "dstreet", "matchplay", "individualputts", "pontobango", "stableford", "oceans11", "ninepoint"]
               .map((key) => [key, GAMES[key]])
               .map(([key, g]) => {
                 const locked = isGameLocked(key);
@@ -12786,8 +12871,8 @@ function computeMatchPlayResult(round, computed) {
 
   if (screen === "whyPlay") {
     const baseKeys = Object.keys(GAME_TILE_STYLE);
-    const individualKeys = baseKeys.slice(0, 7);
-    const teamKeys = baseKeys.slice(7, baseKeys.indexOf("avoscramble"));
+    const individualKeys = baseKeys.slice(0, 8);
+    const teamKeys = baseKeys.slice(8, baseKeys.indexOf("avoscramble"));
     // Same explicit tournament order used on the Games page: Stroke Play,
     // Scramble, Best Ball, Match Play, Team Match Play, Foursomes. Match
     // Play and Team Match Play are dual-purpose games, so their
