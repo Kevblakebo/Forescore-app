@@ -5254,7 +5254,7 @@ export default function GolfScorecard() {
     return (
       <div className="gsc-modal-backdrop" onClick={() => setGameDetailsOpen(false)}>
         <div className="gsc-modal" onClick={(e) => e.stopPropagation()}>
-          <div className="gsc-modal-title">Game Details</div>
+          <div className="gsc-modal-title">Edit Details</div>
           <div style={{ fontSize: 13, color: "#4b4b45", lineHeight: 1.9 }}>
             <div><b>Max score over par per hole:</b> {cfg.doubleParMax ? "Double par" : cfg.maxOver != null ? `+${cfg.maxOver}` : "No limit set"}</div>
             {GAMES[r.game] && GAMES[r.game].hasPutts && (
@@ -16343,7 +16343,7 @@ function computeMatchPlayResult(round, computed) {
                   Rules
                 </button>
                 <button className="gsc-link" style={{ color: "#F3EFE0", fontSize: 11, textDecoration: "underline" }} onClick={() => setGameDetailsOpen(true)}>
-                  Game Details
+                  Edit Details
                 </button>
                 {isTournamentOrganizer(t) && (
                   <button className="gsc-link" style={{ color: "#F3EFE0", fontSize: 11, textDecoration: "underline" }} onClick={() => startTournamentFoursome(t)}>
@@ -17309,7 +17309,7 @@ function computeMatchPlayResult(round, computed) {
                 Rules
               </button>
               <button className="gsc-link" style={{ color: "#F3EFE0", fontSize: 11, textDecoration: "underline" }} onClick={() => setGameDetailsOpen(true)}>
-                Game Details
+                Edit Details
               </button>
               {canEditThisRound && (
                 <button className="gsc-link" style={{ color: "#F3EFE0", fontSize: 11, textDecoration: "underline" }} onClick={() => openEditFoursome(round.id, round)}>
