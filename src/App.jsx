@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Home as HomeIcon, Flag as FlagIcon, Trophy as TrophyIcon, User as UserIcon, Users as GroupsIcon, Lock, Library as LibraryIcon, ShoppingBag } from "lucide-react";
 import { supabase } from "./storage-polyfill.js";
+import { AppleSignIn, SignInScope } from "@capawesome/capacitor-apple-sign-in";
 
 /* ---------- design tokens ----------
    Palette: fairway (#1B4332) deep green, paper (#F3EFE0) cream, ink (#2B2B28),
@@ -3098,6 +3099,65 @@ export default function GolfScorecard() {
     }
     setAuthPassword("");
     goBack("profileTab");
+  }
+
+  // Apple's own client ID for the web/OAuth flow - the Services ID
+  // registered in the Apple Developer Portal, distinct from the app's
+  // own bundle ID used for native iOS sign-in.
+  const APPLE_WEB_CLIENT_ID = "com.ripscoregolf.app.signin";
+
+  async function handleAppleSignIn() {
+    setAuthErr("");
+    setAuthNotice("");
+    if (!supabase) {
+      setAuthErr("Account login isn't configured yet on this deployment.");
+      return;
+    }
+    setAuthBusy(true);
+    try {
+      const native = isRunningInNativeApp();
+      const nonce = crypto.randomUUID();
+      // initialize() is only needed (and only available) on Android and
+      // Web - iOS uses AuthenticationServices natively and skips it.
+      if (!native) {
+        await AppleSignIn.initialize({ clientId: APPLE_WEB_CLIENT_ID });
+      }
+      const result = await AppleSignIn.signIn({
+        scopes: [SignInScope.Email, SignInScope.FullName],
+        nonce,
+        ...(!native ? { redirectUrl: window.location.origin, state: crypto.randomUUID() } : {}),
+      });
+      const { data, error } = await supabase.auth.signInWithIdToken({
+        provider: "apple",
+        token: result.idToken,
+        nonce,
+      });
+      setAuthBusy(false);
+      if (error) {
+        setAuthErr(error.message);
+        return;
+      }
+      // The global auth listener above already routes a brand-new
+      // account to completeProfile, based on a just-now
+      // email_confirmed_at timestamp - checking that same condition
+      // here (rather than always navigating) avoids a race where this
+      // function's own navigation could override that redirect for a
+      // new sign-in, while still moving a RETURNING person off the
+      // login/register screen once they're actually signed in.
+      const confirmedAt = data.session && data.session.user && data.session.user.email_confirmed_at ? new Date(data.session.user.email_confirmed_at).getTime() : null;
+      const isNewAccount = confirmedAt && Date.now() - confirmedAt < 2 * 60 * 1000;
+      if (!isNewAccount) {
+        goBack("profileTab");
+      }
+    } catch (e) {
+      setAuthBusy(false);
+      const msg = (e && (e.message || String(e))) || "";
+      // Someone canceling the Apple sheet is an expected, routine
+      // outcome, not an error worth showing.
+      if (!/cancel/i.test(msg)) {
+        setAuthErr("Apple sign-in didn't go through. Try again.");
+      }
+    }
   }
 
   async function sendPasswordReset() {
@@ -13171,6 +13231,19 @@ function computeMatchPlayResult(round, computed) {
             <button className="gsc-btn gsc-btn-outline" style={{ width: "100%", marginTop: 10 }} onClick={() => { setAuthErr(""); goToScreen("register"); }}>
               Create Account
             </button>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "16px 0" }}>
+              <div style={{ flex: 1, height: 1, background: "#e5e0d0" }} />
+              <div style={{ fontSize: 12, color: "#8a8a80" }}>or</div>
+              <div style={{ flex: 1, height: 1, background: "#e5e0d0" }} />
+            </div>
+            <button
+              className="gsc-btn"
+              style={{ width: "100%", background: "#000", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
+              disabled={authBusy}
+              onClick={handleAppleSignIn}
+            >
+              <span style={{ fontSize: 16 }}>{"\uF8FF"}</span> Continue with Apple
+            </button>
           </div>
         </div>
       </div>
@@ -13315,6 +13388,19 @@ function computeMatchPlayResult(round, computed) {
             {authErr && <div style={{ color: "#A42E2D", fontSize: 13, marginTop: 10 }}>{authErr}</div>}
             <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 14 }} disabled={authBusy} onClick={signUp}>
               {authBusy ? "Creating account..." : "Create Account"}
+            </button>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "16px 0" }}>
+              <div style={{ flex: 1, height: 1, background: "#e5e0d0" }} />
+              <div style={{ fontSize: 12, color: "#8a8a80" }}>or</div>
+              <div style={{ flex: 1, height: 1, background: "#e5e0d0" }} />
+            </div>
+            <button
+              className="gsc-btn"
+              style={{ width: "100%", background: "#000", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
+              disabled={authBusy}
+              onClick={handleAppleSignIn}
+            >
+              <span style={{ fontSize: 16 }}>{"\uF8FF"}</span> Continue with Apple
             </button>
           </div>
           <div style={{ textAlign: "center", fontSize: 13, color: "#6b6b63" }}>
