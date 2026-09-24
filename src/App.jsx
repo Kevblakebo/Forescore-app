@@ -2487,6 +2487,11 @@ export default function GolfScorecard() {
   const [justSubscribed, setJustSubscribed] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState("yearly");
   const [profileForm, setProfileForm] = useState({ name: "", handicap: "", venmo: "", home_course: "", leaderboard_opt_in: false, avatar: "" });
+  // Apple only hands over a person's name on their very first sign-in ever
+  // - staged here from handleAppleSignIn so loadProfile can use it as a
+  // starting value for a brand-new account, then cleared right after use
+  // so it never leaks into a later, different sign-in.
+  const [pendingAppleFullName, setPendingAppleFullName] = useState("");
   const [profileLoading, setProfileLoading] = useState(false);
   // Distinct from profileLoading: starts false and only ever flips true
   // once loadProfile has genuinely completed at least once for the
@@ -3142,6 +3147,15 @@ export default function GolfScorecard() {
         nonce: hashedNonce,
         ...(!native ? { redirectUrl: window.location.origin, state: crypto.randomUUID() } : {}),
       });
+      // Apple only ever hands over the person's name on their first
+      // sign-in - stage it now, BEFORE calling signInWithIdToken below,
+      // so it's already in place by the time that call's session change
+      // triggers loadProfile (which uses it as completeProfile's
+      // starting full_name for a brand-new account). Does nothing on a
+      // returning sign-in, since Apple returns null for both fields
+      // every time after the first.
+      const appleFullName = [result.givenName, result.familyName].filter(Boolean).join(" ").trim();
+      if (appleFullName) setPendingAppleFullName(appleFullName);
       const { data, error } = await supabase.auth.signInWithIdToken({
         provider: "apple",
         token: result.idToken,
@@ -3149,6 +3163,7 @@ export default function GolfScorecard() {
       });
       setAuthBusy(false);
       if (error) {
+        if (appleFullName) setPendingAppleFullName(""); // this sign-in didn't actually succeed - don't let it linger for a later, unrelated one
         setAuthErr(error.message);
         return;
       }
@@ -3274,9 +3289,12 @@ export default function GolfScorecard() {
       setProfile(data);
       setProfileForm({ full_name: data.full_name || "", name: data.name || "", handicap: data.handicap || "", venmo: data.venmo || "", home_course: data.home_course || "", leaderboard_opt_in: !!data.leaderboard_opt_in, avatar: data.avatar || "" });
     } else {
-      // First time - no profile row yet, that's expected, just start with a blank form.
+      // First time - no profile row yet, that's expected, just start with a
+      // blank form - except full_name, which uses whatever Apple handed
+      // over on this person's first-ever sign-in, if any.
       setProfile(null);
-      setProfileForm({ full_name: "", name: "", handicap: "", venmo: "", home_course: "", leaderboard_opt_in: false, avatar: "" });
+      setProfileForm({ full_name: pendingAppleFullName || "", name: "", handicap: "", venmo: "", home_course: "", leaderboard_opt_in: false, avatar: "" });
+      if (pendingAppleFullName) setPendingAppleFullName("");
     }
   }
 
@@ -13243,21 +13261,21 @@ function computeMatchPlayResult(round, computed) {
             <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 14 }} disabled={authBusy} onClick={signIn}>
               {authBusy ? "Logging in..." : "Log In"}
             </button>
-            <button
-              className="gsc-btn"
-              style={{ width: "100%", marginTop: 10, background: "#000", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
-              disabled={authBusy}
-              onClick={handleAppleSignIn}
-            >
-              <span style={{ fontSize: 16 }}>{"\uF8FF"}</span> Continue with Apple
+            <button className="gsc-btn gsc-btn-outline" style={{ width: "100%", marginTop: 10 }} onClick={() => { setAuthErr(""); goToScreen("register"); }}>
+              Create Account
             </button>
             <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "16px 0" }}>
               <div style={{ flex: 1, height: 1, background: "#e5e0d0" }} />
               <div style={{ fontSize: 12, color: "#8a8a80" }}>or</div>
               <div style={{ flex: 1, height: 1, background: "#e5e0d0" }} />
             </div>
-            <button className="gsc-btn gsc-btn-outline" style={{ width: "100%" }} onClick={() => { setAuthErr(""); goToScreen("register"); }}>
-              Create Account
+            <button
+              className="gsc-btn"
+              style={{ width: "100%", background: "#000", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
+              disabled={authBusy}
+              onClick={handleAppleSignIn}
+            >
+              <span style={{ fontSize: 16 }}>{"\uF8FF"}</span> Continue with Apple
             </button>
           </div>
         </div>
