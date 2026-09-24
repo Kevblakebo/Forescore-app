@@ -150,6 +150,20 @@ function isRunningInNativeApp() {
   } catch (e) {}
   return false;
 }
+
+// Computes the SHA-256 hash of a string, returned as a lowercase hex
+// string. Apple Sign-In requires the nonce sent to Apple to be this
+// hashed form - Apple embeds whatever it's given directly into the ID
+// token's nonce claim, unhashed. Supabase then hashes the RAW nonce
+// itself to compare against that claim, so the raw value (not this
+// hashed one) is what gets passed to signInWithIdToken() afterward.
+async function sha256Hex(text) {
+  const encoded = new TextEncoder().encode(text);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", encoded);
+  return Array.from(new Uint8Array(hashBuffer))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
 // Subscriptions currently only work on the web - Apple and Google both
 // require in-app digital subscriptions to go through their own payment
 // systems (StoreKit, Play Billing) rather than Stripe directly, so this
@@ -3116,7 +3130,8 @@ export default function GolfScorecard() {
     setAuthBusy(true);
     try {
       const native = isRunningInNativeApp();
-      const nonce = crypto.randomUUID();
+      const rawNonce = crypto.randomUUID();
+      const hashedNonce = await sha256Hex(rawNonce);
       // initialize() is only needed (and only available) on Android and
       // Web - iOS uses AuthenticationServices natively and skips it.
       if (!native) {
@@ -3124,13 +3139,13 @@ export default function GolfScorecard() {
       }
       const result = await AppleSignIn.signIn({
         scopes: [SignInScope.Email, SignInScope.FullName],
-        nonce,
+        nonce: hashedNonce,
         ...(!native ? { redirectUrl: window.location.origin, state: crypto.randomUUID() } : {}),
       });
       const { data, error } = await supabase.auth.signInWithIdToken({
         provider: "apple",
         token: result.idToken,
-        nonce,
+        nonce: rawNonce,
       });
       setAuthBusy(false);
       if (error) {
