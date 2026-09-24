@@ -13243,21 +13243,21 @@ function computeMatchPlayResult(round, computed) {
             <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 14 }} disabled={authBusy} onClick={signIn}>
               {authBusy ? "Logging in..." : "Log In"}
             </button>
-            <button className="gsc-btn gsc-btn-outline" style={{ width: "100%", marginTop: 10 }} onClick={() => { setAuthErr(""); goToScreen("register"); }}>
-              Create Account
+            <button
+              className="gsc-btn"
+              style={{ width: "100%", marginTop: 10, background: "#000", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
+              disabled={authBusy}
+              onClick={handleAppleSignIn}
+            >
+              <span style={{ fontSize: 16 }}>{"\uF8FF"}</span> Continue with Apple
             </button>
             <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "16px 0" }}>
               <div style={{ flex: 1, height: 1, background: "#e5e0d0" }} />
               <div style={{ fontSize: 12, color: "#8a8a80" }}>or</div>
               <div style={{ flex: 1, height: 1, background: "#e5e0d0" }} />
             </div>
-            <button
-              className="gsc-btn"
-              style={{ width: "100%", background: "#000", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
-              disabled={authBusy}
-              onClick={handleAppleSignIn}
-            >
-              <span style={{ fontSize: 16 }}>{"\uF8FF"}</span> Continue with Apple
+            <button className="gsc-btn gsc-btn-outline" style={{ width: "100%" }} onClick={() => { setAuthErr(""); goToScreen("register"); }}>
+              Create Account
             </button>
           </div>
         </div>
