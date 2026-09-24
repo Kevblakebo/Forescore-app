@@ -8879,10 +8879,12 @@ export default function GolfScorecard() {
     let sharedOk = false;
     let finalRound = localRound;
 
+    let lastRow = null;
     if (supabase) {
       for (let attempt = 0; attempt < 12; attempt++) {
         const { data: row, error: fetchErr } = await supabase.from("kv_store").select("value, version").eq("key", key).maybeSingle();
         if (fetchErr || !row) break; // Row doesn't exist yet, or a genuine error - fall through to the whole-object fallback below
+        lastRow = row;
         let current;
         try {
           current = JSON.parse(row.value);
@@ -8913,17 +8915,45 @@ export default function GolfScorecard() {
     }
 
     if (!sharedOk) {
-      // Fallback for: the row doesn't exist yet (a brand new round,
-      // never saved before - the 7 hole/player-level edit functions
-      // that call this only ever run after a round already exists, so
-      // this should be rare in practice), every retry genuinely
-      // exhausted under extreme contention, or Supabase isn't
-      // configured at all (a local-only session). The old,
-      // whole-object write is still the right fallback here - something
-      // saving is better than nothing saving at all.
-      const res = await storageSet(key, JSON.stringify(localRound), true);
-      sharedOk = res.ok;
-      finalRound = localRound;
+      // Before giving up and writing this device's own local copy
+      // wholesale, make one last attempt to fetch whatever's actually on
+      // the server right now and apply just this edit on top of THAT -
+      // not a version-checked attempt (we're out of retries for that),
+      // just a best-effort way to avoid blindly overwriting fields this
+      // device's local copy might be missing or behind on: another
+      // player's finished status, another player's own scores, slope/
+      // rating, anything. Falls through to the true, whole-object
+      // fallback below only if even this fails.
+      let patchedOntoLatest = null;
+      if (supabase) {
+        try {
+          const { data: latestRow } = await supabase.from("kv_store").select("value").eq("key", key).maybeSingle();
+          if (latestRow && latestRow.value) {
+            const latest = JSON.parse(latestRow.value);
+            patchedOntoLatest = applyPatch(latest);
+          }
+        } catch (e) {
+          // Fetch or parse failed - fall through to the true fallback below.
+        }
+      }
+      if (patchedOntoLatest) {
+        const res = await storageSet(key, JSON.stringify(patchedOntoLatest), true);
+        sharedOk = res.ok;
+        finalRound = patchedOntoLatest;
+      } else {
+        // True fallback for: the row doesn't exist yet (a brand new
+        // round, never saved before - the 7 hole/player-level edit
+        // functions that call this only ever run after a round already
+        // exists, so this should be rare in practice), or Supabase isn't
+        // configured at all (a local-only session). The old,
+        // whole-object write is still the right fallback here -
+        // something saving is better than nothing saving at all, and
+        // there's genuinely no "latest server state" to apply the patch
+        // to instead.
+        const res = await storageSet(key, JSON.stringify(localRound), true);
+        sharedOk = res.ok;
+        finalRound = localRound;
+      }
     } else {
       // The server-confirmed, merged result may include another
       // player's change that landed during a retry cycle - update this
@@ -8947,7 +8977,7 @@ export default function GolfScorecard() {
       // number each call produced avoids this: whichever call produced
       // the highest version is unambiguously the freshest, regardless
       // of which one started first or finished first.
-      const newVersion = row.version + 1;
+      const newVersion = lastRow.version + 1;
       if (newVersion > highestAppliedVersionRef.current) {
         highestAppliedVersionRef.current = newVersion;
         setRound((r) => (r && r.id === finalRound.id ? finalRound : r));
