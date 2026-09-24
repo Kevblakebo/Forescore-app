@@ -14907,6 +14907,10 @@ function computeMatchPlayResult(round, computed) {
           }}
         />
         <div className="gsc-body">
+          <div className="gsc-no-select" style={{ fontSize: 13, marginBottom: 10, color: "#4b4b45" }}>{activeTournament ? g.tournamentDesc || g.desc : g.desc}</div>
+          <button className="gsc-link" style={{ marginBottom: 10, fontSize: 13, display: "block" }} onClick={() => openWhyPlay(gameKey, !!activeTournament)}>
+            Why people love this game
+          </button>
           <button className="gsc-link" style={{ marginBottom: 12, fontSize: 13 }} onClick={() => openRules(gameKey, !!activeTournament)}>
             View full rules for {g.name}
           </button>
@@ -15647,6 +15651,10 @@ function computeMatchPlayResult(round, computed) {
         <style>{STYLE}</style>
         <Header title={tg.tournamentName || tg.name} sub={MATCH_PLAY_GAMES.includes(tournamentGameKey) ? "Tournament setup - every match plays this format" : "Tournament setup - every foursome plays this format"} onBack={() => goBack("roundsTab")} />
         <div className="gsc-body">
+          <div className="gsc-no-select" style={{ fontSize: 13, marginBottom: 10, color: "#4b4b45" }}>{tg.tournamentDesc || tg.desc}</div>
+          <button className="gsc-link" style={{ marginBottom: 10, fontSize: 13, display: "block" }} onClick={() => openWhyPlay(tournamentGameKey, true)}>
+            Why people love this game
+          </button>
           <button className="gsc-link" style={{ marginBottom: 12, fontSize: 13 }} onClick={() => openRules(tournamentGameKey, true)}>
             View full rules for {tg.tournamentName || tg.name}
           </button>
