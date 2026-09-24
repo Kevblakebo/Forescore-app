@@ -2416,7 +2416,6 @@ export default function GolfScorecard() {
   const [gameKey, setGameKey] = useState(null);
   const [cfg, setCfg] = useState({});
   const [roundName, setRoundName] = useState("");
-  const [roundAvatarPickerOpen, setRoundAvatarPickerOpen] = useState(false);
   const [roundDate, setRoundDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [players, setPlayers] = useState([]); // {name, hcp}
   const [pontoPairing, setPontoPairing] = useState([[0, 1], [2, 3]]);
@@ -14003,44 +14002,6 @@ function computeMatchPlayResult(round, computed) {
                 value={isTournament ? tournamentName : roundName}
                 onChange={(e) => (isTournament ? setTournamentName(e.target.value) : setRoundName(e.target.value))}
               />
-              <div className="gsc-field" style={{ marginTop: 12 }}>
-                <div className="gsc-label">Group Avatar (optional)</div>
-                <button
-                  onClick={() => setRoundAvatarPickerOpen((v) => !v)}
-                  style={{ width: 44, height: 44, borderRadius: "50%", border: "1.5px solid #d8d2bd", background: "#fff", fontSize: 20, cursor: "pointer", position: "relative" }}
-                >
-                  {activeCfg.roundAvatar || "\u{1F3CC}\u{FE0F}"}
-                  {!activeCfg.roundAvatar && (
-                    <span style={{ position: "absolute", bottom: -2, right: -2, width: 16, height: 16, borderRadius: "50%", background: "#A42E2D", color: "#fff", fontSize: 11, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", border: "1.5px solid #F3EFE0" }}>
-                      +
-                    </span>
-                  )}
-                </button>
-                {roundAvatarPickerOpen && (
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8, padding: "10px 0 0" }}>
-                    {AVATAR_OPTIONS.map((emoji) => (
-                      <button
-                        key={emoji}
-                        onClick={() => {
-                          setActiveCfg({ ...activeCfg, roundAvatar: activeCfg.roundAvatar === emoji ? "" : emoji });
-                          setRoundAvatarPickerOpen(false);
-                        }}
-                        style={{ width: 36, height: 36, borderRadius: "50%", border: activeCfg.roundAvatar === emoji ? "2px solid #A42E2D" : "1.5px solid #d8d2bd", background: "#fff", fontSize: 18, cursor: "pointer" }}
-                      >
-                        {emoji}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-              {!isTournament && session && (
-                <label style={{ display: "flex", alignItems: "flex-start", gap: 8, marginTop: 14, cursor: "pointer" }}>
-                  <input type="checkbox" checked={saveAsNewGroup} onChange={(e) => setSaveAsNewGroup(e.target.checked)} style={{ marginTop: 2 }} />
-                  <span style={{ fontSize: 13, color: "#4b4b45" }}>
-                    Create a group from today's players{roundName.trim() ? ` called "${roundName.trim()}"` : ""} once this round is finished
-                  </span>
-                </label>
-              )}
               <button
                 className="gsc-btn gsc-btn-primary"
                 style={{ width: "100%", marginTop: 14 }}
@@ -14226,75 +14187,30 @@ function computeMatchPlayResult(round, computed) {
           {wizardStepId === "field_limits" && g && (
             <div className="gsc-card">
               <div className="gsc-label" style={{ marginBottom: 10, fontSize: 16 }}>Set your game limits and scoring (optional)</div>
-              {g.hasScore && (
-                <div className="gsc-field">
-                  <div className="gsc-label">Max strokes over par per hole</div>
-                  <input
-                    className="gsc-input"
-                    type="number"
-                    min="0"
-                    placeholder="No max"
-                    disabled={!!activeCfg.doubleParMax}
-                    value={activeCfg.doubleParMax ? "" : activeCfg.maxOver}
-                    onChange={(e) => setActiveCfg({ ...activeCfg, maxOver: cleanNumericText(e.target.value) })}
-                    style={activeCfg.doubleParMax ? { opacity: 0.5 } : undefined}
-                  />
-                  <label style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 8, fontSize: 13, color: "#4b4b45" }}>
-                    <input
-                      type="checkbox"
-                      checked={!!activeCfg.doubleParMax}
-                      onChange={(e) => setActiveCfg({ ...activeCfg, doubleParMax: e.target.checked, maxOver: e.target.checked ? "" : activeCfg.maxOver })}
-                    />
-                    Use double par max instead (e.g. par 4 caps at 8)
-                  </label>
-                </div>
-              )}
-              {g.hasPutts && !["individualputts", "teamputts"].includes(wizardAnswers.resolvedGameKey) && (
+              {wizardAnswers.resolvedGameKey !== "avoscramble" && (
                 <div className="gsc-field" style={{ marginTop: 10 }}>
-                  <div className="gsc-label">Track putts?</div>
+                  <div className="gsc-label">Use per-hole handicapping (net scoring)?</div>
                   <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 6 }}>
-                    Track putts and include in the game scoring as defined in the game rules.
+                    Strokes are given to higher-handicap players on the hardest holes, and net scores are used for scoring, points, and standings.
                   </div>
                   <div style={{ display: "flex", gap: 8 }}>
                     <button
                       className="gsc-btn"
-                      style={{ flex: 1, background: activeCfg.trackPutts !== false ? "#A42E2D" : "transparent", color: activeCfg.trackPutts !== false ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
-                      onClick={() => setActiveCfg({ ...activeCfg, trackPutts: true })}
+                      style={{ flex: 1, background: activeCfg.netScoring ? "#A42E2D" : "transparent", color: activeCfg.netScoring ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
+                      onClick={() => setActiveCfg({ ...activeCfg, netScoring: true })}
                     >
                       Yes
                     </button>
                     <button
                       className="gsc-btn"
-                      style={{ flex: 1, background: activeCfg.trackPutts === false ? "#A42E2D" : "transparent", color: activeCfg.trackPutts === false ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
-                      onClick={() => setActiveCfg({ ...activeCfg, trackPutts: false })}
+                      style={{ flex: 1, background: !activeCfg.netScoring ? "#A42E2D" : "transparent", color: !activeCfg.netScoring ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
+                      onClick={() => setActiveCfg({ ...activeCfg, netScoring: false })}
                     >
                       No
                     </button>
                   </div>
                 </div>
               )}
-              {g.hasPutts && activeCfg.trackPutts !== false && (
-                <div className="gsc-field" style={{ marginTop: 10 }}>
-                  <div className="gsc-label">Max putts per hole</div>
-                  <input className="gsc-input" type="number" min="0" placeholder="No max" value={activeCfg.maxPutts} onChange={(e) => setActiveCfg({ ...activeCfg, maxPutts: cleanNumericText(e.target.value) })} />
-                </div>
-              )}
-              <div className="gsc-field" style={{ marginTop: 10 }}>
-                <div className="gsc-label">Mulligans per player{wizardAnswers.resolvedGameKey === "seabluffe" ? ", per 6 holes" : ""}</div>
-                <input className="gsc-input" type="number" min="0" placeholder="0" value={activeCfg.mulliganSegment} onChange={(e) => setActiveCfg({ ...activeCfg, mulliganSegment: cleanNumericText(e.target.value) })} />
-              </div>
-              <div className="gsc-field" style={{ marginTop: 10 }}>
-                <div className="gsc-label">Earn a bonus mulligan</div>
-                <input
-                  className="gsc-input"
-                  placeholder="e.g. Give to charity"
-                  value={activeCfg.mulliganChallenge}
-                  onChange={(e) => setActiveCfg({ ...activeCfg, mulliganChallenge: e.target.value })}
-                />
-                <div style={{ fontSize: 11, color: "#8a8a80", marginTop: 4 }}>
-                  If set, anyone can award a player an extra mulligan on the scoring screen once they've done this.
-                </div>
-              </div>
               {nassauEligible(wizardAnswers.resolvedGameKey, players.length) && (
                 <div className="gsc-field" style={{ marginTop: 10 }}>
                   <div className="gsc-label">Scoring method</div>
@@ -14430,30 +14346,69 @@ function computeMatchPlayResult(round, computed) {
                   )}
                 </div>
               )}
-              {wizardAnswers.resolvedGameKey !== "avoscramble" && (
+              {g.hasPutts && !["individualputts", "teamputts"].includes(wizardAnswers.resolvedGameKey) && (
                 <div className="gsc-field" style={{ marginTop: 10 }}>
-                  <div className="gsc-label">Use per-hole handicapping (net scoring)?</div>
+                  <div className="gsc-label">Track putts?</div>
                   <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 6 }}>
-                    Strokes are given to higher-handicap players on the hardest holes, and net scores are used for scoring, points, and standings.
+                    Track putts and include in the game scoring as defined in the game rules.
                   </div>
                   <div style={{ display: "flex", gap: 8 }}>
                     <button
                       className="gsc-btn"
-                      style={{ flex: 1, background: activeCfg.netScoring ? "#A42E2D" : "transparent", color: activeCfg.netScoring ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
-                      onClick={() => setActiveCfg({ ...activeCfg, netScoring: true })}
+                      style={{ flex: 1, background: activeCfg.trackPutts !== false ? "#A42E2D" : "transparent", color: activeCfg.trackPutts !== false ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
+                      onClick={() => setActiveCfg({ ...activeCfg, trackPutts: true })}
                     >
                       Yes
                     </button>
                     <button
                       className="gsc-btn"
-                      style={{ flex: 1, background: !activeCfg.netScoring ? "#A42E2D" : "transparent", color: !activeCfg.netScoring ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
-                      onClick={() => setActiveCfg({ ...activeCfg, netScoring: false })}
+                      style={{ flex: 1, background: activeCfg.trackPutts === false ? "#A42E2D" : "transparent", color: activeCfg.trackPutts === false ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
+                      onClick={() => setActiveCfg({ ...activeCfg, trackPutts: false })}
                     >
                       No
                     </button>
                   </div>
                 </div>
               )}
+              {g.hasScore && (
+                <div className="gsc-field">
+                  <div className="gsc-label">Max strokes over par per hole</div>
+                  <input
+                    className="gsc-input"
+                    type="number"
+                    min="0"
+                    placeholder="No max"
+                    disabled={!!activeCfg.doubleParMax}
+                    value={activeCfg.doubleParMax ? "" : activeCfg.maxOver}
+                    onChange={(e) => setActiveCfg({ ...activeCfg, maxOver: cleanNumericText(e.target.value) })}
+                    style={activeCfg.doubleParMax ? { opacity: 0.5 } : undefined}
+                  />
+                  <label style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 8, fontSize: 13, color: "#4b4b45" }}>
+                    <input
+                      type="checkbox"
+                      checked={!!activeCfg.doubleParMax}
+                      onChange={(e) => setActiveCfg({ ...activeCfg, doubleParMax: e.target.checked, maxOver: e.target.checked ? "" : activeCfg.maxOver })}
+                    />
+                    Use double par max instead (e.g. par 4 caps at 8)
+                  </label>
+                </div>
+              )}
+              <div className="gsc-field" style={{ marginTop: 10 }}>
+                <div className="gsc-label">Mulligans per player{wizardAnswers.resolvedGameKey === "seabluffe" ? ", per 6 holes" : ""}</div>
+                <input className="gsc-input" type="number" min="0" placeholder="0" value={activeCfg.mulliganSegment} onChange={(e) => setActiveCfg({ ...activeCfg, mulliganSegment: cleanNumericText(e.target.value) })} />
+              </div>
+              <div className="gsc-field" style={{ marginTop: 10 }}>
+                <div className="gsc-label">Earn a bonus mulligan</div>
+                <input
+                  className="gsc-input"
+                  placeholder="e.g. Give to charity"
+                  value={activeCfg.mulliganChallenge}
+                  onChange={(e) => setActiveCfg({ ...activeCfg, mulliganChallenge: e.target.value })}
+                />
+                <div style={{ fontSize: 11, color: "#8a8a80", marginTop: 4 }}>
+                  If set, anyone can award a player an extra mulligan on the scoring screen once they've done this.
+                </div>
+              </div>
               {["dstreet", "ponto", "teamputts"].includes(wizardAnswers.resolvedGameKey) && (
                 <div className="gsc-field" style={{ marginTop: 10 }}>
                   <div className="gsc-label">Ties carry over to next hole?</div>
@@ -15080,46 +15035,6 @@ function computeMatchPlayResult(round, computed) {
             />
             {!activeTournament && (
               <div className="gsc-field" style={{ marginTop: 12 }}>
-                <div className="gsc-label">Group Avatar (optional)</div>
-                <button
-                  onClick={() => setRoundAvatarPickerOpen((v) => !v)}
-                  style={{ width: 44, height: 44, borderRadius: "50%", border: "1.5px solid #d8d2bd", background: "#fff", fontSize: 20, cursor: "pointer", position: "relative" }}
-                >
-                  {cfg.roundAvatar || "\u{1F3CC}\u{FE0F}"}
-                  {!cfg.roundAvatar && (
-                    <span style={{ position: "absolute", bottom: -2, right: -2, width: 16, height: 16, borderRadius: "50%", background: "#A42E2D", color: "#fff", fontSize: 11, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", border: "1.5px solid #F3EFE0" }}>
-                      +
-                    </span>
-                  )}
-                </button>
-                {roundAvatarPickerOpen && (
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8, padding: "10px 0 0" }}>
-                    {AVATAR_OPTIONS.map((emoji) => (
-                      <button
-                        key={emoji}
-                        onClick={() => {
-                          setCfg({ ...cfg, roundAvatar: cfg.roundAvatar === emoji ? "" : emoji });
-                          setRoundAvatarPickerOpen(false);
-                        }}
-                        style={{ width: 36, height: 36, borderRadius: "50%", border: cfg.roundAvatar === emoji ? "2px solid #A42E2D" : "1.5px solid #d8d2bd", background: "#fff", fontSize: 18, cursor: "pointer" }}
-                      >
-                        {emoji}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-            {!activeTournament && session && (
-              <label style={{ display: "flex", alignItems: "flex-start", gap: 8, marginTop: 4, marginBottom: 12, cursor: "pointer" }}>
-                <input type="checkbox" checked={saveAsNewGroup} onChange={(e) => setSaveAsNewGroup(e.target.checked)} style={{ marginTop: 2 }} />
-                <span style={{ fontSize: 13, color: "#4b4b45" }}>
-                  Create a group from today's players{roundName.trim() ? ` called "${roundName.trim()}"` : ""} once this round is finished
-                </span>
-              </label>
-            )}
-            {!activeTournament && (
-              <div className="gsc-field" style={{ marginTop: 12 }}>
                 <div className="gsc-label">Date</div>
                 <input className="gsc-input" type="date" value={roundDate} onChange={(e) => setRoundDate(e.target.value)} />
               </div>
@@ -15321,131 +15236,28 @@ function computeMatchPlayResult(round, computed) {
           {!activeTournament && (
           <div className="gsc-card">
             <div className="gsc-label" style={{ marginBottom: 10 }}>Game variables (Optional)</div>
-            {g.hasScore && (
+            {g.rotates !== undefined && g.hasScore && (
               <div className="gsc-field">
-                <div className="gsc-label">Max score over par per hole</div>
-                <input
-                  className="gsc-input"
-                  type="number"
-                  min="0"
-                  value={cfg.doubleParMax ? "" : cfg.maxOver}
-                  disabled={!!cfg.doubleParMax}
-                  style={cfg.doubleParMax ? { opacity: 0.5 } : undefined}
-                  onChange={(e) => {
-                    const raw = cleanNumericText(e.target.value);
-                    setCfg({ ...cfg, maxOver: raw === "" ? "" : Number(raw) });
-                  }}
-                  onBlur={(e) => {
-                    if (e.target.value === "") setCfg((c) => ({ ...c, maxOver: "" }));
-                  }}
-                />
-                <label style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 8, fontSize: 13, color: "#4b4b45" }}>
-                  <input
-                    type="checkbox"
-                    checked={!!cfg.doubleParMax}
-                    onChange={(e) => setCfg({ ...cfg, doubleParMax: e.target.checked, maxOver: e.target.checked ? "" : cfg.maxOver })}
-                  />
-                  Use double par max instead (e.g. par 4 caps at 8)
-                </label>
-              </div>
-            )}
-            {g.hasPutts && !["individualputts", "teamputts"].includes(gameKey) && (
-              <div className="gsc-field">
-                <div className="gsc-label">Track putts?</div>
+                <div className="gsc-label">Use per-hole handicapping (net scoring)?</div>
                 <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 6 }}>
-                  Track putts and include in the game scoring as defined in the game rules.
+                  Strokes are given to higher-handicap players on the hardest holes, and net scores are used for scoring, points, and standings.
                 </div>
                 <div style={{ display: "flex", gap: 8 }}>
                   <button
                     className="gsc-btn"
-                    style={{ flex: 1, background: cfg.trackPutts !== false ? "#A42E2D" : "transparent", color: cfg.trackPutts !== false ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
-                    onClick={() => setCfg({ ...cfg, trackPutts: true })}
+                    style={{ flex: 1, background: cfg.netScoring ? "#A42E2D" : "transparent", color: cfg.netScoring ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
+                    onClick={() => setCfg({ ...cfg, netScoring: true })}
                   >
                     Yes
                   </button>
                   <button
                     className="gsc-btn"
-                    style={{ flex: 1, background: cfg.trackPutts === false ? "#A42E2D" : "transparent", color: cfg.trackPutts === false ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
-                    onClick={() => setCfg({ ...cfg, trackPutts: false })}
+                    style={{ flex: 1, background: !cfg.netScoring ? "#A42E2D" : "transparent", color: !cfg.netScoring ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
+                    onClick={() => setCfg({ ...cfg, netScoring: false })}
                   >
                     No
                   </button>
                 </div>
-              </div>
-            )}
-            {cfg.trackPutts !== false && (
-            <div className="gsc-field">
-              <div className="gsc-label">Max putts per hole</div>
-              <input
-                className="gsc-input"
-                type="number"
-                min="1"
-                value={cfg.maxPutts}
-                onChange={(e) => {
-                  const raw = cleanNumericText(e.target.value);
-                  setCfg({ ...cfg, maxPutts: raw === "" ? "" : Number(raw) });
-                }}
-                onBlur={(e) => {
-                  if (e.target.value === "") setCfg((c) => ({ ...c, maxPutts: "" }));
-                }}
-              />
-            </div>
-            )}
-            {g.rotates !== undefined && g.hasScore && (
-              <div className="gsc-field">
-                <div className="gsc-label">{gameKey === "seabluffe" ? `Mulligans per player, per ${mulliganWindow(gameKey)} holes` : "Mulligans per player"}</div>
-                <input
-                  className="gsc-input"
-                  type="number"
-                  min="0"
-                  value={cfg.mulliganSegment}
-                  onChange={(e) => {
-                    const raw = cleanNumericText(e.target.value);
-                    setCfg({ ...cfg, mulliganSegment: raw === "" ? "" : Number(raw) });
-                  }}
-                  onBlur={(e) => {
-                    if (e.target.value === "") setCfg((c) => ({ ...c, mulliganSegment: 0 }));
-                  }}
-                />
-              </div>
-            )}
-            {g.rotates !== undefined && g.hasScore && (
-              <div className="gsc-field">
-                <div className="gsc-label">Earn a bonus mulligan</div>
-                <input
-                  className="gsc-input"
-                  placeholder="e.g. Give to charity"
-                  value={cfg.mulliganChallenge}
-                  onChange={(e) => setCfg({ ...cfg, mulliganChallenge: e.target.value })}
-                />
-                <div style={{ fontSize: 11, color: "#8a8a80", marginTop: 4 }}>
-                  If set, anyone can award a player an extra mulligan on the scoring screen once they've done this.
-                </div>
-              </div>
-            )}
-            {!cfg.nassau && (gameKey === "dstreet" || gameKey === "ponto") && (
-              <div className="gsc-field">
-                <div className="gsc-label">Stakes per skin, per player</div>
-                <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 6 }}>
-                  For every skin won, whoever won it collects this amount from everyone else - carried-over skins count as multiple. Leave blank to just play for points, no money tracked.
-                </div>
-                <div style={{ position: "relative" }}>
-                  <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#6b6b63", fontSize: 15, pointerEvents: "none" }}>$</span>
-                  <input
-                    className="gsc-input"
-                    style={{ paddingLeft: 24 }}
-                    inputMode="decimal"
-                    placeholder="0.50"
-                    value={cfg.skinStake || ""}
-                    onChange={(e) => setCfg({ ...cfg, skinStake: e.target.value })}
-                  />
-                </div>
-              </div>
-            )}
-            {!cfg.nassau && gameKey !== "dstreet" && gameKey !== "ponto" && (
-              <div className="gsc-field">
-                <div className="gsc-label">Prize / stakes</div>
-                <input className="gsc-input" value={cfg.prize} onChange={(e) => setCfg({ ...cfg, prize: e.target.value })} />
               </div>
             )}
             {nassauEligible(gameKey, players.length) && (
@@ -15528,34 +15340,119 @@ function computeMatchPlayResult(round, computed) {
                 )}
               </div>
             )}
-            <div className="gsc-field">
-              <div className="gsc-label">Venmo handle for settling up (optional)</div>
-              <input className="gsc-input" placeholder="@your-venmo" value={cfg.venmo || ""} onChange={(e) => setCfg({ ...cfg, venmo: e.target.value })} />
-            </div>
-            {g.rotates !== undefined && g.hasScore && (
+            {g.hasPutts && !["individualputts", "teamputts"].includes(gameKey) && (
               <div className="gsc-field">
-                <div className="gsc-label">Use per-hole handicapping (net scoring)?</div>
+                <div className="gsc-label">Track putts?</div>
                 <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 6 }}>
-                  Strokes are given to higher-handicap players on the hardest holes, and net scores are used for scoring, points, and standings.
+                  Track putts and include in the game scoring as defined in the game rules.
                 </div>
                 <div style={{ display: "flex", gap: 8 }}>
                   <button
                     className="gsc-btn"
-                    style={{ flex: 1, background: cfg.netScoring ? "#A42E2D" : "transparent", color: cfg.netScoring ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
-                    onClick={() => setCfg({ ...cfg, netScoring: true })}
+                    style={{ flex: 1, background: cfg.trackPutts !== false ? "#A42E2D" : "transparent", color: cfg.trackPutts !== false ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
+                    onClick={() => setCfg({ ...cfg, trackPutts: true })}
                   >
                     Yes
                   </button>
                   <button
                     className="gsc-btn"
-                    style={{ flex: 1, background: !cfg.netScoring ? "#A42E2D" : "transparent", color: !cfg.netScoring ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
-                    onClick={() => setCfg({ ...cfg, netScoring: false })}
+                    style={{ flex: 1, background: cfg.trackPutts === false ? "#A42E2D" : "transparent", color: cfg.trackPutts === false ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
+                    onClick={() => setCfg({ ...cfg, trackPutts: false })}
                   >
                     No
                   </button>
                 </div>
               </div>
             )}
+            {g.hasScore && (
+              <div className="gsc-field">
+                <div className="gsc-label">Max score over par per hole</div>
+                <input
+                  className="gsc-input"
+                  type="number"
+                  min="0"
+                  value={cfg.doubleParMax ? "" : cfg.maxOver}
+                  disabled={!!cfg.doubleParMax}
+                  style={cfg.doubleParMax ? { opacity: 0.5 } : undefined}
+                  onChange={(e) => {
+                    const raw = cleanNumericText(e.target.value);
+                    setCfg({ ...cfg, maxOver: raw === "" ? "" : Number(raw) });
+                  }}
+                  onBlur={(e) => {
+                    if (e.target.value === "") setCfg((c) => ({ ...c, maxOver: "" }));
+                  }}
+                />
+                <label style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 8, fontSize: 13, color: "#4b4b45" }}>
+                  <input
+                    type="checkbox"
+                    checked={!!cfg.doubleParMax}
+                    onChange={(e) => setCfg({ ...cfg, doubleParMax: e.target.checked, maxOver: e.target.checked ? "" : cfg.maxOver })}
+                  />
+                  Use double par max instead (e.g. par 4 caps at 8)
+                </label>
+              </div>
+            )}
+            {g.rotates !== undefined && g.hasScore && (
+              <div className="gsc-field">
+                <div className="gsc-label">{gameKey === "seabluffe" ? `Mulligans per player, per ${mulliganWindow(gameKey)} holes` : "Mulligans per player"}</div>
+                <input
+                  className="gsc-input"
+                  type="number"
+                  min="0"
+                  value={cfg.mulliganSegment}
+                  onChange={(e) => {
+                    const raw = cleanNumericText(e.target.value);
+                    setCfg({ ...cfg, mulliganSegment: raw === "" ? "" : Number(raw) });
+                  }}
+                  onBlur={(e) => {
+                    if (e.target.value === "") setCfg((c) => ({ ...c, mulliganSegment: 0 }));
+                  }}
+                />
+              </div>
+            )}
+            {g.rotates !== undefined && g.hasScore && (
+              <div className="gsc-field">
+                <div className="gsc-label">Earn a bonus mulligan</div>
+                <input
+                  className="gsc-input"
+                  placeholder="e.g. Give to charity"
+                  value={cfg.mulliganChallenge}
+                  onChange={(e) => setCfg({ ...cfg, mulliganChallenge: e.target.value })}
+                />
+                <div style={{ fontSize: 11, color: "#8a8a80", marginTop: 4 }}>
+                  If set, anyone can award a player an extra mulligan on the scoring screen once they've done this.
+                </div>
+              </div>
+            )}
+            {!cfg.nassau && (gameKey === "dstreet" || gameKey === "ponto") && (
+              <div className="gsc-field">
+                <div className="gsc-label">Stakes per skin, per player</div>
+                <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 6 }}>
+                  For every skin won, whoever won it collects this amount from everyone else - carried-over skins count as multiple. Leave blank to just play for points, no money tracked.
+                </div>
+                <div style={{ position: "relative" }}>
+                  <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#6b6b63", fontSize: 15, pointerEvents: "none" }}>$</span>
+                  <input
+                    className="gsc-input"
+                    style={{ paddingLeft: 24 }}
+                    inputMode="decimal"
+                    placeholder="0.50"
+                    value={cfg.skinStake || ""}
+                    onChange={(e) => setCfg({ ...cfg, skinStake: e.target.value })}
+                  />
+                </div>
+              </div>
+            )}
+            {!cfg.nassau && gameKey !== "dstreet" && gameKey !== "ponto" && (
+              <div className="gsc-field">
+                <div className="gsc-label">Prize / stakes</div>
+                <input className="gsc-input" value={cfg.prize} onChange={(e) => setCfg({ ...cfg, prize: e.target.value })} />
+              </div>
+            )}
+            <div className="gsc-field">
+              <div className="gsc-label">Venmo handle for settling up (optional)</div>
+              <input className="gsc-input" placeholder="@your-venmo" value={cfg.venmo || ""} onChange={(e) => setCfg({ ...cfg, venmo: e.target.value })} />
+            </div>
             {["dstreet", "ponto", "teamputts"].includes(gameKey) && (
               <div className="gsc-field">
                 <div className="gsc-label">Ties carry over to next hole?</div>
@@ -16003,32 +15900,28 @@ function computeMatchPlayResult(round, computed) {
 
           <div className="gsc-card">
             <div className="gsc-label" style={{ marginBottom: 10 }}>Shared game variables</div>
-            {tg.hasScore && (
+            {tg.hasScore && tournamentGameKey !== "avoscramble" && (
               <div className="gsc-field">
-                <div className="gsc-label">Max score over par per hole</div>
-                <input
-                  className="gsc-input"
-                  type="number"
-                  min="0"
-                  value={tournamentCfg.doubleParMax ? "" : tournamentCfg.maxOver}
-                  disabled={!!tournamentCfg.doubleParMax}
-                  style={tournamentCfg.doubleParMax ? { opacity: 0.5 } : undefined}
-                  onChange={(e) => {
-                    const raw = cleanNumericText(e.target.value);
-                    setTournamentCfg({ ...tournamentCfg, maxOver: raw === "" ? "" : Number(raw) });
-                  }}
-                  onBlur={(e) => {
-                    if (e.target.value === "") setTournamentCfg((c) => ({ ...c, maxOver: "" }));
-                  }}
-                />
-                <label style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 8, fontSize: 13, color: "#4b4b45" }}>
-                  <input
-                    type="checkbox"
-                    checked={!!tournamentCfg.doubleParMax}
-                    onChange={(e) => setTournamentCfg({ ...tournamentCfg, doubleParMax: e.target.checked, maxOver: e.target.checked ? "" : tournamentCfg.maxOver })}
-                  />
-                  Use double par max instead (e.g. par 4 caps at 8)
-                </label>
+                <div className="gsc-label">Use per-hole handicapping (net scoring)?</div>
+                <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 6 }}>
+                  Strokes are given to higher-handicap players on the hardest holes, and net scores are used for scoring, points, and standings.
+                </div>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button
+                    className="gsc-btn"
+                    style={{ flex: 1, background: tournamentCfg.netScoring ? "#A42E2D" : "transparent", color: tournamentCfg.netScoring ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
+                    onClick={() => setTournamentCfg({ ...tournamentCfg, netScoring: true })}
+                  >
+                    Yes
+                  </button>
+                  <button
+                    className="gsc-btn"
+                    style={{ flex: 1, background: !tournamentCfg.netScoring ? "#A42E2D" : "transparent", color: !tournamentCfg.netScoring ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
+                    onClick={() => setTournamentCfg({ ...tournamentCfg, netScoring: false })}
+                  >
+                    No
+                  </button>
+                </div>
               </div>
             )}
             {tg.hasPutts && (
@@ -16055,22 +15948,32 @@ function computeMatchPlayResult(round, computed) {
                 </div>
               </div>
             )}
-            {tg.hasPutts && tournamentCfg.trackPutts !== false && (
+            {tg.hasScore && (
               <div className="gsc-field">
-                <div className="gsc-label">Max putts per hole</div>
+                <div className="gsc-label">Max score over par per hole</div>
                 <input
                   className="gsc-input"
                   type="number"
-                  min="1"
-                  value={tournamentCfg.maxPutts}
+                  min="0"
+                  value={tournamentCfg.doubleParMax ? "" : tournamentCfg.maxOver}
+                  disabled={!!tournamentCfg.doubleParMax}
+                  style={tournamentCfg.doubleParMax ? { opacity: 0.5 } : undefined}
                   onChange={(e) => {
                     const raw = cleanNumericText(e.target.value);
-                    setTournamentCfg({ ...tournamentCfg, maxPutts: raw === "" ? "" : Number(raw) });
+                    setTournamentCfg({ ...tournamentCfg, maxOver: raw === "" ? "" : Number(raw) });
                   }}
                   onBlur={(e) => {
-                    if (e.target.value === "") setTournamentCfg((c) => ({ ...c, maxPutts: "" }));
+                    if (e.target.value === "") setTournamentCfg((c) => ({ ...c, maxOver: "" }));
                   }}
                 />
+                <label style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 8, fontSize: 13, color: "#4b4b45" }}>
+                  <input
+                    type="checkbox"
+                    checked={!!tournamentCfg.doubleParMax}
+                    onChange={(e) => setTournamentCfg({ ...tournamentCfg, doubleParMax: e.target.checked, maxOver: e.target.checked ? "" : tournamentCfg.maxOver })}
+                  />
+                  Use double par max instead (e.g. par 4 caps at 8)
+                </label>
               </div>
             )}
             {tg.hasScore && (
@@ -16102,30 +16005,6 @@ function computeMatchPlayResult(round, computed) {
                 />
                 <div style={{ fontSize: 11, color: "#8a8a80", marginTop: 4 }}>
                   If set, anyone can award a player an extra mulligan on the scoring screen once they've done this.
-                </div>
-              </div>
-            )}
-            {tg.hasScore && tournamentGameKey !== "avoscramble" && (
-              <div className="gsc-field">
-                <div className="gsc-label">Use per-hole handicapping (net scoring)?</div>
-                <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 6 }}>
-                  Strokes are given to higher-handicap players on the hardest holes, and net scores are used for scoring, points, and standings.
-                </div>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <button
-                    className="gsc-btn"
-                    style={{ flex: 1, background: tournamentCfg.netScoring ? "#A42E2D" : "transparent", color: tournamentCfg.netScoring ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
-                    onClick={() => setTournamentCfg({ ...tournamentCfg, netScoring: true })}
-                  >
-                    Yes
-                  </button>
-                  <button
-                    className="gsc-btn"
-                    style={{ flex: 1, background: !tournamentCfg.netScoring ? "#A42E2D" : "transparent", color: !tournamentCfg.netScoring ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
-                    onClick={() => setTournamentCfg({ ...tournamentCfg, netScoring: false })}
-                  >
-                    No
-                  </button>
                 </div>
               </div>
             )}
