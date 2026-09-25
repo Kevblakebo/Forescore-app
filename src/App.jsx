@@ -1501,9 +1501,6 @@ const OCEANS11_GAMES = [];
 function oceans11Eligible(gameKey, playerCount) {
   return OCEANS11_GAMES.includes(gameKey) && playerCount >= 2 && playerCount <= 4;
 }
-function gameSupportsOceans11(gameKey) {
-  return OCEANS11_GAMES.includes(gameKey);
-}
 
 // Individual Stroke Play, Individual Skins, and Individual Putts all get
 // this simpler, 2-way version of the "scoring method" toggle - just
@@ -14215,7 +14212,7 @@ function computeMatchPlayResult(round, computed) {
                 <div className="gsc-field" style={{ marginTop: 10 }}>
                   <div className="gsc-label">Scoring method</div>
                   <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 6 }}>
-                    Nassau splits the round into three separate bets: front 9, back 9, and overall 18 - each its own winner.
+                    Overall scores the full 18 holes as one competition. Nassau splits it into three separate bets instead - front 9, back 9, and overall 18 - each its own winner.
                   </div>
                   <div style={{ display: "flex", gap: 8 }}>
                     <button
@@ -14251,64 +14248,12 @@ function computeMatchPlayResult(round, computed) {
                   )}
                 </div>
               )}
-              {oceans11Eligible(wizardAnswers.resolvedGameKey, players.length) && (
-                <div className="gsc-field" style={{ marginTop: 10 }}>
-                  <div className="gsc-label">Scoring method</div>
-                  <div style={{ display: "flex", gap: 8 }}>
-                    <button
-                      className="gsc-btn"
-                      style={{ flex: 1, background: !activeCfg.oceans11 && !activeCfg.nassau ? "#A42E2D" : "transparent", color: !activeCfg.oceans11 && !activeCfg.nassau ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
-                      onClick={() => setActiveCfg({ ...activeCfg, oceans11: false, nassau: false })}
-                    >
-                      Overall
-                    </button>
-                    <button
-                      className="gsc-btn"
-                      style={{ flex: 1, background: activeCfg.oceans11 ? "#A42E2D" : "transparent", color: activeCfg.oceans11 ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
-                      onClick={() => setActiveCfg({ ...activeCfg, oceans11: true, nassau: false })}
-                    >
-                      Oceans 11
-                    </button>
-                    <button
-                      className="gsc-btn"
-                      style={{ flex: 1, background: activeCfg.nassau ? "#A42E2D" : "transparent", color: activeCfg.nassau ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
-                      onClick={() => setActiveCfg({ ...activeCfg, nassau: true, oceans11: false })}
-                    >
-                      Nassau
-                    </button>
-                  </div>
-                  {!activeCfg.oceans11 && !activeCfg.nassau && (
-                    <div style={{ fontSize: 11, color: "#8a8a80", marginTop: 6 }}>Standard stroke play across the full round.</div>
-                  )}
-                  {activeCfg.oceans11 && (
-                    <div style={{ fontSize: 11, color: "#8a8a80", marginTop: 6 }}>
-                      Each player picks their own best 11 holes as they play - lowest total across those 11 wins.
-                    </div>
-                  )}
-                  {activeCfg.nassau && (
-                    <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 8 }}>
-                      <div style={{ fontSize: 11, color: "#8a8a80" }}>
-                        Splits the round into three separate competitions: front 9, back 9, and overall 18 - each with its own winner, ranked individually rather than in teams.
-                      </div>
-                      <div>
-                        <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 4 }}>Front 9 wager per player</div>
-                        <input className="gsc-input" placeholder="$5" value={activeCfg.nassauFrontPrize || ""} onChange={(e) => setActiveCfg({ ...activeCfg, nassauFrontPrize: e.target.value })} />
-                      </div>
-                      <div>
-                        <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 4 }}>Back 9 wager per player</div>
-                        <input className="gsc-input" placeholder="$5" value={activeCfg.nassauBackPrize || ""} onChange={(e) => setActiveCfg({ ...activeCfg, nassauBackPrize: e.target.value })} />
-                      </div>
-                      <div>
-                        <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 4 }}>Overall 18 wager per player</div>
-                        <input className="gsc-input" placeholder="$5" value={activeCfg.nassauOverallPrize || ""} onChange={(e) => setActiveCfg({ ...activeCfg, nassauOverallPrize: e.target.value })} />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
               {nassauOnlyEligible(wizardAnswers.resolvedGameKey, players.length) && (
                 <div className="gsc-field" style={{ marginTop: 10 }}>
                   <div className="gsc-label">Scoring method</div>
+                  <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 6 }}>
+                    Overall scores the full 18 holes as one competition. Nassau splits it into three separate bets instead - front 9, back 9, and overall 18 - each its own winner.
+                  </div>
                   <div style={{ display: "flex", gap: 8 }}>
                     <button
                       className="gsc-btn"
@@ -15264,7 +15209,7 @@ function computeMatchPlayResult(round, computed) {
               <div className="gsc-field">
                 <div className="gsc-label">Scoring method</div>
                 <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 6 }}>
-                  Nassau splits the round into three separate bets: front 9, back 9, and overall 18 - each its own winner.
+                  Overall scores the full 18 holes as one competition. Nassau splits it into three separate bets instead - front 9, back 9, and overall 18 - each its own winner.
                 </div>
                 <div style={{ display: "flex", gap: 8 }}>
                   <button
@@ -15303,6 +15248,9 @@ function computeMatchPlayResult(round, computed) {
             {nassauOnlyEligible(gameKey, players.length) && (
               <div className="gsc-field">
                 <div className="gsc-label">Scoring method</div>
+                <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 6 }}>
+                  Overall scores the full 18 holes as one competition. Nassau splits it into three separate bets instead - front 9, back 9, and overall 18 - each its own winner.
+                </div>
                 <div style={{ display: "flex", gap: 8 }}>
                   <button
                     className="gsc-btn"
