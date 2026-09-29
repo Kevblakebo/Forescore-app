@@ -2,7 +2,13 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import { Home as HomeIcon, Flag as FlagIcon, Trophy as TrophyIcon, User as UserIcon, Users as GroupsIcon, Lock, Library as LibraryIcon, ShoppingBag, Menu as MenuIcon } from "lucide-react";
 import { supabase } from "./storage-polyfill.js";
 import { AppleSignIn, SignInScope } from "@capawesome/capacitor-apple-sign-in";
-import { GoogleAuth } from "@southdevs/capacitor-google-auth";
+import { SocialLogin } from "@capgo/capacitor-social-login";
+
+// SocialLogin.initialize() is documented as a call-once operation, so this
+// module-level flag (not React state - it must survive across renders and
+// screens without re-triggering anything) ensures handleGoogleSignIn only
+// ever initializes the plugin the first time it's actually needed.
+let googleSocialLoginInitialized = false;
 
 /* ---------- design tokens ----------
    Palette: fairway (#1B4332) deep green, paper (#F3EFE0) cream, ink (#2B2B28),
@@ -3289,20 +3295,23 @@ export default function GolfScorecard() {
     }
     setAuthBusy(true);
     try {
-      const native = isRunningInNativeApp();
-      // initialize() is required on web and Android before the first
-      // signIn() call - iOS reads its client ID from GoogleService-Info.plist
-      // instead, via the native SDK, so it's skipped there. clientId here is
-      // always the WEB client ID even on Android, since that's what
-      // Supabase needs to verify the token against - iosClientId is what
-      // actually drives the native iOS picker.
-      if (!native) {
-        await GoogleAuth.initialize({ clientId: GOOGLE_WEB_CLIENT_ID, scopes: ["email", "profile"], grantOfflineAccess: false });
-      } else {
-        await GoogleAuth.initialize({ clientId: GOOGLE_WEB_CLIENT_ID, iosClientId: GOOGLE_IOS_CLIENT_ID, scopes: ["email", "profile"], grantOfflineAccess: false });
+      // initialize() is call-once per the plugin's own docs - the module-level
+      // flag above ensures repeated taps (or visiting both Login and Create
+      // Account) never re-run it. webClientId is required on every platform,
+      // iOS included, since that's what Supabase verifies the token against;
+      // iOSClientId is what actually drives the native iOS account picker.
+      if (!googleSocialLoginInitialized) {
+        await SocialLogin.initialize({
+          google: {
+            webClientId: GOOGLE_WEB_CLIENT_ID,
+            iOSClientId: GOOGLE_IOS_CLIENT_ID,
+            mode: "online",
+          },
+        });
+        googleSocialLoginInitialized = true;
       }
-      const result = await GoogleAuth.signIn();
-      const idToken = result && result.authentication && result.authentication.idToken;
+      const res = await SocialLogin.login({ provider: "google", options: {} });
+      const idToken = res && res.result && res.result.idToken;
       if (!idToken) {
         setAuthBusy(false);
         setAuthErr("Google sign-in didn't go through. Try again.");
@@ -3314,7 +3323,7 @@ export default function GolfScorecard() {
       // Unlike Apple, Google returns this on every sign-in, not just the
       // first, but it's still harmless to stage every time since it's only
       // ever read for a genuinely new account.
-      const googleFullName = (result.name || "").trim();
+      const googleFullName = ((res.result.profile && res.result.profile.name) || "").trim();
       if (googleFullName) setPendingOAuthFullName(googleFullName);
       const { data, error } = await supabase.auth.signInWithIdToken({
         provider: "google",
