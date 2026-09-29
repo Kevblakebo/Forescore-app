@@ -11091,7 +11091,7 @@ function computeMatchPlayResult(round, computed) {
                     width: "100%",
                     textAlign: "left",
                     background: "#FDF6E9",
-                    border: "1.5px solid #B08D57",
+                    border: "none",
                     borderRadius: 20,
                     padding: "10px 16px",
                     fontSize: 13,
