@@ -17662,13 +17662,23 @@ function computeMatchPlayResult(round, computed) {
                           <button onClick={() => updateSideHoleEntryStep(side, "strokes", -1, 1, round.par[holeIdx])}>-</button>
                           <div
                             className="gsc-stepper-val"
-                            style={{ cursor: "pointer", ...(sideEntry.strokes === "" || sideEntry.strokes == null ? { opacity: 0.4 } : undefined) }}
+                            style={{
+                              cursor: "pointer",
+                              borderRadius: 8,
+                              padding: "2px 4px",
+                              ...(sideEntry.strokes === "" || sideEntry.strokes == null
+                                ? { opacity: 0.7, background: "#FDF6E9", border: "1.5px dashed #B08D57" }
+                                : { border: "1.5px solid transparent" }),
+                            }}
                             onClick={() => updateSideHoleEntryStep(side, "strokes", 0, 1, round.par[holeIdx])}
                           >
                             {sideEntry.strokes === "" || sideEntry.strokes == null ? round.par[holeIdx] : sideEntry.strokes}
                           </div>
                           <button onClick={() => updateSideHoleEntryStep(side, "strokes", 1, 1, round.par[holeIdx])}>+</button>
                         </div>
+                        {(sideEntry.strokes === "" || sideEntry.strokes == null) && (
+                          <div style={{ fontSize: 9.5, color: "#8a8a80", textAlign: "center", marginTop: 2 }}>tap to confirm</div>
+                        )}
                       </div>
                       <div>
                         <div style={{ fontSize: 11, color: "#6b6b63", marginBottom: 3, textAlign: "center" }}>PUTTS</div>
@@ -17676,13 +17686,23 @@ function computeMatchPlayResult(round, computed) {
                           <button onClick={() => updateSideHoleEntryStep(side, "putts", -1, 0, 2)}>-</button>
                           <div
                             className="gsc-stepper-val"
-                            style={{ cursor: "pointer", ...(sideEntry.putts === "" || sideEntry.putts == null ? { opacity: 0.4 } : undefined) }}
+                            style={{
+                              cursor: "pointer",
+                              borderRadius: 8,
+                              padding: "2px 4px",
+                              ...(sideEntry.putts === "" || sideEntry.putts == null
+                                ? { opacity: 0.7, background: "#FDF6E9", border: "1.5px dashed #B08D57" }
+                                : { border: "1.5px solid transparent" }),
+                            }}
                             onClick={() => updateSideHoleEntryStep(side, "putts", 0, 0, 2)}
                           >
                             {sideEntry.putts === "" || sideEntry.putts == null ? 2 : sideEntry.putts}
                           </div>
                           <button onClick={() => updateSideHoleEntryStep(side, "putts", 1, 0, 2)}>+</button>
                         </div>
+                        {(sideEntry.putts === "" || sideEntry.putts == null) && (
+                          <div style={{ fontSize: 9.5, color: "#8a8a80", textAlign: "center", marginTop: 2 }}>tap to confirm</div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -17915,13 +17935,23 @@ function computeMatchPlayResult(round, computed) {
                           <button onClick={() => updateHoleEntryStep(i, "strokes", -1, 1, round.par[holeIdx])}>-</button>
                           <div
                             className="gsc-stepper-val"
-                            style={{ cursor: "pointer", ...(e.strokes === "" || e.strokes == null ? { opacity: 0.4 } : undefined) }}
+                            style={{
+                              cursor: "pointer",
+                              borderRadius: 8,
+                              padding: "2px 4px",
+                              ...(e.strokes === "" || e.strokes == null
+                                ? { opacity: 0.7, background: "#FDF6E9", border: "1.5px dashed #B08D57" }
+                                : { border: "1.5px solid transparent" }),
+                            }}
                             onClick={() => updateHoleEntryStep(i, "strokes", 0, 1, round.par[holeIdx])}
                           >
                             {e.strokes === "" || e.strokes == null ? round.par[holeIdx] : e.strokes}
                           </div>
                           <button onClick={() => updateHoleEntryStep(i, "strokes", 1, 1, round.par[holeIdx])}>+</button>
                         </div>
+                        {(e.strokes === "" || e.strokes == null) && (
+                          <div style={{ fontSize: 9.5, color: "#8a8a80", textAlign: "center", marginTop: 2 }}>tap to confirm</div>
+                        )}
                         {round.cfg.netScoring && e.strokes !== "" && e.strokes != null && (() => {
                           const strokesOff = computed.strokesOffForHole(i, holeIdx);
                           const net = Number(e.strokes) - strokesOff;
@@ -17958,13 +17988,23 @@ function computeMatchPlayResult(round, computed) {
                           <button onClick={() => updateHoleEntryStep(i, "putts", -1, 0, 2)}>-</button>
                           <div
                             className="gsc-stepper-val"
-                            style={{ cursor: "pointer", ...(e.putts === "" || e.putts == null ? { opacity: 0.4 } : undefined) }}
+                            style={{
+                              cursor: "pointer",
+                              borderRadius: 8,
+                              padding: "2px 4px",
+                              ...(e.putts === "" || e.putts == null
+                                ? { opacity: 0.7, background: "#FDF6E9", border: "1.5px dashed #B08D57" }
+                                : { border: "1.5px solid transparent" }),
+                            }}
                             onClick={() => updateHoleEntryStep(i, "putts", 0, 0, 2)}
                           >
                             {e.putts === "" || e.putts == null ? 2 : e.putts}
                           </div>
                           <button onClick={() => updateHoleEntryStep(i, "putts", 1, 0, 2)}>+</button>
                         </div>
+                        {(e.putts === "" || e.putts == null) && (
+                          <div style={{ fontSize: 9.5, color: "#8a8a80", textAlign: "center", marginTop: 2 }}>tap to confirm</div>
+                        )}
                       </div>
                     )}
                     {mulLeft !== null && (() => {
