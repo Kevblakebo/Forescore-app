@@ -1384,6 +1384,38 @@ function playHoleInOneCheer() {
   }
 }
 
+// A short, synthesized click - no audio file for this one, generated the
+// same way playFireworksSound() below builds its noise bursts. Unlike
+// fireworks (a rare celebration), hole navigation can happen many times
+// in a single round, so the AudioContext is created once and reused
+// rather than fresh on every call.
+let holeChangeAudioCtx = null;
+function playHoleChangeClick() {
+  try {
+    const ctx = holeChangeAudioCtx || (holeChangeAudioCtx = new (window.AudioContext || window.webkitAudioContext)());
+    const now = ctx.currentTime;
+    const duration = 0.03;
+    const buffer = ctx.createBuffer(1, Math.max(1, Math.floor(ctx.sampleRate * duration)), ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+    const source = ctx.createBufferSource();
+    source.buffer = buffer;
+    const filter = ctx.createBiquadFilter();
+    filter.type = "highpass";
+    filter.frequency.value = 2500;
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.25, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+    source.connect(filter);
+    filter.connect(gain);
+    gain.connect(ctx.destination);
+    source.start(now);
+    source.stop(now + duration);
+  } catch (e) {
+    // Silently ignore - sound is a nice-to-have, never worth surfacing an error over.
+  }
+}
+
 function playFireworksSound() {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -9351,6 +9383,7 @@ export default function GolfScorecard() {
   // never triggers this at all.
   function requestHoleChange(targetIdx, game) {
     if (targetIdx <= holeIdx || !round) {
+      if (targetIdx !== holeIdx) playHoleChangeClick();
       setHoleIdx(targetIdx);
       return;
     }
@@ -9368,6 +9401,7 @@ export default function GolfScorecard() {
       }
     });
     if (missing.length === 0) {
+      playHoleChangeClick();
       setHoleIdx(targetIdx);
       return;
     }
@@ -9385,6 +9419,7 @@ export default function GolfScorecard() {
       if (missingPutts) updateHoleEntry(playerIdx, "putts", defaultPutts);
     });
     setPendingHoleChange(null);
+    playHoleChangeClick();
     setHoleIdx(targetIdx);
   }
 
