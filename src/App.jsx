@@ -2955,6 +2955,8 @@ export default function GolfScorecard() {
   const [rulesOpenForIsTournament, setRulesOpenForIsTournament] = useState(false);
   const [whyPlayOpenFor, setWhyPlayOpenFor] = useState(null);
   const [whyPlayOpenForIsTournament, setWhyPlayOpenForIsTournament] = useState(false);
+  const [descriptionOpenFor, setDescriptionOpenFor] = useState(null);
+  const [descriptionOpenForIsTournament, setDescriptionOpenForIsTournament] = useState(false);
   const [quickInfoFor, setQuickInfoFor] = useState(null);
   const [quickInfoForIsTournament, setQuickInfoForIsTournament] = useState(false);
   const [mulliganAwardedFlash, setMulliganAwardedFlash] = useState(null);
@@ -5175,6 +5177,13 @@ export default function GolfScorecard() {
   function closeWhyPlay() {
     setWhyPlayOpenFor(null);
   }
+  function openDescription(key, isTournament) {
+    setDescriptionOpenFor(key);
+    setDescriptionOpenForIsTournament(!!isTournament);
+  }
+  function closeDescription() {
+    setDescriptionOpenFor(null);
+  }
 
   function YearlyRecapModal() {
     if (!yearlyRecapOpen) return null;
@@ -5723,6 +5732,27 @@ export default function GolfScorecard() {
           <div className="gsc-modal-title">Why People Love {title}</div>
           <div style={{ fontSize: 13, color: "#4b4b45", lineHeight: 1.6, marginBottom: 16 }}>{text}</div>
           <button className="gsc-btn gsc-btn-primary" style={{ width: "100%" }} onClick={closeWhyPlay}>
+            Close
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  function DescriptionModal() {
+    if (!descriptionOpenFor) return null;
+    const rg = GAMES[descriptionOpenFor];
+    if (!rg) return null;
+    const showTournament = descriptionOpenForIsTournament && rg.tournamentDesc;
+    const text = showTournament ? rg.tournamentDesc : rg.desc;
+    if (!text) return null;
+    const title = showTournament ? rg.tournamentName || rg.name : rg.name;
+    return (
+      <div className="gsc-modal-backdrop" onClick={closeDescription}>
+        <div className="gsc-modal" style={{ maxWidth: 440, maxHeight: "80vh", overflowY: "auto" }} onClick={(e) => e.stopPropagation()}>
+          <div className="gsc-modal-title">{title} - Game Format Description</div>
+          <div className="gsc-no-select" style={{ fontSize: 13, color: "#4b4b45", lineHeight: 1.6, marginBottom: 16 }}>{text}</div>
+          <button className="gsc-btn gsc-btn-primary" style={{ width: "100%" }} onClick={closeDescription}>
             Close
           </button>
         </div>
@@ -15057,7 +15087,9 @@ function computeMatchPlayResult(round, computed) {
           }}
         />
         <div className="gsc-body">
-          <div className="gsc-no-select" style={{ fontSize: 13, marginBottom: 10, color: "#4b4b45" }}>{activeTournament ? g.tournamentDesc || g.desc : g.desc}</div>
+          <button className="gsc-link" style={{ marginBottom: 10, fontSize: 13, display: "block" }} onClick={() => openDescription(gameKey, !!activeTournament)}>
+            Game format description
+          </button>
           <button className="gsc-link" style={{ marginBottom: 10, fontSize: 13, display: "block" }} onClick={() => openWhyPlay(gameKey, !!activeTournament)}>
             Why people love this game
           </button>
@@ -15734,6 +15766,7 @@ function computeMatchPlayResult(round, computed) {
         </div>
         {RulesModal()}
         {WhyPlayModal()}
+        {DescriptionModal()}
         {GroupFillModal()}
       </div>
     );
@@ -15746,7 +15779,9 @@ function computeMatchPlayResult(round, computed) {
         <style>{STYLE}</style>
         <Header title={tg.tournamentName || tg.name} sub={MATCH_PLAY_GAMES.includes(tournamentGameKey) ? "Tournament setup - every match plays this format" : "Tournament setup - every foursome plays this format"} onBack={() => goBack("libraryTab")} />
         <div className="gsc-body">
-          <div className="gsc-no-select" style={{ fontSize: 13, marginBottom: 10, color: "#4b4b45" }}>{tg.tournamentDesc || tg.desc}</div>
+          <button className="gsc-link" style={{ marginBottom: 10, fontSize: 13, display: "block" }} onClick={() => openDescription(tournamentGameKey, true)}>
+            Game format description
+          </button>
           <button className="gsc-link" style={{ marginBottom: 10, fontSize: 13, display: "block" }} onClick={() => openWhyPlay(tournamentGameKey, true)}>
             Why people love this game
           </button>
@@ -16144,6 +16179,7 @@ function computeMatchPlayResult(round, computed) {
         </div>
         {RulesModal()}
         {WhyPlayModal()}
+        {DescriptionModal()}
       </div>
     );
   }
