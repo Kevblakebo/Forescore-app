@@ -10872,7 +10872,7 @@ function computeMatchPlayResult(round, computed) {
   function TopIconRow() {
     return (
       <div className="gsc-topiconrow">
-        <div style={{ position: "relative" }}>
+        <div style={{ position: "relative", display: "flex" }}>
           <button className="gsc-topiconrow-chip" onClick={() => setNavMenuOpen((v) => !v)} aria-label="Open menu">
             <MenuIcon size={22} color="#1B4332" strokeWidth={2.2} />
           </button>
