@@ -5482,9 +5482,25 @@ export default function GolfScorecard() {
           </div>
 
           <div className="gsc-field">
-            <div className="gsc-label">Max score over par per hole</div>
-            <input className="gsc-input" placeholder="No limit" value={c.maxOver ?? ""} onChange={(e) => set({ maxOver: e.target.value })} />
+            <div className="gsc-label">Use per-hole handicapping (net scoring)?</div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button className="gsc-btn" style={{ flex: 1, background: c.netScoring ? "#A42E2D" : "transparent", color: c.netScoring ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }} onClick={() => set({ netScoring: true })}>Yes</button>
+              <button className="gsc-btn" style={{ flex: 1, background: !c.netScoring ? "#A42E2D" : "transparent", color: !c.netScoring ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }} onClick={() => set({ netScoring: false })}>No</button>
+            </div>
           </div>
+
+          {round && !oceans11Eligible(round.game, round.players.length) && (nassauEligible(round.game, round.players.length) || nassauOnlyEligible(round.game, round.players.length)) && (
+            <div className="gsc-field">
+              <div className="gsc-label">Scoring method</div>
+              <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 6 }}>
+                Nassau splits the round into three separate bets: front 9, back 9, and overall 18 - each its own winner.
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button className="gsc-btn" style={{ flex: 1, background: !c.nassau ? "#A42E2D" : "transparent", color: !c.nassau ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }} onClick={() => set({ nassau: false })}>Overall</button>
+                <button className="gsc-btn" style={{ flex: 1, background: c.nassau ? "#A42E2D" : "transparent", color: c.nassau ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }} onClick={() => set({ nassau: true })}>Nassau</button>
+              </div>
+            </div>
+          )}
 
           {g && g.hasPutts && (
             <>
@@ -5504,6 +5520,21 @@ export default function GolfScorecard() {
             </>
           )}
 
+          {round && ["dstreet", "ponto", "teamputts"].includes(round.game) && (
+            <div className="gsc-field">
+              <div className="gsc-label">Ties carry over to next hole?</div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button className="gsc-btn" style={{ flex: 1, background: c.tiesCarryOver ? "#A42E2D" : "transparent", color: c.tiesCarryOver ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }} onClick={() => set({ tiesCarryOver: true })}>Yes</button>
+                <button className="gsc-btn" style={{ flex: 1, background: !c.tiesCarryOver ? "#A42E2D" : "transparent", color: !c.tiesCarryOver ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }} onClick={() => set({ tiesCarryOver: false })}>No</button>
+              </div>
+            </div>
+          )}
+
+          <div className="gsc-field">
+            <div className="gsc-label">Max score over par per hole</div>
+            <input className="gsc-input" placeholder="No limit" value={c.maxOver ?? ""} onChange={(e) => set({ maxOver: e.target.value })} />
+          </div>
+
           <div className="gsc-field">
             <div className="gsc-label">Mulligans per player</div>
             <input className="gsc-input" placeholder="None set" value={c.mulliganSegment ?? ""} onChange={(e) => set({ mulliganSegment: e.target.value })} />
@@ -5520,19 +5551,6 @@ export default function GolfScorecard() {
               <input className="gsc-input" type="number" min="0" placeholder="0" value={c.minDrives ?? ""} onChange={(e) => set({ minDrives: cleanNumericText(e.target.value) })} />
               <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 6 }}>
                 Each player's tee shot must be used at least this many times over the round.
-              </div>
-            </div>
-          )}
-
-          {round && !oceans11Eligible(round.game, round.players.length) && (nassauEligible(round.game, round.players.length) || nassauOnlyEligible(round.game, round.players.length)) && (
-            <div className="gsc-field">
-              <div className="gsc-label">Scoring method</div>
-              <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 6 }}>
-                Nassau splits the round into three separate bets: front 9, back 9, and overall 18 - each its own winner.
-              </div>
-              <div style={{ display: "flex", gap: 8 }}>
-                <button className="gsc-btn" style={{ flex: 1, background: !c.nassau ? "#A42E2D" : "transparent", color: !c.nassau ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }} onClick={() => set({ nassau: false })}>Overall</button>
-                <button className="gsc-btn" style={{ flex: 1, background: c.nassau ? "#A42E2D" : "transparent", color: c.nassau ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }} onClick={() => set({ nassau: true })}>Nassau</button>
               </div>
             </div>
           )}
@@ -5571,24 +5589,6 @@ export default function GolfScorecard() {
             <div className="gsc-label">Venmo handle for settling up</div>
             <input className="gsc-input" placeholder="@handle" value={c.venmo ?? ""} onChange={(e) => set({ venmo: e.target.value })} />
           </div>
-
-          <div className="gsc-field">
-            <div className="gsc-label">Use per-hole handicapping (net scoring)?</div>
-            <div style={{ display: "flex", gap: 8 }}>
-              <button className="gsc-btn" style={{ flex: 1, background: c.netScoring ? "#A42E2D" : "transparent", color: c.netScoring ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }} onClick={() => set({ netScoring: true })}>Yes</button>
-              <button className="gsc-btn" style={{ flex: 1, background: !c.netScoring ? "#A42E2D" : "transparent", color: !c.netScoring ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }} onClick={() => set({ netScoring: false })}>No</button>
-            </div>
-          </div>
-
-          {round && ["dstreet", "ponto", "teamputts"].includes(round.game) && (
-            <div className="gsc-field">
-              <div className="gsc-label">Ties carry over to next hole?</div>
-              <div style={{ display: "flex", gap: 8 }}>
-                <button className="gsc-btn" style={{ flex: 1, background: c.tiesCarryOver ? "#A42E2D" : "transparent", color: c.tiesCarryOver ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }} onClick={() => set({ tiesCarryOver: true })}>Yes</button>
-                <button className="gsc-btn" style={{ flex: 1, background: !c.tiesCarryOver ? "#A42E2D" : "transparent", color: !c.tiesCarryOver ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }} onClick={() => set({ tiesCarryOver: false })}>No</button>
-              </div>
-            </div>
-          )}
 
           {editSettingsErr && <div style={{ color: "#A42E2D", fontSize: 13, marginTop: 6 }}>{editSettingsErr}</div>}
           <div className="gsc-modal-row" style={{ marginTop: 10 }}>
@@ -14732,7 +14732,7 @@ function computeMatchPlayResult(round, computed) {
               <div style={{ fontWeight: 800, fontSize: 16, color: "#8a6a2f" }}>Quick Start</div>
             </div>
             <div style={{ fontSize: 13, color: "#4b4b45" }}>
-              Just track everyone's strokes and putts - no wagers, no formats to pick, nothing else to configure. Search your course, add your players, and go.
+              Individual Strokes Play format. Search your course and enter your players to get started. Additional game details can be edited in the scoring pages.
             </div>
           </div>
 
