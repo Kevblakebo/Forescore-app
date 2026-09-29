@@ -11132,7 +11132,7 @@ function computeMatchPlayResult(round, computed) {
           </div>
           {!session && (
             <div style={{ fontSize: 12, color: "#8a8a80", margin: "-8px 0 16px" }}>
-              No account needed to play, create one anytime to access premium features including GPS, Side Games, course info, stats, your RipScore Index, groups, leaderboards, and prior saved rounds.
+              No account needed to play, create one anytime to access premium features including all game formats, GPS, Side Games, course info, stats, your RipScore Index, groups, leaderboards, and prior saved rounds.
               <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 10 }} onClick={() => { setAuthErr(""); goToScreen("login"); }}>
                 Log In or Create Account
               </button>
@@ -11302,62 +11302,6 @@ function computeMatchPlayResult(round, computed) {
             <button className="gsc-btn gsc-btn-gold" style={{ width: "100%", marginTop: 10 }} onClick={startWizard}>
               Start the Game Wizard
             </button>
-          </div>
-
-
-          <div className="gsc-card gsc-game-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }} onClick={() => goToScreen("groupsTab")}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <div>
-                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  <span style={{ fontSize: 16 }}>{"\u{1F465}"}</span>
-                  <div style={{ fontWeight: 800, fontSize: 16, color: "#8a6a2f" }}>Groups</div>
-                </div>
-                <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 4 }}>Play together, compete together</div>
-                <div style={{ fontSize: 12, color: "#6b6b63" }}>Shared leaderboards with your regulars</div>
-              </div>
-              <GroupsIcon size={20} color="#8a6a2f" />
-            </div>
-          </div>
-
-          <div className="gsc-card gsc-game-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }} onClick={() => goToScreen("statsTab")}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <div>
-                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  <span style={{ fontSize: 16 }}>{"\u{1F4CA}"}</span>
-                  <div style={{ fontWeight: 800, fontSize: 16, color: "#8a6a2f" }}>Stats</div>
-                </div>
-                <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 4 }}>Your rounds, averages, and wins</div>
-                <div style={{ fontSize: 12, color: "#6b6b63" }}>RipScore Index, leaderboards & head-to-head</div>
-              </div>
-              <TrophyIcon size={20} color="#8a6a2f" />
-            </div>
-          </div>
-
-          <div className="gsc-card gsc-game-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }} onClick={() => goToScreen("profileTab")}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <div>
-                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  <span style={{ fontSize: 16 }}>{"\u{1F464}"}</span>
-                  <div style={{ fontWeight: 800, fontSize: 16, color: "#8a6a2f" }}>Profile</div>
-                </div>
-                <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 4 }}>Saved defaults and account</div>
-              </div>
-              <UserIcon size={20} color="#8a6a2f" />
-            </div>
-          </div>
-
-          <div className="gsc-card gsc-game-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }} onClick={() => goToScreen("libraryTab")}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <div>
-                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  <span style={{ fontSize: 16 }}>{"\u{1F4D6}"}</span>
-                  <div style={{ fontWeight: 800, fontSize: 16, color: "#8a6a2f" }}>Library</div>
-                </div>
-                <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 4 }}>Golf Games Library</div>
-                <div style={{ fontSize: 12, color: "#6b6b63" }}>About this App</div>
-              </div>
-              <LibraryIcon size={20} color="#8a6a2f" />
-            </div>
           </div>
         </div>
         {RulesModal()}
