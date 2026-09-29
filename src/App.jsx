@@ -3399,6 +3399,19 @@ export default function GolfScorecard() {
   }
 
   async function signOutUser() {
+    // Supabase's own session is only half the picture - the native Google
+    // SDK keeps its own separate cached sign-in on-device (that's what lets
+    // repeat taps skip the account picker), so it needs its own explicit
+    // logout call here too, or "Continue with Google" would silently sign
+    // the person back in right after they just logged out.
+    if (googleSocialLoginInitialized) {
+      try {
+        await SocialLogin.logout({ provider: "google" });
+      } catch (e) {
+        // Non-fatal - the person's RipScore session is still cleared below
+        // either way, and a fresh sign-in attempt will just re-initialize.
+      }
+    }
     if (supabase) await supabase.auth.signOut();
     setProfile(null);
     setProfileForm({ full_name: "", name: "", handicap: "", venmo: "", home_course: "", leaderboard_opt_in: false, avatar: "" });
@@ -3426,6 +3439,15 @@ export default function GolfScorecard() {
     }
     // The account and its data are gone server-side - clear local state
     // and sign out, same as a normal logout, then land back on Home.
+    // Same reasoning as signOutUser above - the native Google SDK's own
+    // cached session needs its own explicit logout call too.
+    if (googleSocialLoginInitialized) {
+      try {
+        await SocialLogin.logout({ provider: "google" });
+      } catch (e) {
+        // Non-fatal - continue with the rest of account deletion regardless.
+      }
+    }
     await supabase.auth.signOut();
     setProfile(null);
     setProfileForm({ full_name: "", name: "", handicap: "", venmo: "", home_course: "", leaderboard_opt_in: false, avatar: "" });
