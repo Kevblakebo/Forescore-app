@@ -10884,7 +10884,7 @@ function computeMatchPlayResult(round, computed) {
           style={{ width: 62, height: "auto", objectFit: "contain", pointerEvents: "none" }}
         />
         <button className="gsc-topiconrow-chip" onClick={() => goToScreen(screen === "profileTab" ? "home" : "profileTab")} aria-label="Profile">
-          <UserIcon size={20} color="#1B4332" strokeWidth={2.2} />
+          <UserIcon size={22} color="#1B4332" strokeWidth={2.2} />
         </button>
       </div>
     );
