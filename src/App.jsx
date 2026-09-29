@@ -2864,7 +2864,7 @@ export default function GolfScorecard() {
   // hole change - null the rest of the time.
   const [pendingHoleChange, setPendingHoleChange] = useState(null);
   const [navMenuOpen, setNavMenuOpen] = useState(false);
-  const [headToHeadExpanded, setHeadToHeadExpanded] = useState(true);
+  const [headToHeadExpanded, setHeadToHeadExpanded] = useState(false);
   const [homeIntroExpanded, setHomeIntroExpanded] = useState(false);
   // Where to navigate once "Leave this round?" is confirmed, when that
   // confirmation was triggered by picking a destination from the new
@@ -14362,6 +14362,30 @@ function computeMatchPlayResult(round, computed) {
                   </div>
                 </div>
               )}
+              {["dstreet", "ponto", "teamputts"].includes(wizardAnswers.resolvedGameKey) && (
+                <div className="gsc-field" style={{ marginTop: 10 }}>
+                  <div className="gsc-label">Ties carry over to next hole?</div>
+                  <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 6 }}>
+                    If a hole ties, the point rides into the next hole instead of going unclaimed - whoever finally wins a hole collects everything that's built up.
+                  </div>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button
+                      className="gsc-btn"
+                      style={{ flex: 1, background: activeCfg.tiesCarryOver ? "#A42E2D" : "transparent", color: activeCfg.tiesCarryOver ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
+                      onClick={() => setActiveCfg({ ...activeCfg, tiesCarryOver: true })}
+                    >
+                      Yes
+                    </button>
+                    <button
+                      className="gsc-btn"
+                      style={{ flex: 1, background: !activeCfg.tiesCarryOver ? "#A42E2D" : "transparent", color: !activeCfg.tiesCarryOver ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
+                      onClick={() => setActiveCfg({ ...activeCfg, tiesCarryOver: false })}
+                    >
+                      No
+                    </button>
+                  </div>
+                </div>
+              )}
               {g.hasScore && (
                 <div className="gsc-field">
                   <div className="gsc-label">Max strokes over par per hole</div>
@@ -14401,30 +14425,6 @@ function computeMatchPlayResult(round, computed) {
                   If set, anyone can award a player an extra mulligan on the scoring screen once they've done this.
                 </div>
               </div>
-              {["dstreet", "ponto", "teamputts"].includes(wizardAnswers.resolvedGameKey) && (
-                <div className="gsc-field" style={{ marginTop: 10 }}>
-                  <div className="gsc-label">Ties carry over to next hole?</div>
-                  <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 6 }}>
-                    If a hole ties, the point rides into the next hole instead of going unclaimed - whoever finally wins a hole collects everything that's built up.
-                  </div>
-                  <div style={{ display: "flex", gap: 8 }}>
-                    <button
-                      className="gsc-btn"
-                      style={{ flex: 1, background: activeCfg.tiesCarryOver ? "#A42E2D" : "transparent", color: activeCfg.tiesCarryOver ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
-                      onClick={() => setActiveCfg({ ...activeCfg, tiesCarryOver: true })}
-                    >
-                      Yes
-                    </button>
-                    <button
-                      className="gsc-btn"
-                      style={{ flex: 1, background: !activeCfg.tiesCarryOver ? "#A42E2D" : "transparent", color: !activeCfg.tiesCarryOver ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
-                      onClick={() => setActiveCfg({ ...activeCfg, tiesCarryOver: false })}
-                    >
-                      No
-                    </button>
-                  </div>
-                </div>
-              )}
               {g.tracksDrives && (
                 <div className="gsc-field" style={{ marginTop: 10 }}>
                   <div className="gsc-label">Minimum drives per player</div>
@@ -15359,6 +15359,30 @@ function computeMatchPlayResult(round, computed) {
                 </div>
               </div>
             )}
+            {["dstreet", "ponto", "teamputts"].includes(gameKey) && (
+              <div className="gsc-field">
+                <div className="gsc-label">Ties carry over to next hole?</div>
+                <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 6 }}>
+                  If a hole ties, the point rides into the next hole instead of going unclaimed - whoever finally wins a hole collects everything that's built up.
+                </div>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button
+                    className="gsc-btn"
+                    style={{ flex: 1, background: cfg.tiesCarryOver ? "#A42E2D" : "transparent", color: cfg.tiesCarryOver ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
+                    onClick={() => setCfg({ ...cfg, tiesCarryOver: true })}
+                  >
+                    Yes
+                  </button>
+                  <button
+                    className="gsc-btn"
+                    style={{ flex: 1, background: !cfg.tiesCarryOver ? "#A42E2D" : "transparent", color: !cfg.tiesCarryOver ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
+                    onClick={() => setCfg({ ...cfg, tiesCarryOver: false })}
+                  >
+                    No
+                  </button>
+                </div>
+              </div>
+            )}
             {g.hasScore && (
               <div className="gsc-field">
                 <div className="gsc-label">Max score over par per hole</div>
@@ -15448,30 +15472,6 @@ function computeMatchPlayResult(round, computed) {
               <div className="gsc-label">Venmo handle for settling up (optional)</div>
               <input className="gsc-input" placeholder="@your-venmo" value={cfg.venmo || ""} onChange={(e) => setCfg({ ...cfg, venmo: e.target.value })} />
             </div>
-            {["dstreet", "ponto", "teamputts"].includes(gameKey) && (
-              <div className="gsc-field">
-                <div className="gsc-label">Ties carry over to next hole?</div>
-                <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 6 }}>
-                  If a hole ties, the point rides into the next hole instead of going unclaimed - whoever finally wins a hole collects everything that's built up.
-                </div>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <button
-                    className="gsc-btn"
-                    style={{ flex: 1, background: cfg.tiesCarryOver ? "#A42E2D" : "transparent", color: cfg.tiesCarryOver ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
-                    onClick={() => setCfg({ ...cfg, tiesCarryOver: true })}
-                  >
-                    Yes
-                  </button>
-                  <button
-                    className="gsc-btn"
-                    style={{ flex: 1, background: !cfg.tiesCarryOver ? "#A42E2D" : "transparent", color: !cfg.tiesCarryOver ? "#F3EFE0" : "#A42E2D", border: "1.5px solid #A42E2D" }}
-                    onClick={() => setCfg({ ...cfg, tiesCarryOver: false })}
-                  >
-                    No
-                  </button>
-                </div>
-              </div>
-            )}
           </div>
           )}
 
