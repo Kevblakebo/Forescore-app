@@ -12492,7 +12492,7 @@ function computeMatchPlayResult(round, computed) {
     return (
       <div className="gsc">
         <style>{STYLE}</style>
-        <Header title="Games Library" sub="Learn about all the game formats available in RipScore, and start a new round or tournament" onBack={() => goBack("libraryTab")} />
+        <Header title="Games Library" sub="Learn about the game formats" onBack={() => goBack("libraryTab")} />
         <div className="gsc-body">
           {activeRound && !activeRound.tournamentId && !isRoundDone(activeRound) && (
             <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
