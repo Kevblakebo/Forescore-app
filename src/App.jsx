@@ -14663,7 +14663,7 @@ function computeMatchPlayResult(round, computed) {
                       ))}
                     </div>
                   )}
-                  {session && (
+                  {session && (p.user_id || i !== 0) && (
                     <div style={{ padding: "4px 4px 0 46px" }}>
                       {p.user_id ? (
                         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -15003,7 +15003,7 @@ function computeMatchPlayResult(round, computed) {
                     ))}
                   </div>
                 )}
-                {session && (
+                {session && (p.user_id || i !== 0) && (
                   <div style={{ padding: "4px 4px 0 46px" }}>
                     {p.user_id ? (
                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -15669,7 +15669,7 @@ function computeMatchPlayResult(round, computed) {
                     ))}
                   </div>
                 )}
-                {session && (
+                {session && (p.user_id || i !== 0) && (
                   <div style={{ padding: "4px 4px 0 46px" }}>
                     {p.user_id ? (
                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
