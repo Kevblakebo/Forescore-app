@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import { Home as HomeIcon, Flag as FlagIcon, Trophy as TrophyIcon, User as UserIcon, Users as GroupsIcon, Lock, Library as LibraryIcon, ShoppingBag, Menu as MenuIcon } from "lucide-react";
 import { supabase } from "./storage-polyfill.js";
 import { AppleSignIn, SignInScope } from "@capawesome/capacitor-apple-sign-in";
+import { GoogleAuth } from "@codetrix-studio/capacitor-google-auth";
 
 /* ---------- design tokens ----------
    Palette: fairway (#1B4332) deep green, paper (#F3EFE0) cream, ink (#2B2B28),
@@ -2567,7 +2568,7 @@ export default function GolfScorecard() {
   // - staged here from handleAppleSignIn so loadProfile can use it as a
   // starting value for a brand-new account, then cleared right after use
   // so it never leaks into a later, different sign-in.
-  const [pendingAppleFullName, setPendingAppleFullName] = useState("");
+  const [pendingOAuthFullName, setPendingOAuthFullName] = useState("");
   const [profileLoading, setProfileLoading] = useState(false);
   // Distinct from profileLoading: starts false and only ever flips true
   // once loadProfile has genuinely completed at least once for the
@@ -3235,7 +3236,7 @@ export default function GolfScorecard() {
       // returning sign-in, since Apple returns null for both fields
       // every time after the first.
       const appleFullName = [result.givenName, result.familyName].filter(Boolean).join(" ").trim();
-      if (appleFullName) setPendingAppleFullName(appleFullName);
+      if (appleFullName) setPendingOAuthFullName(appleFullName);
       const { data, error } = await supabase.auth.signInWithIdToken({
         provider: "apple",
         token: result.idToken,
@@ -3243,7 +3244,7 @@ export default function GolfScorecard() {
       });
       setAuthBusy(false);
       if (error) {
-        if (appleFullName) setPendingAppleFullName(""); // this sign-in didn't actually succeed - don't let it linger for a later, unrelated one
+        if (appleFullName) setPendingOAuthFullName(""); // this sign-in didn't actually succeed - don't let it linger for a later, unrelated one
         setAuthErr(error.message);
         return;
       }
@@ -3266,6 +3267,77 @@ export default function GolfScorecard() {
       // outcome, not an error worth showing.
       if (!/cancel/i.test(msg)) {
         setAuthErr("Apple sign-in didn't go through. Try again.");
+      }
+    }
+  }
+
+  // Google's own OAuth client IDs - separate ones are required per
+  // platform by Google's own rules (each is tied to that platform's own
+  // bundle/package identifier or web origin), unlike Apple's single
+  // Services ID covering both. Filled in from the Google Cloud Console
+  // once that project exists - see the setup notes delivered alongside
+  // this change for exactly what to create and where these come from.
+  const GOOGLE_WEB_CLIENT_ID = "476316079380-fmg6ur1v0nbd0ucs6rnngraks7a79trv.apps.googleusercontent.com";
+  const GOOGLE_IOS_CLIENT_ID = "476316079380-el06l24sgte63sebl9qh06hcsnhm0tue.apps.googleusercontent.com";
+
+  async function handleGoogleSignIn() {
+    setAuthErr("");
+    setAuthNotice("");
+    if (!supabase) {
+      setAuthErr("Account login isn't configured yet on this deployment.");
+      return;
+    }
+    setAuthBusy(true);
+    try {
+      const native = isRunningInNativeApp();
+      // initialize() is required on web and Android before the first
+      // signIn() call - iOS reads its client ID from GoogleService-Info.plist
+      // instead, via the native SDK, so it's skipped there. clientId here is
+      // always the WEB client ID even on Android, since that's what
+      // Supabase needs to verify the token against - iosClientId is what
+      // actually drives the native iOS picker.
+      if (!native) {
+        await GoogleAuth.initialize({ clientId: GOOGLE_WEB_CLIENT_ID, scopes: ["email", "profile"], grantOfflineAccess: false });
+      } else {
+        await GoogleAuth.initialize({ clientId: GOOGLE_WEB_CLIENT_ID, iosClientId: GOOGLE_IOS_CLIENT_ID, scopes: ["email", "profile"], grantOfflineAccess: false });
+      }
+      const result = await GoogleAuth.signIn();
+      const idToken = result && result.authentication && result.authentication.idToken;
+      if (!idToken) {
+        setAuthBusy(false);
+        setAuthErr("Google sign-in didn't go through. Try again.");
+        return;
+      }
+      // Same reasoning as Apple's own pendingOAuthFullName staging above -
+      // in place before signInWithIdToken so loadProfile can use it as
+      // completeProfile's starting full_name for a brand-new account.
+      // Unlike Apple, Google returns this on every sign-in, not just the
+      // first, but it's still harmless to stage every time since it's only
+      // ever read for a genuinely new account.
+      const googleFullName = (result.name || "").trim();
+      if (googleFullName) setPendingOAuthFullName(googleFullName);
+      const { data, error } = await supabase.auth.signInWithIdToken({
+        provider: "google",
+        token: idToken,
+      });
+      setAuthBusy(false);
+      if (error) {
+        if (googleFullName) setPendingOAuthFullName("");
+        setAuthErr(error.message);
+        return;
+      }
+      const confirmedAt = data.session && data.session.user && data.session.user.email_confirmed_at ? new Date(data.session.user.email_confirmed_at).getTime() : null;
+      const isNewAccount = confirmedAt && Date.now() - confirmedAt < 2 * 60 * 1000;
+      if (!isNewAccount) {
+        goBack("profileTab");
+      }
+    } catch (e) {
+      setAuthBusy(false);
+      const msg = (e && (e.message || String(e))) || "";
+      // Someone canceling the Google picker is an expected, routine
+      // outcome, not an error worth showing.
+      if (!/cancel/i.test(msg)) {
+        setAuthErr("Google sign-in didn't go through. Try again.");
       }
     }
   }
@@ -3373,8 +3445,8 @@ export default function GolfScorecard() {
       // blank form - except full_name, which uses whatever Apple handed
       // over on this person's first-ever sign-in, if any.
       setProfile(null);
-      setProfileForm({ full_name: pendingAppleFullName || "", name: "", handicap: "", venmo: "", home_course: "", leaderboard_opt_in: false, avatar: "" });
-      if (pendingAppleFullName) setPendingAppleFullName("");
+      setProfileForm({ full_name: pendingOAuthFullName || "", name: "", handicap: "", venmo: "", home_course: "", leaderboard_opt_in: false, avatar: "" });
+      if (pendingOAuthFullName) setPendingOAuthFullName("");
     }
   }
 
@@ -13434,6 +13506,20 @@ function computeMatchPlayResult(round, computed) {
             >
               <span style={{ fontSize: 16 }}>{"\uF8FF"}</span> Continue with Apple
             </button>
+            <button
+              className="gsc-btn"
+              style={{ width: "100%", marginTop: 10, background: "#fff", color: "#2B2B28", border: "1.5px solid #d8d2bd", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
+              disabled={authBusy}
+              onClick={handleGoogleSignIn}
+            >
+              <svg width="16" height="16" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+                <path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.9c1.7-1.57 2.68-3.87 2.68-6.62z" />
+                <path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.9-2.26c-.8.54-1.84.86-3.06.86-2.35 0-4.34-1.59-5.05-3.72H.96v2.33A9 9 0 0 0 9 18z" />
+                <path fill="#FBBC05" d="M3.95 10.7A5.4 5.4 0 0 1 3.67 9c0-.59.1-1.17.28-1.7V4.97H.96A9 9 0 0 0 0 9c0 1.45.35 2.83.96 4.03l2.99-2.33z" />
+                <path fill="#EA4335" d="M9 3.58c1.32 0 2.51.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 0 0 .96 4.97l2.99 2.33C4.66 5.17 6.65 3.58 9 3.58z" />
+              </svg>
+              Continue with Google
+            </button>
           </div>
         </div>
       </div>
@@ -13591,6 +13677,20 @@ function computeMatchPlayResult(round, computed) {
               onClick={handleAppleSignIn}
             >
               <span style={{ fontSize: 16 }}>{"\uF8FF"}</span> Continue with Apple
+            </button>
+            <button
+              className="gsc-btn"
+              style={{ width: "100%", marginTop: 10, background: "#fff", color: "#2B2B28", border: "1.5px solid #d8d2bd", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
+              disabled={authBusy}
+              onClick={handleGoogleSignIn}
+            >
+              <svg width="16" height="16" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+                <path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.9c1.7-1.57 2.68-3.87 2.68-6.62z" />
+                <path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.9-2.26c-.8.54-1.84.86-3.06.86-2.35 0-4.34-1.59-5.05-3.72H.96v2.33A9 9 0 0 0 9 18z" />
+                <path fill="#FBBC05" d="M3.95 10.7A5.4 5.4 0 0 1 3.67 9c0-.59.1-1.17.28-1.7V4.97H.96A9 9 0 0 0 0 9c0 1.45.35 2.83.96 4.03l2.99-2.33z" />
+                <path fill="#EA4335" d="M9 3.58c1.32 0 2.51.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 0 0 .96 4.97l2.99 2.33C4.66 5.17 6.65 3.58 9 3.58z" />
+              </svg>
+              Continue with Google
             </button>
           </div>
           <div style={{ textAlign: "center", fontSize: 13, color: "#6b6b63" }}>
