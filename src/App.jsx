@@ -3286,6 +3286,27 @@ export default function GolfScorecard() {
   const GOOGLE_WEB_CLIENT_ID = "476316079380-fmg6ur1v0nbd0ucs6rnngraks7a79trv.apps.googleusercontent.com";
   const GOOGLE_IOS_CLIENT_ID = "476316079380-el06l24sgte63sebl9qh06hcsnhm0tue.apps.googleusercontent.com";
 
+  // Shared by handleGoogleSignIn below AND by signOutUser/deleteMyAccount
+  // further down. Logout needs this too, not just sign-in: the plugin
+  // requires initialize() before any other call including logout(), and
+  // googleSocialLoginInitialized only reflects whether THIS app launch has
+  // called it - a fresh cold launch resets it to false even when the
+  // person is still natively signed in to Google from a previous launch,
+  // which would otherwise cause logout to silently skip clearing that
+  // native session entirely.
+  async function ensureGoogleSocialLoginInitialized() {
+    if (!googleSocialLoginInitialized) {
+      await SocialLogin.initialize({
+        google: {
+          webClientId: GOOGLE_WEB_CLIENT_ID,
+          iOSClientId: GOOGLE_IOS_CLIENT_ID,
+          mode: "online",
+        },
+      });
+      googleSocialLoginInitialized = true;
+    }
+  }
+
   async function handleGoogleSignIn() {
     setAuthErr("");
     setAuthNotice("");
@@ -3295,21 +3316,10 @@ export default function GolfScorecard() {
     }
     setAuthBusy(true);
     try {
-      // initialize() is call-once per the plugin's own docs - the module-level
-      // flag above ensures repeated taps (or visiting both Login and Create
-      // Account) never re-run it. webClientId is required on every platform,
-      // iOS included, since that's what Supabase verifies the token against;
-      // iOSClientId is what actually drives the native iOS account picker.
-      if (!googleSocialLoginInitialized) {
-        await SocialLogin.initialize({
-          google: {
-            webClientId: GOOGLE_WEB_CLIENT_ID,
-            iOSClientId: GOOGLE_IOS_CLIENT_ID,
-            mode: "online",
-          },
-        });
-        googleSocialLoginInitialized = true;
-      }
+      // webClientId is required on every platform, iOS included, since
+      // that's what Supabase verifies the token against; iOSClientId is
+      // what actually drives the native iOS account picker.
+      await ensureGoogleSocialLoginInitialized();
       const res = await SocialLogin.login({ provider: "google", options: {} });
       const idToken = res && res.result && res.result.idToken;
       if (!idToken) {
@@ -3403,14 +3413,17 @@ export default function GolfScorecard() {
     // SDK keeps its own separate cached sign-in on-device (that's what lets
     // repeat taps skip the account picker), so it needs its own explicit
     // logout call here too, or "Continue with Google" would silently sign
-    // the person back in right after they just logged out.
-    if (googleSocialLoginInitialized) {
-      try {
-        await SocialLogin.logout({ provider: "google" });
-      } catch (e) {
-        // Non-fatal - the person's RipScore session is still cleared below
-        // either way, and a fresh sign-in attempt will just re-initialize.
-      }
+    // the person back in right after they just logged out. initialize()
+    // first (not just checking the flag) matters: a fresh app launch since
+    // the last Google sign-in resets that flag to false even though the
+    // native session is still very much active, so skipping straight to
+    // logout() on the flag alone would silently do nothing in that case.
+    try {
+      await ensureGoogleSocialLoginInitialized();
+      await SocialLogin.logout({ provider: "google" });
+    } catch (e) {
+      // Non-fatal - the person's RipScore session is still cleared below
+      // either way, and a fresh sign-in attempt will just re-initialize.
     }
     if (supabase) await supabase.auth.signOut();
     setProfile(null);
@@ -3439,14 +3452,14 @@ export default function GolfScorecard() {
     }
     // The account and its data are gone server-side - clear local state
     // and sign out, same as a normal logout, then land back on Home.
-    // Same reasoning as signOutUser above - the native Google SDK's own
-    // cached session needs its own explicit logout call too.
-    if (googleSocialLoginInitialized) {
-      try {
-        await SocialLogin.logout({ provider: "google" });
-      } catch (e) {
-        // Non-fatal - continue with the rest of account deletion regardless.
-      }
+    // Same reasoning as signOutUser above - initialize() first, not just
+    // checking the flag, since a fresh app launch resets it even when the
+    // native Google session is still active.
+    try {
+      await ensureGoogleSocialLoginInitialized();
+      await SocialLogin.logout({ provider: "google" });
+    } catch (e) {
+      // Non-fatal - continue with the rest of account deletion regardless.
     }
     await supabase.auth.signOut();
     setProfile(null);
