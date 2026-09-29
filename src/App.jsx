@@ -766,6 +766,49 @@ const GAMES = {
       "Putts start once on the putting green.",
     ],
   },
+  quota: {
+    name: "Quota",
+    tag: "Individual points vs. your own target - up to 4 players",
+    desc: "Each player gets a personal point target (their quota) calculated automatically from handicap. Points are awarded each hole based on net score relative to par, same math as Stableford - but instead of comparing raw totals, whoever finishes furthest above their own quota wins. Great for groups with a wide spread of handicaps.",
+    rotates: false,
+    hasScore: true,
+    hasPutts: true,
+    tracksQuota: true,
+    defaults: { maxOver: "", maxPutts: "", mulliganSegment: "", mulliganChallenge: "", prize: "", netScoring: true },
+    rules: [
+      "Individual points game for up to 4 players, measured against your own personal target instead of directly against everyone else's total.",
+      {
+        text: "Each player gets a quota - a target point total for the round - based on their handicap:",
+        sub: [
+          "Quota = 36 minus handicap, for an 18-hole round (scaled down for a shorter round).",
+          "A 10 handicap has a quota of 26. A scratch (0 handicap) player has a quota of 36.",
+          "Calculated automatically from each player's entered handicap - no extra setup step needed. Anyone with no handicap entered gets a quota of 36.",
+        ],
+      },
+      {
+        text: "Points are awarded each hole based on net score relative to par:",
+        sub: [
+          "Albatross (3 under par) or better: 5 points",
+          "Eagle (2 under par): 4 points",
+          "Birdie (1 under par): 3 points",
+          "Par (even): 2 points",
+          "Bogey (1 over par): 1 point",
+          "Double bogey or worse (2+ over par): 0 points",
+        ],
+      },
+      "Per-hole handicapping (net score per hole) is defaulted to On for this format, since both the points and the quota itself depend on net score. Can be turned off in game scoring settings to use gross score instead.",
+      "Whoever finishes furthest above their own quota wins - not whoever has the most raw points. A high-handicap player who beats their quota by 4 outranks a low-handicap player who only beat theirs by 2, even if the low-handicap player scored more total points.",
+      "Putts are tracked but don't count toward the standings.",
+      "Prize: to be agreed on prior to round.",
+      "Strokes max: to be agreed on prior to round.",
+      "Putts max: to be agreed on prior to round.",
+      "Mulligans: to be agreed on prior to round.",
+      "Play all OB shots per USGA Rules.",
+      "Must putt all the way into the hole.",
+      "Flagstick can stay in.",
+      "Putts start once on the putting green.",
+    ],
+  },
   matchplay: {
     name: "Individual Match Play",
     tournamentName: "Match Play Tournament",
@@ -914,12 +957,12 @@ const GAMES = {
 // this is a refactor of already-existing colors, not a new palette.
 const GAME_TILE_STYLE = (() => {
   const order = [
-    "swami", "dstreet", "matchplay", "individualputts", "pontobango", "stableford", "oceans11", "ninepoint",
+    "swami", "dstreet", "matchplay", "individualputts", "pontobango", "stableford", "oceans11", "ninepoint", "quota",
     "teamstrokes", "ponto", "matchplayfourball", "teamputts", "beachside", "seabluffe", "moonlightwolf", "vegas", "teamoceans11",
     "avoscramble", "tourneybb", "tourneygg", "altshot",
   ];
   const emoji = {
-    dstreet: "\u{1F4B0}", swami: "\u26F3", individualputts: "\u{1F3AF}", pontobango: "\u{1F3B2}", stableford: "\u{1F4C8}", matchplay: "\u2694\uFE0F", oceans11: "\u{1F30A}", ninepoint: "9\uFE0F\u20E3",
+    dstreet: "\u{1F4B0}", swami: "\u26F3", individualputts: "\u{1F3AF}", pontobango: "\u{1F3B2}", stableford: "\u{1F4C8}", matchplay: "\u2694\uFE0F", oceans11: "\u{1F30A}", ninepoint: "9\uFE0F\u20E3", quota: "\u{1F522}",
     ponto: "\u{1F91D}", teamstrokes: "\u{1F3CC}\u{FE0F}", teamputts: "\u{1F573}\u{FE0F}", beachside: "\u2B50", seabluffe: "\u{1F504}", moonlightwolf: "\u{1F43A}", vegas: "\u{1F3B0}", matchplayfourball: "\u{1F93A}", teamoceans11: "\u{1F30A}",
     avoscramble: "\u{1F500}", tourneybb: "\u{1F3C6}", tourneygg: "\u{1F3C5}", altshot: "\u{1F501}",
   };
@@ -956,6 +999,7 @@ const WHY_PLAY = {
   stableford: "Stableford's biggest draw is that a single poor hole can't ruin an entire round - it only ever costs zero points, which keeps the pressure low and the format genuinely relaxed and enjoyable for casual and club play alike. It also rewards aggressive play in a way stroke play doesn't, letting golfers go after a spectacular shot without the same fear of a blown-up score. It was originally created specifically to help the average club golfer enjoy a competitive round more - and that founding idea is still exactly why it remains so popular today.",
   oceans11: "Oceans 11 turns every single hole into its own small decision, not just a number to add up. Take a good score now, and you're locked in - safe, but maybe leaving something better on the table. Pass on it hoping for even lower later, and you're gambling that the back nine treats you kindly, with fewer holes left to recover if it doesn't. That constant \"bank it or hold out\" tension is what people end up talking about after the round - it rewards reading your own game in the moment, not just playing steady, and it means even a rough start doesn't have to be the whole story.",
   ninepoint: "9-Point is the answer to the age-old problem of a fourth player bailing on the tee sheet - it turns a threesome from a compromise into the actual best way to play. Since every hole is its own fresh 9-point pot, one bad hole is never a disaster, and a great hole is worth chasing on its own terms, not just as part of an 18-hole grind. Comparing net scores hole by hole, rather than tallying strokes against par, keeps it personal and immediate - you're always thinking about where you stand against these two specific people, right now, not some abstract number. And the win-by-2 rule gives a truly great hole real teeth - nail one and you take the whole pot instead of splitting it, which is exactly the kind of moment golfers replay in the clubhouse afterward.",
+  quota: "Quota is a staple of club and league play for one simple reason: it lets a scratch player and a 20-handicapper compete on genuinely even footing without anyone feeling like the outcome was decided before the round even started. Since the target is personal - your own quota, built from your own handicap - the format keeps everyone chasing the same thing: beat your own number. That framing tends to resonate more than a plain running point total, because it turns each hole into a simple, tangible question - am I ahead of my own pace, or behind it - rather than an abstract score to compare against a stranger's. It's exactly why you'll find it running week after week at clubs with wide-ranging membership: it doesn't ask everyone to be equally good, just to play to their own potential.",
   matchplay: "Match play is the original form of the game, and it stays popular because a disastrous hole only ever costs you that one hole, not your entire round - a blow-up on 14 is forgotten the moment you tee off on 15. That head-to-head, hole-by-hole tension is exactly why it's the format the Ryder Cup, Presidents Cup, and Solheim Cup are all built on - it rewards clutch play and course management under direct pressure from a single opponent, not just a good scorecard. A match can also be won before the 18th hole is ever played, which gives it a different, often more dramatic pace than counting strokes all the way to the end.",
   matchplayfourball: "Four-Ball takes match play's core appeal - a bad hole only costs you that one hole, not the round - and adds the safety net of a partner on top of it, which is exactly why it's one of the most popular team formats at the Ryder Cup, Presidents Cup, and Solheim Cup. Since only the better of the two partners' scores counts each hole, both players can play aggressively without the fear of a single bad swing sinking the team, and a struggling partner never has to feel like they're letting the side down. That built-in cushion is what makes it a genuine crowd favorite for pairs who want real head-to-head competition without needing two flawless rounds to win it.",
   altshot: "Foursomes is the Ryder Cup format most golfers only ever watch, never play - the whole team plays one ball, alternating every shot, which turns a single mis-hit into something both partners genuinely feel together. Running it as a tournament captures the same energy the pros bring to it: several alternate-shot matches going at once under one shared event, each one entirely its own contest, so a rough patch at one table never touches how anyone else's match is going. It rewards a completely different kind of teamwork than Four-Ball does - momentum and trust in a shared ball, not just picking the better of two - and it's a memorable change of pace for a group that's already played the usual formats together.",
@@ -973,7 +1017,7 @@ const WHY_PLAY = {
 const VIBE_GAME_MAP = {
   "2-3": {
     simple: ["swami", "individualputts"],
-    mixedSkill: ["pontobango", "stableford"],
+    mixedSkill: ["pontobango", "stableford", "quota"],
     highDrama: "dstreet",
     // Every Nassau/Oceans-11-eligible individual format - same list used
     // at 4 players for the "every player for themselves" branch below.
@@ -984,7 +1028,7 @@ const VIBE_GAME_MAP = {
   },
   "4": {
     simple: { team: ["teamstrokes", "teamputts"], individual: ["swami", "individualputts"] },
-    mixedSkill: { team: ["seabluffe", "beachside"], individual: ["pontobango", "stableford"] },
+    mixedSkill: { team: ["seabluffe", "beachside"], individual: ["pontobango", "stableford", "quota"] },
     highDrama: { team: ["ponto", "vegas", "matchplayfourball"], individual: "dstreet" },
     // Combines what used to be two separate vibes ("maximum strategy"
     // and "playing a Nassau format") into one, branching three ways
@@ -5028,7 +5072,7 @@ export default function GolfScorecard() {
   // retype their own name and handicap every single time. Everyone else
   // still starts blank, same as before.
   function freshPlayerSlots(gameKeyArg, flexible) {
-    const isIndividual = gameKeyArg === "dstreet" || gameKeyArg === "swami" || gameKeyArg === "oceans11" || gameKeyArg === "pontobango" || gameKeyArg === "individualputts" || gameKeyArg === "stableford" || gameKeyArg === "matchplay";
+    const isIndividual = gameKeyArg === "dstreet" || gameKeyArg === "swami" || gameKeyArg === "oceans11" || gameKeyArg === "pontobango" || gameKeyArg === "individualputts" || gameKeyArg === "stableford" || gameKeyArg === "quota" || gameKeyArg === "matchplay";
     // Flexible mode (regular round setup, not a tournament foursome)
     // starts with the minimum players actually needed for this format -
     // most individual games can be, and often are, played with just a
@@ -7363,7 +7407,7 @@ export default function GolfScorecard() {
       } else {
         setGameKey(key);
         setCfg(withProfileVenmo({ ...GAMES[key].defaults, ...(nextAnswers.wantsNassau && !["swami", "dstreet", "individualputts", "oceans11"].includes(key) ? { nassau: true } : {}) }));
-        const count = key === "ninepoint" ? 3 : key === "swami" || key === "dstreet" || key === "pontobango" || key === "individualputts" || key === "stableford" || key === "matchplay" || key === "oceans11" ? Math.max(1, Math.min(4, Number(nextAnswers.playerCount) || 4)) : 4;
+        const count = key === "ninepoint" ? 3 : key === "swami" || key === "dstreet" || key === "pontobango" || key === "individualputts" || key === "stableford" || key === "quota" || key === "matchplay" || key === "oceans11" ? Math.max(1, Math.min(4, Number(nextAnswers.playerCount) || 4)) : 4;
         setPlayers((p) => {
           const base = [...p];
           while (base.length < count) base.push({ name: "", hcp: "", avatar: "" });
@@ -7890,7 +7934,7 @@ export default function GolfScorecard() {
       avatar: p.avatar || "",
       ...(i === 0 && session ? { user_id: session.user.id } : p.user_id ? { user_id: p.user_id } : {}),
     }));
-    const isIndividual = gameKey === "dstreet" || gameKey === "swami" || gameKey === "oceans11" || gameKey === "pontobango" || gameKey === "individualputts" || gameKey === "stableford" || gameKey === "matchplay" || gameKey === "ninepoint";
+    const isIndividual = gameKey === "dstreet" || gameKey === "swami" || gameKey === "oceans11" || gameKey === "pontobango" || gameKey === "individualputts" || gameKey === "stableford" || gameKey === "quota" || gameKey === "matchplay" || gameKey === "ninepoint";
     if (gameKey === "matchplay") {
       if (cleanPlayers.length !== 2) {
         setErr("Individual Match Play needs exactly 2 players.");
@@ -9745,6 +9789,11 @@ function computeRoundScoring(round) {
   // field, and every other player's strokes are relative to them.
   const netScoringOn = !!round.cfg.netScoring;
   const playerHcps = round.players.map((p) => (p.hcp !== "" && p.hcp != null && !isNaN(Number(p.hcp)) ? Number(p.hcp) : null));
+  // Quota's personal target for the round: the standard 36-minus-handicap
+  // formula (an 18-hole baseline, same as every other computation in this
+  // function). Anyone with no handicap entered gets a scratch player's
+  // quota of 36, rather than guessing at one.
+  const playerQuota = playerHcps.map((h) => 36 - (h ?? 0));
   const validHcps = playerHcps.filter((h) => h != null);
   const lowestHcp = validHcps.length > 0 ? Math.min(...validHcps) : 0;
   const allocatedStrokes = playerHcps.map((h) => (h != null ? Math.round(h - lowestHcp) : 0));
@@ -9919,12 +9968,15 @@ function computeRoundScoring(round) {
         const winnerIdx = teamNumbers[0] < teamNumbers[1] ? 0 : 1;
         ptsAwarded[winnerIdx].score = diff;
       }
-    } else if (g.tracksStableford) {
+    } else if (g.tracksStableford || g.tracksQuota) {
       // Each player earns points independently based on their own net
       // score relative to par - unlike every other points-based game
       // here, this isn't a comparison against anyone else's score, so it
       // doesn't use awardLowest at all. teamsThisHole is always a set of
       // single-player "teams" for an individual game like this one.
+      // Quota uses this exact same per-hole points table as Stableford -
+      // its own personal-target twist only changes how the round's
+      // overall ranking is decided, not how any single hole scores.
       const stablefordPoints = (relToPar) => {
         if (relToPar <= -3) return 5; // albatross or better
         if (relToPar === -2) return 4; // eagle
@@ -9975,7 +10027,7 @@ function computeRoundScoring(round) {
       const sums = teamRes.map((t) => t.scoreSum);
       awardLowest(sums, "score").forEach((v, i) => (ptsAwarded[i].score = v));
     }
-    if (!g.tracksPontoBangoBongo && !g.tracksWolf && !g.tracksVegas && !g.tracksStableford && !g.tracksNinePoint && g.hasPutts && !g.totalScoring && round.cfg.trackPutts !== false) {
+    if (!g.tracksPontoBangoBongo && !g.tracksWolf && !g.tracksVegas && !g.tracksStableford && !g.tracksQuota && !g.tracksNinePoint && g.hasPutts && !g.totalScoring && round.cfg.trackPutts !== false) {
       const sums = teamRes.map((t) => t.puttSum);
       awardLowest(sums, "putt").forEach((v, i) => (ptsAwarded[i].putt = v));
     }
@@ -10002,7 +10054,7 @@ function computeRoundScoring(round) {
     }
   }
 
-  return { playerPoints, playerTotalScore, playerTotalNetScore, playerTotalPutts, playerParPlayed, teamPointsByTeamIdx, holeResults, mulligansUsed, netScoringOn, allocatedStrokes, strokesOffForHole, carryPools };
+  return { playerPoints, playerTotalScore, playerTotalNetScore, playerTotalPutts, playerParPlayed, playerQuota, teamPointsByTeamIdx, holeResults, mulligansUsed, netScoringOn, allocatedStrokes, strokesOffForHole, carryPools };
 }
 
 // Nassau is a scoring lens applied on top of whatever format is already
@@ -10528,6 +10580,7 @@ function computeMatchPlayResult(round, computed) {
     const isTotalScoring = GAMES[r.game] && GAMES[r.game].totalScoring;
     const rankByPutts = GAMES[r.game] && GAMES[r.game].rankByPutts;
     const rankByTeamTotal = GAMES[r.game] && GAMES[r.game].rankByTeamTotal;
+    const tracksQuota = GAMES[r.game] && GAMES[r.game].tracksQuota;
     const netOn = !!c.netScoringOn;
 
     // For team-total games, both teammates need to show and be ranked by
@@ -10557,6 +10610,8 @@ function computeMatchPlayResult(round, computed) {
         ...pl,
         idx: i,
         points: c.playerPoints[i],
+        quota: c.playerQuota ? c.playerQuota[i] : null,
+        quotaDiff: c.playerQuota ? c.playerPoints[i] - c.playerQuota[i] : null,
         score: rankByTeamTotal ? teamScoreOf[i] : c.playerTotalScore[i],
         netScore: rankByTeamTotal ? teamNetScoreOf[i] : c.playerTotalNetScore[i],
         putts: rankByTeamTotal ? teamPuttsOf[i] : c.playerTotalPutts[i],
@@ -10578,6 +10633,14 @@ function computeMatchPlayResult(round, computed) {
           const bVal = netOn ? b.netScore : b.score;
           if (aVal !== bVal) return aVal - bVal; // lowest strokes wins
           return a.putts - b.putts; // total putts breaks a tie
+        }
+        if (tracksQuota) {
+          // Quota's whole point: rank by how far above (or below) each
+          // player's own personal target they finished, not by raw
+          // points - a high-handicap player who beats their quota by 4
+          // outranks a low-handicap player who only beat theirs by 2,
+          // even with a lower total point count.
+          return b.quotaDiff - a.quotaDiff;
         }
         return b.points - a.points;
       });
@@ -11106,7 +11169,7 @@ function computeMatchPlayResult(round, computed) {
                   <>
                     <div style={{ margin: "8px 0 0" }}>
                       <div style={{ marginBottom: 4 }}>{"\u{1F465}"} Set Up Your Group Once</div>
-                      <div style={{ marginBottom: 4 }}>{"\u26F3"} 22 Game Formats + Side Games, for Every Kind of Day</div>
+                      <div style={{ marginBottom: 4 }}>{"\u26F3"} 24 Game Formats + Side Games, for Every Kind of Day</div>
                       <div style={{ marginBottom: 4 }}>{"\u{1F4CD}"} Live Distance to the Green GPS</div>
                       <div style={{ marginBottom: 4 }}>{"\u{1F3CC}\u{FE0F}"} Optional Handicapping, Done Right</div>
                       <div style={{ marginBottom: 4 }}>{"\u{1F4CA}"} A Leaderboard Just for Your Group</div>
@@ -11278,8 +11341,8 @@ function computeMatchPlayResult(round, computed) {
               };
               const baseKeys = Object.keys(GAME_TILE_STYLE);
               const tourneyOnlyStartIdx = baseKeys.indexOf("avoscramble");
-              const individualKeys = baseKeys.slice(0, 8);
-              const teamKeys = baseKeys.slice(8, tourneyOnlyStartIdx);
+              const individualKeys = baseKeys.slice(0, 9);
+              const teamKeys = baseKeys.slice(9, tourneyOnlyStartIdx);
               // Explicit order requested for this section: Stroke Play,
               // Scramble, Best Ball, Match Play, Team Match Play, Foursomes -
               // not derived from GAME_TILE_STYLE's order like the two
@@ -12430,7 +12493,7 @@ function computeMatchPlayResult(round, computed) {
           <div className="gsc-card" style={{ cursor: "pointer", background: "#FDF6E9", border: "2px solid #B08D57" }} onClick={() => goToScreen("gamesLibraryDetail")}>
             <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
               <span style={{ fontSize: 16 }}>{"\u{1F4D6}"}</span>
-              <div style={{ fontWeight: 800, fontSize: 16, color: "#8a6a2f" }}>Games Library</div>
+              <div style={{ fontWeight: 800, fontSize: 16, color: "#8a6a2f" }}>Game Format Library</div>
             </div>
             <div style={{ fontSize: 13, color: "#4b4b45" }}>
               Learn about all the game formats available in RipScore, and start a new round or tournament.
@@ -12514,7 +12577,7 @@ function computeMatchPlayResult(round, computed) {
     return (
       <div className="gsc">
         <style>{STYLE}</style>
-        <Header title="Games Library" sub="Learn about the game formats" onBack={() => goBack("libraryTab")} />
+        <Header title="Game Format Library" sub="Learn about the game formats" onBack={() => goBack("libraryTab")} />
         <div className="gsc-body">
           {activeRound && !activeRound.tournamentId && !isRoundDone(activeRound) && (
             <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
@@ -12558,15 +12621,10 @@ function computeMatchPlayResult(round, computed) {
           )}
 
           <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
-              <span style={{ fontSize: 18 }}>{"\u26F3"}</span>
-              <div style={{ fontWeight: 800, fontSize: 17, color: "#8a6a2f" }}>Start a New Round</div>
-            </div>
-
             <div className="gsc-label" style={{ marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Individual Game Formats</div>
             <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>Up to 4 Players</div>
             <div style={{ display: "flex", overflowX: "auto", gap: 10, paddingBottom: 6, WebkitOverflowScrolling: "touch" }}>
-            {["swami", "dstreet", "matchplay", "individualputts", "pontobango", "stableford", "oceans11", "ninepoint"]
+            {["swami", "dstreet", "matchplay", "individualputts", "pontobango", "stableford", "oceans11", "ninepoint", "quota"]
               .map((key) => [key, GAMES[key]])
               .map(([key, g]) => {
                 const locked = isGameLocked(key);
@@ -12624,11 +12682,6 @@ function computeMatchPlayResult(round, computed) {
           </div>
 
           <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
-              <span style={{ fontSize: 18 }}>{"\u26F3"}</span>
-              <div style={{ fontWeight: 800, fontSize: 17, color: "#8a6a2f" }}>Start a New Round</div>
-            </div>
-
             <div className="gsc-label" style={{ marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Team Game Formats</div>
             <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>2 vs 2</div>
             <div style={{ display: "flex", overflowX: "auto", gap: 10, paddingBottom: 6, WebkitOverflowScrolling: "touch" }}>
@@ -12690,10 +12743,6 @@ function computeMatchPlayResult(round, computed) {
           </div>
 
           <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
-              <span style={{ fontSize: 18 }}>{"\u{1F3C6}"}</span>
-              <div style={{ fontWeight: 800, fontSize: 17, color: "#8a6a2f" }}>Start a New Tournament</div>
-            </div>
             <div className="gsc-label" style={{ marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Tournament Game Formats</div>
             <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>Multiple Foursomes</div>
             {/* Explicit display order requested for this list: Stroke
@@ -12885,7 +12934,7 @@ function computeMatchPlayResult(round, computed) {
                 Save your regular playing partners as a group. Next time you play, fill in everyone's name, avatar, and handicap with one tap - no retyping names round after round.
               </p>
 
-              <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>{"\u26F3"} 22 Game Formats + Side Games, for Every Kind of Day</p>
+              <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>{"\u26F3"} 24 Game Formats + Side Games, for Every Kind of Day</p>
               <p style={{ margin: "0 0 14px" }}>
                 Skins, Wolf, Vegas, Stableford, Bingo Bango Bongo, Best Ball, Round Robin, Match Play, and more - for individuals, teams, and full multi-foursome tournaments. Pick a format, and RipScore keeps score, tracks mulligans, and shows exactly who's winning, hole by hole.
               </p>
@@ -13037,8 +13086,8 @@ function computeMatchPlayResult(round, computed) {
 
   if (screen === "whyPlay") {
     const baseKeys = Object.keys(GAME_TILE_STYLE);
-    const individualKeys = baseKeys.slice(0, 8);
-    const teamKeys = baseKeys.slice(8, baseKeys.indexOf("avoscramble"));
+    const individualKeys = baseKeys.slice(0, 9);
+    const teamKeys = baseKeys.slice(9, baseKeys.indexOf("avoscramble"));
     // Same explicit tournament order used on the Games page: Stroke Play,
     // Scramble, Best Ball, Match Play, Team Match Play, Foursomes. Match
     // Play and Team Match Play are dual-purpose games, so their
@@ -15477,7 +15526,7 @@ function computeMatchPlayResult(round, computed) {
 
           <div className="gsc-card">
             <div className="gsc-label" style={{ marginBottom: 10 }}>Players Names and Handicaps (Optional)</div>
-            {(gameKey === "swami" || gameKey === "dstreet" || gameKey === "pontobango" || gameKey === "individualputts" || gameKey === "stableford" || gameKey === "oceans11") && (
+            {(gameKey === "swami" || gameKey === "dstreet" || gameKey === "pontobango" || gameKey === "individualputts" || gameKey === "stableford" || gameKey === "quota" || gameKey === "oceans11") && (
               <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 10 }}>
                 This format supports {gameKey === "pontobango" || gameKey === "individualputts" ? "2-4" : "1-4"} players - add or remove players below to match who's actually playing.
               </div>
@@ -15516,7 +15565,7 @@ function computeMatchPlayResult(round, computed) {
                   </button>
                   <input className="gsc-input" placeholder={`Player ${LETTERS[i]} name`} value={p.name} onChange={(e) => updatePlayer(i, "name", e.target.value)} />
                   <input className="gsc-input" style={{ flex: "0 0 70px" }} placeholder="HCP" value={p.hcp} onChange={(e) => updatePlayer(i, "hcp", e.target.value)} />
-                  {(gameKey === "swami" || gameKey === "dstreet" || gameKey === "pontobango" || gameKey === "individualputts" || gameKey === "stableford" || gameKey === "oceans11") && players.length > (gameKey === "pontobango" || gameKey === "individualputts" ? 2 : 1) && (
+                  {(gameKey === "swami" || gameKey === "dstreet" || gameKey === "pontobango" || gameKey === "individualputts" || gameKey === "stableford" || gameKey === "quota" || gameKey === "oceans11") && players.length > (gameKey === "pontobango" || gameKey === "individualputts" ? 2 : 1) && (
                     <button
                       className="gsc-btn gsc-btn-outline"
                       style={{ flex: "0 0 auto", color: "#A42E2D", borderColor: "#A42E2D", padding: "9px 12px" }}
@@ -15605,7 +15654,7 @@ function computeMatchPlayResult(round, computed) {
                 )}
               </div>
             ))}
-            {(gameKey === "swami" || gameKey === "dstreet" || gameKey === "pontobango" || gameKey === "individualputts" || gameKey === "stableford" || gameKey === "oceans11") && players.length < 4 && (
+            {(gameKey === "swami" || gameKey === "dstreet" || gameKey === "pontobango" || gameKey === "individualputts" || gameKey === "stableford" || gameKey === "quota" || gameKey === "oceans11") && players.length < 4 && (
               <button className="gsc-btn gsc-btn-outline" style={{ width: "100%", marginTop: 4 }} onClick={addPlayerSlot}>
                 + Add another player
               </button>
@@ -16591,6 +16640,8 @@ function computeMatchPlayResult(round, computed) {
         winners = ranks.slice(0, Math.min(2, ranks.length));
       } else if (g.totalScoring) {
         winners = ranks.filter((row) => row.score === ranks[0].score && row.putts === ranks[0].putts);
+      } else if (g.tracksQuota) {
+        winners = ranks.filter((row) => row.quotaDiff === ranks[0].quotaDiff);
       } else {
         winners = ranks.filter((row) => row.points === ranks[0].points);
       }
@@ -16998,7 +17049,7 @@ function computeMatchPlayResult(round, computed) {
                       {p.avatar && <span style={{ marginRight: 4 }}>{p.avatar}</span>}
                       {p.name}
                     </div>
-                    <div className="gsc-mono" style={{ fontWeight: 700 }}>
+                    <div className="gsc-mono" style={{ fontWeight: 700, textAlign: "right" }}>
                       {g.rankByPutts ? (
                         <span style={{ fontSize: 17 }}>{p.putts}put/{p.score}str</span>
                       ) : g.totalScoring ? (
@@ -17007,6 +17058,11 @@ function computeMatchPlayResult(round, computed) {
                         <>
                           {p.points} pts <span style={{ fontWeight: 700, color: "#6b6b63" }}>({p.score}str{g.hasPutts && round.cfg.trackPutts !== false ? `/${p.putts}putt` : ""}/{formatRelPar(p.relPar)})</span>
                         </>
+                      )}
+                      {g.tracksQuota && (
+                        <div style={{ fontSize: 12, color: p.quotaDiff >= 0 ? "#1B4332" : "#A42E2D" }}>
+                          Quota {p.quota} ({p.quotaDiff >= 0 ? "+" : ""}{p.quotaDiff})
+                        </div>
                       )}
                     </div>
                   </div>
@@ -18414,6 +18470,11 @@ function computeMatchPlayResult(round, computed) {
                 </div>
                 <div className="gsc-mono" style={{ fontWeight: 700, textAlign: "right" }}>
                   {!g.singleTeam && !g.totalScoring && <div>{p.points} pts</div>}
+                  {g.tracksQuota && (
+                    <div style={{ fontSize: 12, color: p.quotaDiff >= 0 ? "#1B4332" : "#A42E2D", fontWeight: 700 }}>
+                      Quota {p.quota} ({p.quotaDiff >= 0 ? "+" : ""}{p.quotaDiff})
+                    </div>
+                  )}
                   {g.rankByTeamTotal ? (
                     <div style={{ fontWeight: 700, fontSize: 17, whiteSpace: "nowrap" }}>
                       {p.score}str{round.cfg.netScoring && <> (net {p.netScore})</>}
