@@ -11074,10 +11074,10 @@ function computeMatchPlayResult(round, computed) {
               <>
                 {profile && profile.name ? (
                   <>
-                    Welcome back {profile.avatar && <span style={{ fontSize: 15 }}>{profile.avatar}</span>} {profile.name}, what game would you like to play today?
+                    Welcome back {profile.avatar && <span style={{ fontSize: 15 }}>{profile.avatar}</span>} {profile.name}.
                   </>
                 ) : (
-                  "Welcome back, what game would you like to play today?"
+                  "Welcome back."
                 )}
               </>
             ) : (
@@ -11177,7 +11177,7 @@ function computeMatchPlayResult(round, computed) {
               <div style={{ fontWeight: 800, fontSize: 16, color: "#A42E2D" }}>Quick Start a New Round</div>
             </div>
             <div style={{ fontSize: 13, color: "#4b4b45", marginTop: 3 }}>
-              Just want to track scores? Search your course, add your players, and go - no formats or wagers to set up.
+              Just want to track scores today? Start here.
             </div>
             <button className="gsc-btn" style={{ width: "100%", marginTop: 10, background: "#A42E2D", color: "#F3EFE0" }} onClick={startQuickStart}>
               Quick Start
@@ -11296,9 +11296,6 @@ function computeMatchPlayResult(round, computed) {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <div>
                 <div style={{ fontWeight: 700, fontSize: 16 }}>{"\u{1F9D9}"} Not sure which format to pick?</div>
-                <div style={{ fontSize: 13, color: "#4b4b45", marginTop: 3 }}>
-                  Answer a few quick questions and we'll get everything set up for you.
-                </div>
               </div>
             </div>
             <button className="gsc-btn gsc-btn-gold" style={{ width: "100%", marginTop: 10 }} onClick={startWizard}>
@@ -11435,9 +11432,6 @@ function computeMatchPlayResult(round, computed) {
 
           <div className="gsc-card gsc-winner-card" style={{ cursor: "pointer" }} onClick={startWizard}>
             <div style={{ fontWeight: 700, fontSize: 16 }}>{"\u{1F9D9}"} Not sure which format to pick?</div>
-            <div style={{ fontSize: 13, color: "#4b4b45", marginTop: 3 }}>
-              Answer a few quick questions and we'll pick the right round or tournament format and set everything up for you.
-            </div>
             <button className="gsc-btn gsc-btn-gold" style={{ width: "100%", marginTop: 10 }} onClick={startWizard}>
               Start the Game Wizard
             </button>
