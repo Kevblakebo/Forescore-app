@@ -1,0 +1,9 @@
+{
+  "appId": "com.ripscoregolf.app",
+  "appName": "RipScore",
+  "webDir": "dist",
+  "ios": {
+    "zoomEnabled": true
+  },
+  "server": { "hostname": "ripscore-app" }
+}
