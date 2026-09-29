@@ -9793,7 +9793,7 @@ function computeRoundScoring(round) {
   // formula (an 18-hole baseline, same as every other computation in this
   // function). Anyone with no handicap entered gets a scratch player's
   // quota of 36, rather than guessing at one.
-  const playerQuota = playerHcps.map((h) => 36 - (h ?? 0));
+  const playerQuota = playerHcps.map((h) => Math.round(36 - (h ?? 0)));
   const validHcps = playerHcps.filter((h) => h != null);
   const lowestHcp = validHcps.length > 0 ? Math.min(...validHcps) : 0;
   const allocatedStrokes = playerHcps.map((h) => (h != null ? Math.round(h - lowestHcp) : 0));
