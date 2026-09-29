@@ -2373,15 +2373,6 @@ export default function GolfScorecard() {
   // update scheduling at all.
   const screenHistoryRef = useRef([]);
   function goToScreen(next) {
-    // Stats is account-specific data with nothing meaningful to show
-    // without one - route to login instead of the stats page itself
-    // for anyone not signed in, regardless of where this navigation
-    // was triggered from (bottom nav, hamburger menu, or elsewhere).
-    if (next === "statsTab" && !session) {
-      screenHistoryRef.current = [...screenHistoryRef.current, screen];
-      setScreen("login");
-      return;
-    }
     screenHistoryRef.current = [...screenHistoryRef.current, screen];
     setScreen(next);
   }
@@ -11384,6 +11375,21 @@ function computeMatchPlayResult(round, computed) {
         <TopIconRow />
         <div className="gsc-body gsc-body-tabbed">
           <TitleStrip title={<span style={{ fontSize: 23 }}>Stats</span>} sub="Your RipScore Index, history & leaderboards" />
+          {!session && (
+            <div className="gsc-card" style={{ textAlign: "center", padding: "28px 20px" }}>
+              <TrophyIcon size={28} color="#8FA998" style={{ marginBottom: 10 }} />
+              <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 6 }}>You're not logged in</div>
+              <div style={{ fontSize: 13, color: "#6b6b63", lineHeight: 1.5, marginBottom: 16 }}>
+                Log in or create an account to see your RipScore Index, stats, finished rounds, the public leaderboard, and your head-to-head records against other players.
+              </div>
+              <button className="gsc-btn gsc-btn-primary" style={{ width: "100%" }} onClick={() => { setAuthErr(""); goToScreen("login"); }}>
+                Log In
+              </button>
+              <button className="gsc-btn gsc-btn-outline" style={{ width: "100%", marginTop: 10 }} onClick={() => { setAuthErr(""); goToScreen("register"); }}>
+                Create Account
+              </button>
+            </div>
+          )}
           {session && (
             <div className="gsc-card gsc-no-select" style={{ background: "#FDF6E9", border: "2px solid #B08D57", textAlign: "center" }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, marginBottom: 6 }}>
@@ -12454,6 +12460,11 @@ function computeMatchPlayResult(round, computed) {
         <TopIconRow />
         <div className="gsc-body gsc-body-tabbed">
           <TitleStrip title={<span style={{ fontSize: 23 }}>Library</span>} sub="Games & about this app" />
+
+          <div style={{ fontWeight: 800, fontSize: 19, color: "#1B4332", margin: "4px 0 2px" }}>
+            {"\u{1F4D6}"} Games Library
+          </div>
+
           {activeRound && !activeRound.tournamentId && !isRoundDone(activeRound) && (
             <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
