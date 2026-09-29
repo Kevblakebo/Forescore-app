@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import { Home as HomeIcon, Flag as FlagIcon, Trophy as TrophyIcon, User as UserIcon, Users as GroupsIcon, Lock, Library as LibraryIcon, ShoppingBag, Menu as MenuIcon } from "lucide-react";
 import { supabase } from "./storage-polyfill.js";
 import { AppleSignIn, SignInScope } from "@capawesome/capacitor-apple-sign-in";
-import { GoogleAuth } from "@codetrix-studio/capacitor-google-auth";
+import { GoogleAuth } from "@southdevs/capacitor-google-auth";
 
 /* ---------- design tokens ----------
    Palette: fairway (#1B4332) deep green, paper (#F3EFE0) cream, ink (#2B2B28),
