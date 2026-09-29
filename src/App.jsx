@@ -2865,6 +2865,7 @@ export default function GolfScorecard() {
   const [pendingHoleChange, setPendingHoleChange] = useState(null);
   const [navMenuOpen, setNavMenuOpen] = useState(false);
   const [headToHeadExpanded, setHeadToHeadExpanded] = useState(true);
+  const [homeIntroExpanded, setHomeIntroExpanded] = useState(false);
   // Where to navigate once "Leave this round?" is confirmed, when that
   // confirmation was triggered by picking a destination from the new
   // logo nav menu while mid-round - null means "use the normal default"
@@ -11083,21 +11084,42 @@ function computeMatchPlayResult(round, computed) {
               </>
             ) : (
               <>
-                RipScore is the golf app built for every group you play with.
-                <div style={{ margin: "8px 0 0" }}>
-                  <div style={{ marginBottom: 4 }}>{"\u{1F465}"} Set Up Your Group Once</div>
-                  <div style={{ marginBottom: 4 }}>{"\u26F3"} 22 Game Formats + Side Games, for Every Kind of Day</div>
-                  <div style={{ marginBottom: 4 }}>{"\u{1F4CD}"} Live Distance to the Green GPS</div>
-                  <div style={{ marginBottom: 4 }}>{"\u{1F3CC}\u{FE0F}"} Optional Handicapping, Done Right</div>
-                  <div style={{ marginBottom: 4 }}>{"\u{1F4CA}"} A Leaderboard Just for Your Group</div>
-                  <div style={{ marginBottom: 4 }}>{"\u{1F4B5}"} Settle Up Without the Argument</div>
-                </div>
-                <div style={{ marginTop: 8 }}>
-                  Whether it's a casual Saturday game or a special group tournament, RipScore keeps the math out of your golf - so all that's left is golf.
-                </div>
+                <button
+                  onClick={() => setHomeIntroExpanded((v) => !v)}
+                  style={{
+                    display: "block",
+                    width: "100%",
+                    textAlign: "left",
+                    background: "#FDF6E9",
+                    border: "1.5px solid #B08D57",
+                    borderRadius: 20,
+                    padding: "10px 16px",
+                    fontSize: 13,
+                    color: "#4b4b45",
+                    lineHeight: 1.4,
+                    cursor: "pointer",
+                  }}
+                >
+                  RipScore is the golf app built for every group you play with. <span style={{ color: "#A42E2D", fontWeight: 700 }}>{homeIntroExpanded ? "Show less" : "Learn more"}</span>
+                </button>
+                {homeIntroExpanded && (
+                  <>
+                    <div style={{ margin: "8px 0 0" }}>
+                      <div style={{ marginBottom: 4 }}>{"\u{1F465}"} Set Up Your Group Once</div>
+                      <div style={{ marginBottom: 4 }}>{"\u26F3"} 22 Game Formats + Side Games, for Every Kind of Day</div>
+                      <div style={{ marginBottom: 4 }}>{"\u{1F4CD}"} Live Distance to the Green GPS</div>
+                      <div style={{ marginBottom: 4 }}>{"\u{1F3CC}\u{FE0F}"} Optional Handicapping, Done Right</div>
+                      <div style={{ marginBottom: 4 }}>{"\u{1F4CA}"} A Leaderboard Just for Your Group</div>
+                      <div style={{ marginBottom: 4 }}>{"\u{1F4B5}"} Settle Up Without the Argument</div>
+                    </div>
+                    <div style={{ marginTop: 8 }}>
+                      Whether it's a casual Saturday game or a special group tournament, RipScore keeps the math out of your golf - so all that's left is golf.
+                    </div>
+                  </>
+                )}
               </>
             )}
-            {!session && (
+            {!session && homeIntroExpanded && (
               <>
                 <div style={{ marginTop: 16, marginBottom: 4 }}>To join an existing round or start a new round:</div>
                 {[
@@ -11130,7 +11152,7 @@ function computeMatchPlayResult(round, computed) {
               </>
             )}
           </div>
-          {!session && (
+          {!session && homeIntroExpanded && (
             <div style={{ fontSize: 12, color: "#8a8a80", margin: "-8px 0 16px" }}>
               No account needed to play, create one anytime to access premium features including all game formats, GPS, Side Games, course info, stats, your RipScore Index, groups, leaderboards, and prior saved rounds.
               <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 10 }} onClick={() => { setAuthErr(""); goToScreen("login"); }}>
