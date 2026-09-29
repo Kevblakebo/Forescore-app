@@ -10773,15 +10773,16 @@ function computeMatchPlayResult(round, computed) {
                 {backExtra}
               </div>
             )}
-            {!onBack && (
-              <div style={{ position: "relative", marginBottom: 6 }}>
-                <button
-                  onClick={() => setNavMenuOpen((v) => !v)}
-                  aria-label="Open menu"
-                  style={{ background: "none", border: "none", padding: 0, cursor: "pointer", display: "flex" }}
-                >
-                  <MenuIcon size={26} color="#1B4332" strokeWidth={2.2} />
-                </button>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              {!onBack && (
+                <div style={{ position: "relative", flexShrink: 0 }}>
+                  <button
+                    onClick={() => setNavMenuOpen((v) => !v)}
+                    aria-label="Open menu"
+                    style={{ background: "none", border: "none", padding: 0, cursor: "pointer", display: "flex" }}
+                  >
+                    <MenuIcon size={24} color="#F3EFE0" strokeWidth={2.2} />
+                  </button>
                 {navMenuOpen && (
                   <>
                     <div
@@ -10875,8 +10876,11 @@ function computeMatchPlayResult(round, computed) {
                 )}
               </div>
             )}
-            <div className="gsc-title gsc-display">{title}</div>
-            {sub && <div className="gsc-sub" style={{ whiteSpace: "normal", wordBreak: "break-word" }}>{sub}</div>}
+              <div style={{ minWidth: 0 }}>
+                <div className="gsc-title gsc-display">{title}</div>
+                {sub && <div className="gsc-sub" style={{ whiteSpace: "normal", wordBreak: "break-word" }}>{sub}</div>}
+              </div>
+            </div>
           </div>
           {right}
           <button
