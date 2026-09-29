@@ -12411,7 +12411,7 @@ function computeMatchPlayResult(round, computed) {
               <div style={{ fontWeight: 800, fontSize: 16, color: "#8a6a2f" }}>Games Library</div>
             </div>
             <div style={{ fontSize: 13, color: "#4b4b45" }}>
-              Start a new round or tournament, or continue one already in progress.
+              Learn about all the game formats available in RipScore, and start a new round or tournament.
             </div>
             <button className="gsc-link" style={{ marginTop: 8, fontSize: 12 }} onClick={() => goToScreen("gamesLibraryDetail")}>
               Read more
@@ -12492,7 +12492,7 @@ function computeMatchPlayResult(round, computed) {
     return (
       <div className="gsc">
         <style>{STYLE}</style>
-        <Header title="Games Library" sub="Start a round, a tournament, or continue one in progress" onBack={() => goBack("libraryTab")} />
+        <Header title="Games Library" sub="Learn about all the game formats available in RipScore, and start a new round or tournament" onBack={() => goBack("libraryTab")} />
         <div className="gsc-body">
           {activeRound && !activeRound.tournamentId && !isRoundDone(activeRound) && (
             <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
