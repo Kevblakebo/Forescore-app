@@ -11570,7 +11570,7 @@ function computeMatchPlayResult(round, computed) {
                 <div style={{ fontWeight: 800, fontSize: 16, color: "#8a6a2f", flex: 1 }}>
                   Head-to-Head Records <span style={{ fontWeight: 500, color: "#8a8a80" }}>({headToHeadList.length})</span>
                 </div>
-                <span style={{ fontSize: 13, color: "#8a6a2f", transform: headToHeadExpanded ? "rotate(0deg)" : "rotate(-90deg)", transition: "transform 0.15s ease" }}>
+                <span style={{ fontSize: 20, color: "#8a6a2f", transform: headToHeadExpanded ? "rotate(0deg)" : "rotate(-90deg)", transition: "transform 0.15s ease" }}>
                   {"\u25BE"}
                 </span>
               </div>
