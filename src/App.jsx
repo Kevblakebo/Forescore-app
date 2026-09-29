@@ -2373,6 +2373,15 @@ export default function GolfScorecard() {
   // update scheduling at all.
   const screenHistoryRef = useRef([]);
   function goToScreen(next) {
+    // Stats is account-specific data with nothing meaningful to show
+    // without one - route to login instead of the stats page itself
+    // for anyone not signed in, regardless of where this navigation
+    // was triggered from (bottom nav, hamburger menu, or elsewhere).
+    if (next === "statsTab" && !session) {
+      screenHistoryRef.current = [...screenHistoryRef.current, screen];
+      setScreen("login");
+      return;
+    }
     screenHistoryRef.current = [...screenHistoryRef.current, screen];
     setScreen(next);
   }
@@ -2767,20 +2776,20 @@ export default function GolfScorecard() {
   }, []);
 
   useEffect(() => {
-    if (screen === "profileTab" && session && session.user && profileFetched) {
+    if (screen === "statsTab" && session && session.user && profileFetched) {
       loadStats();
       loadRipscoreIndex();
     }
   }, [screen, session && session.user && session.user.id, profileFetched]);
 
   useEffect(() => {
-    if (screen === "profileTab" && session && session.user) {
+    if (screen === "statsTab" && session && session.user) {
       loadLeaderboard();
     }
   }, [screen, session && session.user && session.user.id]);
 
   useEffect(() => {
-    if (screen === "profileTab" && session && session.user) {
+    if (screen === "statsTab" && session && session.user) {
       loadHeadToHeadList();
     }
   }, [screen, session && session.user && session.user.id]);
@@ -2864,6 +2873,7 @@ export default function GolfScorecard() {
   // hole change - null the rest of the time.
   const [pendingHoleChange, setPendingHoleChange] = useState(null);
   const [navMenuOpen, setNavMenuOpen] = useState(false);
+  const [headToHeadExpanded, setHeadToHeadExpanded] = useState(true);
   // Where to navigate once "Leave this round?" is confirmed, when that
   // confirmation was triggered by picking a destination from the new
   // logo nav menu while mid-round - null means "use the normal default"
@@ -6371,7 +6381,7 @@ export default function GolfScorecard() {
       // progress - no confirmation needed, and definitely shouldn't dump
       // them onto the home screen instead of back where they came from.
       setViewingRoundFromStats(false);
-      goBack("profileTab");
+      goBack("statsTab");
       return;
     }
     setConfirmLeaveOpen(true);
@@ -10947,8 +10957,8 @@ function computeMatchPlayResult(round, computed) {
 
   const NAV_ITEMS = [
     { key: "home", label: "Home", icon: HomeIcon },
-    { key: "roundsTab", label: "Games", icon: FlagIcon },
     { key: "groupsTab", label: "Groups", icon: GroupsIcon },
+    { key: "statsTab", label: "Stats", icon: TrophyIcon },
     { key: "profileTab", label: "Profile", icon: UserIcon },
     { key: "libraryTab", label: "Library", icon: LibraryIcon },
   ];
@@ -11318,6 +11328,20 @@ function computeMatchPlayResult(round, computed) {
             </div>
           </div>
 
+          <div className="gsc-card gsc-game-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }} onClick={() => goToScreen("statsTab")}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div>
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <span style={{ fontSize: 16 }}>{"\u{1F4CA}"}</span>
+                  <div style={{ fontWeight: 800, fontSize: 16, color: "#8a6a2f" }}>Stats</div>
+                </div>
+                <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 4 }}>Your rounds, averages, and wins</div>
+                <div style={{ fontSize: 12, color: "#6b6b63" }}>RipScore Index, leaderboards & head-to-head</div>
+              </div>
+              <TrophyIcon size={20} color="#8a6a2f" />
+            </div>
+          </div>
+
           <div className="gsc-card gsc-game-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }} onClick={() => goToScreen("profileTab")}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <div>
@@ -11326,7 +11350,6 @@ function computeMatchPlayResult(round, computed) {
                   <div style={{ fontWeight: 800, fontSize: 16, color: "#8a6a2f" }}>Profile</div>
                 </div>
                 <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 4 }}>Saved defaults and account</div>
-                <div style={{ fontSize: 12, color: "#6b6b63" }}>Stats - your rounds, averages, and wins</div>
               </div>
               <UserIcon size={20} color="#8a6a2f" />
             </div>
@@ -11354,360 +11377,306 @@ function computeMatchPlayResult(round, computed) {
     );
   }
 
-  if (screen === "roundsTab") {
+  if (screen === "statsTab") {
     return (
       <div className="gsc">
         <style>{STYLE}</style>
         <TopIconRow />
         <div className="gsc-body gsc-body-tabbed">
-          <TitleStrip title={<span style={{ fontSize: 23 }}>Games</span>} sub="Join, start, or revisit" />
-          {activeRound && !activeRound.tournamentId && !isRoundDone(activeRound) && (
-            <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <span style={{ fontSize: 16 }}>{"\u23F3"}</span>
-                <div style={{ fontWeight: 800, fontSize: 15, color: "#8a6a2f" }}>Round in progress</div>
+          <TitleStrip title={<span style={{ fontSize: 23 }}>Stats</span>} sub="Your RipScore Index, history & leaderboards" />
+          {session && (
+            <div className="gsc-card gsc-no-select" style={{ background: "#FDF6E9", border: "2px solid #B08D57", textAlign: "center" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, marginBottom: 6 }}>
+                <span style={{ fontSize: 16 }}>{"\u26F3"}</span>
+                <div style={{ fontWeight: 800, fontSize: 16, color: "#8a6a2f" }}>RipScore Index</div>
               </div>
-              <div style={{ fontWeight: 700, fontSize: 16, marginTop: 2 }}>{activeRound.name}</div>
-              <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 2 }}>
-                {GAMES[activeRound.game].name} - {activeRound.date}{activeRound.course ? " - " + activeRound.course : ""}
-              </div>
-              <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
-                <button className="gsc-btn gsc-btn-primary" style={{ flex: 1 }} onClick={resumeActiveRound}>Continue round</button>
-                <button className="gsc-btn gsc-btn-outline" onClick={discardActiveRound}>Discard</button>
-              </div>
+              {ripscoreIndexLoading ? (
+                <div style={{ fontSize: 13, color: "#6b6b63", padding: "6px 0" }}>Loading...</div>
+              ) : ripscoreIndex == null ? (
+                <div style={{ fontSize: 13, color: "#6b6b63", padding: "6px 0", lineHeight: 1.5 }}>
+                  Play at least 3 full 18-hole rounds at a course you searched for (not manually entered) to see your RipScore Index.
+                </div>
+              ) : (
+                <>
+                  <div style={{ fontSize: 36, fontWeight: 800, color: "#1B4332" }}>{ripscoreIndex.toFixed(1)}</div>
+                  <div style={{ fontSize: 11, color: "#8a8a80", marginTop: 4 }}>
+                    Unofficial - an in-app estimate only, not a USGA Handicap Index or GHIN number.
+                  </div>
+                </>
+              )}
+              <button className="gsc-link" style={{ marginTop: 8, fontSize: 12 }} onClick={() => goToScreen("ripscoreIndexInfo")}>
+                How this is calculated
+              </button>
             </div>
           )}
 
-          {lastTournament && (
+          {session && (
             <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <span style={{ fontSize: 16 }}>{"\u{1F3C6}"}</span>
-                <div style={{ fontWeight: 800, fontSize: 15, color: "#8a6a2f" }}>Tournament in progress</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+                <span style={{ fontSize: 16 }}>{"\u{1F4CA}"}</span>
+                <div style={{ fontWeight: 800, fontSize: 16, color: "#8a6a2f" }}>My Stats</div>
               </div>
-              <div style={{ fontWeight: 700, fontSize: 16, marginTop: 2 }}>{lastTournament.name}</div>
-              <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
-                <button className="gsc-btn gsc-btn-primary" style={{ flex: 1 }} onClick={() => openTournamentBoard(lastTournament.id)}>Continue tournament</button>
-                <button className="gsc-btn gsc-btn-outline" onClick={discardTournament}>Discard</button>
-              </div>
-              {isTournamentOrganizer(lastTournament) && (
-                <button
-                  className="gsc-link"
-                  style={{ marginTop: 10, fontSize: 12 }}
-                  disabled={tournamentBusy}
-                  onClick={() => addFoursomeToTournamentId(lastTournament.id)}
-                >
-                  {lastTournament.game && MATCH_PLAY_GAMES.includes(lastTournament.game) ? "Add a match" : "Add a foursome"}
+
+              <div style={{ display: "flex", alignItems: "flex-end", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
+                <div style={{ flex: "1 1 120px" }}>
+                  <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 3 }}>From</div>
+                  <input type="date" className="gsc-input" value={statsDateFrom} onChange={(e) => setStatsDateFrom(e.target.value)} />
+                </div>
+                <div style={{ flex: "1 1 120px" }}>
+                  <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 3 }}>To</div>
+                  <input type="date" className="gsc-input" value={statsDateTo} onChange={(e) => setStatsDateTo(e.target.value)} />
+                </div>
+                <button className="gsc-btn gsc-btn-primary" style={{ flex: "0 0 auto" }} disabled={statsLoading} onClick={() => loadStats()}>
+                  Apply
                 </button>
+                {(statsDateFrom || statsDateTo) && (
+                  <button
+                    className="gsc-link"
+                    style={{ fontSize: 12 }}
+                    onClick={() => {
+                      setStatsDateFrom("");
+                      setStatsDateTo("");
+                      loadStats({ dateFrom: "", dateTo: "" });
+                    }}
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+
+              {statsLoading ? (
+                <div style={{ fontSize: 13, color: "#6b6b63" }}>Loading your stats...</div>
+              ) : statsErr ? (
+                <div style={{ color: "#A42E2D", fontSize: 13 }}>{statsErr}</div>
+              ) : !stats || stats.roundsPlayed === 0 ? (
+                <div style={{ fontSize: 13, color: "#6b6b63", lineHeight: 1.5 }}>
+                  {statsDateFrom || statsDateTo
+                    ? "No completed rounds found in that date range."
+                    : "No completed rounds yet while logged in. Play (and finish) a round while logged in and it'll show up here."}
+                </div>
+              ) : (
+                <>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                    <div style={{ background: "#F3EFE0", borderRadius: 10, padding: "10px 12px" }}>
+                      <div style={{ fontSize: 20, fontWeight: 800, color: "#1B4332" }}>{stats.roundsPlayed}</div>
+                      <div style={{ fontSize: 11, color: "#6b6b63" }}>Rounds Played</div>
+                    </div>
+                    <div style={{ background: "#F3EFE0", borderRadius: 10, padding: "10px 12px" }}>
+                      <div style={{ fontSize: 20, fontWeight: 800, color: "#1B4332" }}>{stats.wins}</div>
+                      <div style={{ fontSize: 11, color: "#6b6b63" }}>Wins</div>
+                    </div>
+                    <div style={{ background: "#F3EFE0", borderRadius: 10, padding: "10px 12px" }}>
+                      <div style={{ fontSize: 20, fontWeight: 800, color: "#1B4332" }}>{stats.avgStrokes != null ? stats.avgStrokes.toFixed(1) : "-"}</div>
+                      <div style={{ fontSize: 11, color: "#6b6b63" }}>Avg Strokes</div>
+                    </div>
+                    <div style={{ background: "#F3EFE0", borderRadius: 10, padding: "10px 12px" }}>
+                      <div style={{ fontSize: 20, fontWeight: 800, color: "#1B4332" }}>{stats.avgPutts != null ? stats.avgPutts.toFixed(1) : "-"}</div>
+                      <div style={{ fontSize: 11, color: "#6b6b63" }}>Avg Putts</div>
+                    </div>
+                    <div style={{ background: "#F3EFE0", borderRadius: 10, padding: "10px 12px" }}>
+                      <div style={{ fontSize: 20, fontWeight: 800, color: "#1B4332" }}>{stats.birdies}</div>
+                      <div style={{ fontSize: 11, color: "#6b6b63" }}>Birdies</div>
+                    </div>
+                    <div style={{ background: "#F3EFE0", borderRadius: 10, padding: "10px 12px" }}>
+                      <div style={{ fontSize: 20, fontWeight: 800, color: "#1B4332" }}>{stats.pars}</div>
+                      <div style={{ fontSize: 11, color: "#6b6b63" }}>Pars</div>
+                    </div>
+                    {stats.eagles > 0 && (
+                      <div style={{ background: "#F3EFE0", borderRadius: 10, padding: "10px 12px", gridColumn: "span 2" }}>
+                        <div style={{ fontSize: 20, fontWeight: 800, color: "#1B4332" }}>{stats.eagles}</div>
+                        <div style={{ fontSize: 11, color: "#6b6b63" }}>Eagles or better</div>
+                      </div>
+                    )}
+                  </div>
+
+                  <button className="gsc-link" style={{ marginTop: 12, fontSize: 12 }} onClick={loadStats}>
+                    Refresh stats
+                  </button>
+                </>
               )}
             </div>
           )}
 
-          <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
-              <span style={{ fontSize: 18 }}>{"\u26F3"}</span>
-              <div style={{ fontWeight: 800, fontSize: 17, color: "#8a6a2f" }}>Join Existing Round</div>
-            </div>
-            <div className="gsc-row" style={{ marginTop: 6 }}>
-              <input className="gsc-input gsc-mono" id="round-join-code" name="round-join-code" autoComplete="off" placeholder="ENTER GAME CODE HERE" value={joinCode} onChange={(e) => setJoinCode(e.target.value.toUpperCase())} maxLength={6} />
-              <button className="gsc-btn gsc-btn-primary" style={{ flex: "0 0 auto" }} disabled={busy || !joinCode} onClick={() => joinRoundOrTournament(joinCode)}>
-                Join
-              </button>
-            </div>
-            {err && <div style={{ color: "#A42E2D", fontSize: 13, marginTop: 8 }}>{err}</div>}
-            {recentCodes.length > 0 && (
-              <div style={{ marginTop: 14 }}>
-                <div className="gsc-label">Recent rounds this session</div>
-                {recentCodes.map((c) => (
-                  <div key={c.code} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #eee6cf" }}>
-                    <div>
-                      <div style={{ fontWeight: 700, fontSize: 14 }}>{c.label}</div>
-                      <div className="gsc-mono" style={{ fontSize: 12, color: "#6b6b63" }}>{c.code}</div>
-                    </div>
-                    <button className="gsc-btn gsc-btn-outline" onClick={() => loadRound(c.code)}>Open</button>
+          {session && stats && stats.recent && stats.recent.length > 0 && (
+            <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+                <span style={{ fontSize: 16 }}>{"\u{1F4CB}"}</span>
+                <div style={{ fontWeight: 800, fontSize: 16, color: "#8a6a2f" }}>Finished Games</div>
+              </div>
+              {deleteHistoryErr && <div style={{ color: "#A42E2D", fontSize: 12, marginBottom: 8 }}>{deleteHistoryErr}</div>}
+              {stats.recent.map((r, i) => (
+                <div
+                  key={i}
+                  onClick={() => (r.tournamentId ? openTournamentBoard(r.tournamentId) : viewRoundFromProfile(r.code, "statsTab"))}
+                  style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "7px 0", borderBottom: i === stats.recent.length - 1 ? "none" : "1px solid #eee6cf", cursor: "pointer" }}
+                >
+                  <div style={{ fontSize: 13, color: "#1B4332", fontWeight: 600 }}>
+                    {stripDateFromTitle(r.name)}
+                    {r.tournamentId && <span style={{ fontSize: 10, color: "#B08D57", marginLeft: 6, fontWeight: 700 }}>TOURNAMENT</span>}
+                    {r.holesPlayed < 18 && (
+                      <span style={{ fontSize: 10, color: "#8a8a80", marginLeft: 6, fontWeight: 400 }}>({r.holesPlayed} holes)</span>
+                    )}
                   </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <div style={{ fontSize: 12, color: "#6b6b63" }}>{r.date}</div>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setDeleteHistoryErr(""); setDeleteHistoryConfirm({ code: r.code, name: r.name }); }}
+                      style={{ background: "none", border: "none", padding: 4, color: "#A42E2D", fontSize: 14, cursor: "pointer", lineHeight: 1 }}
+                      title="Remove from your history"
+                    >
+                      {"\u{1F5D1}"}
+                    </button>
+                    <span style={{ color: "#8FA998", fontSize: 14 }}>{"\u203A"}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          {session && (
+            <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+                <span style={{ fontSize: 16 }}>{"\u{1F3C6}"}</span>
+                <div style={{ fontWeight: 800, fontSize: 16, color: "#8a6a2f" }}>Public Leaderboard</div>
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
+                {Object.entries(LEADERBOARD_CATEGORIES).map(([key, cat]) => (
+                  <button
+                    key={key}
+                    onClick={() => setLeaderboardCategory(key)}
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 700,
+                      padding: "5px 10px",
+                      borderRadius: 20,
+                      border: leaderboardCategory === key ? "1.5px solid #1B4332" : "1.5px solid #d8d2bd",
+                      background: leaderboardCategory === key ? "#1B4332" : "#fff",
+                      color: leaderboardCategory === key ? "#F3EFE0" : "#4b4b45",
+                      cursor: "pointer",
+                    }}
+                  >
+                    {cat.label}
+                  </button>
                 ))}
               </div>
-            )}
-          </div>
 
-          <div className="gsc-card gsc-winner-card" style={{ cursor: "pointer" }} onClick={startWizard}>
-            <div style={{ fontWeight: 700, fontSize: 16 }}>{"\u{1F9D9}"} Not sure which format to pick?</div>
-            <button className="gsc-btn gsc-btn-gold" style={{ width: "100%", marginTop: 10 }} onClick={startWizard}>
-              Start the Game Wizard
-            </button>
-          </div>
+              {leaderboardLoading ? (
+                <div style={{ fontSize: 13, color: "#6b6b63" }}>Loading the leaderboard...</div>
+              ) : leaderboardErr ? (
+                <div style={{ color: "#A42E2D", fontSize: 13 }}>{leaderboardErr}</div>
+              ) : (
+                (() => {
+                  const cat = LEADERBOARD_CATEGORIES[leaderboardCategory];
+                  const ranked = leaderboard
+                    .map((row) => ({ row, value: cat.valueOf(row) }))
+                    .filter((x) => x.value != null)
+                    .sort((a, b) => (cat.lowerIsBetter ? a.value - b.value : b.value - a.value));
 
-          <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
-              <span style={{ fontSize: 18 }}>{"\u26F3"}</span>
-              <div style={{ fontWeight: 800, fontSize: 17, color: "#8a6a2f" }}>Start a New Round</div>
+                  if (ranked.length === 0) {
+                    return (
+                      <div style={{ fontSize: 13, color: "#6b6b63", lineHeight: 1.5 }}>
+                        Nobody's opted into the leaderboard yet for this category. Turn on "Show me on the leaderboard" above to be the first.
+                      </div>
+                    );
+                  }
+
+                  return ranked.slice(0, 10).map((x, i) => {
+                    const isMe = session && x.row.user_id === session.user.id;
+                    return (
+                      <div
+                        key={x.row.user_id}
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          padding: "7px 0",
+                          borderBottom: i === Math.min(ranked.length, 10) - 1 ? "none" : "1px solid #eee6cf",
+                          background: isMe ? "#EBF0EC" : "transparent",
+                          borderRadius: isMe ? 6 : 0,
+                          paddingLeft: isMe ? 8 : 0,
+                          paddingRight: isMe ? 8 : 0,
+                        }}
+                      >
+                        <div style={{ fontSize: 13, fontWeight: isMe ? 700 : 600, color: "#1B4332" }}>
+                          {i + 1}. {x.row.avatar ? `${x.row.avatar} ` : ""}{x.row.display_name}
+                          {isMe && <span style={{ fontSize: 10, color: "#B08D57", marginLeft: 6, fontWeight: 700 }}>YOU</span>}
+                        </div>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: "#4b4b45" }}>{cat.format(x.value)}</div>
+                      </div>
+                    );
+                  });
+                })()
+              )}
             </div>
+          )}
 
-            <div className="gsc-label" style={{ marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Individual Game Formats</div>
-            <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>Up to 4 Players</div>
-            <div style={{ display: "flex", overflowX: "auto", gap: 10, paddingBottom: 6, WebkitOverflowScrolling: "touch" }}>
-            {["swami", "dstreet", "matchplay", "individualputts", "pontobango", "stableford", "oceans11", "ninepoint"]
-              .map((key) => [key, GAMES[key]])
-              .map(([key, g]) => {
-                const locked = isGameLocked(key);
-                return (
-                <div
-                  key={key}
-                  className="gsc-card gsc-game-card"
-                  style={{ width: 250, flexShrink: 0, opacity: locked ? 0.75 : 1 }}
-                  onClick={() => (locked ? handleLockedGameTap(key) : startNewRound(key))}
-                >
-                  <div className="gsc-game-title" style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    {GAME_TILE_STYLE[key] && (
-                      <span style={{ width: 26, height: 26, borderRadius: 7, background: GAME_TILE_STYLE[key].color, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 14, flexShrink: 0 }}>
-                        {GAME_TILE_STYLE[key].emoji}
-                      </span>
-                    )}
-                    {g.name}
-                  </div>
-                  {locked && (
-                    <div style={{ marginTop: 4 }}>
-                      <span style={{ fontSize: 11, fontWeight: 700, color: "#fff", background: "#8a6a2f", padding: "2px 8px", borderRadius: 20, display: "inline-block" }}>
-                        {"\u{1F512}"} Log in to play
-                      </span>
-                    </div>
-                  )}
-                  <div className="gsc-tag">{g.tag}</div>
-                  {gameSupportsNassau(key) && <div style={{ fontSize: 11, color: "#B08D57", fontWeight: 700, marginTop: 4 }}>*Nassau Avail</div>}
-                  <div className="gsc-no-select" style={{ fontSize: 13, marginTop: 8, color: "#4b4b45" }}>{g.desc}</div>
-                  {WHY_PLAY[key] && (
-                    <button
-                      className="gsc-link"
-                      style={{ marginTop: 8, fontSize: 12, display: "block" }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openWhyPlay(key);
-                      }}
-                    >
-                      Why people love this game
-                    </button>
-                  )}
-                  <button
-                    className="gsc-link"
-                    style={{ marginTop: 8, fontSize: 12, display: "block" }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      openRules(key);
-                    }}
-                  >
-                    View full rules
-                  </button>
+
+          {session && headToHeadList.length > 0 && (
+            <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
+              <div
+                style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: headToHeadExpanded ? 10 : 0, cursor: "pointer" }}
+                onClick={() => setHeadToHeadExpanded((v) => !v)}
+              >
+                <span style={{ fontSize: 16 }}>{"\u2694\uFE0F"}</span>
+                <div style={{ fontWeight: 800, fontSize: 16, color: "#8a6a2f", flex: 1 }}>
+                  Head-to-Head Records <span style={{ fontWeight: 500, color: "#8a8a80" }}>({headToHeadList.length})</span>
                 </div>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
-              <span style={{ fontSize: 18 }}>{"\u26F3"}</span>
-              <div style={{ fontWeight: 800, fontSize: 17, color: "#8a6a2f" }}>Start a New Round</div>
-            </div>
-
-            <div className="gsc-label" style={{ marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Team Game Formats</div>
-            <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>2 vs 2</div>
-            <div style={{ display: "flex", overflowX: "auto", gap: 10, paddingBottom: 6, WebkitOverflowScrolling: "touch" }}>
-            {["teamstrokes", "ponto", "matchplayfourball", "teamputts", "beachside", "seabluffe", "moonlightwolf", "vegas", "teamoceans11"]
-              .map((key) => [key, GAMES[key]])
-              .map(([key, g]) => {
-                const locked = isGameLocked(key);
-                return (
-                <div
-                  key={key}
-                  className="gsc-card gsc-game-card"
-                  style={{ width: 250, flexShrink: 0, opacity: locked ? 0.75 : 1 }}
-                  onClick={() => (locked ? handleLockedGameTap(key) : startNewRound(key))}
-                >
-                  <div className="gsc-game-title" style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    {GAME_TILE_STYLE[key] && (
-                      <span style={{ width: 26, height: 26, borderRadius: 7, background: GAME_TILE_STYLE[key].color, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 14, flexShrink: 0 }}>
-                        {GAME_TILE_STYLE[key].emoji}
-                      </span>
-                    )}
-                    {g.name}
-                  </div>
-                  {locked && (
-                    <div style={{ marginTop: 4 }}>
-                      <span style={{ fontSize: 11, fontWeight: 700, color: "#fff", background: "#8a6a2f", padding: "2px 8px", borderRadius: 20, display: "inline-block" }}>
-                        {"\u{1F512}"} Log in to play
-                      </span>
-                    </div>
-                  )}
-                  <div className="gsc-tag">{g.tag}</div>
-                  {gameSupportsNassau(key) && <div style={{ fontSize: 11, color: "#B08D57", fontWeight: 700, marginTop: 4 }}>*Nassau Avail</div>}
-                  <div className="gsc-no-select" style={{ fontSize: 13, marginTop: 8, color: "#4b4b45" }}>{g.desc}</div>
-                  {WHY_PLAY[key] && (
-                    <button
-                      className="gsc-link"
-                      style={{ marginTop: 8, fontSize: 12, display: "block" }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openWhyPlay(key);
-                      }}
-                    >
-                      Why people love this game
-                    </button>
-                  )}
-                  <button
-                    className="gsc-link"
-                    style={{ marginTop: 8, fontSize: 12, display: "block" }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      openRules(key);
-                    }}
-                  >
-                    View full rules
-                  </button>
-                </div>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
-              <span style={{ fontSize: 18 }}>{"\u{1F3C6}"}</span>
-              <div style={{ fontWeight: 800, fontSize: 17, color: "#8a6a2f" }}>Start a New Tournament</div>
-            </div>
-            <div className="gsc-label" style={{ marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Tournament Game Formats</div>
-            <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>Multiple Foursomes</div>
-            {/* Explicit display order requested for this list: Stroke
-                Play, Scramble, Best Ball, Match Play, Team Match Play,
-                Foursomes - same order as the homepage tournament tiles,
-                not TOURNAMENT_GAME_KEYS' own order (that constant is also
-                used elsewhere as a default fallback game, so its order is
-                left alone). */}
-            <div style={{ display: "flex", overflowX: "auto", gap: 10, paddingBottom: 6, WebkitOverflowScrolling: "touch" }}>
-            {["tourneygg", "avoscramble", "tourneybb", "matchplay", "matchplayfourball", "altshot"].map((key) => {
-              const g = GAMES[key];
-              const locked = isGameLocked(key);
-              return (
-                <div
-                  key={key}
-                  className="gsc-card gsc-game-card"
-                  style={{ width: 250, flexShrink: 0, opacity: locked ? 0.75 : 1 }}
-                  onClick={() => (locked ? handleLockedGameTap(key) : startTournamentCreateFlow(key))}
-                >
-                  <div className="gsc-game-title" style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    {GAME_TILE_STYLE[key] && (
-                      <span style={{ width: 26, height: 26, borderRadius: 7, background: GAME_TILE_STYLE[key].color, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 14, flexShrink: 0 }}>
-                        {GAME_TILE_STYLE[key].emoji}
-                      </span>
-                    )}
-                    {g.tournamentName || g.name}
-                  </div>
-                  {locked && (
-                    <div style={{ marginTop: 4 }}>
-                      <span style={{ fontSize: 11, fontWeight: 700, color: "#fff", background: "#8a6a2f", padding: "2px 8px", borderRadius: 20, display: "inline-block" }}>
-                        {"\u{1F512}"} Log in to play
-                      </span>
-                    </div>
-                  )}
-                  <div className="gsc-tag">{g.tournamentTag || g.tag}</div>
-                  <div className="gsc-no-select" style={{ fontSize: 13, marginTop: 8, color: "#4b4b45" }}>{g.tournamentDesc || g.desc}</div>
-                  {(g.tournamentWhyPlay || WHY_PLAY[key]) && (
-                    <button
-                      className="gsc-link"
-                      style={{ marginTop: 8, fontSize: 12, display: "block" }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openWhyPlay(key, true);
-                      }}
-                    >
-                      Why people love this game
-                    </button>
-                  )}
-                  <button
-                    className="gsc-link"
-                    style={{ marginTop: 8, fontSize: 12, display: "block" }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      openRules(key, true);
-                    }}
-                  >
-                    View full rules
-                  </button>
-                </div>
-              );
-            })}
-            </div>
-          </div>
-
-          <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
-              <span style={{ fontSize: 16 }}>{"\u26F3"}</span>
-              <div style={{ fontWeight: 800, fontSize: 15, color: "#8a6a2f" }}>Nassau</div>
-            </div>
-            <div style={{ fontSize: 13, color: "#4b4b45" }}>
-              Nassau is a scoring method you can turn on for any of the 7 formats marked *Nassau Avail above - both individual formats (Individual Stroke Play, Individual Skins, Individual Putts) and 4-player, 2 vs 2 team formats (Team Stroke Play, Team Skins, Team Putts, Team Best Ball). Instead of one winner for the whole round, it splits things into three separate bets: front 9, back 9, and overall 18 - each with its own winner and its own wager, so a rough front 9 doesn't have to spoil the whole day. Turn it on from the "Set your game limits and scoring" step during setup.
-            </div>
-          </div>
-
-          <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
-              <span style={{ fontSize: 16 }}>{"\u{1F3AF}"}</span>
-              <div style={{ fontWeight: 800, fontSize: 15, color: "#8a6a2f" }}>Side Games</div>
-            </div>
-            <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 12 }}>
-              Played alongside any round above - hole-by-hole bets like Closest to the Pin or Sandies. Open Side Games from within an active round's scoring screen once it's started.
-            </div>
-            {DEFAULT_GAMES.map((g) => (
-              <div key={g.id} className="gsc-card" style={{ marginBottom: 8, opacity: 0.75, cursor: "default" }}>
-                <div className="gsc-game-title">{g.name}</div>
-                <div style={{ fontSize: 13, marginTop: 6, color: "#4b4b45" }}>{g.rule}</div>
+                <span style={{ fontSize: 13, color: "#8a6a2f", transform: headToHeadExpanded ? "rotate(0deg)" : "rotate(-90deg)", transition: "transform 0.15s ease" }}>
+                  {"\u25BE"}
+                </span>
               </div>
-            ))}
-          </div>
+              {headToHeadExpanded && headToHeadList.map((h, i) => {
+                const avgDiff = h.rounds_played > 0 ? (h.opp_strokes_sum - h.my_strokes_sum) / h.rounds_played : 0;
+                return (
+                  <div
+                    key={h.opponent_id}
+                    style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: i === headToHeadList.length - 1 ? "none" : "1px solid #eee6cf" }}
+                  >
+                    <div>
+                      <div style={{ fontSize: 13, color: "#1B4332", fontWeight: 600 }}>
+                        {h.opponentAvatar} {h.opponentName}
+                      </div>
+                      <div style={{ fontSize: 11, color: "#8a8a80", marginTop: 2 }}>
+                        {h.rounds_played} round{h.rounds_played === 1 ? "" : "s"} played
+                        {Math.abs(h.current_streak) >= 2 && (
+                          <span> - {"\u{1F525}"} {Math.abs(h.current_streak)} {h.current_streak > 0 ? "wins" : "losses"} in a row</span>
+                        )}
+                      </div>
+                    </div>
+                    <div style={{ textAlign: "right" }}>
+                      <div style={{ fontSize: 15, fontWeight: 800, color: h.wins >= h.losses ? "#1B4332" : "#A42E2D" }}>
+                        {h.wins}-{h.losses}{h.ties > 0 ? `-${h.ties}` : ""}
+                      </div>
+                      <div style={{ fontSize: 11, color: "#8a8a80" }}>
+                        {avgDiff > 0 ? `+${avgDiff.toFixed(1)} avg` : avgDiff < 0 ? `${avgDiff.toFixed(1)} avg` : "even avg"}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
 
-          <div style={{ fontSize: 12, color: "#8a8a80", textAlign: "center", marginTop: 4 }}>
-            Round data is stored so anyone with the round code can view or edit scores, when sync is working.
-          </div>
+          {session && (
+            <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+                <span style={{ fontSize: 16 }}>{"\u26F3"}</span>
+                <div style={{ fontWeight: 800, fontSize: 16, color: "#8a6a2f" }}>Post to GHIN</div>
+              </div>
+              <div style={{ fontSize: 13, color: "#4b4b45" }}>
+                Head to GHIN.com to post your score toward your official handicap.
+              </div>
+              <a href="https://www.ghin.com" target="_blank" rel="noreferrer" className="gsc-link" style={{ marginTop: 8, fontSize: 12, display: "inline-block" }}>
+                Open GHIN.com {"\u2197"}
+              </a>
+            </div>
+          )}
         </div>
-        {deleteRoundConfirm && (
-          <div className="gsc-modal-backdrop" onClick={cancelDeleteFinishedRound}>
-            <div className="gsc-modal" onClick={(e) => e.stopPropagation()}>
-              <div className="gsc-modal-title">Delete this round?</div>
-              <div className="gsc-modal-body">
-                "{deleteRoundConfirm.name}" will be permanently deleted from this device. This can't be undone.
-              </div>
-              {deleteRoundErr && <div style={{ color: "#A42E2D", fontSize: 13, marginBottom: 12 }}>{deleteRoundErr}</div>}
-              <div className="gsc-modal-row">
-                <button className="gsc-btn gsc-btn-outline" onClick={cancelDeleteFinishedRound}>Cancel</button>
-                <button className="gsc-btn gsc-btn-primary" style={{ background: "#A42E2D" }} disabled={deleteRoundBusy} onClick={confirmDeleteFinishedRound}>
-                  {deleteRoundBusy ? "Deleting..." : "Yes, delete"}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-        {deleteTournamentConfirm && (
-          <div className="gsc-modal-backdrop" onClick={cancelDeleteFinishedTournament}>
-            <div className="gsc-modal" onClick={(e) => e.stopPropagation()}>
-              <div className="gsc-modal-title">Remove this tournament?</div>
-              <div className="gsc-modal-body">
-                "{deleteTournamentConfirm.name}" will be removed from your finished tournaments list on this device. The tournament and every foursome's data stay fully intact - you could still rejoin later with the tournament code.
-              </div>
-              {deleteTournamentErr && <div style={{ color: "#A42E2D", fontSize: 13, marginBottom: 12 }}>{deleteTournamentErr}</div>}
-              <div className="gsc-modal-row">
-                <button className="gsc-btn gsc-btn-outline" onClick={cancelDeleteFinishedTournament}>Cancel</button>
-                <button className="gsc-btn gsc-btn-primary" style={{ background: "#A42E2D" }} disabled={deleteTournamentBusy} onClick={confirmDeleteFinishedTournament}>
-                  {deleteTournamentBusy ? "Removing..." : "Yes, remove"}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-        {RulesModal()}
-        {WhyPlayModal()}
         <BottomNav />
+        {DeleteHistoryConfirmModal()}
       </div>
     );
   }
+
 
   if (screen === "profileTab") {
     return (
@@ -11715,7 +11684,7 @@ function computeMatchPlayResult(round, computed) {
         <style>{STYLE}</style>
         <TopIconRow />
         <div className="gsc-body gsc-body-tabbed">
-          <TitleStrip title={<span style={{ fontSize: 23 }}>Profile</span>} sub="Your account & stats" />
+          <TitleStrip title={<span style={{ fontSize: 23 }}>Profile</span>} sub="Your account" />
           {authLoading ? (
             <div className="gsc-card" style={{ textAlign: "center", padding: "24px" }}>
               <div style={{ fontSize: 13, color: "#6b6b63" }}>Loading...</div>
@@ -11893,270 +11862,6 @@ function computeMatchPlayResult(round, computed) {
           )}
 
           {session && (
-            <div className="gsc-card gsc-no-select" style={{ background: "#FDF6E9", border: "2px solid #B08D57", textAlign: "center" }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, marginBottom: 6 }}>
-                <span style={{ fontSize: 16 }}>{"\u26F3"}</span>
-                <div style={{ fontWeight: 800, fontSize: 16, color: "#8a6a2f" }}>RipScore Index</div>
-              </div>
-              {ripscoreIndexLoading ? (
-                <div style={{ fontSize: 13, color: "#6b6b63", padding: "6px 0" }}>Loading...</div>
-              ) : ripscoreIndex == null ? (
-                <div style={{ fontSize: 13, color: "#6b6b63", padding: "6px 0", lineHeight: 1.5 }}>
-                  Play at least 3 full 18-hole rounds at a course you searched for (not manually entered) to see your RipScore Index.
-                </div>
-              ) : (
-                <>
-                  <div style={{ fontSize: 36, fontWeight: 800, color: "#1B4332" }}>{ripscoreIndex.toFixed(1)}</div>
-                  <div style={{ fontSize: 11, color: "#8a8a80", marginTop: 4 }}>
-                    Unofficial - an in-app estimate only, not a USGA Handicap Index or GHIN number.
-                  </div>
-                </>
-              )}
-              <button className="gsc-link" style={{ marginTop: 8, fontSize: 12 }} onClick={() => goToScreen("ripscoreIndexInfo")}>
-                How this is calculated
-              </button>
-            </div>
-          )}
-
-          {session && (
-            <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
-                <span style={{ fontSize: 16 }}>{"\u{1F4CA}"}</span>
-                <div style={{ fontWeight: 800, fontSize: 16, color: "#8a6a2f" }}>My Stats</div>
-              </div>
-
-              <div style={{ display: "flex", alignItems: "flex-end", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
-                <div style={{ flex: "1 1 120px" }}>
-                  <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 3 }}>From</div>
-                  <input type="date" className="gsc-input" value={statsDateFrom} onChange={(e) => setStatsDateFrom(e.target.value)} />
-                </div>
-                <div style={{ flex: "1 1 120px" }}>
-                  <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 3 }}>To</div>
-                  <input type="date" className="gsc-input" value={statsDateTo} onChange={(e) => setStatsDateTo(e.target.value)} />
-                </div>
-                <button className="gsc-btn gsc-btn-primary" style={{ flex: "0 0 auto" }} disabled={statsLoading} onClick={() => loadStats()}>
-                  Apply
-                </button>
-                {(statsDateFrom || statsDateTo) && (
-                  <button
-                    className="gsc-link"
-                    style={{ fontSize: 12 }}
-                    onClick={() => {
-                      setStatsDateFrom("");
-                      setStatsDateTo("");
-                      loadStats({ dateFrom: "", dateTo: "" });
-                    }}
-                  >
-                    Clear
-                  </button>
-                )}
-              </div>
-
-              {statsLoading ? (
-                <div style={{ fontSize: 13, color: "#6b6b63" }}>Loading your stats...</div>
-              ) : statsErr ? (
-                <div style={{ color: "#A42E2D", fontSize: 13 }}>{statsErr}</div>
-              ) : !stats || stats.roundsPlayed === 0 ? (
-                <div style={{ fontSize: 13, color: "#6b6b63", lineHeight: 1.5 }}>
-                  {statsDateFrom || statsDateTo
-                    ? "No completed rounds found in that date range."
-                    : "No completed rounds yet while logged in. Play (and finish) a round while logged in and it'll show up here."}
-                </div>
-              ) : (
-                <>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                    <div style={{ background: "#F3EFE0", borderRadius: 10, padding: "10px 12px" }}>
-                      <div style={{ fontSize: 20, fontWeight: 800, color: "#1B4332" }}>{stats.roundsPlayed}</div>
-                      <div style={{ fontSize: 11, color: "#6b6b63" }}>Rounds Played</div>
-                    </div>
-                    <div style={{ background: "#F3EFE0", borderRadius: 10, padding: "10px 12px" }}>
-                      <div style={{ fontSize: 20, fontWeight: 800, color: "#1B4332" }}>{stats.wins}</div>
-                      <div style={{ fontSize: 11, color: "#6b6b63" }}>Wins</div>
-                    </div>
-                    <div style={{ background: "#F3EFE0", borderRadius: 10, padding: "10px 12px" }}>
-                      <div style={{ fontSize: 20, fontWeight: 800, color: "#1B4332" }}>{stats.avgStrokes != null ? stats.avgStrokes.toFixed(1) : "-"}</div>
-                      <div style={{ fontSize: 11, color: "#6b6b63" }}>Avg Strokes</div>
-                    </div>
-                    <div style={{ background: "#F3EFE0", borderRadius: 10, padding: "10px 12px" }}>
-                      <div style={{ fontSize: 20, fontWeight: 800, color: "#1B4332" }}>{stats.avgPutts != null ? stats.avgPutts.toFixed(1) : "-"}</div>
-                      <div style={{ fontSize: 11, color: "#6b6b63" }}>Avg Putts</div>
-                    </div>
-                    <div style={{ background: "#F3EFE0", borderRadius: 10, padding: "10px 12px" }}>
-                      <div style={{ fontSize: 20, fontWeight: 800, color: "#1B4332" }}>{stats.birdies}</div>
-                      <div style={{ fontSize: 11, color: "#6b6b63" }}>Birdies</div>
-                    </div>
-                    <div style={{ background: "#F3EFE0", borderRadius: 10, padding: "10px 12px" }}>
-                      <div style={{ fontSize: 20, fontWeight: 800, color: "#1B4332" }}>{stats.pars}</div>
-                      <div style={{ fontSize: 11, color: "#6b6b63" }}>Pars</div>
-                    </div>
-                    {stats.eagles > 0 && (
-                      <div style={{ background: "#F3EFE0", borderRadius: 10, padding: "10px 12px", gridColumn: "span 2" }}>
-                        <div style={{ fontSize: 20, fontWeight: 800, color: "#1B4332" }}>{stats.eagles}</div>
-                        <div style={{ fontSize: 11, color: "#6b6b63" }}>Eagles or better</div>
-                      </div>
-                    )}
-                  </div>
-
-                  <button className="gsc-link" style={{ marginTop: 12, fontSize: 12 }} onClick={loadStats}>
-                    Refresh stats
-                  </button>
-                </>
-              )}
-            </div>
-          )}
-
-          {session && stats && stats.recent && stats.recent.length > 0 && (
-            <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
-                <span style={{ fontSize: 16 }}>{"\u{1F4CB}"}</span>
-                <div style={{ fontWeight: 800, fontSize: 16, color: "#8a6a2f" }}>Finished Games</div>
-              </div>
-              {deleteHistoryErr && <div style={{ color: "#A42E2D", fontSize: 12, marginBottom: 8 }}>{deleteHistoryErr}</div>}
-              {stats.recent.map((r, i) => (
-                <div
-                  key={i}
-                  onClick={() => (r.tournamentId ? openTournamentBoard(r.tournamentId) : viewRoundFromProfile(r.code, "profileTab"))}
-                  style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "7px 0", borderBottom: i === stats.recent.length - 1 ? "none" : "1px solid #eee6cf", cursor: "pointer" }}
-                >
-                  <div style={{ fontSize: 13, color: "#1B4332", fontWeight: 600 }}>
-                    {stripDateFromTitle(r.name)}
-                    {r.tournamentId && <span style={{ fontSize: 10, color: "#B08D57", marginLeft: 6, fontWeight: 700 }}>TOURNAMENT</span>}
-                    {r.holesPlayed < 18 && (
-                      <span style={{ fontSize: 10, color: "#8a8a80", marginLeft: 6, fontWeight: 400 }}>({r.holesPlayed} holes)</span>
-                    )}
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <div style={{ fontSize: 12, color: "#6b6b63" }}>{r.date}</div>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setDeleteHistoryErr(""); setDeleteHistoryConfirm({ code: r.code, name: r.name }); }}
-                      style={{ background: "none", border: "none", padding: 4, color: "#A42E2D", fontSize: 14, cursor: "pointer", lineHeight: 1 }}
-                      title="Remove from your history"
-                    >
-                      {"\u{1F5D1}"}
-                    </button>
-                    <span style={{ color: "#8FA998", fontSize: 14 }}>{"\u203A"}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-          {session && (
-            <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
-                <span style={{ fontSize: 16 }}>{"\u{1F3C6}"}</span>
-                <div style={{ fontWeight: 800, fontSize: 16, color: "#8a6a2f" }}>Public Leaderboard</div>
-              </div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
-                {Object.entries(LEADERBOARD_CATEGORIES).map(([key, cat]) => (
-                  <button
-                    key={key}
-                    onClick={() => setLeaderboardCategory(key)}
-                    style={{
-                      fontSize: 11,
-                      fontWeight: 700,
-                      padding: "5px 10px",
-                      borderRadius: 20,
-                      border: leaderboardCategory === key ? "1.5px solid #1B4332" : "1.5px solid #d8d2bd",
-                      background: leaderboardCategory === key ? "#1B4332" : "#fff",
-                      color: leaderboardCategory === key ? "#F3EFE0" : "#4b4b45",
-                      cursor: "pointer",
-                    }}
-                  >
-                    {cat.label}
-                  </button>
-                ))}
-              </div>
-
-              {leaderboardLoading ? (
-                <div style={{ fontSize: 13, color: "#6b6b63" }}>Loading the leaderboard...</div>
-              ) : leaderboardErr ? (
-                <div style={{ color: "#A42E2D", fontSize: 13 }}>{leaderboardErr}</div>
-              ) : (
-                (() => {
-                  const cat = LEADERBOARD_CATEGORIES[leaderboardCategory];
-                  const ranked = leaderboard
-                    .map((row) => ({ row, value: cat.valueOf(row) }))
-                    .filter((x) => x.value != null)
-                    .sort((a, b) => (cat.lowerIsBetter ? a.value - b.value : b.value - a.value));
-
-                  if (ranked.length === 0) {
-                    return (
-                      <div style={{ fontSize: 13, color: "#6b6b63", lineHeight: 1.5 }}>
-                        Nobody's opted into the leaderboard yet for this category. Turn on "Show me on the leaderboard" above to be the first.
-                      </div>
-                    );
-                  }
-
-                  return ranked.slice(0, 10).map((x, i) => {
-                    const isMe = session && x.row.user_id === session.user.id;
-                    return (
-                      <div
-                        key={x.row.user_id}
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                          padding: "7px 0",
-                          borderBottom: i === Math.min(ranked.length, 10) - 1 ? "none" : "1px solid #eee6cf",
-                          background: isMe ? "#EBF0EC" : "transparent",
-                          borderRadius: isMe ? 6 : 0,
-                          paddingLeft: isMe ? 8 : 0,
-                          paddingRight: isMe ? 8 : 0,
-                        }}
-                      >
-                        <div style={{ fontSize: 13, fontWeight: isMe ? 700 : 600, color: "#1B4332" }}>
-                          {i + 1}. {x.row.avatar ? `${x.row.avatar} ` : ""}{x.row.display_name}
-                          {isMe && <span style={{ fontSize: 10, color: "#B08D57", marginLeft: 6, fontWeight: 700 }}>YOU</span>}
-                        </div>
-                        <div style={{ fontSize: 13, fontWeight: 700, color: "#4b4b45" }}>{cat.format(x.value)}</div>
-                      </div>
-                    );
-                  });
-                })()
-              )}
-            </div>
-          )}
-
-
-          {session && headToHeadList.length > 0 && (
-            <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
-                <span style={{ fontSize: 16 }}>{"\u2694\uFE0F"}</span>
-                <div style={{ fontWeight: 800, fontSize: 16, color: "#8a6a2f" }}>Head-to-Head Records</div>
-              </div>
-              {headToHeadList.map((h, i) => {
-                const avgDiff = h.rounds_played > 0 ? (h.opp_strokes_sum - h.my_strokes_sum) / h.rounds_played : 0;
-                return (
-                  <div
-                    key={h.opponent_id}
-                    style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: i === headToHeadList.length - 1 ? "none" : "1px solid #eee6cf" }}
-                  >
-                    <div>
-                      <div style={{ fontSize: 13, color: "#1B4332", fontWeight: 600 }}>
-                        {h.opponentAvatar} {h.opponentName}
-                      </div>
-                      <div style={{ fontSize: 11, color: "#8a8a80", marginTop: 2 }}>
-                        {h.rounds_played} round{h.rounds_played === 1 ? "" : "s"} played
-                        {Math.abs(h.current_streak) >= 2 && (
-                          <span> - {"\u{1F525}"} {Math.abs(h.current_streak)} {h.current_streak > 0 ? "wins" : "losses"} in a row</span>
-                        )}
-                      </div>
-                    </div>
-                    <div style={{ textAlign: "right" }}>
-                      <div style={{ fontSize: 15, fontWeight: 800, color: h.wins >= h.losses ? "#1B4332" : "#A42E2D" }}>
-                        {h.wins}-{h.losses}{h.ties > 0 ? `-${h.ties}` : ""}
-                      </div>
-                      <div style={{ fontSize: 11, color: "#8a8a80" }}>
-                        {avgDiff > 0 ? `+${avgDiff.toFixed(1)} avg` : avgDiff < 0 ? `${avgDiff.toFixed(1)} avg` : "even avg"}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          {session && (
             <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
                 <span style={{ fontSize: 16 }}>{"\u26F3"}</span>
@@ -12172,7 +11877,6 @@ function computeMatchPlayResult(round, computed) {
           )}
         </div>
         <BottomNav />
-        {DeleteHistoryConfirmModal()}
       </div>
     );
   }
@@ -12750,29 +12454,321 @@ function computeMatchPlayResult(round, computed) {
         <TopIconRow />
         <div className="gsc-body gsc-body-tabbed">
           <TitleStrip title={<span style={{ fontSize: 23 }}>Library</span>} sub="Games & about this app" />
-          <div className="gsc-card" style={{ cursor: "pointer", background: "#FDF6E9", border: "2px solid #B08D57" }} onClick={() => goToScreen("whyPlay")}>
+          {activeRound && !activeRound.tournamentId && !isRoundDone(activeRound) && (
+            <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <span style={{ fontSize: 16 }}>{"\u23F3"}</span>
+                <div style={{ fontWeight: 800, fontSize: 15, color: "#8a6a2f" }}>Round in progress</div>
+              </div>
+              <div style={{ fontWeight: 700, fontSize: 16, marginTop: 2 }}>{activeRound.name}</div>
+              <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 2 }}>
+                {GAMES[activeRound.game].name} - {activeRound.date}{activeRound.course ? " - " + activeRound.course : ""}
+              </div>
+              <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+                <button className="gsc-btn gsc-btn-primary" style={{ flex: 1 }} onClick={resumeActiveRound}>Continue round</button>
+                <button className="gsc-btn gsc-btn-outline" onClick={discardActiveRound}>Discard</button>
+              </div>
+            </div>
+          )}
+
+          {lastTournament && (
+            <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <span style={{ fontSize: 16 }}>{"\u{1F3C6}"}</span>
+                <div style={{ fontWeight: 800, fontSize: 15, color: "#8a6a2f" }}>Tournament in progress</div>
+              </div>
+              <div style={{ fontWeight: 700, fontSize: 16, marginTop: 2 }}>{lastTournament.name}</div>
+              <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+                <button className="gsc-btn gsc-btn-primary" style={{ flex: 1 }} onClick={() => openTournamentBoard(lastTournament.id)}>Continue tournament</button>
+                <button className="gsc-btn gsc-btn-outline" onClick={discardTournament}>Discard</button>
+              </div>
+              {isTournamentOrganizer(lastTournament) && (
+                <button
+                  className="gsc-link"
+                  style={{ marginTop: 10, fontSize: 12 }}
+                  disabled={tournamentBusy}
+                  onClick={() => addFoursomeToTournamentId(lastTournament.id)}
+                >
+                  {lastTournament.game && MATCH_PLAY_GAMES.includes(lastTournament.game) ? "Add a match" : "Add a foursome"}
+                </button>
+              )}
+            </div>
+          )}
+
+          <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
-              <span style={{ fontSize: 16 }}>{"\u2764\uFE0F"}</span>
-              <div style={{ fontWeight: 800, fontSize: 16, color: "#8a6a2f" }}>Why People Love These Games</div>
+              <span style={{ fontSize: 18 }}>{"\u26F3"}</span>
+              <div style={{ fontWeight: 800, fontSize: 17, color: "#8a6a2f" }}>Start a New Round</div>
             </div>
-            <div style={{ fontSize: 13, color: "#4b4b45" }}>
-              What makes each of the 22 formats worth playing, straight from the golfers who love them.
+
+            <div className="gsc-label" style={{ marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Individual Game Formats</div>
+            <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>Up to 4 Players</div>
+            <div style={{ display: "flex", overflowX: "auto", gap: 10, paddingBottom: 6, WebkitOverflowScrolling: "touch" }}>
+            {["swami", "dstreet", "matchplay", "individualputts", "pontobango", "stableford", "oceans11", "ninepoint"]
+              .map((key) => [key, GAMES[key]])
+              .map(([key, g]) => {
+                const locked = isGameLocked(key);
+                return (
+                <div
+                  key={key}
+                  className="gsc-card gsc-game-card"
+                  style={{ width: 250, flexShrink: 0, opacity: locked ? 0.75 : 1 }}
+                  onClick={() => (locked ? handleLockedGameTap(key) : startNewRound(key))}
+                >
+                  <div className="gsc-game-title" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    {GAME_TILE_STYLE[key] && (
+                      <span style={{ width: 26, height: 26, borderRadius: 7, background: GAME_TILE_STYLE[key].color, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 14, flexShrink: 0 }}>
+                        {GAME_TILE_STYLE[key].emoji}
+                      </span>
+                    )}
+                    {g.name}
+                  </div>
+                  {locked && (
+                    <div style={{ marginTop: 4 }}>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: "#fff", background: "#8a6a2f", padding: "2px 8px", borderRadius: 20, display: "inline-block" }}>
+                        {"\u{1F512}"} Log in to play
+                      </span>
+                    </div>
+                  )}
+                  <div className="gsc-tag">{g.tag}</div>
+                  {gameSupportsNassau(key) && <div style={{ fontSize: 11, color: "#B08D57", fontWeight: 700, marginTop: 4 }}>*Nassau Avail</div>}
+                  <div className="gsc-no-select" style={{ fontSize: 13, marginTop: 8, color: "#4b4b45" }}>{g.desc}</div>
+                  {WHY_PLAY[key] && (
+                    <button
+                      className="gsc-link"
+                      style={{ marginTop: 8, fontSize: 12, display: "block" }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openWhyPlay(key);
+                      }}
+                    >
+                      Why people love this game
+                    </button>
+                  )}
+                  <button
+                    className="gsc-link"
+                    style={{ marginTop: 8, fontSize: 12, display: "block" }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openRules(key);
+                    }}
+                  >
+                    View full rules
+                  </button>
+                </div>
+                );
+              })}
             </div>
-            <button className="gsc-link" style={{ marginTop: 8, fontSize: 12 }} onClick={() => goToScreen("whyPlay")}>
-              Read more
-            </button>
           </div>
 
-          <div className="gsc-card" style={{ cursor: "pointer", background: "#FDF6E9", border: "2px solid #B08D57" }} onClick={() => goToScreen("library")}>
+          <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
-              <span style={{ fontSize: 16 }}>{"\u{1F4D6}"}</span>
-              <div style={{ fontWeight: 800, fontSize: 16, color: "#8a6a2f" }}>Golf Games Library</div>
+              <span style={{ fontSize: 18 }}>{"\u26F3"}</span>
+              <div style={{ fontWeight: 800, fontSize: 17, color: "#8a6a2f" }}>Start a New Round</div>
+            </div>
+
+            <div className="gsc-label" style={{ marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Team Game Formats</div>
+            <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>2 vs 2</div>
+            <div style={{ display: "flex", overflowX: "auto", gap: 10, paddingBottom: 6, WebkitOverflowScrolling: "touch" }}>
+            {["teamstrokes", "ponto", "matchplayfourball", "teamputts", "beachside", "seabluffe", "moonlightwolf", "vegas", "teamoceans11"]
+              .map((key) => [key, GAMES[key]])
+              .map(([key, g]) => {
+                const locked = isGameLocked(key);
+                return (
+                <div
+                  key={key}
+                  className="gsc-card gsc-game-card"
+                  style={{ width: 250, flexShrink: 0, opacity: locked ? 0.75 : 1 }}
+                  onClick={() => (locked ? handleLockedGameTap(key) : startNewRound(key))}
+                >
+                  <div className="gsc-game-title" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    {GAME_TILE_STYLE[key] && (
+                      <span style={{ width: 26, height: 26, borderRadius: 7, background: GAME_TILE_STYLE[key].color, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 14, flexShrink: 0 }}>
+                        {GAME_TILE_STYLE[key].emoji}
+                      </span>
+                    )}
+                    {g.name}
+                  </div>
+                  {locked && (
+                    <div style={{ marginTop: 4 }}>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: "#fff", background: "#8a6a2f", padding: "2px 8px", borderRadius: 20, display: "inline-block" }}>
+                        {"\u{1F512}"} Log in to play
+                      </span>
+                    </div>
+                  )}
+                  <div className="gsc-tag">{g.tag}</div>
+                  {gameSupportsNassau(key) && <div style={{ fontSize: 11, color: "#B08D57", fontWeight: 700, marginTop: 4 }}>*Nassau Avail</div>}
+                  <div className="gsc-no-select" style={{ fontSize: 13, marginTop: 8, color: "#4b4b45" }}>{g.desc}</div>
+                  {WHY_PLAY[key] && (
+                    <button
+                      className="gsc-link"
+                      style={{ marginTop: 8, fontSize: 12, display: "block" }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openWhyPlay(key);
+                      }}
+                    >
+                      Why people love this game
+                    </button>
+                  )}
+                  <button
+                    className="gsc-link"
+                    style={{ marginTop: 8, fontSize: 12, display: "block" }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openRules(key);
+                    }}
+                  >
+                    View full rules
+                  </button>
+                </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+              <span style={{ fontSize: 18 }}>{"\u{1F3C6}"}</span>
+              <div style={{ fontWeight: 800, fontSize: 17, color: "#8a6a2f" }}>Start a New Tournament</div>
+            </div>
+            <div className="gsc-label" style={{ marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Tournament Game Formats</div>
+            <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>Multiple Foursomes</div>
+            {/* Explicit display order requested for this list: Stroke
+                Play, Scramble, Best Ball, Match Play, Team Match Play,
+                Foursomes - same order as the homepage tournament tiles,
+                not TOURNAMENT_GAME_KEYS' own order (that constant is also
+                used elsewhere as a default fallback game, so its order is
+                left alone). */}
+            <div style={{ display: "flex", overflowX: "auto", gap: 10, paddingBottom: 6, WebkitOverflowScrolling: "touch" }}>
+            {["tourneygg", "avoscramble", "tourneybb", "matchplay", "matchplayfourball", "altshot"].map((key) => {
+              const g = GAMES[key];
+              const locked = isGameLocked(key);
+              return (
+                <div
+                  key={key}
+                  className="gsc-card gsc-game-card"
+                  style={{ width: 250, flexShrink: 0, opacity: locked ? 0.75 : 1 }}
+                  onClick={() => (locked ? handleLockedGameTap(key) : startTournamentCreateFlow(key))}
+                >
+                  <div className="gsc-game-title" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    {GAME_TILE_STYLE[key] && (
+                      <span style={{ width: 26, height: 26, borderRadius: 7, background: GAME_TILE_STYLE[key].color, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 14, flexShrink: 0 }}>
+                        {GAME_TILE_STYLE[key].emoji}
+                      </span>
+                    )}
+                    {g.tournamentName || g.name}
+                  </div>
+                  {locked && (
+                    <div style={{ marginTop: 4 }}>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: "#fff", background: "#8a6a2f", padding: "2px 8px", borderRadius: 20, display: "inline-block" }}>
+                        {"\u{1F512}"} Log in to play
+                      </span>
+                    </div>
+                  )}
+                  <div className="gsc-tag">{g.tournamentTag || g.tag}</div>
+                  <div className="gsc-no-select" style={{ fontSize: 13, marginTop: 8, color: "#4b4b45" }}>{g.tournamentDesc || g.desc}</div>
+                  {(g.tournamentWhyPlay || WHY_PLAY[key]) && (
+                    <button
+                      className="gsc-link"
+                      style={{ marginTop: 8, fontSize: 12, display: "block" }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openWhyPlay(key, true);
+                      }}
+                    >
+                      Why people love this game
+                    </button>
+                  )}
+                  <button
+                    className="gsc-link"
+                    style={{ marginTop: 8, fontSize: 12, display: "block" }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openRules(key, true);
+                    }}
+                  >
+                    View full rules
+                  </button>
+                </div>
+              );
+            })}
+            </div>
+          </div>
+
+          <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+              <span style={{ fontSize: 16 }}>{"\u26F3"}</span>
+              <div style={{ fontWeight: 800, fontSize: 15, color: "#8a6a2f" }}>Nassau</div>
             </div>
             <div style={{ fontSize: 13, color: "#4b4b45" }}>
-              Browse other popular team, individual, side, and just-for-fun formats worth trying on your next round.
+              Nassau is a scoring method you can turn on for any of the 7 formats marked *Nassau Avail above - both individual formats (Individual Stroke Play, Individual Skins, Individual Putts) and 4-player, 2 vs 2 team formats (Team Stroke Play, Team Skins, Team Putts, Team Best Ball). Instead of one winner for the whole round, it splits things into three separate bets: front 9, back 9, and overall 18 - each with its own winner and its own wager, so a rough front 9 doesn't have to spoil the whole day. Turn it on from the "Set your game limits and scoring" step during setup.
             </div>
-            <button className="gsc-link" style={{ marginTop: 8, fontSize: 12 }} onClick={() => goToScreen("library")}>
-              Browse the library
+          </div>
+
+          <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+              <span style={{ fontSize: 16 }}>{"\u{1F3AF}"}</span>
+              <div style={{ fontWeight: 800, fontSize: 15, color: "#8a6a2f" }}>Side Games</div>
+            </div>
+            <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 12 }}>
+              Played alongside any round above - hole-by-hole bets like Closest to the Pin or Sandies. Open Side Games from within an active round's scoring screen once it's started.
+            </div>
+            {DEFAULT_GAMES.map((g) => (
+              <div key={g.id} className="gsc-card" style={{ marginBottom: 8, opacity: 0.75, cursor: "default" }}>
+                <div className="gsc-game-title">{g.name}</div>
+                <div style={{ fontSize: 13, marginTop: 6, color: "#4b4b45" }}>{g.rule}</div>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ fontSize: 12, color: "#8a8a80", textAlign: "center", marginTop: 4 }}>
+            Round data is stored so anyone with the round code can view or edit scores, when sync is working.
+          </div>
+        {deleteRoundConfirm && (
+          <div className="gsc-modal-backdrop" onClick={cancelDeleteFinishedRound}>
+            <div className="gsc-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="gsc-modal-title">Delete this round?</div>
+              <div className="gsc-modal-body">
+                "{deleteRoundConfirm.name}" will be permanently deleted from this device. This can't be undone.
+              </div>
+              {deleteRoundErr && <div style={{ color: "#A42E2D", fontSize: 13, marginBottom: 12 }}>{deleteRoundErr}</div>}
+              <div className="gsc-modal-row">
+                <button className="gsc-btn gsc-btn-outline" onClick={cancelDeleteFinishedRound}>Cancel</button>
+                <button className="gsc-btn gsc-btn-primary" style={{ background: "#A42E2D" }} disabled={deleteRoundBusy} onClick={confirmDeleteFinishedRound}>
+                  {deleteRoundBusy ? "Deleting..." : "Yes, delete"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        {deleteTournamentConfirm && (
+          <div className="gsc-modal-backdrop" onClick={cancelDeleteFinishedTournament}>
+            <div className="gsc-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="gsc-modal-title">Remove this tournament?</div>
+              <div className="gsc-modal-body">
+                "{deleteTournamentConfirm.name}" will be removed from your finished tournaments list on this device. The tournament and every foursome's data stay fully intact - you could still rejoin later with the tournament code.
+              </div>
+              {deleteTournamentErr && <div style={{ color: "#A42E2D", fontSize: 13, marginBottom: 12 }}>{deleteTournamentErr}</div>}
+              <div className="gsc-modal-row">
+                <button className="gsc-btn gsc-btn-outline" onClick={cancelDeleteFinishedTournament}>Cancel</button>
+                <button className="gsc-btn gsc-btn-primary" style={{ background: "#A42E2D" }} disabled={deleteTournamentBusy} onClick={confirmDeleteFinishedTournament}>
+                  {deleteTournamentBusy ? "Removing..." : "Yes, remove"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+          <div className="gsc-card" style={{ cursor: "pointer", background: "#FDF6E9", border: "2px solid #B08D57" }} onClick={() => goToScreen("ripscoreIndexInfo")}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+              <span style={{ fontSize: 16 }}>{"\u26F3"}</span>
+              <div style={{ fontWeight: 800, fontSize: 16, color: "#8a6a2f" }}>RipScore Index Explained</div>
+            </div>
+            <div style={{ fontSize: 13, color: "#4b4b45" }}>
+              How the unofficial score on your Profile page is actually calculated, hole by hole and round by round.
+            </div>
+            <button className="gsc-link" style={{ marginTop: 8, fontSize: 12 }} onClick={() => goToScreen("ripscoreIndexInfo")}>
+              Read more
             </button>
           </div>
 
@@ -12785,19 +12781,6 @@ function computeMatchPlayResult(round, computed) {
               What RipScore tracks for you, and how a round works from tee to tally.
             </div>
             <button className="gsc-link" style={{ marginTop: 8, fontSize: 12 }} onClick={() => goToScreen("about")}>
-              Read more
-            </button>
-          </div>
-
-          <div className="gsc-card" style={{ cursor: "pointer", background: "#FDF6E9", border: "2px solid #B08D57" }} onClick={() => goToScreen("ripscoreIndexInfo")}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
-              <span style={{ fontSize: 16 }}>{"\u26F3"}</span>
-              <div style={{ fontWeight: 800, fontSize: 16, color: "#8a6a2f" }}>RipScore Index Explained</div>
-            </div>
-            <div style={{ fontSize: 13, color: "#4b4b45" }}>
-              How the unofficial score on your Profile page is actually calculated, hole by hole and round by round.
-            </div>
-            <button className="gsc-link" style={{ marginTop: 8, fontSize: 12 }} onClick={() => goToScreen("ripscoreIndexInfo")}>
               Read more
             </button>
           </div>
@@ -12841,6 +12824,8 @@ function computeMatchPlayResult(round, computed) {
             </button>
           </div>
         </div>
+        {RulesModal()}
+        {WhyPlayModal()}
         <BottomNav />
       </div>
     );
@@ -14987,7 +14972,7 @@ function computeMatchPlayResult(round, computed) {
           sub={activeTournament ? (MATCH_PLAY_GAMES.includes(activeTournament.game) ? `${g.name} - Match setup` : `${g.name} - Foursome setup`) : isTeamGame ? "Round setup (2 vs 2)" : "Round setup"}
           onBack={() => {
             if (activeTournament) setActiveTournament(null);
-            goBack("roundsTab");
+            goBack("libraryTab");
           }}
         />
         <div className="gsc-body">
@@ -15678,7 +15663,7 @@ function computeMatchPlayResult(round, computed) {
     return (
       <div className="gsc">
         <style>{STYLE}</style>
-        <Header title={tg.tournamentName || tg.name} sub={MATCH_PLAY_GAMES.includes(tournamentGameKey) ? "Tournament setup - every match plays this format" : "Tournament setup - every foursome plays this format"} onBack={() => goBack("roundsTab")} />
+        <Header title={tg.tournamentName || tg.name} sub={MATCH_PLAY_GAMES.includes(tournamentGameKey) ? "Tournament setup - every match plays this format" : "Tournament setup - every foursome plays this format"} onBack={() => goBack("libraryTab")} />
         <div className="gsc-body">
           <div className="gsc-no-select" style={{ fontSize: 13, marginBottom: 10, color: "#4b4b45" }}>{tg.tournamentDesc || tg.desc}</div>
           <button className="gsc-link" style={{ marginBottom: 10, fontSize: 13, display: "block" }} onClick={() => openWhyPlay(tournamentGameKey, true)}>
@@ -17110,6 +17095,8 @@ function computeMatchPlayResult(round, computed) {
           <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 10 }} onClick={finishCelebrationAndGoHome}>
             {round && round.tournamentId
               ? "Continue to Leaderboard"
+              : roundViewReturnScreen === "statsTab"
+              ? "Continue to Stats"
               : roundViewReturnScreen === "profileTab"
               ? "Continue to Profile"
               : roundViewReturnScreen === "groupsTab"
