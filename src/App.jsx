@@ -89,7 +89,7 @@ const STYLE = `
   .gsc-modal-title { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif; font-size:19px; font-weight:700; color:#1B4332; margin-bottom:8px; }
   .gsc-modal-body { font-size:14px; color:#4b4b45; line-height:1.5; margin-bottom:18px; }
   .gsc-modal-row { display:flex; gap:10px; }
-  .gsc-navbar { position:fixed; bottom:calc(14px + env(safe-area-inset-bottom)); left:16px; right:16px; max-width:520px; margin:0 auto; background:rgba(20,51,38,0.32); border:1.5px solid rgba(243,239,224,0.4); border-radius:999px; display:flex; padding:6px 6px; box-shadow:0 10px 30px rgba(10,26,19,0.18), 0 2px 8px rgba(10,26,19,0.1); z-index:20; }
+  .gsc-navbar { position:fixed; bottom:calc(14px + env(safe-area-inset-bottom)); left:16px; right:16px; max-width:520px; margin:0 auto; background:rgba(20,51,38,0.5); backdrop-filter:blur(18px) saturate(160%); -webkit-backdrop-filter:blur(18px) saturate(160%); border:1px solid rgba(243,239,224,0.25); border-radius:999px; display:flex; padding:6px 6px; box-shadow:0 10px 30px rgba(10,26,19,0.18), 0 2px 8px rgba(10,26,19,0.1); z-index:20; }
   @keyframes gsc-firework-particle { 0% { transform:translate(0,0) scale(1); opacity:1; } 100% { transform:translate(var(--dx), var(--dy)) scale(0.3); opacity:0; } }
   @keyframes gsc-firework-pop { 0% { opacity:0; } 15% { opacity:1; } 100% { opacity:0; } }
   .gsc-firework-field { position:absolute; inset:0; overflow:hidden; pointer-events:none; }
