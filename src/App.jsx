@@ -31,6 +31,10 @@ const STYLE = `
   .gsc-header-row { display:flex; align-items:center; justify-content:space-between; gap:8px; }
   .gsc-title { font-size:19px; font-weight:700; letter-spacing:0.3px; line-height:1.2; }
   .gsc-sub { font-size:11px; opacity:0.75; margin-top:2px; letter-spacing:0.5px; text-transform:uppercase; }
+  .gsc-topiconrow { position:fixed; top:0; left:0; right:0; display:flex; align-items:center; justify-content:space-between; padding:calc(14px + env(safe-area-inset-top)) 18px 10px; z-index:15; pointer-events:none; }
+  .gsc-topiconrow > * { pointer-events:auto; }
+  .gsc-topiconrow-chip { display:flex; align-items:center; justify-content:center; width:40px; height:40px; border-radius:999px; background:rgba(243,239,224,0.82); box-shadow:0 2px 8px rgba(0,0,0,0.15); border:none; padding:0; cursor:pointer; touch-action:manipulation; }
+  .gsc-titlestrip { background:#1B4332; color:#F3EFE0; padding:calc(78px + env(safe-area-inset-top)) 18px 18px; margin:-16px -16px 16px; }
   .gsc-btn { border:none; border-radius:8px; padding:9px 14px; font-size:14px; font-weight:600; cursor:pointer; min-height:44px; touch-action:manipulation; }
   .gsc-btn-primary { background:#A42E2D; color:#F3EFE0; }
   .gsc-btn-ghost { background:rgba(243,239,224,0.12); color:#F3EFE0; }
@@ -89,7 +93,7 @@ const STYLE = `
   .gsc-modal-title { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif; font-size:19px; font-weight:700; color:#1B4332; margin-bottom:8px; }
   .gsc-modal-body { font-size:14px; color:#4b4b45; line-height:1.5; margin-bottom:18px; }
   .gsc-modal-row { display:flex; gap:10px; }
-  .gsc-navbar { position:fixed; bottom:calc(14px + env(safe-area-inset-bottom)); left:16px; right:16px; max-width:520px; margin:0 auto; background:rgba(20,51,38,0.5); backdrop-filter:blur(18px) saturate(160%); -webkit-backdrop-filter:blur(18px) saturate(160%); border:1px solid rgba(243,239,224,0.25); border-radius:999px; display:flex; padding:6px 6px; box-shadow:0 10px 30px rgba(10,26,19,0.18), 0 2px 8px rgba(10,26,19,0.1); z-index:20; }
+  .gsc-navbar { position:fixed; bottom:calc(6px + env(safe-area-inset-bottom)); left:16px; right:16px; max-width:520px; margin:0 auto; background:rgba(20,51,38,0.5); backdrop-filter:blur(18px) saturate(160%); -webkit-backdrop-filter:blur(18px) saturate(160%); border:1px solid rgba(243,239,224,0.25); border-radius:999px; display:flex; padding:6px 6px; box-shadow:0 10px 30px rgba(10,26,19,0.18), 0 2px 8px rgba(10,26,19,0.1); z-index:20; }
   @keyframes gsc-firework-particle { 0% { transform:translate(0,0) scale(1); opacity:1; } 100% { transform:translate(var(--dx), var(--dy)) scale(0.3); opacity:0; } }
   @keyframes gsc-firework-pop { 0% { opacity:0; } 15% { opacity:1; } 100% { opacity:0; } }
   .gsc-firework-field { position:absolute; inset:0; overflow:hidden; pointer-events:none; }
@@ -10762,6 +10766,143 @@ function computeMatchPlayResult(round, computed) {
   }
 
   // ---------- render helpers ----------
+  // Shared dropdown content for the nav menu - used by both Header's
+  // logo-adjacent hamburger (sub-screens) and the top icon row's own
+  // hamburger (the five main tab screens), so this ~70 lines of menu
+  // markup only has to be maintained in one place.
+  function NavMenuDropdown() {
+    return (
+      <>
+        <div
+          onClick={() => setNavMenuOpen(false)}
+          style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.25)" }}
+        />
+        <div
+          style={{
+            position: "absolute",
+            top: "100%",
+            left: 0,
+            marginTop: 6,
+            zIndex: 201,
+            background: "#F3EFE0",
+            borderRadius: 12,
+            boxShadow: "0 6px 20px rgba(0,0,0,0.25)",
+            minWidth: 190,
+            overflow: "hidden",
+          }}
+        >
+          {NAV_ITEMS.map((item) => {
+            const Icon = item.icon;
+            const active = screen === item.key;
+            return (
+              <button
+                key={item.key}
+                onClick={() => handleNavMenuSelect(item.key)}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  width: "100%",
+                  padding: "12px 16px",
+                  border: "none",
+                  borderBottom: "1px solid rgba(27,67,50,0.1)",
+                  background: active ? "rgba(27,67,50,0.08)" : "none",
+                  color: "#1B4332",
+                  fontSize: 15,
+                  fontWeight: active ? 700 : 500,
+                  textAlign: "left",
+                  cursor: "pointer",
+                }}
+              >
+                <Icon />
+                {item.label}
+              </button>
+            );
+          })}
+          {SUBSCRIPTIONS_AVAILABLE_HERE && session && (
+            <button
+              onClick={() => handleNavMenuSelect("subscribe")}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                width: "100%",
+                padding: "12px 16px",
+                border: "none",
+                borderBottom: "1px solid rgba(27,67,50,0.1)",
+                background: screen === "subscribe" ? "rgba(27,67,50,0.08)" : "none",
+                color: "#1B4332",
+                fontSize: 15,
+                fontWeight: screen === "subscribe" ? 700 : 500,
+                textAlign: "left",
+                cursor: "pointer",
+              }}
+            >
+              <span>{"\u2B50"}</span>
+              RipScore Premium
+            </button>
+          )}
+          <button
+            onClick={() => handleNavMenuSelect(session ? "logout" : "login")}
+            style={{
+              display: "block",
+              width: "100%",
+              padding: "12px 16px",
+              border: "none",
+              background: "none",
+              color: "#A42E2D",
+              fontSize: 15,
+              fontWeight: 600,
+              textAlign: "left",
+              cursor: "pointer",
+            }}
+          >
+            {session ? "Log Out" : "Log In"}
+          </button>
+        </div>
+      </>
+    );
+  }
+
+  // The fixed, transparent hamburger/logo/profile row used at the top of
+  // the five main tab screens - see .gsc-topiconrow. Distinct from
+  // Header(), which still handles every sub-screen's Back button + title,
+  // unchanged.
+  function TopIconRow() {
+    return (
+      <div className="gsc-topiconrow">
+        <div style={{ position: "relative" }}>
+          <button className="gsc-topiconrow-chip" onClick={() => setNavMenuOpen((v) => !v)} aria-label="Open menu">
+            <MenuIcon size={22} color="#1B4332" strokeWidth={2.2} />
+          </button>
+          {navMenuOpen && <NavMenuDropdown />}
+        </div>
+        <img
+          src={LOGO_DATA_URI}
+          alt="RipScore logo"
+          style={{ width: 46, height: "auto", objectFit: "contain", pointerEvents: "none" }}
+        />
+        <button className="gsc-topiconrow-chip" onClick={() => goToScreen("profileTab")} aria-label="Profile">
+          <UserIcon size={20} color="#1B4332" strokeWidth={2.2} />
+        </button>
+      </div>
+    );
+  }
+
+  // The green title strip that now lives inside each main tab's own
+  // scrollable body content (see .gsc-titlestrip), rather than in a
+  // sticky header - it scrolls away like any other page content once
+  // TopIconRow (fixed, transparent) is the only thing left pinned to
+  // the top of the screen.
+  function TitleStrip({ title, sub }) {
+    return (
+      <div className="gsc-titlestrip">
+        <div className="gsc-title gsc-display">{title}</div>
+        {sub && <div className="gsc-sub" style={{ whiteSpace: "normal", wordBreak: "break-word" }}>{sub}</div>}
+      </div>
+    );
+  }
+
   function Header({ title, sub, onBack, backExtra, right, belowLogo }) {
     return (
       <div className="gsc-header">
@@ -10783,99 +10924,9 @@ function computeMatchPlayResult(round, computed) {
                   >
                     <MenuIcon size={30} color="#F3EFE0" strokeWidth={2.2} />
                   </button>
-                {navMenuOpen && (
-                  <>
-                    <div
-                      onClick={() => setNavMenuOpen(false)}
-                      style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.25)" }}
-                    />
-                    <div
-                      style={{
-                        position: "absolute",
-                        top: "100%",
-                        left: 0,
-                        marginTop: 6,
-                        zIndex: 201,
-                        background: "#F3EFE0",
-                        borderRadius: 12,
-                        boxShadow: "0 6px 20px rgba(0,0,0,0.25)",
-                        minWidth: 190,
-                        overflow: "hidden",
-                      }}
-                    >
-                      {NAV_ITEMS.map((item) => {
-                        const Icon = item.icon;
-                        const active = screen === item.key;
-                        return (
-                          <button
-                            key={item.key}
-                            onClick={() => handleNavMenuSelect(item.key)}
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 10,
-                              width: "100%",
-                              padding: "12px 16px",
-                              border: "none",
-                              borderBottom: "1px solid rgba(27,67,50,0.1)",
-                              background: active ? "rgba(27,67,50,0.08)" : "none",
-                              color: "#1B4332",
-                              fontSize: 15,
-                              fontWeight: active ? 700 : 500,
-                              textAlign: "left",
-                              cursor: "pointer",
-                            }}
-                          >
-                            <Icon />
-                            {item.label}
-                          </button>
-                        );
-                      })}
-                      {SUBSCRIPTIONS_AVAILABLE_HERE && session && (
-                        <button
-                          onClick={() => handleNavMenuSelect("subscribe")}
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 10,
-                            width: "100%",
-                            padding: "12px 16px",
-                            border: "none",
-                            borderBottom: "1px solid rgba(27,67,50,0.1)",
-                            background: screen === "subscribe" ? "rgba(27,67,50,0.08)" : "none",
-                            color: "#1B4332",
-                            fontSize: 15,
-                            fontWeight: screen === "subscribe" ? 700 : 500,
-                            textAlign: "left",
-                            cursor: "pointer",
-                          }}
-                        >
-                          <span>{"\u2B50"}</span>
-                          RipScore Premium
-                        </button>
-                      )}
-                      <button
-                        onClick={() => handleNavMenuSelect(session ? "logout" : "login")}
-                        style={{
-                          display: "block",
-                          width: "100%",
-                          padding: "12px 16px",
-                          border: "none",
-                          background: "none",
-                          color: "#A42E2D",
-                          fontSize: 15,
-                          fontWeight: 600,
-                          textAlign: "left",
-                          cursor: "pointer",
-                        }}
-                      >
-                        {session ? "Log Out" : "Log In"}
-                      </button>
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
+                  {navMenuOpen && <NavMenuDropdown />}
+                </div>
+              )}
               <div style={{ minWidth: 0 }}>
                 <div className="gsc-title gsc-display">{title}</div>
                 {sub && <div className="gsc-sub" style={{ whiteSpace: "normal", wordBreak: "break-word" }}>{sub}</div>}
@@ -10883,17 +10934,11 @@ function computeMatchPlayResult(round, computed) {
             </div>
           </div>
           {right}
-          <button
-            onClick={() => setNavMenuOpen((v) => !v)}
-            aria-label="Open menu"
-            style={{ background: "none", border: "none", padding: 0, cursor: "pointer", display: "block", flexShrink: 0 }}
-          >
-            <img
-              src={LOGO_DATA_URI}
-              alt="RipScore logo"
-              style={{ width: 58, height: "auto", objectFit: "contain", alignSelf: "flex-start", marginRight: 0, marginTop: -2, pointerEvents: "none" }}
-            />
-          </button>
+          <img
+            src={LOGO_DATA_URI}
+            alt="RipScore logo"
+            style={{ width: 58, height: "auto", objectFit: "contain", alignSelf: "flex-start", marginRight: 0, marginTop: -2, pointerEvents: "none", flexShrink: 0 }}
+          />
         </div>
         {belowLogo && <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 6 }}>{belowLogo}</div>}
       </div>
@@ -10996,11 +11041,12 @@ function computeMatchPlayResult(round, computed) {
     return (
       <div className="gsc">
         <style>{STYLE}</style>
-        <Header
-          title={<><span style={{ fontSize: 23 }}>RipScore Golf</span><div style={{ fontSize: 11, fontWeight: 400, opacity: 0.75, letterSpacing: "0.5px", textTransform: "uppercase", marginTop: 2, fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>Your crew. Your leaderboard.</div></>}
-          sub=""
-        />
+        <TopIconRow />
         <div className="gsc-body gsc-body-tabbed">
+          <TitleStrip
+            title={<><span style={{ fontSize: 23 }}>RipScore Golf</span><div style={{ fontSize: 11, fontWeight: 400, opacity: 0.75, letterSpacing: "0.5px", textTransform: "uppercase", marginTop: 2, fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>Your crew. Your leaderboard.</div></>}
+            sub=""
+          />
           {joinableGroupRounds.filter((jr) => !dismissedJoinableRounds.includes(jr.code)).map((jr) => (
             <div key={jr.code} className="gsc-card" style={{ background: "#F8F1E4", border: "1px solid #B08D57", marginBottom: 16 }}>
               <div style={{ fontSize: 11, color: "#8a6a2f", textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 700, marginBottom: 6 }}>
@@ -11315,8 +11361,9 @@ function computeMatchPlayResult(round, computed) {
     return (
       <div className="gsc">
         <style>{STYLE}</style>
-        <Header title={<span style={{ fontSize: 23 }}>Games</span>} sub="Join, start, or revisit" />
+        <TopIconRow />
         <div className="gsc-body gsc-body-tabbed">
+          <TitleStrip title={<span style={{ fontSize: 23 }}>Games</span>} sub="Join, start, or revisit" />
           {activeRound && !activeRound.tournamentId && !isRoundDone(activeRound) && (
             <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -11672,8 +11719,9 @@ function computeMatchPlayResult(round, computed) {
     return (
       <div className="gsc">
         <style>{STYLE}</style>
-        <Header title={<span style={{ fontSize: 23 }}>Profile</span>} sub="Your account & stats" />
+        <TopIconRow />
         <div className="gsc-body gsc-body-tabbed">
+          <TitleStrip title={<span style={{ fontSize: 23 }}>Profile</span>} sub="Your account & stats" />
           {authLoading ? (
             <div className="gsc-card" style={{ textAlign: "center", padding: "24px" }}>
               <div style={{ fontSize: 13, color: "#6b6b63" }}>Loading...</div>
@@ -12139,8 +12187,9 @@ function computeMatchPlayResult(round, computed) {
     return (
       <div className="gsc">
         <style>{STYLE}</style>
-        <Header title={<span style={{ fontSize: 23 }}>Groups</span>} sub="Play together, compete together" />
+        <TopIconRow />
         <div className="gsc-body gsc-body-tabbed">
+          <TitleStrip title={<span style={{ fontSize: 23 }}>Groups</span>} sub="Play together, compete together" />
           {!session && (
             <div className="gsc-card" style={{ textAlign: "center", padding: "28px 20px" }}>
               <GroupsIcon size={28} color="#8FA998" style={{ marginBottom: 10 }} />
@@ -12704,8 +12753,9 @@ function computeMatchPlayResult(round, computed) {
     return (
       <div className="gsc">
         <style>{STYLE}</style>
-        <Header title={<span style={{ fontSize: 23 }}>Library</span>} sub="Games & about this app" />
+        <TopIconRow />
         <div className="gsc-body gsc-body-tabbed">
+          <TitleStrip title={<span style={{ fontSize: 23 }}>Library</span>} sub="Games & about this app" />
           <div className="gsc-card" style={{ cursor: "pointer", background: "#FDF6E9", border: "2px solid #B08D57" }} onClick={() => goToScreen("whyPlay")}>
             <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
               <span style={{ fontSize: 16 }}>{"\u2764\uFE0F"}</span>
