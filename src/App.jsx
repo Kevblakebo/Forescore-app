@@ -12461,10 +12461,95 @@ function computeMatchPlayResult(round, computed) {
         <div className="gsc-body gsc-body-tabbed">
           <TitleStrip title={<span style={{ fontSize: 23 }}>Library</span>} sub="Games & about this app" />
 
-          <div style={{ fontWeight: 800, fontSize: 19, color: "#1B4332", margin: "4px 0 2px" }}>
-            {"\u{1F4D6}"} Games Library
+          <div className="gsc-card" style={{ cursor: "pointer", background: "#FDF6E9", border: "2px solid #B08D57" }} onClick={() => goToScreen("gamesLibraryDetail")}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+              <span style={{ fontSize: 16 }}>{"\u{1F4D6}"}</span>
+              <div style={{ fontWeight: 800, fontSize: 16, color: "#8a6a2f" }}>Games Library</div>
+            </div>
+            <div style={{ fontSize: 13, color: "#4b4b45" }}>
+              Start a new round or tournament, or continue one already in progress.
+            </div>
+            <button className="gsc-link" style={{ marginTop: 8, fontSize: 12 }} onClick={() => goToScreen("gamesLibraryDetail")}>
+              Read more
+            </button>
           </div>
 
+          <div className="gsc-card" style={{ cursor: "pointer", background: "#FDF6E9", border: "2px solid #B08D57" }} onClick={() => goToScreen("ripscoreIndexInfo")}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+              <span style={{ fontSize: 16 }}>{"\u26F3"}</span>
+              <div style={{ fontWeight: 800, fontSize: 16, color: "#8a6a2f" }}>RipScore Index Explained</div>
+            </div>
+            <div style={{ fontSize: 13, color: "#4b4b45" }}>
+              How the unofficial score on your Profile page is actually calculated, hole by hole and round by round.
+            </div>
+            <button className="gsc-link" style={{ marginTop: 8, fontSize: 12 }} onClick={() => goToScreen("ripscoreIndexInfo")}>
+              Read more
+            </button>
+          </div>
+
+          <div className="gsc-card" style={{ cursor: "pointer", background: "#FDF6E9", border: "2px solid #B08D57" }} onClick={() => goToScreen("about")}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+              <span style={{ fontSize: 16 }}>{"\u2139\uFE0F"}</span>
+              <div style={{ fontWeight: 800, fontSize: 16, color: "#8a6a2f" }}>About this App</div>
+            </div>
+            <div style={{ fontSize: 13, color: "#4b4b45" }}>
+              What RipScore tracks for you, and how a round works from tee to tally.
+            </div>
+            <button className="gsc-link" style={{ marginTop: 8, fontSize: 12 }} onClick={() => goToScreen("about")}>
+              Read more
+            </button>
+          </div>
+
+          <div className="gsc-card" style={{ cursor: "pointer", background: "#FDF6E9", border: "2px solid #B08D57" }} onClick={() => goToScreen("feedback")}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+              <span style={{ fontSize: 16 }}>{"\u{1F4AC}"}</span>
+              <div style={{ fontWeight: 800, fontSize: 16, color: "#8a6a2f" }}>Give Feedback</div>
+            </div>
+            <div style={{ fontSize: 13, color: "#4b4b45" }}>
+              Two minutes, ten questions - tell us what's working and what isn't.
+            </div>
+            <button className="gsc-link" style={{ marginTop: 8, fontSize: 12 }} onClick={() => goToScreen("feedback")}>
+              Start feedback survey
+            </button>
+          </div>
+
+          <div className="gsc-card" style={{ cursor: "pointer", background: "#FDF6E9", border: "2px solid #B08D57" }} onClick={() => goToScreen("termsOfService")}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+              <span style={{ fontSize: 16 }}>{"\u{1F4DC}"}</span>
+              <div style={{ fontWeight: 800, fontSize: 16, color: "#8a6a2f" }}>Terms of Service</div>
+            </div>
+            <div style={{ fontSize: 13, color: "#4b4b45" }}>
+              The terms for using RipScore.
+            </div>
+            <button className="gsc-link" style={{ marginTop: 8, fontSize: 12 }} onClick={() => goToScreen("termsOfService")}>
+              Read more
+            </button>
+          </div>
+
+          <div className="gsc-card" style={{ cursor: "pointer", background: "#FDF6E9", border: "2px solid #B08D57" }} onClick={() => goToScreen("privacyPolicy")}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+              <span style={{ fontSize: 16 }}>{"\u{1F512}"}</span>
+              <div style={{ fontWeight: 800, fontSize: 16, color: "#8a6a2f" }}>Privacy Policy</div>
+            </div>
+            <div style={{ fontSize: 13, color: "#4b4b45" }}>
+              How RipScore handles your data.
+            </div>
+            <button className="gsc-link" style={{ marginTop: 8, fontSize: 12 }} onClick={() => goToScreen("privacyPolicy")}>
+              Read more
+            </button>
+          </div>
+        </div>
+        <BottomNav />
+      </div>
+    );
+  }
+
+  if (screen === "gamesLibraryDetail") {
+    return (
+      <div className="gsc">
+        <style>{STYLE}</style>
+        <Header title="Games Library" sub="Start a round, a tournament, or continue one in progress" onBack={() => goBack("libraryTab")} />
+        <div className="gsc-body">
           {activeRound && !activeRound.tournamentId && !isRoundDone(activeRound) && (
             <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -12770,74 +12855,9 @@ function computeMatchPlayResult(round, computed) {
             </div>
           </div>
         )}
-          <div className="gsc-card" style={{ cursor: "pointer", background: "#FDF6E9", border: "2px solid #B08D57" }} onClick={() => goToScreen("ripscoreIndexInfo")}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
-              <span style={{ fontSize: 16 }}>{"\u26F3"}</span>
-              <div style={{ fontWeight: 800, fontSize: 16, color: "#8a6a2f" }}>RipScore Index Explained</div>
-            </div>
-            <div style={{ fontSize: 13, color: "#4b4b45" }}>
-              How the unofficial score on your Profile page is actually calculated, hole by hole and round by round.
-            </div>
-            <button className="gsc-link" style={{ marginTop: 8, fontSize: 12 }} onClick={() => goToScreen("ripscoreIndexInfo")}>
-              Read more
-            </button>
-          </div>
-
-          <div className="gsc-card" style={{ cursor: "pointer", background: "#FDF6E9", border: "2px solid #B08D57" }} onClick={() => goToScreen("about")}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
-              <span style={{ fontSize: 16 }}>{"\u2139\uFE0F"}</span>
-              <div style={{ fontWeight: 800, fontSize: 16, color: "#8a6a2f" }}>About this App</div>
-            </div>
-            <div style={{ fontSize: 13, color: "#4b4b45" }}>
-              What RipScore tracks for you, and how a round works from tee to tally.
-            </div>
-            <button className="gsc-link" style={{ marginTop: 8, fontSize: 12 }} onClick={() => goToScreen("about")}>
-              Read more
-            </button>
-          </div>
-
-          <div className="gsc-card" style={{ cursor: "pointer", background: "#FDF6E9", border: "2px solid #B08D57" }} onClick={() => goToScreen("feedback")}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
-              <span style={{ fontSize: 16 }}>{"\u{1F4AC}"}</span>
-              <div style={{ fontWeight: 800, fontSize: 16, color: "#8a6a2f" }}>Give Feedback</div>
-            </div>
-            <div style={{ fontSize: 13, color: "#4b4b45" }}>
-              Two minutes, ten questions - tell us what's working and what isn't.
-            </div>
-            <button className="gsc-link" style={{ marginTop: 8, fontSize: 12 }} onClick={() => goToScreen("feedback")}>
-              Start feedback survey
-            </button>
-          </div>
-
-          <div className="gsc-card" style={{ cursor: "pointer", background: "#FDF6E9", border: "2px solid #B08D57" }} onClick={() => goToScreen("termsOfService")}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
-              <span style={{ fontSize: 16 }}>{"\u{1F4DC}"}</span>
-              <div style={{ fontWeight: 800, fontSize: 16, color: "#8a6a2f" }}>Terms of Service</div>
-            </div>
-            <div style={{ fontSize: 13, color: "#4b4b45" }}>
-              The terms for using RipScore.
-            </div>
-            <button className="gsc-link" style={{ marginTop: 8, fontSize: 12 }} onClick={() => goToScreen("termsOfService")}>
-              Read more
-            </button>
-          </div>
-
-          <div className="gsc-card" style={{ cursor: "pointer", background: "#FDF6E9", border: "2px solid #B08D57" }} onClick={() => goToScreen("privacyPolicy")}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
-              <span style={{ fontSize: 16 }}>{"\u{1F512}"}</span>
-              <div style={{ fontWeight: 800, fontSize: 16, color: "#8a6a2f" }}>Privacy Policy</div>
-            </div>
-            <div style={{ fontSize: 13, color: "#4b4b45" }}>
-              How RipScore handles your data.
-            </div>
-            <button className="gsc-link" style={{ marginTop: 8, fontSize: 12 }} onClick={() => goToScreen("privacyPolicy")}>
-              Read more
-            </button>
-          </div>
         </div>
         {RulesModal()}
         {WhyPlayModal()}
-        <BottomNav />
       </div>
     );
   }
