@@ -12,6 +12,7 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "@capawesome/capacitor-apple-sign-in": "^0.1.4",
+    "@codetrix-studio/capacitor-google-auth": "^3.4.0-rc.4",
     "@supabase/supabase-js": "^2.45.0",
     "lucide-react": "^0.383.0"
   },
