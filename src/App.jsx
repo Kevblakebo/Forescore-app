@@ -2637,6 +2637,13 @@ export default function GolfScorecard() {
   const [statsErr, setStatsErr] = useState("");
   const [statsDateFrom, setStatsDateFrom] = useState("");
   const [statsDateTo, setStatsDateTo] = useState("");
+  // Bumped only by the Clear button below, never by a normal date pick -
+  // forces the two date inputs to remount with a fresh DOM node. Needed
+  // because some mobile WebViews (notably iOS) don't reliably clear a
+  // native <input type="date">'s displayed value when it's set to "" only
+  // via React's value prop - the state updates correctly, but the field
+  // can keep showing the old date on screen until the input is recreated.
+  const [statsDateInputKey, setStatsDateInputKey] = useState(0);
 
   // ---- Leaderboard (opt-in, cross-user) ----
   const [leaderboard, setLeaderboard] = useState([]);
@@ -11714,11 +11721,11 @@ function computeMatchPlayResult(round, computed) {
               <div style={{ display: "flex", alignItems: "flex-end", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
                 <div style={{ flex: "1 1 120px" }}>
                   <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 3 }}>From</div>
-                  <input type="date" className="gsc-input" value={statsDateFrom} onChange={(e) => setStatsDateFrom(e.target.value)} />
+                  <input key={`stats-from-${statsDateInputKey}`} type="date" className="gsc-input" value={statsDateFrom} onChange={(e) => setStatsDateFrom(e.target.value)} />
                 </div>
                 <div style={{ flex: "1 1 120px" }}>
                   <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 3 }}>To</div>
-                  <input type="date" className="gsc-input" value={statsDateTo} onChange={(e) => setStatsDateTo(e.target.value)} />
+                  <input key={`stats-to-${statsDateInputKey}`} type="date" className="gsc-input" value={statsDateTo} onChange={(e) => setStatsDateTo(e.target.value)} />
                 </div>
                 <button className="gsc-btn gsc-btn-primary" style={{ flex: "0 0 auto" }} disabled={statsLoading} onClick={() => loadStats()}>
                   Apply
@@ -11730,6 +11737,7 @@ function computeMatchPlayResult(round, computed) {
                     onClick={() => {
                       setStatsDateFrom("");
                       setStatsDateTo("");
+                      setStatsDateInputKey((k) => k + 1);
                       loadStats({ dateFrom: "", dateTo: "" });
                     }}
                   >
