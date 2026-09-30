@@ -12843,8 +12843,9 @@ function computeMatchPlayResult(round, computed) {
     return (
       <div className="gsc">
         <style>{STYLE}</style>
-        <Header title="Games" sub="Start, join, or learn a format" onBack={() => goBack("home")} />
+        <TopIconRow />
         <div className="gsc-body">
+          <TitleStrip title={<span style={{ fontSize: 23 }}>Games</span>} sub="Start, join, or learn a format" />
           <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
               <span style={{ fontSize: 18 }}>{"\u26F3"}</span>
