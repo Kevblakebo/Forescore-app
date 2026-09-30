@@ -3,6 +3,7 @@ import { Home as HomeIcon, Flag as FlagIcon, Trophy as TrophyIcon, User as UserI
 import { supabase } from "./storage-polyfill.js";
 import { AppleSignIn, SignInScope } from "@capawesome/capacitor-apple-sign-in";
 import { SocialLogin } from "@capgo/capacitor-social-login";
+import { Geolocation } from "@capacitor/geolocation";
 
 // SocialLogin.initialize() is documented as a call-once operation, so this
 // module-level flag (not React state - it must survive across renders and
@@ -2728,27 +2729,35 @@ export default function GolfScorecard() {
   const [sideGamesVenmoByUserId, setSideGamesVenmoByUserId] = useState({});
   const gpsWatchIdRef = useRef(null);
 
-  function startGPSWatch() {
-    if (!("geolocation" in navigator)) {
-      setGpsStatus("unsupported");
-      return;
-    }
+  // Uses the Capacitor Geolocation plugin rather than calling
+  // navigator.geolocation directly - the plugin safely wraps
+  // navigator.geolocation itself when running on the plain website, but
+  // talks straight to the OS's own location system when running inside
+  // the native iOS/Android apps. That native path matters: calling
+  // navigator.geolocation directly inside a Capacitor iOS app is a
+  // well-documented WKWebView quirk that shows two separate, stacked
+  // location prompts (one app-level, one website-origin-level) instead
+  // of the single prompt a normal app shows.
+  async function startGPSWatch() {
     setGpsStatus("locating");
-    gpsWatchIdRef.current = navigator.geolocation.watchPosition(
-      (pos) => {
-        setGpsStatus("active");
-        setPlayerGPS({ lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy });
-      },
-      (err) => {
-        setGpsStatus(err.code === 1 ? "denied" : "error");
-      },
-      { enableHighAccuracy: true, maximumAge: 3000, timeout: 15000 }
-    );
+    try {
+      const id = await Geolocation.watchPosition({ enableHighAccuracy: true, maximumAge: 3000, timeout: 15000 }, (pos, err) => {
+        if (pos) {
+          setGpsStatus("active");
+          setPlayerGPS({ lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy });
+        } else if (err) {
+          setGpsStatus(err.code === 1 ? "denied" : "error");
+        }
+      });
+      gpsWatchIdRef.current = id;
+    } catch (err) {
+      setGpsStatus(err && err.code === 1 ? "denied" : "error");
+    }
   }
 
   function stopGPSWatch() {
-    if (gpsWatchIdRef.current != null && "geolocation" in navigator) {
-      navigator.geolocation.clearWatch(gpsWatchIdRef.current);
+    if (gpsWatchIdRef.current != null) {
+      Geolocation.clearWatch({ id: gpsWatchIdRef.current }).catch(() => {});
     }
     gpsWatchIdRef.current = null;
     setGpsStatus("idle");
@@ -7293,48 +7302,40 @@ export default function GolfScorecard() {
     setCourseSearchBusy(false);
   }
 
+  // Uses the Capacitor Geolocation plugin - see the comment on
+  // startGPSWatch above for why (avoids a well-documented WKWebView
+  // double-prompt when calling navigator.geolocation directly inside a
+  // Capacitor iOS app).
   async function searchCoursesByGps() {
-    if (!("geolocation" in navigator)) {
-      setCourseSearchErr("Location isn't available on this device. Search by name instead.");
-      return;
-    }
     setGpsCourseSearchBusy(true);
     setCourseSearchErr("");
     setCourseSearchResults([]);
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        try {
-          const { latitude, longitude } = pos.coords;
-          const res = await fetch(`${API_BASE}/api/course-gps-search?lat=${latitude}&lng=${longitude}`);
-          const data = await res.json().catch(() => null);
-          if (!res.ok || !data) {
-            setCourseSearchErr((data && data.error) || "Course search isn't available right now. You can still search by name or enter par manually below.");
-            setGpsCourseSearchBusy(false);
-            return;
-          }
-          setCourseSearchResults(data.courses || []);
-          if (!data.courses || data.courses.length === 0) {
-            setCourseSearchErr(
-              data.noCoordinatesAvailable
-                ? "Found nearby courses, but couldn't confirm their exact location. Try searching by name instead."
-                : "No courses found nearby. Try searching by name, or enter par manually below."
-            );
-          }
-        } catch (e) {
-          setCourseSearchErr("Course search isn't available right now. You can still search by name or enter par manually below.");
-        }
+    try {
+      const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 10000 });
+      const { latitude, longitude } = pos.coords;
+      const res = await fetch(`${API_BASE}/api/course-gps-search?lat=${latitude}&lng=${longitude}`);
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data) {
+        setCourseSearchErr((data && data.error) || "Course search isn't available right now. You can still search by name or enter par manually below.");
         setGpsCourseSearchBusy(false);
-      },
-      (err) => {
-        setGpsCourseSearchBusy(false);
+        return;
+      }
+      setCourseSearchResults(data.courses || []);
+      if (!data.courses || data.courses.length === 0) {
         setCourseSearchErr(
-          err.code === 1
-            ? "Location access denied - you can still search by name below."
-            : "Couldn't get your location - you can still search by name below."
+          data.noCoordinatesAvailable
+            ? "Found nearby courses, but couldn't confirm their exact location. Try searching by name instead."
+            : "No courses found nearby. Try searching by name, or enter par manually below."
         );
-      },
-      { enableHighAccuracy: true, timeout: 10000 }
-    );
+      }
+    } catch (err) {
+      setCourseSearchErr(
+        err && err.code === 1
+          ? "Location access denied - you can still search by name below."
+          : "Couldn't get your location - you can still search by name below."
+      );
+    }
+    setGpsCourseSearchBusy(false);
   }
 
   // Session-gated the same way distance-to-green already is - averages
