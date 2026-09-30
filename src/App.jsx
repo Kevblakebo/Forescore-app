@@ -11439,10 +11439,10 @@ function computeMatchPlayResult(round, computed) {
               <>
                 {profile && profile.name ? (
                   <>
-                    <b>Welcome back {profile.avatar && <span style={{ fontSize: 15 }}>{profile.avatar}</span>} {profile.name}.</b>
+                    <b>Welcome back {profile.avatar && <span style={{ fontSize: 15 }}>{profile.avatar}</span>} {profile.name}!</b>
                   </>
                 ) : (
-                  <b>Welcome back.</b>
+                  <b>Welcome back!</b>
                 )}
               </>
             ) : (
