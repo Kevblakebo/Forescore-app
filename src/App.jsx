@@ -12769,7 +12769,7 @@ function computeMatchPlayResult(round, computed) {
         <style>{STYLE}</style>
         <TopIconRow />
         <div className="gsc-body">
-          <TitleStrip title={<span style={{ fontSize: 23 }}>Library</span>} sub="Games & about this app" />
+          <TitleStrip title={<span style={{ fontSize: 23 }}>Library</span>} sub="About This App" />
 
           <div className="gsc-card" style={{ cursor: "pointer", background: "#FDF6E9", border: "2px solid #B08D57" }} onClick={() => goToScreen("ripscoreIndexInfo")}>
             <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
