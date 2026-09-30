@@ -332,7 +332,7 @@ const GAMES = {
   ponto: {
     name: "Team Skins",
     tag: "Fixed teams points - 4 players",
-    desc: "Two 2-person teams, same partners all 18 holes. Points for low combined score AND low combined putts each hole. Great for similar handicaps. Overall and Nassau scoring methods available. In this game format you can choose to play Ties Carryover (classic Skins format) or Ties do not carryover (similar to Match Play format).",
+    desc: "Two 2-person teams, same partners all 18 holes. Points for low combined score AND low combined putts each hole (optional). Great for similar handicaps. Overall and Nassau scoring methods available.",
     rotates: false,
     hasScore: true,
     hasPutts: true,
@@ -591,13 +591,13 @@ const GAMES = {
   dstreet: {
     name: "Individual Skins",
     tag: "Individual points - up to 4 players",
-    desc: "Individual strokes and putting skins game for up to 4 players. Points for low strokes AND low putts each hole. Most points wins. Great for similar handicaps. Overall and Nassau scoring methods available. In this game format you can choose to play Ties Carryover (classic Skins format) or Ties do not carryover (similar to Match Play format).",
+    desc: "Individual strokes and putting skins game for up to 4 players. Points for low strokes AND low putts each hole (optional). Most points wins. Great for similar handicaps. Overall and Nassau scoring methods available.",
     rotates: false,
     hasScore: true,
     hasPutts: true,
     defaults: { maxOver: "", maxPutts: "", mulliganSegment: "", mulliganChallenge: "", prize: "", tiesCarryOver: true, netScoring: true },
     rules: [
-      "Individual strokes and putting skins game for up to 4 players. Points for low strokes AND low putts each hole. Most points wins.",
+      "Individual strokes and putting skins game for up to 4 players. Points for low strokes AND low putts each hole (optional). Most points wins.",
       {
         text: "0, 1, or 2 points possible per hole per player:",
         sub: [
@@ -967,7 +967,7 @@ const GAMES = {
 const GAME_TILE_STYLE = (() => {
   const order = [
     "swami", "dstreet", "matchplay", "individualputts", "pontobango", "stableford", "oceans11", "ninepoint", "quota",
-    "teamstrokes", "ponto", "matchplayfourball", "teamputts", "beachside", "seabluffe", "moonlightwolf", "vegas", "teamoceans11",
+    "teamstrokes", "ponto", "matchplayfourball", "teamputts", "beachside", "seabluffe", "teamoceans11", "vegas", "moonlightwolf",
     "avoscramble", "tourneybb", "tourneygg", "altshot",
   ];
   const emoji = {
@@ -1427,6 +1427,37 @@ async function playHoleChangeClick() {
     // Silently ignore - sound is a nice-to-have, never worth surfacing an error over.
   }
 }
+
+// Short, synthesized click for every stroke/putt stepper tap - reuses the
+// same shared AudioContext as playHoleChangeClick above, but stays a
+// brief noise burst rather than the longer golf audio clip, since this
+// fires far more often (every single +/- tap while scoring a hole).
+function playScoreChangeClick() {
+  try {
+    const ctx = holeChangeAudioCtx || (holeChangeAudioCtx = new (window.AudioContext || window.webkitAudioContext)());
+    const now = ctx.currentTime;
+    const duration = 0.03;
+    const buffer = ctx.createBuffer(1, Math.max(1, Math.floor(ctx.sampleRate * duration)), ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+    const source = ctx.createBufferSource();
+    source.buffer = buffer;
+    const filter = ctx.createBiquadFilter();
+    filter.type = "highpass";
+    filter.frequency.value = 2500;
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+    source.connect(filter);
+    filter.connect(gain);
+    gain.connect(ctx.destination);
+    source.start(now);
+    source.stop(now + duration);
+  } catch (e) {
+    // Silently ignore - sound is a nice-to-have, never worth surfacing an error over.
+  }
+}
+
 
 function playFireworksSound() {
   try {
@@ -9525,6 +9556,7 @@ export default function GolfScorecard() {
   // itself instead guarantees every click reads the truly current
   // value, no matter how fast they're tapped.
   function updateHoleEntryStep(playerIdx, field, delta, minValue, defaultValue = 0) {
+    playScoreChangeClick();
     lastLocalEditRef.current = Date.now();
     const applyPatch = (r) => {
       const currentEntry = ((r.scores[holeIdx] || {})[playerIdx]) || {};
@@ -9606,6 +9638,7 @@ export default function GolfScorecard() {
   // entries via bestBall) correctly treats it as a single team score
   // without needing its own separate scoring code path.
   function updateTeamHoleEntry(field, value) {
+    playScoreChangeClick();
     lastLocalEditRef.current = Date.now();
     const applyPatch = (r) => {
       const next = { ...r, scores: { ...r.scores } };
@@ -9633,6 +9666,7 @@ export default function GolfScorecard() {
   // per hole (not the whole round sharing a single score, the way
   // Scramble's oneTeamScore does).
   function updateSideHoleEntryStep(sidePlayerIdxs, field, delta, minValue, defaultValue = 0) {
+    playScoreChangeClick();
     lastLocalEditRef.current = Date.now();
     const applyPatch = (r) => {
       const anchorIdx = sidePlayerIdxs[0];
@@ -11430,17 +11464,24 @@ function computeMatchPlayResult(round, computed) {
                     cursor: "pointer",
                   }}
                 >
-                  RipScore is the golf app built for every group you play with. <span style={{ color: "#A42E2D", fontWeight: 700 }}>{homeIntroExpanded ? "Show less" : "Learn more"}</span>
+                  Welcome to RipScore, the golf app built for every group you play with. <span style={{ color: "#A42E2D", fontWeight: 700 }}>{homeIntroExpanded ? "Show less" : "Learn more"}</span>
                 </button>
                 {homeIntroExpanded && (
                   <>
                     <div style={{ margin: "8px 0 0" }}>
+                      <div style={{ marginBottom: 4 }}>{"\u{1F9EE}"} Easy scoring without the math</div>
                       <div style={{ marginBottom: 4 }}>{"\u{1F465}"} Set Up Your Group Once</div>
-                      <div style={{ marginBottom: 4 }}>{"\u26F3"} 24 Game Formats + Side Games, for Every Kind of Day</div>
-                      <div style={{ marginBottom: 4 }}>{"\u{1F4CD}"} Live Distance to the Green GPS</div>
+                      <div style={{ marginBottom: 4 }}>{"\u26F3"} 24 Game Formats + Side Games</div>
+                      <div style={{ marginBottom: 4 }}>{"\u{1F517}"} Join a Round Without Downloading</div>
+                      <div style={{ marginBottom: 4 }}>{"\u{1F4CD}"} Live GPS Distance to the Green</div>
+                      <div style={{ marginBottom: 4 }}>{"\u{1F6F0}\u{FE0F}"} See the Hole From Above</div>
                       <div style={{ marginBottom: 4 }}>{"\u{1F3CC}\u{FE0F}"} Optional Handicapping, Done Right</div>
-                      <div style={{ marginBottom: 4 }}>{"\u{1F4CA}"} A Leaderboard Just for Your Group</div>
+                      <div style={{ marginBottom: 4 }}>{"\u26F3"} RipScore Index and GHIN link</div>
+                      <div style={{ marginBottom: 4 }}>{"\u{1F4CA}"} Leaderboards Just for Your Groups</div>
+                      <div style={{ marginBottom: 4 }}>{"\u{1F3AC}"} A Recap Written for Your Round</div>
                       <div style={{ marginBottom: 4 }}>{"\u{1F4B5}"} Settle Up Without the Argument</div>
+                      <div style={{ marginBottom: 4 }}>{"\u{1F4CB}"} Finished rounds saved</div>
+                      <div style={{ marginBottom: 4 }}>{"\u{1F4C8}"} Running stats and history</div>
                     </div>
                     <div style={{ marginTop: 8 }}>
                       Whether it's a casual Saturday game or a special group tournament, RipScore keeps the math out of your golf - so all that's left is golf.
