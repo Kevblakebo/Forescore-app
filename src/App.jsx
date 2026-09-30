@@ -59,6 +59,7 @@ const STYLE = `
   .gsc-field { margin-bottom:12px; }
   .gsc-label { display:block; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.4px; color:#6b6b63; margin-bottom:5px; }
   .gsc-input { width:100%; padding:9px 10px; border:1.5px solid #d8d2bd; border-radius:8px; font-size:16px; background:#FDFCF7; }
+  .gsc-input[type="date"]::-webkit-clear-button { display:none; }
   .gsc-input[type="date"] { -webkit-appearance:none; appearance:none; min-width:0; }
   .gsc-row { display:flex; gap:10px; }
   .gsc-row > * { flex:1; }
