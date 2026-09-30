@@ -2470,8 +2470,23 @@ button.primary{background:var(--green6);color:#fff;padding:14px 22px;border-radi
 .addBtn{padding:0 18px;border-radius:10px;background:#E3EAE2;color:var(--green6);font-size:14px;font-weight:600}
 `;
 
+// Lets /privacy and /terms work as direct, standalone links to those two
+// screens - needed so the Privacy Policy URL required by app stores (and
+// Apple's own App Review) actually opens straight to the policy, rather
+// than just to the app's homepage. Safe to call inside the native apps
+// too: window.location.pathname there is the Capacitor/TWA internal root,
+// which won't match either path, so it falls through to "home" as normal.
+function getInitialScreenFromPath() {
+  try {
+    const path = window.location.pathname.replace(/\/+$/, "");
+    if (path === "/privacy") return "privacyPolicy";
+    if (path === "/terms") return "termsOfService";
+  } catch (e) {}
+  return "home";
+}
+
 export default function GolfScorecard() {
-  const [screen, setScreen] = useState("home");
+  const [screen, setScreen] = useState(getInitialScreenFromPath);
   // Generic "wherever you actually came from" back-navigation - forward
   // navigation calls goToScreen() (instead of setScreen() directly),
   // which pushes the current screen onto a plain ref-based stack before
