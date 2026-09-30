@@ -2947,6 +2947,7 @@ export default function GolfScorecard() {
   // hole change - null the rest of the time.
   const [pendingHoleChange, setPendingHoleChange] = useState(null);
   const [navMenuOpen, setNavMenuOpen] = useState(false);
+  const [logoInfoOpen, setLogoInfoOpen] = useState(false);
   const [headToHeadExpanded, setHeadToHeadExpanded] = useState(false);
   const [homeIntroExpanded, setHomeIntroExpanded] = useState(false);
   // Where to navigate once "Leave this round?" is confirmed, when that
@@ -11110,6 +11111,58 @@ function computeMatchPlayResult(round, computed) {
     );
   }
 
+  // Feature-summary popover opened by tapping the RipScore logo itself,
+  // shown on all five main tab screens since TopIconRow (and the logo
+  // inside it) is shared across all of them.
+  function LogoInfoDropdown() {
+    const bullets = [
+      "\u{1F465} Set Up Your Group Once",
+      "\u26F3 24 Game Formats + Side Games, for Every Kind of Day",
+      "\u{1F3B2} Side Games, Right From the Scorecard",
+      "\u{1F517} Join a Round Without Downloading Anything",
+      "\u{1F4CD} Live GPS Distance to the Green",
+      "\u{1F6F0}\u{FE0F} See the Hole From Above",
+      "\u{1F3CC}\u{FE0F} Optional Handicapping, Done Right",
+      "\u26F3 RipScore Index",
+      "\u{1F4CA} A Leaderboard Just for Your Group",
+      "\u{1F3AC} A Recap Written for Your Round",
+      "\u{1F4B5} Settle Up Without the Argument",
+      "\u{1F4CB} Prior Saved Rounds to Go Back To",
+    ];
+    return (
+      <>
+        <div
+          onClick={() => setLogoInfoOpen(false)}
+          style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.25)" }}
+        />
+        <div
+          style={{
+            position: "absolute",
+            top: "100%",
+            left: "50%",
+            transform: "translateX(-50%)",
+            marginTop: 6,
+            zIndex: 201,
+            background: "#F3EFE0",
+            borderRadius: 14,
+            boxShadow: "0 6px 20px rgba(0,0,0,0.25)",
+            width: 260,
+            padding: "14px 16px",
+          }}
+        >
+          <div style={{ fontWeight: 800, fontSize: 14, color: "#1B4332", marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
+            <span>{"\u{1F9EE}"}</span> Easy scoring without the math
+          </div>
+          {bullets.map((b, idx) => (
+            <div key={idx} style={{ fontSize: 12.5, color: "#4b4b45", lineHeight: 1.5, marginBottom: idx === bullets.length - 1 ? 0 : 5 }}>
+              {b}
+            </div>
+          ))}
+        </div>
+      </>
+    );
+  }
+
   // The fixed, transparent hamburger/logo/profile row used at the top of
   // the five main tab screens - see .gsc-topiconrow. Distinct from
   // Header(), which still handles every sub-screen's Back button + title,
@@ -11123,11 +11176,20 @@ function computeMatchPlayResult(round, computed) {
           </button>
           {navMenuOpen && <NavMenuDropdown />}
         </div>
-        <img
-          src={LOGO_DATA_URI}
-          alt="RipScore logo"
-          style={{ width: 62, height: "auto", objectFit: "contain", pointerEvents: "none" }}
-        />
+        <div style={{ position: "relative", display: "flex" }}>
+          <button
+            onClick={() => setLogoInfoOpen((v) => !v)}
+            style={{ background: "none", border: "none", padding: 0, cursor: "pointer", display: "flex" }}
+            aria-label="What RipScore does"
+          >
+            <img
+              src={LOGO_DATA_URI}
+              alt="RipScore logo"
+              style={{ width: 62, height: "auto", objectFit: "contain", pointerEvents: "none" }}
+            />
+          </button>
+          {logoInfoOpen && <LogoInfoDropdown />}
+        </div>
         <button className="gsc-topiconrow-chip" onClick={() => goToScreen(screen === "profileTab" ? "home" : "profileTab")} aria-label="Profile">
           <UserIcon size={22} color="#1B4332" strokeWidth={2.2} />
         </button>
