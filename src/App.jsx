@@ -1428,33 +1428,35 @@ async function playHoleChangeClick() {
   }
 }
 
-// Short, synthesized "knock" for every stroke/putt stepper tap - reuses the
-// same shared AudioContext as playHoleChangeClick above, but stays brief
-// rather than the longer golf audio clip, since this fires far more often
-// (every single +/- tap while scoring a hole). Two layered pieces build the
-// knock: a short low-frequency tone with a falling pitch gives it a
-// percussive "thud" body, and a brief burst of lowpass-filtered noise on
-// top adds attack/texture - deliberately lowpass rather than highpass, so
-// the sound stays warm and knock-like instead of thin and tinny.
+// Short, synthesized tap/knock for every stroke/putt stepper tap - reuses
+// the same shared AudioContext as playHoleChangeClick above, but stays
+// brief rather than the longer golf audio clip, since this fires far more
+// often (every single +/- tap while scoring a hole). Deliberately tuned
+// between two earlier versions: a pure highpass noise click (too thin and
+// tinny) and a deep low-frequency thud (too heavy) - this keeps the same
+// two-layer approach (a short tonal body plus a noise-texture burst on
+// top) but pitches the tone higher for a snappier "tap" feel and keeps
+// the noise layer's filter more open than the deep-thud version, so it
+// reads as a light knock rather than either a click or a thump.
 function playScoreChangeClick() {
   try {
     const ctx = holeChangeAudioCtx || (holeChangeAudioCtx = new (window.AudioContext || window.webkitAudioContext)());
     const now = ctx.currentTime;
 
-    const thudDuration = 0.055;
+    const tapDuration = 0.04;
     const osc = ctx.createOscillator();
     osc.type = "sine";
-    osc.frequency.setValueAtTime(190, now);
-    osc.frequency.exponentialRampToValueAtTime(90, now + 0.05);
+    osc.frequency.setValueAtTime(340, now);
+    osc.frequency.exponentialRampToValueAtTime(170, now + 0.035);
     const oscGain = ctx.createGain();
-    oscGain.gain.setValueAtTime(0.5, now);
-    oscGain.gain.exponentialRampToValueAtTime(0.001, now + thudDuration);
+    oscGain.gain.setValueAtTime(0.4, now);
+    oscGain.gain.exponentialRampToValueAtTime(0.001, now + tapDuration);
     osc.connect(oscGain);
     oscGain.connect(ctx.destination);
     osc.start(now);
-    osc.stop(now + thudDuration);
+    osc.stop(now + tapDuration);
 
-    const noiseDuration = 0.025;
+    const noiseDuration = 0.02;
     const buffer = ctx.createBuffer(1, Math.max(1, Math.floor(ctx.sampleRate * noiseDuration)), ctx.sampleRate);
     const data = buffer.getChannelData(0);
     for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
@@ -1462,9 +1464,9 @@ function playScoreChangeClick() {
     noiseSource.buffer = buffer;
     const noiseFilter = ctx.createBiquadFilter();
     noiseFilter.type = "lowpass";
-    noiseFilter.frequency.value = 900;
+    noiseFilter.frequency.value = 1800;
     const noiseGain = ctx.createGain();
-    noiseGain.gain.setValueAtTime(0.18, now);
+    noiseGain.gain.setValueAtTime(0.2, now);
     noiseGain.gain.exponentialRampToValueAtTime(0.001, now + noiseDuration);
     noiseSource.connect(noiseFilter);
     noiseFilter.connect(noiseGain);
@@ -1475,6 +1477,7 @@ function playScoreChangeClick() {
     // Silently ignore - sound is a nice-to-have, never worth surfacing an error over.
   }
 }
+
 
 
 function playFireworksSound() {
