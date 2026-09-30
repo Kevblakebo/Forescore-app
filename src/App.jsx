@@ -17871,7 +17871,7 @@ function computeMatchPlayResult(round, computed) {
                 return (
                   <div key={sideIdx} className="gsc-player-row">
                     <div className="gsc-player-name">{sideNames}</div>
-                    <div style={{ display: "flex", gap: 22, marginTop: 8, flexWrap: "wrap" }}>
+                    <div style={{ display: "flex", gap: 22, marginTop: 8, flexWrap: "nowrap" }}>
                       <div>
                         <div style={{ fontSize: 11, color: "#6b6b63", marginBottom: 3, textAlign: "center" }}>STROKES</div>
                         <div className="gsc-stepper">
@@ -17940,7 +17940,7 @@ function computeMatchPlayResult(round, computed) {
                 return (
                   <div className="gsc-player-row">
                     <div className="gsc-player-name">Team Strokes</div>
-                    <div style={{ display: "flex", gap: 22, marginTop: 8, flexWrap: "wrap" }}>
+                    <div style={{ display: "flex", gap: 22, marginTop: 8, flexWrap: "nowrap" }}>
                       <div>
                         <div style={{ fontSize: 11, color: "#6b6b63", marginBottom: 3, textAlign: "center" }}>TOTAL STROKES</div>
                         <div className="gsc-stepper">
@@ -18143,7 +18143,7 @@ function computeMatchPlayResult(round, computed) {
                       ))}
                     </div>
                   )}
-                  <div style={{ display: "flex", gap: 22, marginTop: 8, flexWrap: "wrap" }}>
+                  <div style={{ display: "flex", gap: 22, marginTop: 8, flexWrap: "nowrap" }}>
                     {g.hasScore && (
                       <div>
                         <div style={{ fontSize: 11, color: "#6b6b63", marginBottom: 3, textAlign: "center" }}>TOTAL STROKES</div>
