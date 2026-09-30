@@ -103,16 +103,12 @@ const STYLE = `
   .gsc-modal-title { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif; font-size:19px; font-weight:700; color:#1B4332; margin-bottom:8px; }
   .gsc-modal-body { font-size:14px; color:#4b4b45; line-height:1.5; margin-bottom:18px; }
   .gsc-modal-row { display:flex; gap:10px; }
-  .gsc-navbar { position:fixed; bottom:env(safe-area-inset-bottom); left:16px; right:16px; max-width:520px; margin:0 auto; background:rgba(20,51,38,0.5); backdrop-filter:blur(18px) saturate(160%); -webkit-backdrop-filter:blur(18px) saturate(160%); border:1px solid rgba(243,239,224,0.25); border-radius:999px; display:flex; padding:6px 6px; box-shadow:0 10px 30px rgba(10,26,19,0.18), 0 2px 8px rgba(10,26,19,0.1); z-index:20; }
   @keyframes gsc-firework-particle { 0% { transform:translate(0,0) scale(1); opacity:1; } 100% { transform:translate(var(--dx), var(--dy)) scale(0.3); opacity:0; } }
   @keyframes gsc-firework-pop { 0% { opacity:0; } 15% { opacity:1; } 100% { opacity:0; } }
   .gsc-firework-field { position:absolute; inset:0; overflow:hidden; pointer-events:none; }
   .gsc-winner-card { border:2px solid #B08D57; background:linear-gradient(180deg, rgba(176,141,87,0.14), rgba(176,141,87,0.03)); }
   @keyframes gsc-accolade-pop { 0% { transform:translateX(-50%) scale(0.7); opacity:0; } 15% { transform:translateX(-50%) scale(1.08); opacity:1; } 25% { transform:translateX(-50%) scale(1); opacity:1; } 85% { transform:translateX(-50%) scale(1); opacity:1; } 100% { transform:translateX(-50%) scale(0.9); opacity:0; } }
   .gsc-accolade { position:fixed; top:calc(70px + env(safe-area-inset-top)); left:50%; z-index:40; background:#1B4332; color:#F3EFE0; border:2px solid #B08D57; border-radius:16px; padding:12px 22px; text-align:center; box-shadow:0 6px 20px rgba(0,0,0,0.3); animation: gsc-accolade-pop 2s ease-out both; pointer-events:none; }
-  .gsc-navitem { flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; padding:8px 2px; border-radius:10px; cursor:pointer; border:none; background:none; touch-action:manipulation; min-height:44px; }
-  .gsc-navitem-label { font-size:10px; font-weight:600; letter-spacing:0.2px; }
-  .gsc-body-tabbed { padding-bottom:calc(96px + env(safe-area-inset-bottom)); }
   .gsc-modal-row > * { flex:1; }
 `;
 
@@ -5281,15 +5277,16 @@ export default function GolfScorecard() {
     return slots;
   }
 
-  // The one game logged-out users can actually play - every other game
-  // stays visible everywhere (home tiles, Games page, wizards) but shows
-  // as locked, tapping through to login/create-account instead of
-  // starting the round. This is deliberate: seeing what's locked (and
-  // why) is meant to sell the value of creating an account, not just
-  // gate access silently.
-  const FREE_GAME_KEY = "swami";
+  // Every game format now requires an account to start (or Quick Start) a
+  // round or tournament - there's no longer a free, playable-without-login
+  // game. The only thing a logged-out person can do is join an existing
+  // round or tournament via its code. Every game still stays visible
+  // everywhere (home tiles, Games page, wizards) but shows as locked,
+  // tapping through to login/create-account instead of starting the
+  // round - seeing what's locked (and why) is meant to sell the value of
+  // creating an account, not just gate access silently.
   function isGameLocked(gameKey) {
-    return !session && gameKey !== FREE_GAME_KEY;
+    return !session;
   }
   function handleLockedGameTap(gameKey) {
     const name = (GAMES[gameKey] && GAMES[gameKey].name) || "this game";
@@ -7701,6 +7698,10 @@ export default function GolfScorecard() {
   // own normal defaults, exactly as if someone had gone through the full
   // setup screen and changed nothing beyond those three things.
   function startQuickStart() {
+    if (isGameLocked("swami")) {
+      handleLockedGameTap("swami");
+      return;
+    }
     setActiveTournament(null);
     setGameKey("swami");
     setCfg(withProfileVenmo({ ...GAMES.swami.defaults }));
@@ -11094,7 +11095,7 @@ function computeMatchPlayResult(round, computed) {
             overflow: "hidden",
           }}
         >
-          {NAV_ITEMS.map((item) => {
+          {HAMBURGER_MENU_ITEMS.map((item) => {
             const Icon = item.icon;
             const active = screen === item.key;
             return (
@@ -11307,46 +11308,20 @@ function computeMatchPlayResult(round, computed) {
     );
   }
 
-  const NAV_ITEMS = [
+  // The hamburger menu's own item list. The bottom tab bar (which used to
+  // have its own separate NAV_ITEMS list + BottomNav component) has been
+  // removed in favor of navigating entirely through this menu - the
+  // original bottom-nav code is preserved in ARCHIVED-BOTTOM-NAV.md,
+  // delivered alongside this file, with exact restoration instructions if
+  // it's ever wanted back.
+  const HAMBURGER_MENU_ITEMS = [
     { key: "home", label: "Home", icon: HomeIcon },
+    { key: "games", label: "Games", icon: FlagIcon },
     { key: "groupsTab", label: "Groups", icon: GroupsIcon },
     { key: "statsTab", label: "Stats", icon: TrophyIcon },
     { key: "profileTab", label: "Profile", icon: UserIcon },
     { key: "libraryTab", label: "Library", icon: LibraryIcon },
   ];
-
-  // Persistent bottom tab bar - only rendered on the five top-level "tab"
-  // screens (see NAV_ITEMS), never on focused sub-flows like Setup or the
-  // active scorecard, matching standard mobile tab-bar conventions.
-  function BottomNav() {
-    return (
-      <div className="gsc-navbar">
-        {NAV_ITEMS.map((item) => {
-          const Icon = item.icon;
-          const active = screen === item.key;
-          return (
-            <button key={item.key} className="gsc-navitem" onClick={() => goToScreen(item.key)}>
-              <span
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: 34,
-                  height: 26,
-                  borderRadius: 999,
-                  background: active ? "#B08D57" : "transparent",
-                  transition: "background 0.15s ease",
-                }}
-              >
-                <Icon size={19} color={active ? "#1B4332" : "#F3EFE0"} strokeWidth={active ? 2.4 : 2} />
-              </span>
-              <span className="gsc-navitem-label" style={{ color: "#F3EFE0", fontWeight: active ? 700 : 600 }}>{item.label}</span>
-            </button>
-          );
-        })}
-      </div>
-    );
-  }
 
   // A short, tasteful CSS-only fireworks burst for the round-complete
   // celebration - a handful of bursts, each a ring of small particles that
@@ -11404,7 +11379,7 @@ function computeMatchPlayResult(round, computed) {
       <div className="gsc">
         <style>{STYLE}</style>
         <TopIconRow />
-        <div className="gsc-body gsc-body-tabbed">
+        <div className="gsc-body">
           <TitleStrip
             title={<><span style={{ fontSize: 23 }}>RipScore Golf</span><div style={{ fontSize: 11, fontWeight: 400, opacity: 0.75, letterSpacing: "0.5px", textTransform: "uppercase", marginTop: 2, fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>Your crew. Your leaderboard.</div></>}
             sub=""
@@ -11519,7 +11494,6 @@ function computeMatchPlayResult(round, computed) {
           </div>
           {!session && homeIntroExpanded && (
             <div style={{ fontSize: 12, color: "#8a8a80", margin: "-8px 0 16px" }}>
-              No account needed to play, create one anytime to access premium features.
               <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 10 }} onClick={() => { setAuthErr(""); goToScreen("login"); }}>
                 Log In or Create Account
               </button>
@@ -11564,6 +11538,13 @@ function computeMatchPlayResult(round, computed) {
               <span style={{ fontSize: 18 }}>{"\u26A1"}</span>
               <div style={{ fontWeight: 800, fontSize: 16, color: "#A42E2D" }}>Quick Start a New Round</div>
             </div>
+            {isGameLocked("swami") && (
+              <div style={{ marginTop: 6 }}>
+                <span style={{ fontSize: 11, fontWeight: 700, color: "#fff", background: "#8a6a2f", padding: "2px 8px", borderRadius: 20, display: "inline-block" }}>
+                  {"\u{1F512}"} Log in to play
+                </span>
+              </div>
+            )}
             <div style={{ fontSize: 13, color: "#4b4b45", marginTop: 3 }}>
               Just want to track scores today? Start here.
             </div>
@@ -11694,7 +11675,6 @@ function computeMatchPlayResult(round, computed) {
         {RulesModal()}
         {WhyPlayModal()}
         {QuickInfoModal()}
-        <BottomNav />
       </div>
     );
   }
@@ -11704,7 +11684,7 @@ function computeMatchPlayResult(round, computed) {
       <div className="gsc">
         <style>{STYLE}</style>
         <TopIconRow />
-        <div className="gsc-body gsc-body-tabbed">
+        <div className="gsc-body">
           <TitleStrip title={<span style={{ fontSize: 23 }}>Stats</span>} sub="Your RipScore Index, history & leaderboards" />
           {!session && (
             <div className="gsc-card" style={{ textAlign: "center", padding: "28px 20px" }}>
@@ -12009,7 +11989,6 @@ function computeMatchPlayResult(round, computed) {
             </div>
           )}
         </div>
-        <BottomNav />
         {DeleteHistoryConfirmModal()}
       </div>
     );
@@ -12021,7 +12000,7 @@ function computeMatchPlayResult(round, computed) {
       <div className="gsc">
         <style>{STYLE}</style>
         <TopIconRow />
-        <div className="gsc-body gsc-body-tabbed">
+        <div className="gsc-body">
           <TitleStrip title={<span style={{ fontSize: 23 }}>Profile</span>} sub="Your account" />
           {authLoading ? (
             <div className="gsc-card" style={{ textAlign: "center", padding: "24px" }}>
@@ -12214,7 +12193,6 @@ function computeMatchPlayResult(round, computed) {
             </div>
           )}
         </div>
-        <BottomNav />
       </div>
     );
   }
@@ -12224,7 +12202,7 @@ function computeMatchPlayResult(round, computed) {
       <div className="gsc">
         <style>{STYLE}</style>
         <TopIconRow />
-        <div className="gsc-body gsc-body-tabbed">
+        <div className="gsc-body">
           <TitleStrip title={<span style={{ fontSize: 23 }}>Groups</span>} sub="Play together, compete together" />
           {!session && (
             <div className="gsc-card" style={{ textAlign: "center", padding: "28px 20px" }}>
@@ -12780,7 +12758,6 @@ function computeMatchPlayResult(round, computed) {
         {ReplayRoundModal()}
         {HeadToHeadModal()}
         {YearlyRecapModal()}
-        <BottomNav />
       </div>
     );
   }
@@ -12790,21 +12767,8 @@ function computeMatchPlayResult(round, computed) {
       <div className="gsc">
         <style>{STYLE}</style>
         <TopIconRow />
-        <div className="gsc-body gsc-body-tabbed">
+        <div className="gsc-body">
           <TitleStrip title={<span style={{ fontSize: 23 }}>Library</span>} sub="Games & about this app" />
-
-          <div className="gsc-card" style={{ cursor: "pointer", background: "#FDF6E9", border: "2px solid #B08D57" }} onClick={() => goToScreen("gamesLibraryDetail")}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
-              <span style={{ fontSize: 16 }}>{"\u{1F4D6}"}</span>
-              <div style={{ fontWeight: 800, fontSize: 16, color: "#8a6a2f" }}>Game Format Library</div>
-            </div>
-            <div style={{ fontSize: 13, color: "#4b4b45" }}>
-              Learn about all the game formats available in RipScore, and start a new round or tournament.
-            </div>
-            <button className="gsc-link" style={{ marginTop: 8, fontSize: 12 }} onClick={() => goToScreen("gamesLibraryDetail")}>
-              Read more
-            </button>
-          </div>
 
           <div className="gsc-card" style={{ cursor: "pointer", background: "#FDF6E9", border: "2px solid #B08D57" }} onClick={() => goToScreen("ripscoreIndexInfo")}>
             <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
@@ -12871,57 +12835,55 @@ function computeMatchPlayResult(round, computed) {
             </button>
           </div>
         </div>
-        <BottomNav />
       </div>
     );
   }
 
-  if (screen === "gamesLibraryDetail") {
+  if (screen === "games") {
     return (
       <div className="gsc">
         <style>{STYLE}</style>
-        <Header title="Game Format Library" sub="Learn about the game formats" onBack={() => goBack("libraryTab")} />
+        <Header title="Games" sub="Start, join, or learn a format" onBack={() => goBack("home")} />
         <div className="gsc-body">
-          {activeRound && !activeRound.tournamentId && !isRoundDone(activeRound) && (
-            <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <span style={{ fontSize: 16 }}>{"\u23F3"}</span>
-                <div style={{ fontWeight: 800, fontSize: 15, color: "#8a6a2f" }}>Round in progress</div>
-              </div>
-              <div style={{ fontWeight: 700, fontSize: 16, marginTop: 2 }}>{activeRound.name}</div>
-              <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 2 }}>
-                {GAMES[activeRound.game].name} - {activeRound.date}{activeRound.course ? " - " + activeRound.course : ""}
-              </div>
-              <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
-                <button className="gsc-btn gsc-btn-primary" style={{ flex: 1 }} onClick={resumeActiveRound}>Continue round</button>
-                <button className="gsc-btn gsc-btn-outline" onClick={discardActiveRound}>Discard</button>
-              </div>
+          <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+              <span style={{ fontSize: 18 }}>{"\u26F3"}</span>
+              <div style={{ fontWeight: 800, fontSize: 17, color: "#8a6a2f" }}>Join Existing Round or Group</div>
             </div>
-          )}
+            <div className="gsc-row">
+              <input className="gsc-input gsc-mono" id="join-code-games" name="join-code-games" autoComplete="off" placeholder="ENTER CODE HERE" value={joinCode} onChange={(e) => { setJoinCode(e.target.value.toUpperCase()); setJoinCodeGroupSuccess(""); }} maxLength={6} />
+              <button className="gsc-btn gsc-btn-primary" style={{ flex: "0 0 auto" }} disabled={busy || !joinCode} onClick={() => joinRoundOrTournament(joinCode)}>
+                Join
+              </button>
+            </div>
+            {err && <div style={{ color: "#A42E2D", fontSize: 13, marginTop: 8 }}>{err}</div>}
+            {joinCodeGroupSuccess && <div style={{ color: "#3F6B54", fontWeight: 700, fontSize: 13, marginTop: 8 }}>{"\u2713"} {joinCodeGroupSuccess}</div>}
+            {recentCodes.length > 0 && (
+              <div style={{ marginTop: 14 }}>
+                <div className="gsc-label">Recent rounds this session</div>
+                {recentCodes.map((c) => (
+                  <div key={c.code} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #eee6cf" }}>
+                    <div>
+                      <div style={{ fontWeight: 700, fontSize: 14 }}>{c.label}</div>
+                      <div className="gsc-mono" style={{ fontSize: 12, color: "#6b6b63" }}>{c.code}</div>
+                    </div>
+                    <button className="gsc-btn gsc-btn-outline" onClick={() => loadRound(c.code)}>Open</button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
 
-          {lastTournament && (
-            <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <span style={{ fontSize: 16 }}>{"\u{1F3C6}"}</span>
-                <div style={{ fontWeight: 800, fontSize: 15, color: "#8a6a2f" }}>Tournament in progress</div>
+          <div className="gsc-card gsc-winner-card" style={{ cursor: "pointer" }} onClick={startWizard}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: 16 }}>{"\u{1F9D9}"} Not sure which format to pick?</div>
               </div>
-              <div style={{ fontWeight: 700, fontSize: 16, marginTop: 2 }}>{lastTournament.name}</div>
-              <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
-                <button className="gsc-btn gsc-btn-primary" style={{ flex: 1 }} onClick={() => openTournamentBoard(lastTournament.id)}>Continue tournament</button>
-                <button className="gsc-btn gsc-btn-outline" onClick={discardTournament}>Discard</button>
-              </div>
-              {isTournamentOrganizer(lastTournament) && (
-                <button
-                  className="gsc-link"
-                  style={{ marginTop: 10, fontSize: 12 }}
-                  disabled={tournamentBusy}
-                  onClick={() => addFoursomeToTournamentId(lastTournament.id)}
-                >
-                  {lastTournament.game && MATCH_PLAY_GAMES.includes(lastTournament.game) ? "Add a match" : "Add a foursome"}
-                </button>
-              )}
             </div>
-          )}
+            <button className="gsc-btn gsc-btn-gold" style={{ width: "100%", marginTop: 10 }} onClick={startWizard}>
+              Start the Game Wizard
+            </button>
+          </div>
 
           <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
             <div className="gsc-label" style={{ marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Individual Game Formats</div>
@@ -12988,7 +12950,7 @@ function computeMatchPlayResult(round, computed) {
             <div className="gsc-label" style={{ marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Team Game Formats</div>
             <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>2 vs 2</div>
             <div style={{ display: "flex", overflowX: "auto", gap: 10, paddingBottom: 6, WebkitOverflowScrolling: "touch" }}>
-            {["teamstrokes", "ponto", "matchplayfourball", "teamputts", "beachside", "seabluffe", "moonlightwolf", "vegas", "teamoceans11"]
+            {["teamstrokes", "ponto", "matchplayfourball", "teamputts", "beachside", "seabluffe", "teamoceans11", "vegas", "moonlightwolf"]
               .map((key) => [key, GAMES[key]])
               .map(([key, g]) => {
                 const locked = isGameLocked(key);
@@ -13249,7 +13211,7 @@ function computeMatchPlayResult(round, computed) {
 
               <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>{"\u{1F517}"} Join a Round Without Downloading Anything</p>
               <p style={{ margin: "0 0 14px" }}>
-                Start a round and share a simple code. Anyone can join instantly from a browser - no download required to play along. Individual Stroke Play is playable without an account, as is joining an existing round or tournament with a share code; every other format, along with GPS, satellite hole views, Side Games, stats, the RipScore Index, and groups, is unlocked with an account. Everyone sees the same live scorecard update in real time.
+                Start a round and share a simple code. Anyone can join instantly from a browser - no download required to play along. Joining an existing round or tournament with a share code is free to do without an account; starting a new round or tournament, in any game format, along with GPS, satellite hole views, Side Games, stats, the RipScore Index, and groups, requires a RipScore account. Everyone sees the same live scorecard update in real time.
               </p>
 
               <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>{"\u{1F4CD}"} Live Distance to the Green</p>
@@ -13478,7 +13440,7 @@ function computeMatchPlayResult(round, computed) {
 
               <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>Accounts and Share Codes</p>
               <p style={{ margin: "0 0 14px" }}>
-                Individual Stroke Play is free to play without creating an account, as is joining an existing round or tournament with a share code. Every other game format, along with GPS, satellite hole views, Side Games, stats, the RipScore Index, and groups, requires a RipScore account. Once a round or tournament is created, it's accessed using a share code - anyone with that code can view or enter scores for it, regardless of whether they're logged in, so treat your codes the way you'd treat access to a shared document, and only share them with people you actually want in your group.
+                Joining an existing round or tournament with a share code is free to do without creating an account. Starting a new round or tournament, in any game format, along with GPS, satellite hole views, Side Games, stats, the RipScore Index, and groups, requires a RipScore account. Once a round or tournament is created, it's accessed using a share code - anyone with that code can view or enter scores for it, regardless of whether they're logged in, so treat your codes the way you'd treat access to a shared document, and only share them with people you actually want in your group.
               </p>
 
               <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>Your Account</p>
