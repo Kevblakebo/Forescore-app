@@ -11519,7 +11519,7 @@ function computeMatchPlayResult(round, computed) {
           </div>
           {!session && homeIntroExpanded && (
             <div style={{ fontSize: 12, color: "#8a8a80", margin: "-8px 0 16px" }}>
-              No account needed to play, create one anytime to access premium features including all game formats, GPS, Side Games, course info, stats, your RipScore Index, groups, leaderboards, and prior saved rounds.
+              No account needed to play, create one anytime to access premium features.
               <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 10 }} onClick={() => { setAuthErr(""); goToScreen("login"); }}>
                 Log In or Create Account
               </button>
