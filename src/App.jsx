@@ -11483,9 +11483,6 @@ function computeMatchPlayResult(round, computed) {
                       <div style={{ marginBottom: 4 }}>{"\u{1F4CB}"} Finished rounds saved</div>
                       <div style={{ marginBottom: 4 }}>{"\u{1F4C8}"} Running stats and history</div>
                     </div>
-                    <div style={{ marginTop: 8 }}>
-                      Whether it's a casual Saturday game or a special group tournament, RipScore keeps the math out of your golf - so all that's left is golf.
-                    </div>
                   </>
                 )}
               </>
