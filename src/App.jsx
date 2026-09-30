@@ -8760,7 +8760,20 @@ export default function GolfScorecard() {
       setEditSettingsErr("This round's data looks corrupted.");
       return;
     }
-    r.cfg = { ...r.cfg, ...editSettingsCfg };
+    // maxOver and mulliganSegment need the same string-to-number
+    // normalization the initial round setup already does (see cleanCfg
+    // above) - this modal's inputs are plain text fields that save
+    // e.target.value directly, so without this, a value like "3" gets
+    // stored as the string "3" and later added directly to a number
+    // elsewhere (e.g. parH + cfg.maxOver, or mulliganSegment + bonusForSeg)
+    // - which in JavaScript concatenates instead of adding (so entering 3
+    // could show up as "30" rather than being added to make 3).
+    const normalizedEditSettingsCfg = {
+      ...editSettingsCfg,
+      maxOver: editSettingsCfg.maxOver === "" || editSettingsCfg.maxOver == null || isNaN(Number(editSettingsCfg.maxOver)) ? null : Number(editSettingsCfg.maxOver),
+      mulliganSegment: editSettingsCfg.mulliganSegment === "" || editSettingsCfg.mulliganSegment == null || isNaN(Number(editSettingsCfg.mulliganSegment)) ? 0 : Number(editSettingsCfg.mulliganSegment),
+    };
+    r.cfg = { ...r.cfg, ...normalizedEditSettingsCfg };
     const w = await storageSet(`golfround:${editSettingsId}`, JSON.stringify(r), true);
     if (!w.ok) {
       setEditSettingsBusy(false);
@@ -17786,7 +17799,7 @@ function computeMatchPlayResult(round, computed) {
               <button className="gsc-btn gsc-btn-outline" disabled={holeIdx === 0} onClick={() => requestHoleChange(holeIdx - 1, g)}>Prev</button>
               <div style={{ textAlign: "center" }}>
                 <div className="gsc-hole-big">Hole {holeIdx + 1}</div>
-                <div className="gsc-par-badge">Par {parH}{round.cfg.doubleParMax ? ` - max ${parH * 2}` : round.cfg.maxOver != null ? ` - max ${parH + round.cfg.maxOver}` : ""}</div>
+                <div className="gsc-par-badge">Par {parH}{round.cfg.doubleParMax ? ` - max ${parH * 2}` : round.cfg.maxOver != null ? ` - max ${parH + Number(round.cfg.maxOver)}` : ""}</div>
                 {(() => {
                   const yd = (round.yardage || [])[holeIdx];
                   const si = (round.strokeIndex || [])[holeIdx];
@@ -18079,7 +18092,7 @@ function computeMatchPlayResult(round, computed) {
               const cls = TEAM_CLASS[teamIdxInHole % 4];
               const e = hs[i] || {};
               const bonusForSeg = round.bonusMulligans && round.bonusMulligans[i] ? round.bonusMulligans[i][mulSeg] || 0 : 0;
-              const mulLeft = g.hasScore ? (round.cfg.mulliganSegment ?? 1) + bonusForSeg - computed.mulligansUsed[i][mulSeg] : null;
+              const mulLeft = g.hasScore ? (round.cfg.mulliganSegment != null && round.cfg.mulliganSegment !== "" ? Number(round.cfg.mulliganSegment) : 1) + bonusForSeg - computed.mulligansUsed[i][mulSeg] : null;
               return (
                 <div key={i} className={`gsc-player-row ${cls}`}>
                   <div className="gsc-player-name">
