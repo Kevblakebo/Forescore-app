@@ -11119,16 +11119,16 @@ function computeMatchPlayResult(round, computed) {
       "\u{1F9EE} Easy scoring without the math",
       "\u{1F465} Set Up Your Group Once",
       "\u26F3 24 Game Formats + Side Games",
-      "\u{1F3B2} Side Games, Right From the Scorecard",
-      "\u{1F517} Join a Round Without Downloading Anything",
+      "\u{1F517} Join a Round Without Downloading",
       "\u{1F4CD} Live GPS Distance to the Green",
       "\u{1F6F0}\u{FE0F} See the Hole From Above",
       "\u{1F3CC}\u{FE0F} Optional Handicapping, Done Right",
-      "\u26F3 RipScore Index",
+      "\u26F3 RipScore Index and GHIN link",
       "\u{1F4CA} Leaderboards Just for Your Groups",
       "\u{1F3AC} A Recap Written for Your Round",
       "\u{1F4B5} Settle Up Without the Argument",
-      "\u{1F4CB} Prior Saved Rounds to Go Back To",
+      "\u{1F4CB} Finished Rounds to Go Back To",
+      "\u{1F4C8} Running Stats and History",
     ];
     return (
       <>
