@@ -1428,59 +1428,36 @@ async function playHoleChangeClick() {
   }
 }
 
-// Short, synthesized putter-strike "knock" for every stroke/putt stepper
-// tap - reuses the same shared AudioContext as playHoleChangeClick above,
-// but stays brief rather than the longer golf audio clip, since this
-// fires far more often (every single +/- tap while scoring a hole).
-// Modeled on the actual sound of a putter striking a ball rather than a
-// generic click or door-knock thud: a bright, fast-decaying "ping" tone
-// (the dominant sound of the contact) with a quieter, slightly higher
-// overtone layered on top for metallic shimmer, a lower tone underneath
-// for a bit of body/weight, and a very brief burst of filtered noise
-// right at the very start for the sharp initial crack of contact.
+// Short, synthesized click for every stroke/putt stepper tap - reuses the
+// same shared AudioContext as playHoleChangeClick above, but stays a
+// brief noise burst rather than the longer golf audio clip, since this
+// fires far more often (every single +/- tap while scoring a hole). Same
+// basic structure as the very first version of this sound, but swaps the
+// highpass filter (which only let very high, hissy frequencies through,
+// making it sound thin and tinny) for a bandpass centered lower in the
+// midrange - keeps it a simple, crisp click, just warmer.
 function playScoreChangeClick() {
   try {
     const ctx = holeChangeAudioCtx || (holeChangeAudioCtx = new (window.AudioContext || window.webkitAudioContext)());
     const now = ctx.currentTime;
-
-    const addTone = (freq, gainPeak, duration) => {
-      const osc = ctx.createOscillator();
-      osc.type = "sine";
-      osc.frequency.setValueAtTime(freq, now);
-      const gain = ctx.createGain();
-      gain.gain.setValueAtTime(gainPeak, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(now);
-      osc.stop(now + duration);
-    };
-    // Main ping (the dominant pitch of the contact) and a quieter, faster
-    // higher overtone on top of it for a touch of metallic shimmer right
-    // at the attack, plus a lower tone for body/weight underneath.
-    addTone(1150, 0.3, 0.05);
-    addTone(1700, 0.12, 0.022);
-    addTone(480, 0.2, 0.045);
-
-    // A very brief crack of noise at the very start of contact.
-    const crackDuration = 0.008;
-    const buffer = ctx.createBuffer(1, Math.max(1, Math.floor(ctx.sampleRate * crackDuration)), ctx.sampleRate);
+    const duration = 0.03;
+    const buffer = ctx.createBuffer(1, Math.max(1, Math.floor(ctx.sampleRate * duration)), ctx.sampleRate);
     const data = buffer.getChannelData(0);
     for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
-    const noiseSource = ctx.createBufferSource();
-    noiseSource.buffer = buffer;
-    const noiseFilter = ctx.createBiquadFilter();
-    noiseFilter.type = "bandpass";
-    noiseFilter.frequency.value = 2600;
-    noiseFilter.Q.value = 0.8;
-    const noiseGain = ctx.createGain();
-    noiseGain.gain.setValueAtTime(0.15, now);
-    noiseGain.gain.exponentialRampToValueAtTime(0.001, now + crackDuration);
-    noiseSource.connect(noiseFilter);
-    noiseFilter.connect(noiseGain);
-    noiseGain.connect(ctx.destination);
-    noiseSource.start(now);
-    noiseSource.stop(now + crackDuration);
+    const source = ctx.createBufferSource();
+    source.buffer = buffer;
+    const filter = ctx.createBiquadFilter();
+    filter.type = "bandpass";
+    filter.frequency.value = 1200;
+    filter.Q.value = 1.2;
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.22, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+    source.connect(filter);
+    filter.connect(gain);
+    gain.connect(ctx.destination);
+    source.start(now);
+    source.stop(now + duration);
   } catch (e) {
     // Silently ignore - sound is a nice-to-have, never worth surfacing an error over.
   }
