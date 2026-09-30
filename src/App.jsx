@@ -13228,7 +13228,7 @@ function computeMatchPlayResult(round, computed) {
 
               <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>{"\u{1F517}"} Join a Round Without an Account</p>
               <p style={{ margin: "0 0 14px" }}>
-                Start a round and share a simple code. Anyone can join instantly from a browser - no download required to play along. Joining an existing round or tournament with a share code is free to do without an account; starting a new round or tournament, in any game format, along with GPS, satellite hole views, Side Games, stats, the RipScore Index, and groups, requires a RipScore account. Everyone sees the same live scorecard update in real time.
+                Start a round and share a simple code. Anyone can join instantly from a browser - no download required to play along. Joining an existing round or tournament with a share code doesn't require an account; starting a new round or tournament, in any game format, along with GPS, satellite hole views, Side Games, stats, the RipScore Index, and groups, requires a RipScore account. Everyone sees the same live scorecard update in real time.
               </p>
 
               <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>{"\u{1F4CD}"} Live Distance to the Green</p>
@@ -13457,7 +13457,7 @@ function computeMatchPlayResult(round, computed) {
 
               <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>Accounts and Share Codes</p>
               <p style={{ margin: "0 0 14px" }}>
-                Joining an existing round or tournament with a share code is free to do without creating an account. Starting a new round or tournament, in any game format, along with GPS, satellite hole views, Side Games, stats, the RipScore Index, and groups, requires a RipScore account. Once a round or tournament is created, it's accessed using a share code - anyone with that code can view or enter scores for it, regardless of whether they're logged in, so treat your codes the way you'd treat access to a shared document, and only share them with people you actually want in your group.
+                Joining an existing round or tournament with a share code doesn't require creating an account. Starting a new round or tournament, in any game format, along with GPS, satellite hole views, Side Games, stats, the RipScore Index, and groups, requires a RipScore account. Once a round or tournament is created, it's accessed using a share code - anyone with that code can view or enter scores for it, regardless of whether they're logged in, so treat your codes the way you'd treat access to a shared document, and only share them with people you actually want in your group.
               </p>
 
               <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>Your Account</p>
