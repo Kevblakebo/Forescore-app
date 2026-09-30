@@ -1428,51 +1428,59 @@ async function playHoleChangeClick() {
   }
 }
 
-// Short, synthesized tap/knock for every stroke/putt stepper tap - reuses
-// the same shared AudioContext as playHoleChangeClick above, but stays
-// brief rather than the longer golf audio clip, since this fires far more
-// often (every single +/- tap while scoring a hole). Deliberately tuned
-// between two earlier versions: a pure highpass noise click (too thin and
-// tinny) and a deep low-frequency thud (too heavy) - this keeps the same
-// two-layer approach (a short tonal body plus a noise-texture burst on
-// top) but pitches the tone higher for a snappier "tap" feel and keeps
-// the noise layer's filter more open than the deep-thud version, so it
-// reads as a light knock rather than either a click or a thump.
+// Short, synthesized putter-strike "knock" for every stroke/putt stepper
+// tap - reuses the same shared AudioContext as playHoleChangeClick above,
+// but stays brief rather than the longer golf audio clip, since this
+// fires far more often (every single +/- tap while scoring a hole).
+// Modeled on the actual sound of a putter striking a ball rather than a
+// generic click or door-knock thud: a bright, fast-decaying "ping" tone
+// (the dominant sound of the contact) with a quieter, slightly higher
+// overtone layered on top for metallic shimmer, a lower tone underneath
+// for a bit of body/weight, and a very brief burst of filtered noise
+// right at the very start for the sharp initial crack of contact.
 function playScoreChangeClick() {
   try {
     const ctx = holeChangeAudioCtx || (holeChangeAudioCtx = new (window.AudioContext || window.webkitAudioContext)());
     const now = ctx.currentTime;
 
-    const tapDuration = 0.04;
-    const osc = ctx.createOscillator();
-    osc.type = "sine";
-    osc.frequency.setValueAtTime(340, now);
-    osc.frequency.exponentialRampToValueAtTime(170, now + 0.035);
-    const oscGain = ctx.createGain();
-    oscGain.gain.setValueAtTime(0.4, now);
-    oscGain.gain.exponentialRampToValueAtTime(0.001, now + tapDuration);
-    osc.connect(oscGain);
-    oscGain.connect(ctx.destination);
-    osc.start(now);
-    osc.stop(now + tapDuration);
+    const addTone = (freq, gainPeak, duration) => {
+      const osc = ctx.createOscillator();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freq, now);
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(gainPeak, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + duration);
+    };
+    // Main ping (the dominant pitch of the contact) and a quieter, faster
+    // higher overtone on top of it for a touch of metallic shimmer right
+    // at the attack, plus a lower tone for body/weight underneath.
+    addTone(1150, 0.3, 0.05);
+    addTone(1700, 0.12, 0.022);
+    addTone(480, 0.2, 0.045);
 
-    const noiseDuration = 0.02;
-    const buffer = ctx.createBuffer(1, Math.max(1, Math.floor(ctx.sampleRate * noiseDuration)), ctx.sampleRate);
+    // A very brief crack of noise at the very start of contact.
+    const crackDuration = 0.008;
+    const buffer = ctx.createBuffer(1, Math.max(1, Math.floor(ctx.sampleRate * crackDuration)), ctx.sampleRate);
     const data = buffer.getChannelData(0);
     for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
     const noiseSource = ctx.createBufferSource();
     noiseSource.buffer = buffer;
     const noiseFilter = ctx.createBiquadFilter();
-    noiseFilter.type = "lowpass";
-    noiseFilter.frequency.value = 1800;
+    noiseFilter.type = "bandpass";
+    noiseFilter.frequency.value = 2600;
+    noiseFilter.Q.value = 0.8;
     const noiseGain = ctx.createGain();
-    noiseGain.gain.setValueAtTime(0.2, now);
-    noiseGain.gain.exponentialRampToValueAtTime(0.001, now + noiseDuration);
+    noiseGain.gain.setValueAtTime(0.15, now);
+    noiseGain.gain.exponentialRampToValueAtTime(0.001, now + crackDuration);
     noiseSource.connect(noiseFilter);
     noiseFilter.connect(noiseGain);
     noiseGain.connect(ctx.destination);
     noiseSource.start(now);
-    noiseSource.stop(now + noiseDuration);
+    noiseSource.stop(now + crackDuration);
   } catch (e) {
     // Silently ignore - sound is a nice-to-have, never worth surfacing an error over.
   }
