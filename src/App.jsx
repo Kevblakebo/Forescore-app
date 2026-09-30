@@ -11176,7 +11176,7 @@ function computeMatchPlayResult(round, computed) {
       "\u{1F9EE} Easy scoring without the math",
       "\u{1F465} Set Up Your Group Once",
       "\u26F3 24 Game Formats + Side Games",
-      "\u{1F517} Join a Round Without Downloading",
+      "\u{1F517} Join a Round Without an Account",
       "\u{1F4CD} Live GPS Distance to the Green",
       "\u{1F6F0}\u{FE0F} See the Hole From Above",
       "\u{1F3CC}\u{FE0F} Optional Handicapping, Done Right",
@@ -11444,7 +11444,7 @@ function computeMatchPlayResult(round, computed) {
                       <div style={{ marginBottom: 4 }}>{"\u{1F9EE}"} Easy scoring without the math</div>
                       <div style={{ marginBottom: 4 }}>{"\u{1F465}"} Set Up Your Group Once</div>
                       <div style={{ marginBottom: 4 }}>{"\u26F3"} 24 Game Formats + Side Games</div>
-                      <div style={{ marginBottom: 4 }}>{"\u{1F517}"} Join a Round Without Downloading</div>
+                      <div style={{ marginBottom: 4 }}>{"\u{1F517}"} Join a Round Without an Account</div>
                       <div style={{ marginBottom: 4 }}>{"\u{1F4CD}"} Live GPS Distance to the Green</div>
                       <div style={{ marginBottom: 4 }}>{"\u{1F6F0}\u{FE0F}"} See the Hole From Above</div>
                       <div style={{ marginBottom: 4 }}>{"\u{1F3CC}\u{FE0F}"} Optional Handicapping, Done Right</div>
@@ -13210,7 +13210,7 @@ function computeMatchPlayResult(round, computed) {
                 Closest to the Pin, Sandies, Barkies, Greenies, and more - run alongside whatever format you're already playing. Track who's owed what hole by hole, and settle up automatically at the end of the round.
               </p>
 
-              <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>{"\u{1F517}"} Join a Round Without Downloading Anything</p>
+              <p style={{ fontWeight: 700, color: "#1B4332", margin: "0 0 6px" }}>{"\u{1F517}"} Join a Round Without an Account</p>
               <p style={{ margin: "0 0 14px" }}>
                 Start a round and share a simple code. Anyone can join instantly from a browser - no download required to play along. Joining an existing round or tournament with a share code is free to do without an account; starting a new round or tournament, in any game format, along with GPS, satellite hole views, Side Games, stats, the RipScore Index, and groups, requires a RipScore account. Everyone sees the same live scorecard update in real time.
               </p>
