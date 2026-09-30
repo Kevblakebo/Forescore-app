@@ -42,7 +42,7 @@ const STYLE = `
   .gsc-sub { font-size:11px; opacity:0.75; margin-top:2px; letter-spacing:0.5px; text-transform:uppercase; }
   .gsc-topiconrow { position:fixed; top:0; left:0; right:0; display:flex; align-items:center; justify-content:space-between; padding:calc(14px + env(safe-area-inset-top)) 18px 10px; z-index:15; pointer-events:none; }
   .gsc-topiconrow > * { pointer-events:auto; }
-  .gsc-topiconrow-chip { display:flex; align-items:center; justify-content:center; width:48px; height:48px; border-radius:999px; background:#1B4332; border:none; padding:0; cursor:pointer; touch-action:manipulation; }
+  .gsc-topiconrow-chip { display:flex; align-items:center; justify-content:center; width:54px; height:54px; border-radius:999px; background:#1B4332; border:none; padding:0; cursor:pointer; touch-action:manipulation; }
   .gsc-titlestrip { background:#1B4332; color:#F3EFE0; padding:calc(78px + env(safe-area-inset-top)) 18px 18px; margin:-16px -16px 16px; }
   .gsc-btn { border:none; border-radius:8px; padding:9px 14px; font-size:14px; font-weight:600; cursor:pointer; min-height:44px; touch-action:manipulation; }
   .gsc-btn-primary { background:#A42E2D; color:#F3EFE0; }
@@ -11227,7 +11227,7 @@ function computeMatchPlayResult(round, computed) {
       <div className="gsc-topiconrow">
         <div style={{ position: "relative", display: "flex" }}>
           <button className="gsc-topiconrow-chip" onClick={() => setNavMenuOpen((v) => !v)} aria-label="Open menu">
-            <MenuIcon size={26} color="#F3EFE0" strokeWidth={2.2} />
+            <MenuIcon size={30} color="#F3EFE0" strokeWidth={2.2} />
           </button>
           {navMenuOpen && <NavMenuDropdown />}
         </div>
@@ -11240,13 +11240,13 @@ function computeMatchPlayResult(round, computed) {
             <img
               src={LOGO_DATA_URI}
               alt="RipScore logo"
-              style={{ width: 62, height: "auto", objectFit: "contain", pointerEvents: "none" }}
+              style={{ width: 70, height: "auto", objectFit: "contain", pointerEvents: "none" }}
             />
           </button>
           {logoInfoOpen && <LogoInfoDropdown />}
         </div>
         <button className="gsc-topiconrow-chip" onClick={() => goToScreen(screen === "profileTab" ? "home" : "profileTab")} aria-label="Profile">
-          <UserIcon size={26} color="#F3EFE0" strokeWidth={2.2} />
+          <UserIcon size={30} color="#F3EFE0" strokeWidth={2.2} />
         </button>
       </div>
     );
