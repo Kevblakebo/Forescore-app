@@ -18143,7 +18143,8 @@ function computeMatchPlayResult(round, computed) {
                       ))}
                     </div>
                   )}
-                  <div style={{ display: "flex", gap: 22, marginTop: 8, flexWrap: "nowrap" }}>
+                  <div style={{ display: "flex", gap: 22, marginTop: 8, flexWrap: "wrap" }}>
+                    <div style={{ display: "flex", gap: 22, flexWrap: "nowrap" }}>
                     {g.hasScore && (
                       <div>
                         <div style={{ fontSize: 11, color: "#6b6b63", marginBottom: 3, textAlign: "center" }}>TOTAL STROKES</div>
@@ -18223,6 +18224,7 @@ function computeMatchPlayResult(round, computed) {
                         )}
                       </div>
                     )}
+                    </div>
                     {mulLeft !== null && (() => {
                       const noLimitSet = (round.cfg.mulliganSegment || 0) === 0;
                       const usedSoFar = computed.mulligansUsed[i][mulSeg];
