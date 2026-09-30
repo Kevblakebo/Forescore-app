@@ -11116,15 +11116,16 @@ function computeMatchPlayResult(round, computed) {
   // inside it) is shared across all of them.
   function LogoInfoDropdown() {
     const bullets = [
+      "\u{1F9EE} Easy scoring without the math",
       "\u{1F465} Set Up Your Group Once",
-      "\u26F3 24 Game Formats + Side Games, for Every Kind of Day",
+      "\u26F3 24 Game Formats + Side Games",
       "\u{1F3B2} Side Games, Right From the Scorecard",
       "\u{1F517} Join a Round Without Downloading Anything",
       "\u{1F4CD} Live GPS Distance to the Green",
       "\u{1F6F0}\u{FE0F} See the Hole From Above",
       "\u{1F3CC}\u{FE0F} Optional Handicapping, Done Right",
       "\u26F3 RipScore Index",
-      "\u{1F4CA} A Leaderboard Just for Your Group",
+      "\u{1F4CA} Leaderboards Just for Your Groups",
       "\u{1F3AC} A Recap Written for Your Round",
       "\u{1F4B5} Settle Up Without the Argument",
       "\u{1F4CB} Prior Saved Rounds to Go Back To",
@@ -11150,9 +11151,6 @@ function computeMatchPlayResult(round, computed) {
             padding: "14px 16px",
           }}
         >
-          <div style={{ fontWeight: 800, fontSize: 14, color: "#1B4332", marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
-            <span>{"\u{1F9EE}"}</span> Easy scoring without the math
-          </div>
           {bullets.map((b, idx) => (
             <div key={idx} style={{ fontSize: 12.5, color: "#4b4b45", lineHeight: 1.5, marginBottom: idx === bullets.length - 1 ? 0 : 5 }}>
               {b}
