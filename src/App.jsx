@@ -162,6 +162,20 @@ function isRunningInNativeApp() {
   return false;
 }
 
+// App Store listing for the iOS app. Shown on the web version only
+// (never inside the native app itself), and hidden on Android devices
+// since the App Store link isn't useful there.
+const APP_STORE_URL = "https://apps.apple.com/app/id6808406365";
+function shouldShowAppStoreLink() {
+  try {
+    if (isRunningInNativeApp()) return false;
+    if (/Android/i.test(navigator.userAgent || "")) return false;
+  } catch (e) {
+    return false;
+  }
+  return true;
+}
+
 // Computes the SHA-256 hash of a string, returned as a lowercase hex
 // string. Apple Sign-In requires the nonce sent to Apple to be this
 // hashed form - Apple embeds whatever it's given directly into the ID
@@ -11513,6 +11527,31 @@ function computeMatchPlayResult(round, computed) {
               <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 10 }} onClick={() => { setAuthErr(""); goToScreen("login"); }}>
                 Log In or Create Account
               </button>
+            </div>
+          )}
+          {shouldShowAppStoreLink() && (
+            <div className="gsc-card" style={{ background: "#1B4332", color: "#F3EFE0", textAlign: "center", border: "none" }}>
+              <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 4 }}>Get the RipScore Golf app</div>
+              <div style={{ fontSize: 12, lineHeight: 1.45, marginBottom: 12, opacity: 0.9 }}>
+                Live shared scorecards, GPS yardage, and automatic settle-up, right in your pocket on the course.
+              </div>
+              <a
+                href={APP_STORE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: "inline-block",
+                  background: "#000",
+                  color: "#fff",
+                  textDecoration: "none",
+                  padding: "10px 22px",
+                  borderRadius: 10,
+                  fontWeight: 700,
+                  fontSize: 14,
+                }}
+              >
+                Download on the App Store
+              </a>
             </div>
           )}
           {activeRound && !activeRound.tournamentId && !isRoundDone(activeRound) && (
