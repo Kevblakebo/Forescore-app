@@ -1308,6 +1308,11 @@ const SEABLUFFE_PAIRINGS = [
   [[0, 3], [1, 2]],
 ];
 const LETTERS = ["A", "B", "C", "D"];
+// Individual formats that can be played with 1-4 players, so players can be
+// added or removed even after the round has started (Edit Players). Team
+// games, 9-Point (exactly 3), Match Play (exactly 2) and tournament
+// foursomes always keep a fixed count, so they're deliberately not here.
+const FLEXIBLE_PLAYER_GAMES = ["dstreet", "swami", "oceans11", "pontobango", "individualputts", "stableford", "quota"];
 const AVATAR_OPTIONS = [
   "\u{1F60E}", "\u{1F525}", "\u2B50", "\u{1F973}", "\u{1F3AF}", "\u{1F981}", "\u{1F43B}", "\u{1F985}", "\u{1F422}", "\u{1F41D}", "\u{1F30A}", "\u{1F335}",
   "\u{1F9B8}", "\u{1F9B9}", "\u{1F977}", "\u{1F987}", "\u{1F577}\u{FE0F}", "\u26A1", "\u{1F4A5}", "\u{1F6E1}\u{FE0F}", "\u{1F4AA}", "\u{1F680}",
@@ -5350,6 +5355,11 @@ export default function GolfScorecard() {
   const [claimSlotBusy, setClaimSlotBusy] = useState(false);
   const [claimSlotErr, setClaimSlotErr] = useState("");
   const [editFoursomePlayers, setEditFoursomePlayers] = useState([]);
+  // null = this round has a fixed player count (team games, 9-Point, Match
+  // Play, tournament foursomes), so Edit Players can only rename/relink.
+  // A number = this is a flexible individual game, so players can be added
+  // (up to 4) or removed (down to this minimum) from Edit Players.
+  const [editFoursomeMinPlayers, setEditFoursomeMinPlayers] = useState(null);
   const [editFoursomeCaptainIdxs, setEditFoursomeCaptainIdxs] = useState([]);
   const [editFoursomeErr, setEditFoursomeErr] = useState("");
   const [editFoursomeBusy, setEditFoursomeBusy] = useState(false);
@@ -6199,6 +6209,16 @@ export default function GolfScorecard() {
                 <div style={{ flex: "0 0 22px", fontWeight: 800, color: "#1B4332", paddingTop: 9 }}>{LETTERS[i] || i + 1}</div>
                 <input className="gsc-input" placeholder="Name" value={p.name} onChange={(e) => updateEditFoursomePlayerName(i, e.target.value)} />
                 <input className="gsc-input" style={{ flex: "0 0 70px" }} placeholder="HCP" value={p.hcp} onChange={(e) => updateEditFoursomePlayer(i, "hcp", e.target.value)} />
+                {editFoursomeMinPlayers != null && editFoursomePlayers.length > editFoursomeMinPlayers && (
+                  <button
+                    className="gsc-link"
+                    aria-label={`Remove player ${LETTERS[i] || i + 1}`}
+                    style={{ flex: "0 0 auto", color: "#A42E2D", fontSize: 18, padding: "0 6px" }}
+                    onClick={() => { setGroupmatePickerFor(null); removeEditFoursomePlayer(i); }}
+                  >
+                    {"✕"}
+                  </button>
+                )}
               </div>
               {session && (
                 <div style={{ padding: "4px 4px 0 30px" }}>
@@ -6252,6 +6272,11 @@ export default function GolfScorecard() {
               )}
             </div>
           ))}
+          {editFoursomeMinPlayers != null && editFoursomePlayers.length < 4 && (
+            <button className="gsc-link" style={{ fontSize: 13, marginBottom: 10 }} onClick={addEditFoursomePlayer}>
+              + Add another player
+            </button>
+          )}
           {editFoursomeIsTournament && (
             <div style={{ marginTop: 8, marginBottom: 8 }}>
               <div className="gsc-label" style={{ marginBottom: 6 }}>Who's this foursome's captain?</div>
@@ -7737,7 +7762,7 @@ export default function GolfScorecard() {
     setCfg(withProfileVenmo({ ...GAMES.swami.defaults }));
     setRoundName("");
     setRoundDate(new Date().toISOString().slice(0, 10));
-    setPlayers(freshPlayerSlots("swami", true));
+    setPlayers(freshPlayerSlots("swami", true).slice(0, 1));
     setPar(Array(18).fill(""));
     setYardage(Array(18).fill(""));
     setStrokeIndex(Array(18).fill(""));
@@ -8668,7 +8693,14 @@ export default function GolfScorecard() {
     setEditFoursomeId(id);
     setEditFoursomeIsTournament(!!roundData.tournamentId);
     setEditFoursomeName(roundData.foursomeName || roundData.name || "");
-    setEditFoursomePlayers(roundData.players.map((p) => ({ name: p.name, hcp: p.hcp, originalName: p.name, avatar: p.avatar || "", user_id: p.user_id || null })));
+    setEditFoursomePlayers(roundData.players.map((p, i) => ({ name: p.name, hcp: p.hcp, originalName: p.name, avatar: p.avatar || "", user_id: p.user_id || null, origIdx: i })));
+    setEditFoursomeMinPlayers(
+      !roundData.tournamentId && FLEXIBLE_PLAYER_GAMES.includes(roundData.game)
+        ? roundData.game === "pontobango" || roundData.game === "individualputts"
+          ? 2
+          : 1
+        : null
+    );
     setEditFoursomeCaptainIdxs(
       roundData.captainIdxs && roundData.captainIdxs.length > 0
         ? roundData.captainIdxs
@@ -8677,6 +8709,15 @@ export default function GolfScorecard() {
         : roundData.players.map((_, i) => i)
     );
     setEditFoursomeOpen(true);
+  }
+
+  function addEditFoursomePlayer() {
+    setEditFoursomePlayers((p) => (p.length >= 4 ? p : [...p, { name: "", hcp: "", originalName: "", avatar: "", user_id: null, origIdx: null }]));
+  }
+
+  function removeEditFoursomePlayer(i) {
+    setGroupmatePickerFor(null);
+    setEditFoursomePlayers((p) => (editFoursomeMinPlayers == null || p.length <= editFoursomeMinPlayers ? p : p.filter((_, idx) => idx !== i)));
   }
 
   function updateEditFoursomePlayer(i, field, val) {
@@ -8735,6 +8776,7 @@ export default function GolfScorecard() {
     // name clears them, and picking a groupmate sets fresh correct ones -
     // no need to re-derive anything by comparing names here.
     const previousUserIds = r.players.map((p) => p.user_id || null);
+    const previousPlayersSnapshot = r.players.map((p) => ({ name: p.name }));
     r.players = editFoursomePlayers.map((p, i) => {
       const trimmedName = p.name.trim() || `Player ${LETTERS[i]}`;
       return {
@@ -8744,6 +8786,44 @@ export default function GolfScorecard() {
         ...(p.user_id ? { user_id: p.user_id } : {}),
       };
     });
+    // Players were added or removed (only possible for flexible individual
+    // games): scores and bonus mulligans are keyed by player position, so
+    // re-key them to follow each remaining player to their new position -
+    // otherwise removing someone in the middle would hand their scores to
+    // whoever shifts into their slot. New players start with no scores
+    // (including on holes already played).
+    const structureChanged =
+      editFoursomeMinPlayers != null &&
+      (editFoursomePlayers.length !== previousUserIds.length || editFoursomePlayers.some((p, i) => p.origIdx !== i));
+    if (structureChanged) {
+      // Safety check: if someone else changed this round's players since
+      // this editor was opened, the saved positions no longer line up, so
+      // don't guess - ask to reopen instead of risking mixed-up scores.
+      const stillLinesUp = editFoursomePlayers.every(
+        (p) => p.origIdx == null || (previousPlayersSnapshot[p.origIdx] && previousPlayersSnapshot[p.origIdx].name === p.originalName)
+      );
+      if (!stillLinesUp) {
+        setEditFoursomeBusy(false);
+        setEditFoursomeErr("The players in this round were changed by someone else. Close this window, reopen Edit Players, and try again.");
+        return;
+      }
+      const newScores = emptyScores();
+      for (let h = 0; h < 18; h++) {
+        const oldHole = (r.scores && r.scores[h]) || {};
+        Object.keys(oldHole).forEach((k) => {
+          if (!/^\d+$/.test(k)) newScores[h][k] = oldHole[k]; // keep any non-player per-hole data as is
+        });
+        editFoursomePlayers.forEach((p, ni) => {
+          if (p.origIdx != null && oldHole[p.origIdx]) newScores[h][ni] = oldHole[p.origIdx];
+        });
+      }
+      r.scores = newScores;
+      const oldBonus = Array.isArray(r.bonusMulligans) ? r.bonusMulligans : [];
+      const newBonus = editFoursomePlayers.map((p) => (p.origIdx != null && oldBonus[p.origIdx] ? [...oldBonus[p.origIdx]] : [0, 0, 0]));
+      while (newBonus.length < 4) newBonus.push([0, 0, 0]);
+      r.bonusMulligans = newBonus;
+      r.teams = editFoursomePlayers.map((_, i) => [i]);
+    }
     if (r.tournamentId) {
       r.foursomeName = cleanName;
       r.name = cleanName + (activeTournament ? ` - ${activeTournament.name}` : "");
@@ -8765,7 +8845,7 @@ export default function GolfScorecard() {
     // saved.
     if (supabase) {
       editFoursomePlayers.forEach((p, i) => {
-        if (!p.user_id || p.user_id === previousUserIds[i]) return;
+        if (!p.user_id || p.user_id === (p.origIdx != null ? previousUserIds[p.origIdx] : null)) return;
         withJwtRetry(() =>
           supabase
             .from("user_rounds")
