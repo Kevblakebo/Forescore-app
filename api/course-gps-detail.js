@@ -10,6 +10,16 @@
 // same course.
 import { createClient } from "@supabase/supabase-js";
 
+// Verified-course overrides: course_cache.override (jsonb) holds fields you
+// have checked against the real scorecard (e.g. indexesMen, indexesWomen,
+// parsMen). They are laid over whatever golfapi.io returns, on every
+// request, whether the detail came from the cache or a fresh API call.
+// Re-fetching from golfapi.io never touches the override column.
+function applyOverride(data, override) {
+  if (!data || !override || typeof override !== "object") return data;
+  return { ...data, ...override, verifiedOverride: true };
+}
+
 const CACHE_MAX_AGE_MS = 180 * 24 * 60 * 60 * 1000; // 180 days
 
 export default async function handler(req, res) {
@@ -44,17 +54,19 @@ export default async function handler(req, res) {
   // Cache check is best-effort - if Supabase isn't reachable or isn't
   // configured, this just falls through to a normal golfapi.io call
   // rather than failing the whole request over a cache problem.
+  let override = null;
   if (supabase) {
     try {
       const { data: cached } = await supabase
         .from("course_cache")
-        .select("detail, detail_cached_at")
+        .select("detail, detail_cached_at, override")
         .eq("course_id", id)
         .maybeSingle();
+      if (cached && cached.override) override = cached.override;
       if (cached && cached.detail && cached.detail_cached_at) {
         const age = Date.now() - new Date(cached.detail_cached_at).getTime();
         if (age < CACHE_MAX_AGE_MS) {
-          return res.status(200).json(cached.detail);
+          return res.status(200).json(applyOverride(cached.detail, override));
         }
       }
     } catch (e) {
@@ -97,7 +109,7 @@ export default async function handler(req, res) {
       }
     }
 
-    return res.status(200).json(data);
+    return res.status(200).json(applyOverride(data, override));
   } catch (e) {
     return res.status(500).json({ error: "Could not reach the course GPS database" });
   }
