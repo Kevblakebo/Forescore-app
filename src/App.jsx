@@ -17906,7 +17906,10 @@ function computeMatchPlayResult(round, computed) {
               <button className="gsc-link" style={{ color: "#F3EFE0", fontSize: 11, textDecoration: "underline" }} onClick={() => openRules(round.game, !!round.tournamentId)}>
                 Rules
               </button>
-              <button className="gsc-link" style={{ color: "#F3EFE0", fontSize: 11, textDecoration: "underline" }} onClick={() => setGameDetailsOpen(true)}>
+              {/* Goes straight to the editable settings while the round is
+                  in progress; a finished round can't be edited, so it still
+                  opens the read-only details view. */}
+              <button className="gsc-link" style={{ color: "#F3EFE0", fontSize: 11, textDecoration: "underline" }} onClick={() => (round.finished ? setGameDetailsOpen(true) : openEditSettings(round))}>
                 Edit Details
               </button>
               {canEditThisRound && (
