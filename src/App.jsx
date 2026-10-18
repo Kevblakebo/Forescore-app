@@ -2675,6 +2675,7 @@ export default function GolfScorecard() {
   const [editSettingsId, setEditSettingsId] = useState(null);
   const [editSettingsCfg, setEditSettingsCfg] = useState(null);
   const [editSettingsBusy, setEditSettingsBusy] = useState(false);
+  const [editSettingsStrokeIndex, setEditSettingsStrokeIndex] = useState(null);
   const [editSettingsErr, setEditSettingsErr] = useState("");
   const [yearlyRecapOpen, setYearlyRecapOpen] = useState(false);
   const [yearlyRecapYear, setYearlyRecapYear] = useState(new Date().getFullYear());
@@ -5700,6 +5701,12 @@ export default function GolfScorecard() {
             </div>
           </div>
 
+          {editSettingsStrokeIndex && (
+            <div className="gsc-field">
+              {renderStrokeIndexEditor(editSettingsStrokeIndex, setEditSettingsStrokeIndex)}
+            </div>
+          )}
+
           {round && !oceans11Eligible(round.game, round.players.length) && (nassauEligible(round.game, round.players.length) || nassauOnlyEligible(round.game, round.players.length)) && (
             <div className="gsc-field">
               <div className="gsc-label">Scoring method</div>
@@ -6190,6 +6197,60 @@ export default function GolfScorecard() {
             Close
           </button>
         </div>
+      </div>
+    );
+  }
+
+  // Shared editor for each hole's handicap (stroke index, 1-18). Used by
+  // round setup, tournament setup and Edit Settings, so a wrong value
+  // from the course database can always be corrected by hand. A plain
+  // function that returns JSX (not a component), so typing never remounts
+  // the inputs and loses focus. Only warns about duplicates/out-of-range
+  // values - never blocks, since some courses are not a clean 1-18.
+  function renderStrokeIndexEditor(values, setValues) {
+    const list = Array.from({ length: 18 }, (_, i) => (values && values[i] != null ? values[i] : ""));
+    const filled = list.filter((v) => v !== "" && !isNaN(Number(v))).map(Number);
+    const hasDup = new Set(filled).size !== filled.length;
+    const hasRange = filled.some((n) => n < 1 || n > 18);
+    const missing = filled.length > 0 && filled.length < 18;
+    return (
+      <div style={{ marginTop: 14 }}>
+        <div className="gsc-label" style={{ marginBottom: 6 }}>Handicap per hole (stroke index)</div>
+        <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 8 }}>
+          Matches the "HCP" row on the scorecard (1 = hardest hole, 18 = easiest). Used for per-hole handicapping. Fix any hole that doesn't match your scorecard.
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 6 }}>
+          {list.map((v, i) => (
+            <div key={i}>
+              <div style={{ fontSize: 10, textAlign: "center", color: "#6b6b63" }}>H{i + 1}</div>
+              <input
+                className="gsc-input gsc-mono"
+                style={{ padding: "6px 2px", textAlign: "center" }}
+                type="number"
+                inputMode="numeric"
+                min="1"
+                max="18"
+                placeholder="-"
+                value={v}
+                onChange={(e) => {
+                  const raw = e.target.value.replace(/^0+(?=\d)/, "");
+                  const next = [...list];
+                  next[i] = raw === "" ? "" : Number(raw);
+                  setValues(next);
+                }}
+              />
+            </div>
+          ))}
+        </div>
+        {(hasDup || hasRange || missing) && (
+          <div style={{ fontSize: 11, color: "#A42E2D", marginTop: 6 }}>
+            {hasRange
+              ? "Handicap numbers should be between 1 and 18."
+              : hasDup
+              ? "Some handicap numbers repeat - each of 1-18 normally appears once."
+              : "Some holes have no handicap number yet."}
+          </div>
+        )}
       </div>
     );
   }
@@ -8885,6 +8946,12 @@ export default function GolfScorecard() {
     setEditSettingsErr("");
     setEditSettingsId(r.id);
     setEditSettingsCfg({ ...r.cfg });
+    // Stroke index is editable here for regular rounds only. In a
+    // tournament every foursome must share one course setup, so changing
+    // it for a single foursome would make standings inconsistent.
+    setEditSettingsStrokeIndex(
+      r.tournamentId ? null : Array.from({ length: 18 }, (_, i) => (r.strokeIndex && r.strokeIndex[i] != null ? r.strokeIndex[i] : ""))
+    );
     setGameDetailsOpen(false);
     setEditSettingsOpen(true);
   }
@@ -8925,6 +8992,9 @@ export default function GolfScorecard() {
       mulliganSegment: editSettingsCfg.mulliganSegment === "" || editSettingsCfg.mulliganSegment == null || isNaN(Number(editSettingsCfg.mulliganSegment)) ? 0 : Number(editSettingsCfg.mulliganSegment),
     };
     r.cfg = { ...r.cfg, ...normalizedEditSettingsCfg };
+    if (editSettingsStrokeIndex && !r.tournamentId) {
+      r.strokeIndex = editSettingsStrokeIndex.map((s) => (s === "" || s == null || isNaN(Number(s)) ? null : Number(s)));
+    }
     const w = await storageSet(`golfround:${editSettingsId}`, JSON.stringify(r), true);
     if (!w.ok) {
       setEditSettingsBusy(false);
@@ -14650,7 +14720,7 @@ function computeMatchPlayResult(round, computed) {
               {courseMsg && <div style={{ fontSize: 12, color: courseMsg.startsWith("Couldn't") ? "#A42E2D" : "#B08D57", marginTop: 8 }}>{courseMsg}</div>}
 
               <button className="gsc-link" style={{ marginTop: 12, fontSize: 12 }} onClick={() => setShowManualCourse((s) => !s)}>
-                {showManualCourse ? "Hide manual par entry" : "Course not listed? Enter par manually"}
+                {showManualCourse ? "Hide manual entry" : "Course not listed, or numbers off? Enter or edit par & hole handicaps"}
               </button>
               {showManualCourse && (
                 <div style={{ marginTop: 10 }}>
@@ -14684,6 +14754,7 @@ function computeMatchPlayResult(round, computed) {
                     ))}
                   </div>
                   <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 8 }}>Total par: {activePar.reduce((a, b) => a + (Number(b) || 0), 0)}</div>
+                  {renderStrokeIndexEditor(isTournament ? tournamentStrokeIndex : strokeIndex, isTournament ? setTournamentStrokeIndex : setStrokeIndex)}
                 </div>
               )}
                 </>
@@ -15258,7 +15329,7 @@ function computeMatchPlayResult(round, computed) {
               </div>
             )}
             <button className="gsc-link" style={{ marginTop: 10, fontSize: 12 }} onClick={() => setShowManualCourse((s) => !s)}>
-              {showManualCourse ? "Hide manual course entry" : "Course not listed? Enter or edit par manually"}
+              {showManualCourse ? "Hide manual course entry" : "Course not listed, or numbers off? Enter or edit par & hole handicaps"}
             </button>
             {showManualCourse && (
               <div style={{ marginTop: 12 }}>
@@ -15299,6 +15370,7 @@ function computeMatchPlayResult(round, computed) {
                     </div>
                   ))}
                 </div>
+                {renderStrokeIndexEditor(strokeIndex, setStrokeIndex)}
               </div>
             )}
               </>
@@ -15639,7 +15711,7 @@ function computeMatchPlayResult(round, computed) {
                   </div>
                 )}
                 <button className="gsc-link" style={{ marginTop: 10, fontSize: 12 }} onClick={() => setShowManualCourse((s) => !s)}>
-                  {showManualCourse ? "Hide manual course entry" : "Course not listed? Enter or edit par manually"}
+                  {showManualCourse ? "Hide manual course entry" : "Course not listed, or numbers off? Enter or edit par & hole handicaps"}
                 </button>
                 {showManualCourse && (
                   <div style={{ marginTop: 12 }}>
@@ -15694,6 +15766,7 @@ function computeMatchPlayResult(round, computed) {
                       ))}
                     </div>
                     <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 8 }}>Total par: {par.reduce((a, b) => a + (Number(b) || 0), 0)}</div>
+                    {renderStrokeIndexEditor(strokeIndex, setStrokeIndex)}
                     <button className="gsc-btn gsc-btn-outline" style={{ marginTop: 10 }} onClick={() => saveCourseToIndex(courseName, par)}>
                       Save this course for next time
                     </button>
@@ -16316,7 +16389,7 @@ function computeMatchPlayResult(round, computed) {
                 </div>
               )}
               <button className="gsc-link" style={{ marginTop: 10, fontSize: 12 }} onClick={() => setShowManualCourse((s) => !s)}>
-                {showManualCourse ? "Hide manual course entry" : "Course not listed? Enter or edit par manually"}
+                {showManualCourse ? "Hide manual course entry" : "Course not listed, or numbers off? Enter or edit par & hole handicaps"}
               </button>
               {showManualCourse && (
                 <div style={{ marginTop: 12 }}>
@@ -16366,6 +16439,7 @@ function computeMatchPlayResult(round, computed) {
                     ))}
                   </div>
                   <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 8 }}>Total par: {tournamentPar.reduce((a, b) => a + (Number(b) || 0), 0)}</div>
+                  {renderStrokeIndexEditor(tournamentStrokeIndex, setTournamentStrokeIndex)}
                   <button className="gsc-btn gsc-btn-outline" style={{ marginTop: 10 }} onClick={() => saveCourseToIndex(tournamentCourseName, tournamentPar)}>
                     Save this course for next time
                   </button>
