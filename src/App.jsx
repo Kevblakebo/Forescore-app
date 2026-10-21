@@ -10977,7 +10977,11 @@ function computeMatchPlayResult(round, computed) {
   // phones-only block. Not linked or advertised anywhere, so ordinary
   // desktop visitors still correctly see the block as intended.
   const desktopPreview = typeof window !== "undefined" && window.location.search.includes("desktopPreview");
-  if (!isPhoneDevice() && !desktopPreview) {
+  // The installed iOS/Android app is never blocked: App Review opens it on
+  // an iPad and a "built for phones" screen there reads as an unusable app
+  // (Guideline 2.1). On a tablet the app simply renders in its normal
+  // centered phone-width column. Only the plain website keeps the block.
+  if (!isPhoneDevice() && !desktopPreview && !isRunningInNativeApp()) {
     return (
       <div className="gsc" style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: 24, textAlign: "center" }}>
         <style>{STYLE}</style>
