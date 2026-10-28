@@ -1785,6 +1785,257 @@ async function storageDelete(key, shared, attempt = 1) {
 }
 
 /* ===================================================================
+   LOCAL-FIRST SCORE SYNC ENGINE
+   Created once per App mount. Holds the queue of score edits made on
+   this device that haven't been confirmed saved yet, and saves them to
+   the shared round as batched, one-at-a-time, version-checked writes.
+   See the "LOCAL-FIRST SCORE SAVING" note in the App component.
+=================================================================== */
+function makeScoreSyncEngine({ setRound, setSaveState, setStorageBroken, setStorageWarning, failCountRef, latestRoundRef, highestAppliedVersionRef, isRoundDone }) {
+  const DEBOUNCE_MS = 350; // wait this long after the last tap before sending
+  const MAX_WAIT_MS = 1500; // ...but never wait longer than this while tapping continues
+  let pending = []; // [{ id, patch }] in tap order - edits not yet confirmed saved
+  let flushing = false;
+  let debounceTimer = null;
+  let maxWaitTimer = null;
+  let retryTimer = null;
+  let retryDelay = 2000;
+  let backupTimer = null;
+  let waiters = [];
+  let uidCounter = 0;
+
+  // Raw-localStorage copy of the whole round, written a moment after taps
+  // (not on every one) - the safety net for the app being force-closed
+  // before the network save lands. Existing launch-time recovery already
+  // reads this key.
+  function backupNow() {
+    const r = latestRoundRef.current;
+    if (!r) return;
+    try {
+      window.localStorage.setItem(`gsc-local-backup:${r.id}`, JSON.stringify(r));
+    } catch (e) {}
+  }
+  function scheduleBackup() {
+    if (backupTimer) return;
+    backupTimer = setTimeout(() => {
+      backupTimer = null;
+      backupNow();
+    }, 80);
+  }
+  function resolveWaitersIfIdle() {
+    if (!flushing && pending.length === 0 && waiters.length > 0) {
+      const w = waiters;
+      waiters = [];
+      w.forEach((f) => f());
+    }
+  }
+
+  // One batched, version-checked save. applyBatch applies every queued
+  // edit, in order, on top of whatever the shared round currently holds,
+  // so other players' scores are never overwritten.
+  async function persist(id, applyBatch) {
+    const key = `golfround:${id}`;
+    let sharedOk = false;
+    let finalRound = null;
+    let newVersion = null;
+    if (supabase) {
+      for (let attempt = 0; attempt < 12; attempt++) {
+        const { data: row, error: fetchErr } = await supabase.from("kv_store").select("value, version").eq("key", key).maybeSingle();
+        if (fetchErr || !row) break;
+        let current;
+        try {
+          current = JSON.parse(row.value);
+        } catch (e) {
+          break;
+        }
+        const patched = applyBatch(current);
+        const { data: updated, error: updateErr } = await withJwtRetry(() =>
+          supabase
+            .from("kv_store")
+            .update({ value: JSON.stringify(patched), version: row.version + 1, updated_at: new Date().toISOString() })
+            .eq("key", key)
+            .eq("version", row.version)
+            .select()
+        );
+        if (updateErr) break;
+        if (updated && updated.length > 0) {
+          sharedOk = true;
+          finalRound = patched;
+          newVersion = row.version + 1;
+          break;
+        }
+        // Someone else saved in between - re-fetch and re-apply on top.
+        await sleep(120 + Math.random() * 180);
+      }
+    }
+    if (!sharedOk) {
+      // Last resort, in order of preference: apply the batch on top of
+      // the freshest server copy (unchecked), else write this device's
+      // own copy of the round.
+      let patchedOntoLatest = null;
+      if (supabase) {
+        try {
+          const { data: latestRow } = await supabase.from("kv_store").select("value").eq("key", key).maybeSingle();
+          if (latestRow && latestRow.value) patchedOntoLatest = applyBatch(JSON.parse(latestRow.value));
+        } catch (e) {}
+      }
+      if (patchedOntoLatest) {
+        const res = await storageSet(key, JSON.stringify(patchedOntoLatest), true);
+        sharedOk = res.ok;
+        finalRound = patchedOntoLatest;
+      } else {
+        const local = latestRoundRef.current && latestRoundRef.current.id === id ? latestRoundRef.current : null;
+        if (local) {
+          const res = await storageSet(key, JSON.stringify(local), true);
+          sharedOk = res.ok;
+          finalRound = local;
+        }
+      }
+    }
+    return { sharedOk, finalRound, newVersion };
+  }
+
+  async function run() {
+    clearTimeout(debounceTimer);
+    debounceTimer = null;
+    clearTimeout(maxWaitTimer);
+    maxWaitTimer = null;
+    clearTimeout(retryTimer);
+    retryTimer = null;
+    if (flushing) return; // the running flush keeps going until the queue is empty
+    if (pending.length === 0) {
+      resolveWaitersIfIdle();
+      return;
+    }
+    flushing = true;
+    setSaveState("saving");
+    let allOk = true;
+    let lastFinal = null;
+    try {
+      while (pending.length > 0) {
+        const id = pending[0].id;
+        const batch = pending.filter((p) => p.id === id);
+        pending = pending.filter((p) => p.id !== id);
+        // Each edit carries a unique id that is recorded in the saved round
+        // (_applied). If a save landed but its reply was lost (common on a
+        // weak signal) the retry sees the ids are already recorded and
+        // skips them - otherwise a "+1" stepper tap could be counted twice.
+        const applyBatch = (current) => {
+          const done = new Set(current._applied || []);
+          let acc = current;
+          const added = [];
+          for (const p of batch) {
+            if (done.has(p.uid)) continue;
+            acc = p.patch(acc);
+            added.push(p.uid);
+          }
+          return { ...acc, _applied: [...(current._applied || []), ...added].slice(-120) };
+        };
+        let result;
+        try {
+          result = await persist(id, applyBatch);
+        } catch (e) {
+          result = { sharedOk: false, finalRound: null, newVersion: null };
+        }
+        if (!result.sharedOk) {
+          // Keep the edits (in order, ahead of anything tapped meanwhile)
+          // and try again shortly - nothing is ever dropped.
+          pending = [...batch, ...pending];
+          allOk = false;
+          break;
+        }
+        lastFinal = result.finalRound;
+        // Show the server's merged result (it may include other players'
+        // scores) - but ALWAYS with this device's not-yet-saved taps
+        // re-applied on top, so the screen can never jump back to an
+        // older snapshot while the player is still tapping.
+        if (result.newVersion != null && result.newVersion > highestAppliedVersionRef.current) {
+          highestAppliedVersionRef.current = result.newVersion;
+          const overlaid = pending.reduce((acc, p) => (p.id === id ? p.patch(acc) : acc), result.finalRound);
+          setRound((r) => (r && r.id === id ? overlaid : r));
+        }
+      }
+    } finally {
+      flushing = false;
+    }
+
+    if (allOk) {
+      retryDelay = 2000;
+      failCountRef.current = 0;
+      // Personal "resume where you left off" copy - once per save, not
+      // once per tap.
+      let personalOk = true;
+      if (lastFinal && !isRoundDone(lastFinal)) {
+        const personalRes = await storageSet(ACTIVE_KEY, JSON.stringify(lastFinal), false);
+        personalOk = personalRes.ok;
+      }
+      if (pending.length === 0 && lastFinal) {
+        try {
+          window.localStorage.removeItem(`gsc-local-backup:${lastFinal.id}`);
+        } catch (e) {}
+      }
+      setStorageBroken(false);
+      setStorageWarning(personalOk ? "" : "Group sync is fine, but this device's resume-save failed once.");
+      setSaveState(pending.length > 0 ? "saving" : "saved");
+    } else {
+      backupNow();
+      failCountRef.current += 1;
+      setSaveState("offline");
+      setStorageWarning("Saved on this device, but group sync isn't working right now - retrying automatically.");
+      retryTimer = setTimeout(run, retryDelay);
+      retryDelay = Math.min(retryDelay * 2, 15000);
+    }
+    if (pending.length > 0 && allOk) {
+      // Taps arrived while that save was running - send them right away.
+      run();
+    } else {
+      // Idle, or waiting on a timed retry: either way, anything that was
+      // waiting on flush() is released (they must never hang while offline;
+      // the edits stay queued and keep retrying on their own).
+      const w = waiters;
+      waiters = [];
+      w.forEach((f) => f());
+    }
+  }
+
+  return {
+    // Called once per tap. Does no network work and no JSON work.
+    queue(patch) {
+      const r = latestRoundRef.current;
+      if (!r) return;
+      uidCounter += 1;
+      pending.push({ id: r.id, patch, uid: `${Date.now().toString(36)}${uidCounter.toString(36)}${Math.random().toString(36).slice(2, 5)}` });
+      setSaveState("saving");
+      scheduleBackup();
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(run, DEBOUNCE_MS);
+      if (!maxWaitTimer) maxWaitTimer = setTimeout(run, MAX_WAIT_MS);
+    },
+    // Send what's queued right now (leaving a hole, hiding the app,
+    // connection coming back).
+    flushNow() {
+      backupNow();
+      return run();
+    },
+    // Resolves once everything queued so far has finished saving (or is
+    // waiting on a retry).
+    flush() {
+      return new Promise((resolve) => {
+        if (!flushing && pending.length === 0) {
+          resolve();
+          return;
+        }
+        waiters.push(resolve);
+        run();
+      });
+    },
+    hasUnsaved() {
+      return flushing || pending.length > 0;
+    },
+  };
+}
+
+/* ===================================================================
    SIDE GAMES — merged directly into App.jsx (originally SideGames.jsx)
    so there's only one file to manage. Nothing below is renamed - same
    exact names as the standalone file, just no longer exported since
@@ -2548,6 +2799,13 @@ export default function GolfScorecard() {
   // it's what actually decides whether a given save's result is safe to
   // show, not which edit happened most recently.
   const highestAppliedVersionRef = useRef(0);
+  // Holds the local-first save queue (created once, after latestRoundRef
+  // exists - see makeScoreSyncEngine).
+  const syncEngineRef = useRef(null);
+  // "saved" | "saving" | "offline" - drives the small status line on the
+  // scoring screen. Setting it to the value it already has does not
+  // re-render, so this costs nothing per tap.
+  const [saveState, setSaveState] = useState("saved");
   const currentAnnounceAudioRef = useRef(null);
   const wolfHowlAudioRef = useRef(null);
   const victoryFanfareAudioRef = useRef(null);
@@ -9273,6 +9531,14 @@ export default function GolfScorecard() {
   }
 
   const saveRound = useCallback(async (r) => {
+    // Anything tapped on this device that's still waiting to be sent has
+    // to land first - otherwise the "server's value wins" merge below
+    // could throw away a score that was just corrected on this device.
+    if (syncEngineRef.current) {
+      try {
+        await syncEngineRef.current.flush();
+      } catch (e) {}
+    }
     // Written synchronously, immediately, before anything network-
     // dependent below - this is the one part of saving that's genuinely
     // guaranteed to work with zero connectivity, since it's raw
@@ -9421,152 +9687,33 @@ export default function GolfScorecard() {
   // top of it, rather than either giving up or blindly overwriting
   // their change. Verified against a real, simulated race with dozens
   // of genuine conflicts before shipping this - every write survived.
-  const saveRoundPatch = useCallback(async (localRound, applyPatch) => {
-    try {
-      window.localStorage.setItem(`gsc-local-backup:${localRound.id}`, JSON.stringify(localRound));
-    } catch (e) {}
-    if (failCountRef.current >= 1) return;
-
-    const key = `golfround:${localRound.id}`;
-    let sharedOk = false;
-    let finalRound = localRound;
-
-    let lastRow = null;
-    if (supabase) {
-      for (let attempt = 0; attempt < 12; attempt++) {
-        const { data: row, error: fetchErr } = await supabase.from("kv_store").select("value, version").eq("key", key).maybeSingle();
-        if (fetchErr || !row) break; // Row doesn't exist yet, or a genuine error - fall through to the whole-object fallback below
-        lastRow = row;
-        let current;
-        try {
-          current = JSON.parse(row.value);
-        } catch (e) {
-          break; // Corrupted data on the server - don't make it worse, fall through to fallback
-        }
-        const patched = applyPatch(current);
-        finalRound = patched;
-        const { data: updated, error: updateErr } = await withJwtRetry(() =>
-          supabase
-            .from("kv_store")
-            .update({ value: JSON.stringify(patched), version: row.version + 1, updated_at: new Date().toISOString() })
-            .eq("key", key)
-            .eq("version", row.version)
-            .select()
-        );
-        if (updateErr) break; // Genuine error, not just a conflict - fall through to fallback
-        if (updated && updated.length > 0) {
-          sharedOk = true;
-          break; // Success
-        }
-        // 0 rows affected means someone else's save landed in between -
-        // loop again to re-fetch their now-current data and re-apply
-        // this same patch on top of it, rather than losing this change
-        // or overwriting theirs.
-        await sleep(120 + Math.random() * 180);
-      }
-    }
-
-    if (!sharedOk) {
-      // Before giving up and writing this device's own local copy
-      // wholesale, make one last attempt to fetch whatever's actually on
-      // the server right now and apply just this edit on top of THAT -
-      // not a version-checked attempt (we're out of retries for that),
-      // just a best-effort way to avoid blindly overwriting fields this
-      // device's local copy might be missing or behind on: another
-      // player's finished status, another player's own scores, slope/
-      // rating, anything. Falls through to the true, whole-object
-      // fallback below only if even this fails.
-      let patchedOntoLatest = null;
-      if (supabase) {
-        try {
-          const { data: latestRow } = await supabase.from("kv_store").select("value").eq("key", key).maybeSingle();
-          if (latestRow && latestRow.value) {
-            const latest = JSON.parse(latestRow.value);
-            patchedOntoLatest = applyPatch(latest);
-          }
-        } catch (e) {
-          // Fetch or parse failed - fall through to the true fallback below.
-        }
-      }
-      if (patchedOntoLatest) {
-        const res = await storageSet(key, JSON.stringify(patchedOntoLatest), true);
-        sharedOk = res.ok;
-        finalRound = patchedOntoLatest;
-      } else {
-        // True fallback for: the row doesn't exist yet (a brand new
-        // round, never saved before - the 7 hole/player-level edit
-        // functions that call this only ever run after a round already
-        // exists, so this should be rare in practice), or Supabase isn't
-        // configured at all (a local-only session). The old,
-        // whole-object write is still the right fallback here -
-        // something saving is better than nothing saving at all, and
-        // there's genuinely no "latest server state" to apply the patch
-        // to instead.
-        const res = await storageSet(key, JSON.stringify(localRound), true);
-        sharedOk = res.ok;
-        finalRound = localRound;
-      }
-    } else {
-      // The server-confirmed, merged result may include another
-      // player's change that landed during a retry cycle - update this
-      // device's own local state to reflect it immediately, rather
-      // than waiting for a separate, later poll to pick it up.
-      //
-      // Critical: this must only happen if THIS call's result is
-      // actually the freshest one seen so far - not just "the most
-      // recently started edit". Rapid edits (e.g. mashing a +/-
-      // stepper, or entering strokes then putts in quick succession)
-      // each fire their own independent, unawaited saveRoundPatch call,
-      // and network timing means an earlier-started call can genuinely
-      // finish LATER than a newer one - after retrying past a version
-      // conflict, its merged result is actually MORE complete than the
-      // newer call's (since its retry re-fetched and re-applied on top
-      // of whatever the newer call had already written). Blocking that
-      // result from ever reaching local state - which an "only the
-      // most-recently-started call wins" check would do - permanently
-      // leaves the screen showing a stale or wrong value even though
-      // the server has the correct one. Comparing the actual version
-      // number each call produced avoids this: whichever call produced
-      // the highest version is unambiguously the freshest, regardless
-      // of which one started first or finished first.
-      const newVersion = lastRow.version + 1;
-      if (newVersion > highestAppliedVersionRef.current) {
-        highestAppliedVersionRef.current = newVersion;
-        setRound((r) => (r && r.id === finalRound.id ? finalRound : r));
-      }
-    }
-
-    const complete = isRoundDone(finalRound);
-    const personalRes = complete ? { ok: true } : await storageSet(ACTIVE_KEY, JSON.stringify(finalRound), false);
-
-    if (sharedOk) {
-      try {
-        window.localStorage.removeItem(`gsc-local-backup:${localRound.id}`);
-      } catch (e) {}
-    }
-    if (!sharedOk && !personalRes.ok) {
-      failCountRef.current += 1;
-      setStorageBroken(true);
-      setStorageWarning("");
-    } else if (!sharedOk) {
-      failCountRef.current = 0;
-      setStorageBroken(false);
-      setStorageWarning(`Saved on this device, but group sync isn't working right now.`);
-    } else if (!personalRes.ok) {
-      failCountRef.current = 0;
-      setStorageBroken(false);
-      setStorageWarning(`Group sync is fine, but this device's resume-save failed once.`);
-    } else {
-      failCountRef.current = 0;
-      setStorageBroken(false);
-      setStorageWarning("");
-    }
-  }, []);
+  // ---------------------------------------------------------------
+  // LOCAL-FIRST SCORE SAVING
+  //
+  // Every score tap now does exactly two things, both instant and local:
+  //   1. updates the on-screen round (setRound), and
+  //   2. adds that one edit to a small queue (see makeScoreSyncEngine).
+  // Nothing about a tap waits on the network. The queue is sent to the
+  // shared database in the background as ONE batched save - a moment
+  // after the last tap (or at least every ~1.5s while someone keeps
+  // tapping), immediately when leaving a hole or the app, and again
+  // automatically if the connection drops. Only one save is ever in
+  // flight at a time from this device, so rapid taps can no longer race
+  // each other for the same database version, and a finished save can
+  // no longer overwrite the screen with an older snapshot: whatever the
+  // server returns is always re-combined with any taps made since.
+  // ---------------------------------------------------------------
+  function commitPatch(applyPatch) {
+    lastLocalEditRef.current = Date.now();
+    setRound((r) => (r ? applyPatch(r) : r));
+    if (syncEngineRef.current) syncEngineRef.current.queue(applyPatch);
+  }
 
   function retrySync() {
     failCountRef.current = 0;
     setStorageBroken(false);
     setStorageWarning("");
+    if (syncEngineRef.current) syncEngineRef.current.flushNow();
     if (round) saveRound(round);
   }
 
@@ -9592,6 +9739,41 @@ export default function GolfScorecard() {
   useEffect(() => {
     latestRoundRef.current = round;
   }, [round]);
+  if (!syncEngineRef.current) {
+    syncEngineRef.current = makeScoreSyncEngine({
+      setRound,
+      setSaveState,
+      setStorageBroken,
+      setStorageWarning,
+      failCountRef,
+      latestRoundRef,
+      highestAppliedVersionRef,
+      isRoundDone,
+    });
+  }
+  // Send any queued scores immediately when the app is hidden/closed, the
+  // connection returns, the player moves to another hole, or leaves the
+  // scoring screen - so nothing waits in the queue while the person is
+  // no longer looking at it.
+  useEffect(() => {
+    const eng = syncEngineRef.current;
+    const onHide = () => eng.flushNow();
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") eng.flushNow();
+    };
+    const onOnline = () => eng.flushNow();
+    window.addEventListener("pagehide", onHide);
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("online", onOnline);
+    return () => {
+      window.removeEventListener("pagehide", onHide);
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("online", onOnline);
+    };
+  }, []);
+  useEffect(() => {
+    if (syncEngineRef.current) syncEngineRef.current.flushNow();
+  }, [holeIdx, screen]);
   // Which exact (hole, player, field, value) combinations have already
   // shown their celebration once - keyed on the actual value too, so if
   // someone genuinely corrects a score to something different, that new
@@ -9716,11 +9898,7 @@ export default function GolfScorecard() {
       next.scores[holeIdx] = holeScores;
       return next;
     };
-    setRound((r) => {
-      const next = applyPatch(r);
-      saveRoundPatch(next, applyPatch);
-      return next;
-    });
+    commitPatch(applyPatch);
   }
 
   // Same idea as updateHoleEntry, but for +/- stepper buttons
@@ -9750,11 +9928,7 @@ export default function GolfScorecard() {
       next.scores[holeIdx] = holeScores;
       return next;
     };
-    setRound((r) => {
-      const next = applyPatch(r);
-      saveRoundPatch(next, applyPatch);
-      return next;
-    });
+    commitPatch(applyPatch);
   }
 
   // Central point for every way the current hole can change forward
@@ -9829,11 +10003,7 @@ export default function GolfScorecard() {
       next.scores[holeIdx] = holeScores;
       return next;
     };
-    setRound((r) => {
-      const next = applyPatch(r);
-      saveRoundPatch(next, applyPatch);
-      return next;
-    });
+    commitPatch(applyPatch);
   }
 
   // Same "smart default" stepping logic as updateHoleEntryStep (so the
@@ -9863,11 +10033,7 @@ export default function GolfScorecard() {
       next.scores[holeIdx] = holeScores;
       return next;
     };
-    setRound((r) => {
-      const next = applyPatch(r);
-      saveRoundPatch(next, applyPatch);
-      return next;
-    });
+    commitPatch(applyPatch);
   }
 
   // Records which player's tee shot was used on this hole - a single
@@ -9884,11 +10050,7 @@ export default function GolfScorecard() {
       next.scores[holeIdx] = holeScores;
       return next;
     };
-    setRound((r) => {
-      const next = applyPatch(r);
-      saveRoundPatch(next, applyPatch);
-      return next;
-    });
+    commitPatch(applyPatch);
   }
 
   // Generic version of the same pattern, used for Bingo/Bango/Bongo -
@@ -9903,11 +10065,7 @@ export default function GolfScorecard() {
       next.scores[holeIdx] = holeScores;
       return next;
     };
-    setRound((r) => {
-      const next = applyPatch(r);
-      saveRoundPatch(next, applyPatch);
-      return next;
-    });
+    commitPatch(applyPatch);
   }
 
   // Lets anyone award a player an extra mulligan mid-round, once they've
@@ -9925,11 +10083,7 @@ export default function GolfScorecard() {
       bonus[playerIdx][seg] = (bonus[playerIdx][seg] || 0) + 1;
       return { ...r, bonusMulligans: bonus };
     };
-    setRound((r) => {
-      const next = applyPatch(r);
-      saveRoundPatch(next, applyPatch);
-      return next;
-    });
+    commitPatch(applyPatch);
     // Brief, temporary confirmation on the button itself - the persistent
     // count next to each player's name is the reliable source of truth,
     // but this gives immediate, satisfying feedback right at the moment
@@ -9948,11 +10102,7 @@ export default function GolfScorecard() {
       const nextPlayers = r.players.map((p, i) => (i === playerIdx ? { ...p, avatar } : p));
       return { ...r, players: nextPlayers };
     };
-    setRound((r) => {
-      const next = applyPatch(r);
-      saveRoundPatch(next, applyPatch);
-      return next;
-    });
+    commitPatch(applyPatch);
     setScoringAvatarPickerFor(null);
   }
 
@@ -9967,6 +10117,15 @@ export default function GolfScorecard() {
   async function syncRoundFromServer(isManual) {
     if (!round) return;
     if (isManual) setSyncStatus("syncing");
+    const engine = syncEngineRef.current;
+    if (engine) {
+      // A manual refresh first sends this device's own queued taps, so
+      // "Refresh Scores" can never show older data than what was just
+      // entered. The automatic 1-second poll simply stands aside while
+      // anything is still waiting to be saved.
+      if (isManual) await engine.flush();
+      else if (engine.hasUnsaved()) return;
+    }
     // Read directly from the same kv_store row saveRoundPatch writes to,
     // via the identical direct Supabase query it uses - rather than the
     // separate window.storage.get path, which is a different access
@@ -9996,6 +10155,14 @@ export default function GolfScorecard() {
     }
     try {
       const fresh = JSON.parse(value);
+      // Taps made while that fetch was in flight must not be stomped by it.
+      if (engine && engine.hasUnsaved()) {
+        if (isManual) {
+          setSyncStatus("error");
+          setTimeout(() => setSyncStatus(""), 2500);
+        }
+        return;
+      }
       // Same protection saveRoundPatch uses, and for the same reason:
       // this device's own edit might still be mid-retry (which can take
       // a few seconds under contention) when this poll fires, so a
@@ -18011,7 +18178,13 @@ function computeMatchPlayResult(round, computed) {
           )
         )}
         <div style={{ background: "#EBF0EC", fontSize: 11, padding: "5px 16px", textAlign: "center", color: "#4A6C5A" }}>
-          {storageBroken ? "Keep playing - your scores are saved on this device and will sync automatically once connection returns." : "Saved automatically - close and reopen this app any time to pick back up here."}
+          {storageBroken
+            ? "Keep playing - your scores are saved on this device and will sync automatically once connection returns."
+            : saveState === "offline"
+            ? "Offline - your scores are saved on this device and will sync automatically once connection returns."
+            : saveState === "saving"
+            ? "Saving..."
+            : "Saved \u2713 - close and reopen this app any time to pick back up here."}
         </div>
         <div className="gsc-hole-strip" ref={holeStripRef}>
           {Array.from({ length: 18 }).map((_, i) => (
