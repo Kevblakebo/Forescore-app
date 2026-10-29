@@ -84,22 +84,35 @@ export default async function handler(req, res) {
   const prompt = `You're writing a short, funny recap for a golf app's group chat - think a golf buddy razzing the group after a round, not a sports broadcaster.
 
 Rules:
-- 2-4 sentences, plain text, no markdown
+- Plain text, no markdown. Length scales with the group: about 2 sentences for 1-2 players, 3-4 for 3 players, 4-6 for 4 players
 - Playful and roasting is great - genuinely funny, a little savage even - but never mean, never about anything outside the round itself
 - Only use the facts given below. Never invent a stat, shot, or moment that isn't in the data
 - Never mention greens in regulation, fairways in regulation, GIR, or FIR - that data isn't tracked or provided, even though they're common golf terms you might otherwise reach for
 - Nobody's gender is given, so never guess it from a name. Use each player's actual name, or gender-neutral "they/them," instead of "he" or "she"
 - If a player's data includes strokesWithoutMulligans, that's already correctly calculated for you - it's what their score would have been without their mulligans' benefit (always worse than their real score, since a mulligan forgives a stroke). Use that number directly if you reference it; never recalculate a mulligan-adjusted score yourself
+- EVERY player in the data must be mentioned by name at least once, each with something specific to them from their own data (their score, putts, birdies, a mulligan habit, or simply where they finished). Never skip anyone, and don't let one or two players take over the recap - give each player their own moment, even if it's short. Players who finished in the middle or at the bottom deserve a joke just as much as the winner
 - Mention the winner, but don't just list scores - find the actual story (a comeback, a collapse, a photo finish, someone's mulligan habit)
 - Vary your structure and jokes - don't fall into the same template every time
 
 Round data:
 ${JSON.stringify(roundData, null, 2)}
 
-Write the recap.`;
+Write the recap. Before you finish, check that every player's name appears in it.`;
 
-  let recapText;
-  try {
+  // Which players' names don't appear in a draft - used to catch a recap
+  // that fixates on one or two people and quietly skips the rest.
+  function missingPlayers(text) {
+    const lower = text.toLowerCase();
+    return players.filter((p) => {
+      const full = String((p && p.name) || "").trim().toLowerCase();
+      if (!full) return false;
+      if (lower.includes(full)) return false;
+      const first = full.split(/\s+/)[0];
+      return !(first.length >= 2 && lower.includes(first));
+    });
+  }
+
+  async function askModel(userPrompt) {
     const workspaceId = process.env.ANTHROPIC_WORKSPACE_ID;
     const headers = {
       "Content-Type": "application/json",
@@ -117,22 +130,43 @@ Write the recap.`;
       headers,
       body: JSON.stringify({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 300,
-        messages: [{ role: "user", content: prompt }],
+        max_tokens: 500,
+        messages: [{ role: "user", content: userPrompt }],
       }),
     });
     if (!upstream.ok) {
       const errBody = await upstream.json().catch(() => null);
       const detail = errBody && errBody.error && errBody.error.message ? errBody.error.message : null;
       console.error("Anthropic API error:", upstream.status, detail || "(no detail)");
-      return res.status(upstream.status).json({ error: detail || `AI recap service returned ${upstream.status}` });
+      const err = new Error(detail || `AI recap service returned ${upstream.status}`);
+      err.status = upstream.status;
+      throw err;
     }
     const data = await upstream.json();
-    recapText = (data.content || []).map((block) => block.text || "").join("").trim();
+    return (data.content || []).map((block) => block.text || "").join("").trim();
+  }
+
+  let recapText;
+  try {
+    recapText = await askModel(prompt);
     if (!recapText) {
       return res.status(502).json({ error: "AI recap came back empty" });
     }
+    // One retry if anyone got left out. If the retry fails or is empty,
+    // keep the first draft rather than losing a recap that already worked.
+    const missing = missingPlayers(recapText);
+    if (missing.length > 0) {
+      try {
+        const retry = await askModel(
+          `${prompt}\n\nYour previous draft was:\n${recapText}\n\nIt left out: ${missing.map((p) => p.name).join(", ")}. Rewrite the recap so that every player is named, including those ones, each with their own specific moment.`
+        );
+        if (retry && missingPlayers(retry).length < missing.length) recapText = retry;
+      } catch (retryErr) {
+        console.warn("AI recap retry failed:", retryErr.message);
+      }
+    }
   } catch (e) {
+    if (e && e.status) return res.status(e.status).json({ error: e.message });
     return res.status(500).json({ error: "Could not reach the AI recap service" });
   }
 
