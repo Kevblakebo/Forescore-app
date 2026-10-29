@@ -72,7 +72,7 @@ const STYLE = `
   .gsc-hole-nav { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
   .gsc-hole-big { font-size:38px; font-weight:800; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif; color:#1B4332; line-height:1; }
   .gsc-par-badge { font-size:13px; color:#6b6b63; font-weight:600; }
-  .gsc-stepper { display:flex; align-items:center; gap:10px; }
+  .gsc-stepper { display:flex; align-items:center; gap:8px; }
   .gsc-stepper button { width:44px; height:44px; border-radius:50%; border:1.5px solid #1B4332; background:#fff; font-size:18px; font-weight:700; color:#1B4332; cursor:pointer; touch-action:manipulation; }
   .gsc-stepper button:disabled { opacity:0.3; }
   .gsc-stepper-val { font-size:20px; font-weight:700; width:28px; text-align:center; font-family: "Courier New", Courier, monospace; }
@@ -18344,7 +18344,7 @@ function computeMatchPlayResult(round, computed) {
                 return (
                   <div key={sideIdx} className="gsc-player-row">
                     <div className="gsc-player-name">{sideNames}</div>
-                    <div style={{ display: "flex", gap: 22, marginTop: 8, flexWrap: "nowrap" }}>
+                    <div style={{ display: "flex", gap: "8px 18px", marginTop: 8, flexWrap: "wrap" }}>
                       <div>
                         <div style={{ fontSize: 11, color: "#6b6b63", marginBottom: 3, textAlign: "center" }}>STROKES</div>
                         <div className="gsc-stepper">
@@ -18413,7 +18413,7 @@ function computeMatchPlayResult(round, computed) {
                 return (
                   <div className="gsc-player-row">
                     <div className="gsc-player-name">Team Strokes</div>
-                    <div style={{ display: "flex", gap: 22, marginTop: 8, flexWrap: "nowrap" }}>
+                    <div style={{ display: "flex", gap: "8px 18px", marginTop: 8, flexWrap: "wrap" }}>
                       <div>
                         <div style={{ fontSize: 11, color: "#6b6b63", marginBottom: 3, textAlign: "center" }}>TOTAL STROKES</div>
                         <div className="gsc-stepper">
@@ -18617,7 +18617,7 @@ function computeMatchPlayResult(round, computed) {
                     </div>
                   )}
                   <div style={{ display: "flex", gap: 22, marginTop: 8, flexWrap: "wrap" }}>
-                    <div style={{ display: "flex", gap: 22, flexWrap: "nowrap" }}>
+                    <div style={{ display: "flex", gap: "8px 18px", flexWrap: "wrap", minWidth: 0 }}>
                     {g.hasScore && (
                       <div>
                         <div style={{ fontSize: 11, color: "#6b6b63", marginBottom: 3, textAlign: "center" }}>TOTAL STROKES</div>
