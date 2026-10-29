@@ -474,8 +474,8 @@ const GAMES = {
   },
   tourneybb: {
     name: "Best Ball Tournament",
-    tag: "4-person best-ball - Tournaments only",
-    desc: "The whole foursome plays as one best-ball team - no 2-person sub-teams. The lowest strokes and lowest putts among all 4 players count each hole. Used only in Tournaments, where foursomes are ranked against each other by total best-ball strokes and total best-ball putts.",
+    tag: "Team best-ball - Tournaments only",
+    desc: "The whole team plays as one best-ball team - no 2-person sub-teams. The lowest strokes and lowest putts among all the players on the team count each hole. Used only in Tournaments, where teams are ranked against each other by total best-ball strokes and total best-ball putts.",
     rotates: false,
     hasScore: true,
     hasPutts: true,
@@ -484,13 +484,13 @@ const GAMES = {
     tournamentOnly: true,
     defaults: { maxOver: "", maxPutts: "", mulliganSegment: "", mulliganChallenge: "", prize: "", netScoring: true },
     rules: [
-      "4-person team best-ball strokes and best-ball putts competition - the whole foursome plays as one team, not split into 2-person sub-teams.",
+      "Team best-ball strokes and best-ball putts competition for 2-4 players - the whole team plays as one team, not split into 2-person sub-teams. If someone does not show up, the team can play with fewer players.",
       "Each player plays their own ball and records their own strokes and putts.",
       {
-        text: "Each hole, the foursome's score is the single lowest score among all 4 players:",
-        sub: ["Strokes: the lowest strokes among all 4 players on that hole.", "Putts: the lowest putts among all 4 players on that hole."],
+        text: "Each hole, the team's score is the single lowest score among all the players on the team:",
+        sub: ["Strokes: the lowest strokes among all the players on the team on that hole.", "Putts: the lowest putts among all the players on the team on that hole."],
       },
-      "Used only in Tournaments - foursomes are ranked against every other foursome by total best-ball strokes and total best-ball putts, tracked and ranked separately (lowest wins each).",
+      "Used only in Tournaments - teams are ranked against every other team by total best-ball strokes and total best-ball putts, tracked and ranked separately (lowest wins each).",
       "Prize: to be agreed on prior to round.",
       "Strokes max: to be agreed on prior to round.",
       "Putts max: to be agreed on prior to round.",
@@ -501,13 +501,13 @@ const GAMES = {
       "Putts start once on the putting green.",
       "No carry-overs on ties.",
       "Per-hole handicapping (net score per hole) is defaulted to On, but can be turned off in game scoring settings.",
-      "Great for foursome-vs-foursome tournament play.",
+      "Great for team-vs-team tournament play.",
     ],
   },
   tourneygg: {
     name: "Stroke Play Tournament",
     tag: "4-person combined - Tournaments only",
-    desc: "The whole foursome plays as one team - no 2-person sub-teams. All 4 players' strokes are added together, and all 4 players' putts are added together, each hole. Used only in Tournaments, where foursomes are ranked against each other by total combined strokes and total combined putts.",
+    desc: "The whole team plays as one team - no 2-person sub-teams. All 4 players' strokes are added together, and all 4 players' putts are added together, each hole. Used only in Tournaments, where teams are ranked against each other by total combined strokes and total combined putts.",
     rotates: false,
     hasScore: true,
     hasPutts: true,
@@ -516,13 +516,13 @@ const GAMES = {
     tournamentOnly: true,
     defaults: { maxOver: "", maxPutts: "", mulliganSegment: "", mulliganChallenge: "", prize: "", netScoring: true },
     rules: [
-      "4-person team combined strokes and combined putts competition - the whole foursome plays as one team, not split into 2-person sub-teams.",
+      "4-person team combined strokes and combined putts competition - the whole team plays as one team, not split into 2-person sub-teams.",
       "Each player plays their own ball and records their own strokes and putts.",
       {
-        text: "Each hole, the foursome's score is all 4 players' scores added together:",
+        text: "Each hole, the team's score is all 4 players' scores added together:",
         sub: ["Strokes: all 4 players' strokes for that hole, combined.", "Putts: all 4 players' putts for that hole, combined."],
       },
-      "Used only in Tournaments - foursomes are ranked against every other foursome by total combined strokes and total combined putts, tracked and ranked separately (lowest wins each).",
+      "Used only in Tournaments - teams are ranked against every other team by total combined strokes and total combined putts, tracked and ranked separately (lowest wins each).",
       "Prize: to be agreed on prior to round.",
       "Strokes max: to be agreed on prior to round.",
       "Putts max: to be agreed on prior to round.",
@@ -533,13 +533,13 @@ const GAMES = {
       "Putts start once on the putting green.",
       "No carry-overs on ties.",
       "Per-hole handicapping (net score per hole) is defaulted to On, but can be turned off in game scoring settings.",
-      "Great for foursome-vs-foursome tournament play.",
+      "Great for team-vs-team tournament play.",
     ],
   },
   avoscramble: {
     name: "Scramble Tournament",
     tag: "Choose best shot - Tournaments only",
-    desc: "The whole foursome plays as one team. Every team member tees off on each hole, the team picks the best shot of the foursome, and all players hit their next shots from that same location. This cycle repeats until the ball is in the hole. The team's strokes score for the hole is then captured.",
+    desc: "The whole team plays as one team. Every team member tees off on each hole, the team picks the best shot of the team, and all players hit their next shots from that same location. This cycle repeats until the ball is in the hole. The team's strokes score for the hole is then captured.",
     rotates: false,
     hasScore: true,
     hasPutts: false,
@@ -550,7 +550,7 @@ const GAMES = {
     tracksDrives: true,
     defaults: { maxOver: "", maxPutts: "", mulliganSegment: "", mulliganChallenge: "", minDrives: "", prize: "", netScoring: true },
     rules: [
-      "4-person team strokes competition - the whole foursome plays as one team",
+      "Team strokes competition (2-4 players) - the whole team plays as one team",
       {
         text: "Basic Play Sequence:",
         sub: [
@@ -561,19 +561,19 @@ const GAMES = {
           "On the green: Mark the chosen putt location; all players putt from that exact spot, usually within a putter head or scorecard length. The first ball holed counts as the team score.",
         ],
       },
-      "For each hole, the foursome's score is just one team score.",
-      "Used only in Tournaments - foursomes are ranked against every other foursome by total strokes, tracked and ranked (lowest score wins).",
+      "For each hole, the team's score is just one team score.",
+      "Used only in Tournaments - teams are ranked against every other team by total strokes, tracked and ranked (lowest score wins).",
       "Minimum drives: each player's tee shot must be used at least this many times over the round, set when the tournament is created and tracked hole by hole.",
       "Prize: to be agreed on prior to round.",
       "Strokes max: to be agreed on prior to round.",
       "Putts max: to be agreed on prior to round.",
       "Mulligans: to be agreed on prior to round.",
-      "Per-hole handicapping (net score per hole) is defaulted to On, but can be turned off in game scoring settings. Since this format has just one team score per hole, this works as an average of the 4 players' handicaps, subtracted from the team's total score to determine net score.",
+      "Per-hole handicapping (net score per hole) is defaulted to On, but can be turned off in game scoring settings. Since this format has just one team score per hole, this works as an average of the players' handicaps, subtracted from the team's total score to determine net score.",
       "Play all OB shots per USGA Rules.",
       "Must putt all the way into the hole.",
       "Flagstick can stay in.",
       "Putts start once on the putting green.",
-      "Great for foursome-vs-foursome tournament play w/higher handicaps.",
+      "Great for team-vs-team tournament play w/higher handicaps.",
     ],
   },
   swami: {
@@ -1312,6 +1312,12 @@ const LETTERS = ["A", "B", "C", "D"];
 // added or removed even after the round has started (Edit Players). Team
 // games, 9-Point (exactly 3), Match Play (exactly 2) and tournament
 // foursomes always keep a fixed count, so they're deliberately not here.
+// Tournament team games that can run short-handed when someone doesn't
+// show up: Scramble and Best Ball. Teams of 2-4 players. (Stroke Play adds
+// every player's score together, so a smaller team would have an unfair
+// advantage there - it stays at 4.)
+const FLEXIBLE_TEAM_GAMES = ["avoscramble", "tourneybb"];
+const MIN_FLEX_TEAM_PLAYERS = 2;
 const FLEXIBLE_PLAYER_GAMES = ["dstreet", "swami", "oceans11", "pontobango", "individualputts", "stableford", "quota"];
 const AVATAR_OPTIONS = [
   "\u{1F60E}", "\u{1F525}", "\u2B50", "\u{1F973}", "\u{1F3AF}", "\u{1F981}", "\u{1F43B}", "\u{1F985}", "\u{1F422}", "\u{1F41D}", "\u{1F30A}", "\u{1F335}",
@@ -1666,6 +1672,60 @@ function computeTeamsForHole(round, h, hs) {
   return round.teams;
 }
 const ACTIVE_KEY = "gsc-active-round";
+// ---- Shotgun start support (tournament rounds) ----
+// A tournament team can begin on any hole. The round's per-hole data
+// (par, yardage, stroke index, GPS) and its scores are stored in PLAY
+// ORDER: index 0 is always the first hole that team plays. That keeps
+// every piece of scoring logic (match play status, standings "thru hole",
+// mulligan windows, front/back segments) correct without change, and
+// round.startHole is only used to turn a play-order index back into the
+// real hole number for display. Default start hole is 1, which makes all
+// of these helpers do nothing.
+function cleanStartHole(v) {
+  const n = Math.round(Number(v));
+  return Number.isFinite(n) && n >= 1 && n <= 18 ? n : 1;
+}
+function startOffset(startHole) {
+  return cleanStartHole(startHole) - 1;
+}
+// Real hole number (1-18) for a play-order index.
+function realHoleNumber(round, idx) {
+  return ((startOffset(round && round.startHole) + idx) % 18) + 1;
+}
+// Array of 18 in real-hole order -> play order.
+function toPlayOrder(arr, startHole) {
+  const s = startOffset(startHole);
+  if (!Array.isArray(arr) || arr.length !== 18 || s === 0) return arr;
+  return arr.map((_, i) => arr[(i + s) % 18]);
+}
+// Array of 18 in play order -> real-hole order.
+function toHoleOrder(arr, startHole) {
+  const s = startOffset(startHole);
+  if (!Array.isArray(arr) || arr.length !== 18 || s === 0) return arr;
+  return arr.map((_, i) => arr[(i - s + 18) % 18]);
+}
+// Same as toPlayOrder, for the {0: [...], 1: [...]} object GPS data uses.
+function holeMapToPlayOrder(obj, startHole) {
+  const s = startOffset(startHole);
+  if (!obj || typeof obj !== "object" || s === 0) return obj;
+  const out = {};
+  for (let i = 0; i < 18; i++) {
+    const v = obj[(i + s) % 18];
+    if (v !== undefined) out[i] = v;
+  }
+  return out;
+}
+// "7" or "7B" - how a team's starting hole reads on screen.
+function startHoleLabel(round) {
+  if (!round) return "";
+  const sh = cleanStartHole(round.startHole);
+  const slot = round.startSlot ? String(round.startSlot).toUpperCase() : "";
+  return slot ? `${sh}${slot}` : `${sh}`;
+}
+function hasCustomStart(round) {
+  return !!round && (cleanStartHole(round.startHole) !== 1 || !!round.startSlot);
+}
+
 const LAST_TOURNAMENT_KEY = "gsc-last-tournament";
 const FINISHED_TOURNAMENT_INDEX_KEY = "gsc-finished-tournament-index";
 const FINISHED_INDEX_KEY = "gsc-finished-index";
@@ -2969,6 +3029,8 @@ export default function GolfScorecard() {
   const [leaderboardLoading, setLeaderboardLoading] = useState(false);
   const [leaderboardErr, setLeaderboardErr] = useState("");
   const [leaderboardCategory, setLeaderboardCategory] = useState("wins");
+  const [leaderboardShowAll, setLeaderboardShowAll] = useState(false);
+  const [recentShowAll, setRecentShowAll] = useState(false);
 
   // ---- Groups (private, invite-by-code leaderboards) ----
   const [myGroups, setMyGroups] = useState([]); // [{id, name}]
@@ -3321,6 +3383,9 @@ export default function GolfScorecard() {
   const [tournamentCfg, setTournamentCfg] = useState({});
   const [tournamentFoursomeCount, setTournamentFoursomeCount] = useState(2);
   const [tournamentFoursomesDraft, setTournamentFoursomesDraft] = useState([]);
+  const [foursomeStartHole, setFoursomeStartHole] = useState("");
+  const [roundStartHole, setRoundStartHole] = useState(1); // regular (non-tournament) rounds: 1 or 10
+  const [foursomeStartSlot, setFoursomeStartSlot] = useState("");
   const [tournamentJoinCode, setTournamentJoinCode] = useState("");
   const [tournamentErr, setTournamentErr] = useState("");
   const [tournamentBusy, setTournamentBusy] = useState(false);
@@ -4146,7 +4211,7 @@ export default function GolfScorecard() {
       firHits,
       firHoles,
       bestRoundStrokes,
-      recent: recent.slice(0, 5),
+      recent,
     });
 
     // Keep the leaderboard's copy of this user's totals fresh - always,
@@ -6518,8 +6583,8 @@ export default function GolfScorecard() {
     return (
       <div className="gsc-modal-backdrop" onClick={() => setEditFoursomeOpen(false)}>
         <div className="gsc-modal" style={{ maxWidth: 420, maxHeight: "85vh", overflowY: "auto" }} onClick={(e) => e.stopPropagation()}>
-          <div className="gsc-modal-title">{editFoursomeIsTournament ? "Edit Foursome" : "Edit Players"}</div>
-          <div className="gsc-label">{editFoursomeIsTournament ? "Foursome name" : "Round name"}</div>
+          <div className="gsc-modal-title">{editFoursomeIsTournament ? "Edit Team" : "Edit Players"}</div>
+          <div className="gsc-label">{editFoursomeIsTournament ? "Team name" : "Round name"}</div>
           <input className="gsc-input" style={{ marginBottom: 14 }} value={editFoursomeName} onChange={(e) => setEditFoursomeName(e.target.value)} />
           <div className="gsc-label" style={{ marginBottom: 6 }}>Players</div>
           {editFoursomePlayers.map((p, i) => (
@@ -6596,11 +6661,16 @@ export default function GolfScorecard() {
               + Add another player
             </button>
           )}
+          {editFoursomeIsTournament && editFoursomeMinPlayers != null && (
+            <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 8 }}>
+              A team can have {MIN_FLEX_TEAM_PLAYERS} to 4 players. Removing a player also removes the scores they entered.
+            </div>
+          )}
           {editFoursomeIsTournament && (
             <div style={{ marginTop: 8, marginBottom: 8 }}>
-              <div className="gsc-label" style={{ marginBottom: 6 }}>Who's this foursome's captain?</div>
+              <div className="gsc-label" style={{ marginBottom: 6 }}>Who's this team's captain?</div>
               <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 8 }}>
-                Only captains can enter or change scores for this foursome - everyone else can just view. Tap to toggle who's a captain; defaults to everyone.
+                Only captains can enter or change scores for this team - everyone else can just view. Tap to toggle who's a captain; defaults to everyone.
               </div>
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                 {editFoursomePlayers.map((p, i) => (
@@ -6862,7 +6932,7 @@ export default function GolfScorecard() {
     for (let h = 0; h < 18; h++) {
       const hs = r.scores[h] || {};
       const filled = r.players.every((_, i) => hs[i] && ((hs[i].strokes != null && hs[i].strokes !== "") || (hs[i].putts != null && hs[i].putts !== "")));
-      if (!filled) incomplete.push(h + 1);
+      if (!filled) incomplete.push(realHoleNumber(r, h));
     }
     return incomplete;
   }
@@ -7881,7 +7951,7 @@ export default function GolfScorecard() {
     setWizardOnlyMode(null);
     setErr("");
     setTournamentErr("");
-    setRoundName("");
+    setRoundName(""); setRoundStartHole(1);
     setRoundDate(new Date().toISOString().slice(0, 10));
     setPlayers(freshPlayerSlots());
     setPontoPairing([[0, 1], [2, 3]]);
@@ -8046,7 +8116,7 @@ export default function GolfScorecard() {
     setActiveTournament(null);
     setGameKey(key);
     setCfg(withProfileVenmo({ ...GAMES[key].defaults }));
-    setRoundName("");
+    setRoundName(""); setRoundStartHole(1);
     setRoundDate(new Date().toISOString().slice(0, 10));
     setPlayers(freshPlayerSlots(key, true));
     setPontoPairing([[0, 1], [2, 3]]);
@@ -8079,7 +8149,7 @@ export default function GolfScorecard() {
     setActiveTournament(null);
     setGameKey("swami");
     setCfg(withProfileVenmo({ ...GAMES.swami.defaults }));
-    setRoundName("");
+    setRoundName(""); setRoundStartHole(1);
     setRoundDate(new Date().toISOString().slice(0, 10));
     setPlayers(freshPlayerSlots("swami", true).slice(0, 1));
     setPar(Array(18).fill(""));
@@ -8133,7 +8203,7 @@ export default function GolfScorecard() {
     setActiveTournament(null);
     setGameKey(old.game);
     setCfg({ ...old.cfg });
-    setRoundName("");
+    setRoundName(""); setRoundStartHole(1);
     setRoundDate(new Date().toISOString().slice(0, 10));
     setPlayers(old.players.map((p) => ({ name: p.name, hcp: p.hcp, avatar: p.avatar || "", user_id: p.user_id })));
     setPontoPairing([[0, 1], [2, 3]]);
@@ -8167,7 +8237,9 @@ export default function GolfScorecard() {
     setActiveTournament(tournament);
     setGameKey(tournament.game);
     setCfg({ ...tournament.cfg });
-    setRoundName("");
+    setRoundName(""); setRoundStartHole(1);
+    setFoursomeStartHole("");
+    setFoursomeStartSlot("");
     setRoundDate(tournament.date);
     setPlayers(freshPlayerSlots(tournament.game));
     setPontoPairing([[0, 1], [2, 3]]);
@@ -8480,15 +8552,18 @@ export default function GolfScorecard() {
         // 2 regulars from a group plus 2 guests needs those extra slots
         // to still exist and be fillable, not disappear along with the
         // ability to add to them.
-        const padded = Array.from({ length: slotCount }, (_, i) => filled[i] || { name: "", avatar: "", hcp: "" });
+        const flexTeam = !!activeTournament && FLEXIBLE_TEAM_GAMES.includes(gameKey);
+        const size = flexTeam ? Math.max(MIN_FLEX_TEAM_PLAYERS, Math.min(4, filled.length)) : slotCount;
+        const padded = Array.from({ length: size }, (_, i) => filled[i] || { name: "", avatar: "", hcp: "" });
         setPlayers(padded);
       }
     } else if (typeof groupFillFor === "number") {
       const fi = groupFillFor;
-      const fullFour = Array.from({ length: 4 }, (_, i) => filled[i] || { name: "", avatar: "", hcp: "" });
+      const teamSize = FLEXIBLE_TEAM_GAMES.includes(tournamentGameKey) ? Math.max(MIN_FLEX_TEAM_PLAYERS, Math.min(4, filled.length)) : 4;
+      const fullFour = Array.from({ length: teamSize }, (_, i) => filled[i] || { name: "", avatar: "", hcp: "" });
       setTournamentFoursomesDraft((prev) => {
         const next = [...prev];
-        if (next[fi]) next[fi] = { ...next[fi], players: fullFour };
+        if (next[fi]) next[fi] = { ...next[fi], players: fullFour, captainIdxs: fullFour.map((_, i) => i) };
         return next;
       });
     }
@@ -8502,7 +8577,8 @@ export default function GolfScorecard() {
     setPlayers((p) => (p.length >= 4 ? p : [...p, { name: "", hcp: "", avatar: "" }]));
   }
   function removePlayerSlot(i) {
-    setPlayers((p) => (p.length <= 1 ? p : p.filter((_, idx) => idx !== i)));
+    const minKeep = activeTournament && FLEXIBLE_TEAM_GAMES.includes(gameKey) ? MIN_FLEX_TEAM_PLAYERS : 1;
+    setPlayers((p) => (p.length <= minKeep ? p : p.filter((_, idx) => idx !== i)));
   }
 
   async function registerFoursomeInTournament(tournamentId, foursomeId, foursomeName) {
@@ -8546,6 +8622,11 @@ export default function GolfScorecard() {
         setErr(needsTwo ? "Need at least 2 players." : "Need at least 1 player.");
         return;
       }
+    } else if (activeTournament && FLEXIBLE_TEAM_GAMES.includes(gameKey)) {
+      if (cleanPlayers.length < MIN_FLEX_TEAM_PLAYERS) {
+        setErr(`A team needs at least ${MIN_FLEX_TEAM_PLAYERS} players.`);
+        return;
+      }
     } else if (cleanPlayers.length < 4) {
       setErr("Need 4 players.");
       return;
@@ -8564,7 +8645,7 @@ export default function GolfScorecard() {
         : isIndividual
         ? cleanPlayers.map((_, i) => [i]) // individual - each player is their own "team" of one, however many were entered
         : gameKey === "tourneybb" || gameKey === "tourneygg" || gameKey === "avoscramble"
-        ? [[0, 1, 2, 3]] // whole foursome as a single team - no sub-teams
+        ? [cleanPlayers.map((_, i) => i)] // whole team as a single team - no sub-teams (2-4 players for Scramble/Best Ball)
         : null; // seabluffe computes teams per-hole
 
     const cleanPar = par.map((p) => (p === "" || p == null || isNaN(Number(p)) ? 4 : Number(p)));
@@ -8587,7 +8668,9 @@ export default function GolfScorecard() {
     const finalYardage = isTournament ? [...(activeTournament.yardage || Array(18).fill(null))] : cleanYardage;
     const finalStrokeIndex = isTournament ? [...(activeTournament.strokeIndex || Array(18).fill(null))] : cleanStrokeIndex;
     const finalCourse = isTournament ? activeTournament.course || "" : courseName.trim();
-    const foursomeName = roundName.trim() || "Foursome";
+    const foursomeName = roundName.trim() || "Team";
+    const myStartHole = isTournament ? cleanStartHole(foursomeStartHole) : cleanStartHole(roundStartHole);
+    const myStartSlot = isTournament ? foursomeStartSlot || "" : "";
 
     const newRound = {
       id: code,
@@ -8598,12 +8681,14 @@ export default function GolfScorecard() {
       cfg: finalCfg,
       players: cleanPlayers,
       teams,
-      par: finalPar,
-      yardage: finalYardage,
-      strokeIndex: finalStrokeIndex,
+      startHole: myStartHole,
+      startSlot: myStartSlot,
+      par: toPlayOrder(finalPar, myStartHole),
+      yardage: toPlayOrder(finalYardage, myStartHole),
+      strokeIndex: toPlayOrder(finalStrokeIndex, myStartHole),
       scores: emptyScores(),
       bonusMulligans: [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]],
-      holeGPS: finalCfg.gpsHoleData || null,
+      holeGPS: holeMapToPlayOrder(finalCfg.gpsHoleData || null, myStartHole),
       avatar: finalCfg.roundAvatar || "",
       createdAt: Date.now(),
       tournamentId: isTournament ? activeTournament.id : null,
@@ -8670,7 +8755,7 @@ export default function GolfScorecard() {
         setTournamentErr(
           MATCH_PLAY_GAMES.includes(activeTournament.game)
             ? `Your match was created and is playable, but couldn't be added to the tournament board yet (${reg.error}). Try refreshing the board from your scorecard once you're underway.`
-            : `Your foursome was created and is playable, but couldn't be added to the tournament leaderboard yet (${reg.error}). Try refreshing the leaderboard from your scorecard once you're underway.`
+            : `Your team was created and is playable, but couldn't be added to the tournament leaderboard yet (${reg.error}). Try refreshing the leaderboard from your scorecard once you're underway.`
         );
       }
     }
@@ -8725,10 +8810,12 @@ export default function GolfScorecard() {
     const count = tournamentFoursomeCount === "" || tournamentFoursomeCount == null || isNaN(Number(tournamentFoursomeCount)) ? 2 : Math.max(1, Number(tournamentFoursomeCount));
     setTournamentFoursomeCount(count);
     const slotsPerMatch = tournamentGameKey === "matchplay" ? 2 : 4;
-    const defaultLabel = MATCH_PLAY_GAMES.includes(tournamentGameKey) ? "Match" : "Foursome";
+    const defaultLabel = MATCH_PLAY_GAMES.includes(tournamentGameKey) ? "Match" : "Team";
     setTournamentFoursomesDraft(
       Array.from({ length: count }, (_, i) => ({
         name: `${defaultLabel} ${i + 1}`,
+        startHole: "",
+        startSlot: "",
         players: i === 0 ? freshPlayerSlots(tournamentGameKey) : Array.from({ length: slotsPerMatch }, () => ({ name: "", hcp: "", avatar: "" })),
         pairing: [[0, 1], [2, 3]],
         captainIdxs: Array.from({ length: slotsPerMatch }, (_, pi) => pi),
@@ -8743,6 +8830,121 @@ export default function GolfScorecard() {
       next[fi] = { ...next[fi], name: val };
       return next;
     });
+  }
+
+  function addFoursomeDraftPlayer(fi) {
+    setTournamentFoursomesDraft((draft) => {
+      const next = [...draft];
+      const cur = next[fi];
+      if (!cur || cur.players.length >= 4) return draft;
+      const wasEveryone = (cur.captainIdxs || []).length === cur.players.length;
+      const newIdx = cur.players.length;
+      next[fi] = {
+        ...cur,
+        players: [...cur.players, { name: "", hcp: "", avatar: "" }],
+        captainIdxs: wasEveryone ? [...(cur.captainIdxs || []), newIdx] : cur.captainIdxs,
+      };
+      return next;
+    });
+  }
+
+  function removeFoursomeDraftPlayer(fi, pi) {
+    setGroupmatePickerFor(null);
+    setAvatarPickerFor(null);
+    setTournamentFoursomesDraft((draft) => {
+      const next = [...draft];
+      const cur = next[fi];
+      if (!cur || cur.players.length <= MIN_FLEX_TEAM_PLAYERS) return draft;
+      const players = cur.players.filter((_, idx) => idx !== pi);
+      // Captain positions shift down when someone earlier in the list is
+      // removed; if that leaves nobody as captain, default back to everyone.
+      let captainIdxs = (cur.captainIdxs || []).filter((x) => x !== pi).map((x) => (x > pi ? x - 1 : x));
+      if (captainIdxs.length === 0) captainIdxs = players.map((_, i) => i);
+      next[fi] = { ...cur, players, captainIdxs };
+      return next;
+    });
+  }
+
+  function updateFoursomeDraftStart(fi, field, val) {
+    setTournamentFoursomesDraft((draft) => {
+      const next = [...draft];
+      next[fi] = { ...next[fi], [field]: val };
+      return next;
+    });
+  }
+
+  // "Which tee do we start on?" for regular rounds - some courses open on
+  // the 10th tee. Defaults to hole 1; only 1 and 10 are offered here.
+  function renderRoundStartHole() {
+    const opts = [1, 10];
+    return (
+      <div style={{ marginTop: 14, marginBottom: 10 }}>
+        <div className="gsc-label" style={{ marginBottom: 6 }}>Starting hole</div>
+        <div style={{ display: "flex", gap: 8 }}>
+          {opts.map((h) => (
+            <button
+              key={h}
+              onClick={() => setRoundStartHole(h)}
+              style={{
+                flex: 1,
+                padding: "10px 0",
+                borderRadius: 8,
+                fontWeight: 700,
+                fontSize: 14,
+                cursor: "pointer",
+                border: cleanStartHole(roundStartHole) === h ? "2px solid #1B4332" : "1.5px solid #d8d2bd",
+                background: cleanStartHole(roundStartHole) === h ? "#EBF0EC" : "#fff",
+                color: "#1B4332",
+              }}
+            >
+              Hole {h}
+            </button>
+          ))}
+        </div>
+        <div style={{ fontSize: 11, color: "#8a8a80", marginTop: 4 }}>
+          Pick Hole 10 if your course starts you on the back nine. The round then plays 10-18, then 1-9.
+        </div>
+      </div>
+    );
+  }
+
+  // Shared "Starting hole" inputs (organizer's team list + a team adding
+  // itself to a tournament). Blank means hole 1. The optional letter is
+  // for shotgun starts where two teams tee off the same hole (7A goes
+  // first, 7B second) - it's shown on screen but doesn't change play.
+  function renderStartHoleFields(holeVal, slotVal, onHole, onSlot) {
+    return (
+      <div style={{ marginTop: 12, marginBottom: 4 }}>
+        <div className="gsc-label" style={{ marginBottom: 6 }}>Starting hole (Optional)</div>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <input
+            className="gsc-input"
+            style={{ width: 90, marginBottom: 0 }}
+            type="number"
+            inputMode="numeric"
+            min="1"
+            max="18"
+            placeholder="1"
+            value={holeVal}
+            onChange={(e) => onHole(e.target.value.replace(/[^0-9]/g, "").slice(0, 2))}
+          />
+          <select
+            className="gsc-input"
+            style={{ width: 120, marginBottom: 0 }}
+            value={slotVal}
+            onChange={(e) => onSlot(e.target.value)}
+          >
+            <option value="">No letter</option>
+            <option value="A">A (1st group)</option>
+            <option value="B">B (2nd group)</option>
+            <option value="C">C (3rd group)</option>
+          </select>
+        </div>
+        <div style={{ fontSize: 11, color: "#8a8a80", marginTop: 4 }}>
+          For a shotgun start. Leave blank to start on hole 1. Use the letter when two groups start on the same hole (7A, 7B).
+        </div>
+      </div>
+    );
   }
 
   function updateFoursomeDraftPlayer(fi, pi, field, val) {
@@ -8832,13 +9034,15 @@ export default function GolfScorecard() {
     for (let fi = 0; fi < tournamentFoursomesDraft.length; fi++) {
       const draft = tournamentFoursomesDraft[fi];
       const foursomeCode = genCode();
-      const foursomeName = draft.name.trim() || "Foursome";
+      const foursomeName = draft.name.trim() || "Team";
       const cleanPlayers = draft.players.map((p, i) => ({
         name: p.name.trim() || `Player ${LETTERS[i]}`,
         hcp: p.hcp,
         avatar: p.avatar || "",
         ...(fi === 0 && i === 0 && session ? { user_id: session.user.id } : p.user_id ? { user_id: p.user_id } : {}),
       }));
+      const startHole = cleanStartHole(draft.startHole);
+      const startSlot = draft.startSlot || "";
       const foursomeRound = {
         id: foursomeCode,
         game: tournamentGameKey,
@@ -8847,13 +9051,15 @@ export default function GolfScorecard() {
         course: tournamentCourseName.trim(),
         cfg: cleanCfg,
         players: cleanPlayers,
-        teams: tournamentGameKey === "matchplay" ? [[0], [1]] : tournamentGameKey === "matchplayfourball" || tournamentGameKey === "altshot" ? (draft.pairing || [[0, 1], [2, 3]]) : [[0, 1, 2, 3]],
-        par: cleanPar,
-        yardage: cleanYardage,
-        strokeIndex: cleanStrokeIndex,
+        teams: tournamentGameKey === "matchplay" ? [[0], [1]] : tournamentGameKey === "matchplayfourball" || tournamentGameKey === "altshot" ? (draft.pairing || [[0, 1], [2, 3]]) : [cleanPlayers.map((_, i) => i)],
+        startHole,
+        startSlot,
+        par: toPlayOrder(cleanPar, startHole),
+        yardage: toPlayOrder(cleanYardage, startHole),
+        strokeIndex: toPlayOrder(cleanStrokeIndex, startHole),
         scores: emptyScores(),
         bonusMulligans: [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]],
-        holeGPS: cleanCfg.gpsHoleData || null,
+        holeGPS: holeMapToPlayOrder(cleanCfg.gpsHoleData || null, startHole),
         avatar: cleanCfg.roundAvatar || "",
         createdAt: Date.now(),
         tournamentId: code,
@@ -8905,7 +9111,7 @@ export default function GolfScorecard() {
     const w = await storageSet(`${TOURNAMENT_PREFIX}${code}`, JSON.stringify(tournament), true);
     setTournamentBusy(false);
     if (!w.ok) {
-      setTournamentErr(`All ${foursomeEntries.length} foursomes were saved, but the tournament record itself failed to save (${w.error}). Try again.`);
+      setTournamentErr(`All ${foursomeEntries.length} teams were saved, but the tournament record itself failed to save (${w.error}). Try again.`);
       return;
     }
     const pointer = { id: tournament.id, name: tournament.name, game: tournament.game, organizerId: tournament.organizerId ?? null };
@@ -9014,7 +9220,9 @@ export default function GolfScorecard() {
     setEditFoursomeName(roundData.foursomeName || roundData.name || "");
     setEditFoursomePlayers(roundData.players.map((p, i) => ({ name: p.name, hcp: p.hcp, originalName: p.name, avatar: p.avatar || "", user_id: p.user_id || null, origIdx: i })));
     setEditFoursomeMinPlayers(
-      !roundData.tournamentId && FLEXIBLE_PLAYER_GAMES.includes(roundData.game)
+      roundData.tournamentId && FLEXIBLE_TEAM_GAMES.includes(roundData.game)
+        ? MIN_FLEX_TEAM_PLAYERS
+        : !roundData.tournamentId && FLEXIBLE_PLAYER_GAMES.includes(roundData.game)
         ? roundData.game === "pontobango" || roundData.game === "individualputts"
           ? 2
           : 1
@@ -9031,12 +9239,25 @@ export default function GolfScorecard() {
   }
 
   function addEditFoursomePlayer() {
+    if (editFoursomePlayers.length >= 4) return;
+    const newIdx = editFoursomePlayers.length;
     setEditFoursomePlayers((p) => (p.length >= 4 ? p : [...p, { name: "", hcp: "", originalName: "", avatar: "", user_id: null, origIdx: null }]));
+    // If every player was a captain ("defaults to everyone"), the new
+    // player joins them; a narrowed-down captain list stays as it was.
+    setEditFoursomeCaptainIdxs((idxs) => (idxs.length === newIdx ? [...idxs, newIdx] : idxs));
   }
 
   function removeEditFoursomePlayer(i) {
     setGroupmatePickerFor(null);
+    if (editFoursomeMinPlayers == null || editFoursomePlayers.length <= editFoursomeMinPlayers) return;
+    const remainingCount = editFoursomePlayers.length - 1;
     setEditFoursomePlayers((p) => (editFoursomeMinPlayers == null || p.length <= editFoursomeMinPlayers ? p : p.filter((_, idx) => idx !== i)));
+    // Captains are stored by position, so shift them down past the removed
+    // player; if nobody is left as captain, default back to everyone.
+    setEditFoursomeCaptainIdxs((idxs) => {
+      const shifted = idxs.filter((x) => x !== i).map((x) => (x > i ? x - 1 : x));
+      return shifted.length > 0 ? shifted : Array.from({ length: remainingCount }, (_, k) => k);
+    });
   }
 
   function updateEditFoursomePlayer(i, field, val) {
@@ -9078,7 +9299,7 @@ export default function GolfScorecard() {
     const res = await storageGet(`golfround:${editFoursomeId}`, true);
     if (!res.ok || !res.value) {
       setEditFoursomeBusy(false);
-      setEditFoursomeErr(`Couldn't load this foursome to edit it (${res.error || "not found"}).`);
+      setEditFoursomeErr(`Couldn't load this team to edit it (${res.error || "not found"}).`);
       return;
     }
     let r;
@@ -9086,10 +9307,10 @@ export default function GolfScorecard() {
       r = JSON.parse(res.value);
     } catch (e) {
       setEditFoursomeBusy(false);
-      setEditFoursomeErr("This foursome's data looks corrupted.");
+      setEditFoursomeErr("This team's data looks corrupted.");
       return;
     }
-    const cleanName = editFoursomeName.trim() || "Foursome";
+    const cleanName = editFoursomeName.trim() || "Team";
     // The draft's own avatar/user_id are always accurate at this point -
     // openEditFoursome seeded them from the original player, retyping a
     // name clears them, and picking a groupmate sets fresh correct ones -
@@ -9127,21 +9348,38 @@ export default function GolfScorecard() {
         return;
       }
       const newScores = emptyScores();
+      // Scramble's single team score lives in every player's slot, so it
+      // is copied across rather than following one player.
+      const keepsTeamScoreInSlotZero = !!(GAMES[r.game] && GAMES[r.game].oneTeamScore);
       for (let h = 0; h < 18; h++) {
         const oldHole = (r.scores && r.scores[h]) || {};
         Object.keys(oldHole).forEach((k) => {
           if (!/^\d+$/.test(k)) newScores[h][k] = oldHole[k]; // keep any non-player per-hole data as is
         });
-        editFoursomePlayers.forEach((p, ni) => {
-          if (p.origIdx != null && oldHole[p.origIdx]) newScores[h][ni] = oldHole[p.origIdx];
-        });
+        if (keepsTeamScoreInSlotZero) {
+          // Scramble writes the one team score into every player's slot, so
+          // give every slot (including a newly added player's) a copy.
+          const teamEntry = editFoursomePlayers.map((p) => (p.origIdx != null ? oldHole[p.origIdx] : null)).find(Boolean) || oldHole[0] || null;
+          if (teamEntry) editFoursomePlayers.forEach((_, ni) => { newScores[h][ni] = { ...teamEntry }; });
+        } else {
+          editFoursomePlayers.forEach((p, ni) => {
+            if (p.origIdx != null && oldHole[p.origIdx]) newScores[h][ni] = oldHole[p.origIdx];
+          });
+        }
+        // "Whose drive was used" is a player position too - follow the
+        // player to their new spot, or clear it if that player was removed.
+        if (oldHole.driveUsedBy != null) {
+          const ni = editFoursomePlayers.findIndex((p) => p.origIdx === oldHole.driveUsedBy);
+          if (ni >= 0) newScores[h].driveUsedBy = ni;
+          else delete newScores[h].driveUsedBy;
+        }
       }
       r.scores = newScores;
       const oldBonus = Array.isArray(r.bonusMulligans) ? r.bonusMulligans : [];
       const newBonus = editFoursomePlayers.map((p) => (p.origIdx != null && oldBonus[p.origIdx] ? [...oldBonus[p.origIdx]] : [0, 0, 0]));
       while (newBonus.length < 4) newBonus.push([0, 0, 0]);
       r.bonusMulligans = newBonus;
-      r.teams = editFoursomePlayers.map((_, i) => [i]);
+      r.teams = r.tournamentId && GAMES[r.game] && GAMES[r.game].singleTeam ? [editFoursomePlayers.map((_, i) => i)] : editFoursomePlayers.map((_, i) => [i]);
     }
     if (r.tournamentId) {
       r.foursomeName = cleanName;
@@ -9208,7 +9446,13 @@ export default function GolfScorecard() {
     // tournament every foursome must share one course setup, so changing
     // it for a single foursome would make standings inconsistent.
     setEditSettingsStrokeIndex(
-      r.tournamentId ? null : Array.from({ length: 18 }, (_, i) => (r.strokeIndex && r.strokeIndex[i] != null ? r.strokeIndex[i] : ""))
+      r.tournamentId
+        ? null
+        : (() => {
+            // Shown by real hole number even if the round started on hole 10.
+            const siByHole = toHoleOrder(r.strokeIndex || [], r.startHole);
+            return Array.from({ length: 18 }, (_, i) => (siByHole && siByHole[i] != null ? siByHole[i] : ""));
+          })()
     );
     setGameDetailsOpen(false);
     setEditSettingsOpen(true);
@@ -9251,7 +9495,7 @@ export default function GolfScorecard() {
     };
     r.cfg = { ...r.cfg, ...normalizedEditSettingsCfg };
     if (editSettingsStrokeIndex && !r.tournamentId) {
-      r.strokeIndex = editSettingsStrokeIndex.map((s) => (s === "" || s == null || isNaN(Number(s)) ? null : Number(s)));
+      r.strokeIndex = toPlayOrder(editSettingsStrokeIndex.map((s) => (s === "" || s == null || isNaN(Number(s)) ? null : Number(s))), r.startHole);
     }
     const w = await storageSet(`golfround:${editSettingsId}`, JSON.stringify(r), true);
     if (!w.ok) {
@@ -11903,7 +12147,7 @@ function computeMatchPlayResult(round, computed) {
                   disabled={tournamentBusy}
                   onClick={() => addFoursomeToTournamentId(lastTournament.id)}
                 >
-                  {lastTournament.game && MATCH_PLAY_GAMES.includes(lastTournament.game) ? "Add a match" : "Add a foursome"}
+                  {lastTournament.game && MATCH_PLAY_GAMES.includes(lastTournament.game) ? "Add a match" : "Add a team"}
                 </button>
               )}
             </div>
@@ -12198,11 +12442,11 @@ function computeMatchPlayResult(round, computed) {
                 <div style={{ fontWeight: 800, fontSize: 16, color: "#8a6a2f" }}>Finished Games</div>
               </div>
               {deleteHistoryErr && <div style={{ color: "#A42E2D", fontSize: 12, marginBottom: 8 }}>{deleteHistoryErr}</div>}
-              {stats.recent.map((r, i) => (
+              {(recentShowAll ? stats.recent : stats.recent.slice(0, 5)).map((r, i, shownArr) => (
                 <div
                   key={i}
                   onClick={() => (r.tournamentId ? openTournamentBoard(r.tournamentId) : viewRoundFromProfile(r.code, "statsTab"))}
-                  style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "7px 0", borderBottom: i === stats.recent.length - 1 ? "none" : "1px solid #eee6cf", cursor: "pointer" }}
+                  style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "7px 0", borderBottom: i === shownArr.length - 1 ? "none" : "1px solid #eee6cf", cursor: "pointer" }}
                 >
                   <div style={{ fontSize: 13, color: "#1B4332", fontWeight: 600 }}>
                     {stripDateFromTitle(r.name)}
@@ -12224,6 +12468,14 @@ function computeMatchPlayResult(round, computed) {
                   </div>
                 </div>
               ))}
+              {stats.recent.length > 5 && (
+                <button
+                  onClick={() => setRecentShowAll((v) => !v)}
+                  style={{ marginTop: 10, width: "100%", padding: "9px 0", borderRadius: 8, border: "1.5px solid #B08D57", background: "#fff", color: "#8a6a2f", fontWeight: 700, fontSize: 13, cursor: "pointer" }}
+                >
+                  {recentShowAll ? "Show less" : `Show all (${stats.recent.length})`}
+                </button>
+              )}
             </div>
           )}
           {session && (
@@ -12236,7 +12488,7 @@ function computeMatchPlayResult(round, computed) {
                 {Object.entries(LEADERBOARD_CATEGORIES).map(([key, cat]) => (
                   <button
                     key={key}
-                    onClick={() => setLeaderboardCategory(key)}
+                    onClick={() => { setLeaderboardCategory(key); setLeaderboardShowAll(false); }}
                     style={{
                       fontSize: 11,
                       fontWeight: 700,
@@ -12273,7 +12525,9 @@ function computeMatchPlayResult(round, computed) {
                     );
                   }
 
-                  return ranked.slice(0, 10).map((x, i) => {
+                  const shownCount = leaderboardShowAll ? 50 : 10;
+                  const shown = ranked.slice(0, shownCount);
+                  const rows = shown.map((x, i) => {
                     const isMe = session && x.row.user_id === session.user.id;
                     return (
                       <div
@@ -12283,7 +12537,7 @@ function computeMatchPlayResult(round, computed) {
                           justifyContent: "space-between",
                           alignItems: "center",
                           padding: "7px 0",
-                          borderBottom: i === Math.min(ranked.length, 10) - 1 ? "none" : "1px solid #eee6cf",
+                          borderBottom: i === shown.length - 1 ? "none" : "1px solid #eee6cf",
                           background: isMe ? "#EBF0EC" : "transparent",
                           borderRadius: isMe ? 6 : 0,
                           paddingLeft: isMe ? 8 : 0,
@@ -12298,6 +12552,19 @@ function computeMatchPlayResult(round, computed) {
                       </div>
                     );
                   });
+                  return (
+                    <>
+                      {rows}
+                      {ranked.length > 10 && (
+                        <button
+                          onClick={() => setLeaderboardShowAll((v) => !v)}
+                          style={{ marginTop: 10, width: "100%", padding: "9px 0", borderRadius: 8, border: "1.5px solid #B08D57", background: "#fff", color: "#8a6a2f", fontWeight: 700, fontSize: 13, cursor: "pointer" }}
+                        >
+                          {leaderboardShowAll ? "Show less" : `Show more (top ${Math.min(ranked.length, 50)})`}
+                        </button>
+                      )}
+                    </>
+                  );
                 })()
               )}
             </div>
@@ -13386,10 +13653,10 @@ function computeMatchPlayResult(round, computed) {
 
           <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
             <div className="gsc-label" style={{ marginBottom: 4, color: "#1B4332", fontSize: 15 }}>Tournament Game Formats</div>
-            <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>Multiple Foursomes</div>
+            <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 10 }}>Multiple Teams</div>
             {/* Explicit display order requested for this list: Stroke
                 Play, Scramble, Best Ball, Match Play, Team Match Play,
-                Foursomes - same order as the homepage tournament tiles,
+                Teams - same order as the homepage tournament tiles,
                 not TOURNAMENT_GAME_KEYS' own order (that constant is also
                 used elsewhere as a default fallback game, so its order is
                 left alone). */}
@@ -13500,7 +13767,7 @@ function computeMatchPlayResult(round, computed) {
             <div className="gsc-modal" onClick={(e) => e.stopPropagation()}>
               <div className="gsc-modal-title">Remove this tournament?</div>
               <div className="gsc-modal-body">
-                "{deleteTournamentConfirm.name}" will be removed from your finished tournaments list on this device. The tournament and every foursome's data stay fully intact - you could still rejoin later with the tournament code.
+                "{deleteTournamentConfirm.name}" will be removed from your finished tournaments list on this device. The tournament and every team's data stay fully intact - you could still rejoin later with the tournament code.
               </div>
               {deleteTournamentErr && <div style={{ color: "#A42E2D", fontSize: 13, marginBottom: 12 }}>{deleteTournamentErr}</div>}
               <div className="gsc-modal-row">
@@ -15162,7 +15429,7 @@ function computeMatchPlayResult(round, computed) {
 
           {wizardStepId === "field_foursomeCount" && (
             <div className="gsc-card">
-              <div className="gsc-label" style={{ marginBottom: 10, fontSize: 16 }}>How many foursomes?</div>
+              <div className="gsc-label" style={{ marginBottom: 10, fontSize: 16 }}>How many teams?</div>
               <input
                 className="gsc-input"
                 type="number"
@@ -15178,7 +15445,7 @@ function computeMatchPlayResult(round, computed) {
                 }}
               />
               <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 8 }}>
-                You'll add each foursome's name and 4 players next. More foursomes can always join later with the tournament code.
+                You'll add each team's name and players next. More teams can always join later with the tournament code.
               </div>
               <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", marginTop: 14 }} onClick={() => wizardGoNext("field_foursomeCount", {})}>
                 Continue
@@ -15335,6 +15602,7 @@ function computeMatchPlayResult(round, computed) {
               <div style={{ position: "relative", fontSize: 13, color: "#4b4b45", marginBottom: 16 }}>
                 Time to head to the first hole.
               </div>
+              <div style={{ position: "relative", textAlign: "left", marginBottom: 12 }}>{renderRoundStartHole()}</div>
               {err && <div style={{ position: "relative", color: "#A42E2D", fontSize: 13, marginBottom: 12 }}>{err}</div>}
               <button
                 className="gsc-btn gsc-btn-primary"
@@ -15687,7 +15955,7 @@ function computeMatchPlayResult(round, computed) {
         <style>{STYLE}</style>
         <Header
           title={activeTournament ? activeTournament.name : g.name}
-          sub={activeTournament ? (MATCH_PLAY_GAMES.includes(activeTournament.game) ? `${g.name} - Match setup` : `${g.name} - Foursome setup`) : isTeamGame ? "Round setup (2 vs 2)" : "Round setup"}
+          sub={activeTournament ? (MATCH_PLAY_GAMES.includes(activeTournament.game) ? `${g.name} - Match setup` : `${g.name} - Team setup`) : isTeamGame ? "Round setup (2 vs 2)" : "Round setup"}
           onBack={() => {
             if (activeTournament) setActiveTournament(null);
             goBack("libraryTab");
@@ -15723,12 +15991,12 @@ function computeMatchPlayResult(round, computed) {
                   : `Ranked by: strokes and putts (tracked separately, lowest wins each) - ${GAMES[activeTournament.game].bestBall ? "best-ball (lowest single score) per hole" : "combined (all 4 players added) per hole"}`}
               </div>
               <div style={{ fontSize: 12, color: "#8a8a80", marginTop: 8 }}>
-                {MATCH_PLAY_GAMES.includes(activeTournament.game) ? "Every match" : "Every foursome"} in this tournament plays under these same settings so the leaderboard stays fair. Tournament code: <span className="gsc-mono" style={{ fontWeight: 700 }}>{activeTournament.id}</span>
+                {MATCH_PLAY_GAMES.includes(activeTournament.game) ? "Every match" : "Every team"} in this tournament plays under these same settings so the leaderboard stays fair. Tournament code: <span className="gsc-mono" style={{ fontWeight: 700 }}>{activeTournament.id}</span>
               </div>
             </div>
           )}
           <div className="gsc-card">
-            <div className="gsc-label">{activeTournament ? (MATCH_PLAY_GAMES.includes(activeTournament.game) ? "Match name (Optional)" : "Foursome name (Optional)") : "Group name (Optional)"}</div>
+            <div className="gsc-label">{activeTournament ? (MATCH_PLAY_GAMES.includes(activeTournament.game) ? "Match name (Optional)" : "Team name (Optional)") : "Group name (Optional)"}</div>
             {!activeTournament && session && (
               <button className="gsc-link" style={{ fontSize: 13, fontWeight: 700, marginBottom: 8, display: "inline-block" }} onClick={() => openGroupFillPicker("playersAndMeta")}>
                 {"\u{1F465}"} Select a group to fill in name, avatar & players
@@ -15744,10 +16012,11 @@ function computeMatchPlayResult(round, computed) {
             )}
             <input
               className="gsc-input"
-              placeholder={activeTournament ? (MATCH_PLAY_GAMES.includes(activeTournament.game) ? "e.g. Match 1" : "e.g. Foursome 1") : g.name + " at ..."}
+              placeholder={activeTournament ? (MATCH_PLAY_GAMES.includes(activeTournament.game) ? "e.g. Match 1" : "e.g. Team 1") : g.name + " at ..."}
               value={roundName}
               onChange={(e) => setRoundName(e.target.value)}
             />
+            {activeTournament && renderStartHoleFields(foursomeStartHole, foursomeStartSlot, setFoursomeStartHole, setFoursomeStartSlot)}
             {!activeTournament && (
               <div className="gsc-field" style={{ marginTop: 12 }}>
                 <div className="gsc-label">Date</div>
@@ -16240,7 +16509,7 @@ function computeMatchPlayResult(round, computed) {
                   </button>
                   <input className="gsc-input" placeholder={`Player ${LETTERS[i]} name`} value={p.name} onChange={(e) => updatePlayer(i, "name", e.target.value)} />
                   <input className="gsc-input" style={{ flex: "0 0 70px" }} placeholder="HCP" value={p.hcp} onChange={(e) => updatePlayer(i, "hcp", e.target.value)} />
-                  {(gameKey === "swami" || gameKey === "dstreet" || gameKey === "pontobango" || gameKey === "individualputts" || gameKey === "stableford" || gameKey === "quota" || gameKey === "oceans11") && players.length > (gameKey === "pontobango" || gameKey === "individualputts" ? 2 : 1) && (
+                  {((gameKey === "swami" || gameKey === "dstreet" || gameKey === "pontobango" || gameKey === "individualputts" || gameKey === "stableford" || gameKey === "quota" || gameKey === "oceans11") && players.length > (gameKey === "pontobango" || gameKey === "individualputts" ? 2 : 1) || (activeTournament && FLEXIBLE_TEAM_GAMES.includes(gameKey) && players.length > MIN_FLEX_TEAM_PLAYERS)) && (
                     <button
                       className="gsc-btn gsc-btn-outline"
                       style={{ flex: "0 0 auto", color: "#A42E2D", borderColor: "#A42E2D", padding: "9px 12px" }}
@@ -16329,7 +16598,7 @@ function computeMatchPlayResult(round, computed) {
                 )}
               </div>
             ))}
-            {(gameKey === "swami" || gameKey === "dstreet" || gameKey === "pontobango" || gameKey === "individualputts" || gameKey === "stableford" || gameKey === "quota" || gameKey === "oceans11") && players.length < 4 && (
+            {((gameKey === "swami" || gameKey === "dstreet" || gameKey === "pontobango" || gameKey === "individualputts" || gameKey === "stableford" || gameKey === "quota" || gameKey === "oceans11") || (activeTournament && FLEXIBLE_TEAM_GAMES.includes(gameKey))) && players.length < 4 && (
               <button className="gsc-btn gsc-btn-outline" style={{ width: "100%", marginTop: 4 }} onClick={addPlayerSlot}>
                 + Add another player
               </button>
@@ -16361,6 +16630,7 @@ function computeMatchPlayResult(round, computed) {
           </div>
 
           {err && <div style={{ color: "#A42E2D", marginBottom: 10 }}>{err}</div>}
+          {!activeTournament && renderRoundStartHole()}
           {storageBroken && (
             <div style={{ background: "#F8F1E4", color: "#8a6a2f", fontSize: 12, padding: "8px 10px", borderRadius: 8, marginBottom: 10 }}>
               Storage isn't responding right now. Your round will still be created and playable this session -{" "}
@@ -16369,7 +16639,7 @@ function computeMatchPlayResult(round, computed) {
           )}
           {!storageBroken && storageWarning && <div style={{ color: "#B08D57", fontSize: 13, marginBottom: 10 }}>{storageWarning}</div>}
           <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", padding: 14, fontSize: 16 }} disabled={busy} onClick={finishSetup}>
-            {busy ? "Saving..." : activeTournament ? (MATCH_PLAY_GAMES.includes(activeTournament.game) ? "Add my match & start playing" : "Add my foursome & start playing") : "Create Round & Generate Share Code"}
+            {busy ? "Saving..." : activeTournament ? (MATCH_PLAY_GAMES.includes(activeTournament.game) ? "Add my match & start playing" : "Add my team & start playing") : "Create Round & Generate Share Code"}
           </button>
         </div>
         {RulesModal()}
@@ -16385,7 +16655,7 @@ function computeMatchPlayResult(round, computed) {
     return (
       <div className="gsc">
         <style>{STYLE}</style>
-        <Header title={tg.tournamentName || tg.name} sub={MATCH_PLAY_GAMES.includes(tournamentGameKey) ? "Tournament setup - every match plays this format" : "Tournament setup - every foursome plays this format"} onBack={() => goBack("libraryTab")} />
+        <Header title={tg.tournamentName || tg.name} sub={MATCH_PLAY_GAMES.includes(tournamentGameKey) ? "Tournament setup - every match plays this format" : "Tournament setup - every team plays this format"} onBack={() => goBack("libraryTab")} />
         <div className="gsc-body">
           <button className="gsc-link" style={{ marginBottom: 10, fontSize: 13, display: "block" }} onClick={() => openDescription(tournamentGameKey, true)}>
             Game format description
@@ -16445,7 +16715,7 @@ function computeMatchPlayResult(round, computed) {
                   </button>
                 ) : tournamentCfg.gpsCourseLabel ? (
                   <div style={{ fontSize: 12, color: "#1B4332", fontWeight: 600, padding: "8px 10px", background: "#EBF0EC", borderRadius: 8 }}>
-                    {"\u26F3"} Enabled for {tournamentCfg.gpsCourseLabel} (applies to every foursome)
+                    {"\u26F3"} Enabled for {tournamentCfg.gpsCourseLabel} (applies to every team)
                   </div>
                 ) : (
                   <div style={{ fontSize: 12, color: "#6b6b63" }}>
@@ -16583,7 +16853,7 @@ function computeMatchPlayResult(round, computed) {
                   </div>
                   <div className="gsc-label" style={{ marginBottom: 6 }}>Par per hole</div>
                   <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 8 }}>
-                    Every foursome in this tournament plays the same course par. Enter par for all 18 holes to continue.
+                    Every team in this tournament plays the same course par. Enter par for all 18 holes to continue.
                   </div>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 6 }}>
                     {tournamentPar.map((v, i) => (
@@ -16757,7 +17027,7 @@ function computeMatchPlayResult(round, computed) {
           </div>
 
           <div className="gsc-card">
-            <div className="gsc-label">{MATCH_PLAY_GAMES.includes(tournamentGameKey) ? "Number of matches" : "Number of foursomes"}</div>
+            <div className="gsc-label">{MATCH_PLAY_GAMES.includes(tournamentGameKey) ? "Number of matches" : "Number of teams"}</div>
             <input
               className="gsc-input"
               type="number"
@@ -16777,13 +17047,13 @@ function computeMatchPlayResult(round, computed) {
                 ? "You'll add each match's name and its 2 players next. More matches can always join later with the tournament code."
                 : tournamentGameKey === "matchplayfourball" || tournamentGameKey === "altshot"
                 ? "You'll add each match's name and its 4 players (2 vs 2) next. More matches can always join later with the tournament code."
-                : "You'll add each foursome's name and 4 players next. More foursomes can always join later with the tournament code."}
+                : "You'll add each team's name and players next. More teams can always join later with the tournament code."}
             </div>
           </div>
 
           {tournamentErr && <div style={{ color: "#A42E2D", marginBottom: 10 }}>{tournamentErr}</div>}
           <button className="gsc-btn gsc-btn-primary" style={{ width: "100%", padding: 14, fontSize: 16 }} onClick={proceedToFoursomeRoster}>
-            {MATCH_PLAY_GAMES.includes(tournamentGameKey) ? "Next: add matches" : "Next: add foursomes"}
+            {MATCH_PLAY_GAMES.includes(tournamentGameKey) ? "Next: add matches" : "Next: add teams"}
           </button>
         </div>
         {RulesModal()}
@@ -16797,19 +17067,26 @@ function computeMatchPlayResult(round, computed) {
     return (
       <div className="gsc">
         <style>{STYLE}</style>
-        <Header title={tournamentName || "New Tournament"} sub={MATCH_PLAY_GAMES.includes(tournamentGameKey) ? "Add each match" : "Add each foursome"} onBack={() => goBack("tournamentCreate")} />
+        <Header title={tournamentName || "New Tournament"} sub={MATCH_PLAY_GAMES.includes(tournamentGameKey) ? "Add each match" : "Add each team"} onBack={() => goBack("tournamentCreate")} />
         <div className="gsc-body">
           <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 12 }}>
             {tournamentGameKey === "matchplay"
               ? "Enter each match's name and its 2 players. You can always add more matches later with the tournament code."
               : tournamentGameKey === "matchplayfourball" || tournamentGameKey === "altshot"
               ? "Enter each match's name and its 4 players (2 vs 2). You can always add more matches later with the tournament code."
-              : "Enter each foursome's name and its 4 players. You can always add more foursomes later with the tournament code."}
+              : "Enter each team's name and its players. You can always add more teams later with the tournament code."}
           </div>
           {tournamentFoursomesDraft.map((f, fi) => (
             <div key={fi} className="gsc-card">
-              <div className="gsc-label">{MATCH_PLAY_GAMES.includes(tournamentGameKey) ? "Match name" : "Foursome name"}</div>
+              <div className="gsc-label">{MATCH_PLAY_GAMES.includes(tournamentGameKey) ? "Match name" : "Team name"}</div>
               <input className="gsc-input" style={{ marginBottom: 12 }} value={f.name} onChange={(e) => updateFoursomeDraftName(fi, e.target.value)} />
+              {renderStartHoleFields(
+                f.startHole || "",
+                f.startSlot || "",
+                (v) => updateFoursomeDraftStart(fi, "startHole", v),
+                (v) => updateFoursomeDraftStart(fi, "startSlot", v)
+              )}
+              <div style={{ height: 8 }} />
               <div className="gsc-label" style={{ marginBottom: 6 }}>Players Names and Handicaps (Optional)</div>
               {session && (
                 <button className="gsc-link" style={{ fontSize: 13, fontWeight: 700, marginBottom: 10, display: "inline-block" }} onClick={() => openGroupFillPicker(fi)}>
@@ -16870,6 +17147,16 @@ function computeMatchPlayResult(round, computed) {
                       value={p.hcp}
                       onChange={(e) => updateFoursomeDraftPlayer(fi, pi, "hcp", e.target.value)}
                     />
+                    {FLEXIBLE_TEAM_GAMES.includes(tournamentGameKey) && f.players.length > MIN_FLEX_TEAM_PLAYERS && (
+                      <button
+                        className="gsc-link"
+                        aria-label={`Remove player ${LETTERS[pi]}`}
+                        style={{ flex: "0 0 auto", color: "#A42E2D", fontSize: 18, padding: "0 6px" }}
+                        onClick={() => removeFoursomeDraftPlayer(fi, pi)}
+                      >
+                        {"\u2715"}
+                      </button>
+                    )}
                   </div>
                   {avatarPickerFor === avatarKey && (
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 8, padding: "10px 4px 4px 46px" }}>
@@ -16951,6 +17238,11 @@ function computeMatchPlayResult(round, computed) {
                 </div>
                 );
               })}
+              {FLEXIBLE_TEAM_GAMES.includes(tournamentGameKey) && f.players.length < 4 && (
+                <button className="gsc-link" style={{ fontSize: 13, marginBottom: 6 }} onClick={() => addFoursomeDraftPlayer(fi)}>
+                  + Add another player
+                </button>
+              )}
               {(tournamentGameKey === "matchplayfourball" || tournamentGameKey === "altshot") && (
                 <div style={{ marginTop: 10 }}>
                   <div className="gsc-label">Teams</div>
@@ -16971,11 +17263,11 @@ function computeMatchPlayResult(round, computed) {
                 </div>
               )}
               <div style={{ marginTop: 10 }}>
-                <div className="gsc-label" style={{ marginBottom: 6 }}>{MATCH_PLAY_GAMES.includes(tournamentGameKey) ? "Who's this match's captain?" : "Who's this foursome's captain?"}</div>
+                <div className="gsc-label" style={{ marginBottom: 6 }}>{MATCH_PLAY_GAMES.includes(tournamentGameKey) ? "Who's this match's captain?" : "Who's this team's captain?"}</div>
                 <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 8 }}>
                   {MATCH_PLAY_GAMES.includes(tournamentGameKey)
                     ? "Only captains can enter or change scores for this match - everyone else can just view. Defaults to everyone; tap to narrow it down."
-                    : "Only captains can enter or change scores for this foursome - everyone else can just view. Defaults to everyone; tap to narrow it down."}
+                    : "Only captains can enter or change scores for this team - everyone else can just view. Defaults to everyone; tap to narrow it down."}
                 </div>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                   {f.players.map((p, pi) => (
@@ -17005,7 +17297,7 @@ function computeMatchPlayResult(round, computed) {
               ? "Creating..."
               : MATCH_PLAY_GAMES.includes(tournamentGameKey)
               ? `Create tournament with ${tournamentFoursomesDraft.length} match${tournamentFoursomesDraft.length === 1 ? "" : "es"}`
-              : `Create tournament with ${tournamentFoursomesDraft.length} foursome${tournamentFoursomesDraft.length === 1 ? "" : "s"}`}
+              : `Create tournament with ${tournamentFoursomesDraft.length} team${tournamentFoursomesDraft.length === 1 ? "" : "s"}`}
           </button>
         </div>
         {GroupFillModal()}
@@ -17035,7 +17327,7 @@ function computeMatchPlayResult(round, computed) {
             <div style={{ fontWeight: 700, fontSize: 14 }}>
               {idx + 1}. {row.name} {round && row.id === round.id && <span className="gsc-chip gsc-lead">YOU</span>}
             </div>
-            <div style={{ fontSize: 12, color: "#6b6b63" }}>{row.error ? `Couldn't load (${row.error})` : `Thru ${row[holesKey]} holes`}</div>
+            <div style={{ fontSize: 12, color: "#6b6b63" }}>{row.error ? `Couldn't load (${row.error})` : `Thru ${row[holesKey]} holes${row.round && hasCustomStart(row.round) ? ` \u00B7 Started on ${startHoleLabel(row.round)}` : ""}`}</div>
             {!row.error && canEditTournamentRound(row.round) && (
               <button
                 className="gsc-link"
@@ -17045,7 +17337,7 @@ function computeMatchPlayResult(round, computed) {
                   openEditFoursome(row.id, row.round);
                 }}
               >
-                Edit foursome
+                Edit team
               </button>
             )}
           </div>
@@ -17107,7 +17399,7 @@ function computeMatchPlayResult(round, computed) {
                 </button>
                 {isTournamentOrganizer(t) && (
                   <button className="gsc-link" style={{ color: "#F3EFE0", fontSize: 11, textDecoration: "underline" }} onClick={() => startTournamentFoursome(t)}>
-                    {t && MATCH_PLAY_GAMES.includes(t.game) ? "Add Match" : "Add Foursome"}
+                    {t && MATCH_PLAY_GAMES.includes(t.game) ? "Add Match" : "Add Team"}
                   </button>
                 )}
               </div>
@@ -17120,17 +17412,17 @@ function computeMatchPlayResult(round, computed) {
               {MATCH_PLAY_GAMES.includes(t.game)
                 ? "Each pairing below is its own, independent match, decided hole by hole - there's no combined ranking across matches, just each match's own result."
                 : GAMES[t.game].oneTeamScore
-                ? "Scramble scoring: the whole foursome shares one team stroke total per hole."
+                ? "Scramble scoring: the whole team shares one team stroke total per hole."
                 : GAMES[t.game].bestBall
-                ? "Best-ball scoring: each foursome's stroke and putt totals are the single lowest score among all 4 players on each hole."
-                : "Combined scoring: each foursome's stroke and putt totals are all 4 players' scores added together."}
+                ? "Best-ball scoring: each team's stroke and putt totals are the single lowest score among all 4 players on each hole."
+                : "Combined scoring: each team's stroke and putt totals are all 4 players' scores added together."}
             </div>
           )}
           {t && (
             <div className="gsc-card" style={{ textAlign: "center" }}>
               <div className="gsc-label" style={{ marginBottom: 6 }}>Tournament code</div>
               <div className="gsc-code" style={{ background: "#1B4332", color: "#F3EFE0", fontSize: 18, padding: "8px 16px" }}>{t.id}</div>
-              <div style={{ fontSize: 12, color: "#8a8a80", marginTop: 8 }}>{t && MATCH_PLAY_GAMES.includes(t.game) ? "Share this so more matches can join" : "Share this so more foursomes can join"}</div>
+              <div style={{ fontSize: 12, color: "#8a8a80", marginTop: 8 }}>{t && MATCH_PLAY_GAMES.includes(t.game) ? "Share this so more matches can join" : "Share this so more teams can join"}</div>
             </div>
           )}
           {boardErr && <div style={{ color: "#A42E2D", marginBottom: 10 }}>{boardErr}</div>}
@@ -17139,7 +17431,7 @@ function computeMatchPlayResult(round, computed) {
               <div style={{ fontSize: 13, color: "#1B4332", fontWeight: 700 }}>
                 {MATCH_PLAY_GAMES.includes(t.game)
                   ? "Tap a match below to enter (or view) hole-by-hole scores as you play."
-                  : "Tap a foursome below to enter (or view) hole-by-hole scores as you play."}
+                  : "Tap a team below to enter (or view) hole-by-hole scores as you play."}
               </div>
             </div>
           )}
@@ -17206,14 +17498,14 @@ function computeMatchPlayResult(round, computed) {
           {board && (
             <div className="gsc-card">
               <div className="gsc-label" style={{ marginBottom: 10 }}>Ranked by Strokes</div>
-              {board.strokesRanked.length === 0 && <div style={{ fontSize: 13, color: "#6b6b63" }}>No foursomes have joined yet.</div>}
+              {board.strokesRanked.length === 0 && <div style={{ fontSize: 13, color: "#6b6b63" }}>No teams have joined yet.</div>}
               {board.strokesRanked.map((row, idx) => renderFoursomeRow(row, idx, "totalStrokes", "strokeHoles"))}
             </div>
           )}
           {board && t && GAMES[t.game].hasPutts && t.cfg.trackPutts !== false && (
             <div className="gsc-card">
               <div className="gsc-label" style={{ marginBottom: 10 }}>Ranked by Putts</div>
-              {board.puttsRanked.length === 0 && <div style={{ fontSize: 13, color: "#6b6b63" }}>No foursomes have joined yet.</div>}
+              {board.puttsRanked.length === 0 && <div style={{ fontSize: 13, color: "#6b6b63" }}>No teams have joined yet.</div>}
               {board.puttsRanked.map((row, idx) => renderFoursomeRow(row, idx, "totalPutts", "puttHoles"))}
             </div>
           )}
@@ -17231,7 +17523,7 @@ function computeMatchPlayResult(round, computed) {
           )}
           {finishTournamentErr && <div style={{ color: "#A42E2D", fontSize: 12, textAlign: "center", marginTop: 8 }}>{finishTournamentErr}</div>}
           <div style={{ fontSize: 11, color: "#8a8a80", textAlign: "center", marginTop: 6 }}>
-            This marks the tournament as finished - it won't be deleted, and every foursome's data stays exactly as it is.
+            This marks the tournament as finished - it won't be deleted, and every team's data stays exactly as it is.
           </div>
         </div>
         {EditFoursomeModal()}
@@ -17391,7 +17683,7 @@ function computeMatchPlayResult(round, computed) {
                   <tr>
                     <th style={{ textAlign: "left" }}>Hole</th>
                     {Array.from({ length: 9 }).map((_, i) => (
-                      <th key={i}>{startH + i + 1}</th>
+                      <th key={i}>{realHoleNumber(round, startH + i)}</th>
                     ))}
                     <th>{totalLabel}</th>
                   </tr>
@@ -17538,9 +17830,9 @@ function computeMatchPlayResult(round, computed) {
           {g.singleTeam ? (
             <div className="gsc-card gsc-winner-card" style={{ textAlign: "center" }}>
               <div style={{ fontSize: 28, marginBottom: 6 }}>&#127942;</div>
-              <div style={{ fontWeight: 700, fontSize: 17, marginBottom: 4 }}>Nice round with your foursome!</div>
+              <div style={{ fontWeight: 700, fontSize: 17, marginBottom: 4 }}>Nice round with your team!</div>
               <div style={{ fontSize: 13, color: "#6b6b63" }}>
-                {round.tournamentId ? "Check the tournament leaderboard to see how you stack up against the other foursomes." : "Great playing today."}
+                {round.tournamentId ? "Check the tournament leaderboard to see how you stack up against the other teams." : "Great playing today."}
               </div>
               {round.tournamentId && (
                 <button className="gsc-btn gsc-btn-primary" style={{ marginTop: 12 }} onClick={() => openTournamentBoard(round.tournamentId)}>
@@ -17862,12 +18154,12 @@ function computeMatchPlayResult(round, computed) {
           <div className="gsc-card gsc-winner-card" style={{ textAlign: "center" }}>
             <div style={{ fontSize: 28, marginBottom: 6 }}>&#127943;</div>
             <div style={{ fontWeight: 700, fontSize: 19 }}>
-              {isMatchPlayTournament ? `${foursomeCount} match${foursomeCount === 1 ? "" : "es"} ready to play` : `${foursomeCount} foursome${foursomeCount === 1 ? "" : "s"} ready to play`}
+              {isMatchPlayTournament ? `${foursomeCount} match${foursomeCount === 1 ? "" : "es"} ready to play` : `${foursomeCount} team${foursomeCount === 1 ? "" : "s"} ready to play`}
             </div>
             <div style={{ fontSize: 13, color: "#6b6b63", marginTop: 6 }}>
               {isMatchPlayTournament
                 ? <>Share tournament code <span className="gsc-mono" style={{ fontWeight: 700 }}>{ct.id}</span> so more matches can join any time.</>
-                : <>Share tournament code <span className="gsc-mono" style={{ fontWeight: 700 }}>{ct.id}</span> so more foursomes can join any time.</>}
+                : <>Share tournament code <span className="gsc-mono" style={{ fontWeight: 700 }}>{ct.id}</span> so more teams can join any time.</>}
             </div>
           </div>
 
@@ -17939,7 +18231,7 @@ function computeMatchPlayResult(round, computed) {
             </div>
           ) : (
             <div className="gsc-card" style={{ textAlign: "center" }}>
-              <div style={{ fontSize: 13, color: "#6b6b63" }}>No foursomes finished this tournament.</div>
+              <div style={{ fontSize: 13, color: "#6b6b63" }}>No teams finished this tournament.</div>
             </div>
           )}
 
@@ -18189,7 +18481,7 @@ function computeMatchPlayResult(round, computed) {
         <div className="gsc-hole-strip" ref={holeStripRef}>
           {Array.from({ length: 18 }).map((_, i) => (
             <div key={i} className={`gsc-hole-pip ${i === holeIdx ? "active" : ""} ${computed.holeResults[i].complete ? "done" : ""}`} onClick={() => requestHoleChange(i, g)}>
-              {i + 1}
+              {realHoleNumber(round, i)}
             </div>
           ))}
         </div>
@@ -18198,7 +18490,12 @@ function computeMatchPlayResult(round, computed) {
             <div className="gsc-hole-nav">
               <button className="gsc-btn gsc-btn-outline" disabled={holeIdx === 0} onClick={() => requestHoleChange(holeIdx - 1, g)}>Prev</button>
               <div style={{ textAlign: "center" }}>
-                <div className="gsc-hole-big">Hole {holeIdx + 1}</div>
+                <div className="gsc-hole-big">Hole {realHoleNumber(round, holeIdx)}</div>
+                {hasCustomStart(round) && (
+                  <div style={{ fontSize: 11, color: "#8a6a2f", fontWeight: 700, marginTop: 4 }}>
+                    {round.tournamentId ? `\u{1F3CC}\uFE0F Shotgun start - your group began on hole ${startHoleLabel(round)}` : `Started on hole ${startHoleLabel(round)}`}
+                  </div>
+                )}
                 <div className="gsc-par-badge">Par {parH}{round.cfg.doubleParMax ? ` - max ${parH * 2}` : round.cfg.maxOver != null ? ` - max ${parH + Number(round.cfg.maxOver)}` : ""}</div>
                 {(() => {
                   const yd = (round.yardage || [])[holeIdx];
@@ -18228,7 +18525,7 @@ function computeMatchPlayResult(round, computed) {
                   const margin = Math.abs(seg.t0 - seg.t1);
                   return (
                     <div style={{ fontSize: 12, color: "#1B4332", fontWeight: 700, marginTop: 4, background: "#F8F1E4", borderRadius: 6, padding: "4px 8px", display: "inline-block" }}>
-                      {segName} thru hole {holeIdx + 1}: {seg.winner == null ? "Tied" : `${sideLabel(seg.winner)} up ${margin} ${unitLabel}${margin === 1 ? "" : "s"}`}
+                      {segName} thru hole {realHoleNumber(round, holeIdx)}: {seg.winner == null ? "Tied" : `${sideLabel(seg.winner)} up ${margin} ${unitLabel}${margin === 1 ? "" : "s"}`}
                     </div>
                   );
                 })()}
@@ -18303,7 +18600,7 @@ function computeMatchPlayResult(round, computed) {
                         {holeImage && (
                           <img
                             src={holeImage}
-                            alt={`Satellite view of hole ${holeIdx + 1}`}
+                            alt={`Satellite view of hole ${realHoleNumber(round, holeIdx)}`}
                             onClick={() => setHoleImageOpen(false)}
                             style={{ width: "100%", maxWidth: 300, borderRadius: 10, marginTop: 4, display: "block", cursor: "pointer" }}
                           />
@@ -18323,9 +18620,9 @@ function computeMatchPlayResult(round, computed) {
                   <button
                     className="gsc-link"
                     onClick={() => goToScreen("sideGames")}
-                    style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 13, color: sideGamesHoleSet.has(holeIdx + 1) ? "#A42E2D" : "#1B4332" }}
+                    style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 13, color: sideGamesHoleSet.has(realHoleNumber(round, holeIdx)) ? "#A42E2D" : "#1B4332" }}
                   >
-                    {"\u{1F3B2}"} Side Games{sideGamesHoleSet.has(holeIdx + 1) ? " \u2713" : ""}
+                    {"\u{1F3B2}"} Side Games{sideGamesHoleSet.has(realHoleNumber(round, holeIdx)) ? " \u2713" : ""}
                   </button>
                 )}
               </div>
@@ -18333,7 +18630,7 @@ function computeMatchPlayResult(round, computed) {
 
             {!canEditThisRound && (
               <div style={{ background: "#F8F1E4", border: "1px solid #B08D57", borderRadius: 10, padding: "10px 12px", marginBottom: 10, fontSize: 12, color: "#8a6a2f", textAlign: "center" }}>
-                {"\u{1F441}\u{FE0F}"} View only - only the tournament organizer or this {MATCH_PLAY_GAMES.includes(round.game) ? "match's" : "foursome's"} captains can enter or change scores.
+                {"\u{1F441}\u{FE0F}"} View only - only the tournament organizer or this {MATCH_PLAY_GAMES.includes(round.game) ? "match's" : "team's"} captains can enter or change scores.
               </div>
             )}
             <div style={{ pointerEvents: canEditThisRound ? "auto" : "none", opacity: canEditThisRound ? 1 : 0.6 }}>
@@ -18865,7 +19162,7 @@ function computeMatchPlayResult(round, computed) {
 
             <div style={{ marginTop: 6 }}>
               {teamsThisHole.map((team, ti) => {
-                const label = g.singleTeam ? "Foursome" : team.map((p) => round.players[p].name).join("+");
+                const label = g.singleTeam ? "Team" : team.map((p) => round.players[p].name).join("+");
                 const r = hr.teamRes[ti];
                 const pts = hr.ptsAwarded[ti];
                 return (
@@ -18894,7 +19191,7 @@ function computeMatchPlayResult(round, computed) {
 
           {g.singleTeam && (
             <div className="gsc-card" style={{ border: "2px solid #B08D57" }}>
-              <div className="gsc-label" style={{ marginBottom: 8 }}>Foursome {g.oneTeamScore ? "Team" : g.bestBall ? "Best-Ball" : "Combined"} Totals</div>
+              <div className="gsc-label" style={{ marginBottom: 8 }}>Team {g.oneTeamScore ? "Scramble" : g.bestBall ? "Best-Ball" : "Combined"} Totals</div>
               <div style={{ fontSize: 13, color: "#4b4b45", lineHeight: 1.6 }}>
                 {g.oneTeamScore ? "Team" : g.bestBall ? "Best-ball" : "Combined"} strokes: <b>{foursomeTotals.totalStrokes}</b> (thru {foursomeTotals.strokeHoles} holes)
                 {g.hasPutts && round.cfg.trackPutts !== false && (
@@ -18905,7 +19202,7 @@ function computeMatchPlayResult(round, computed) {
                 )}
               </div>
               <div style={{ fontSize: 12, color: "#8a8a80", marginTop: 8 }}>
-                This is what counts on the tournament leaderboard - check the Leaderboard link above to see how this foursome ranks against the others.
+                This is what counts on the tournament leaderboard - check the Leaderboard link above to see how this team ranks against the others.
               </div>
               {g.tracksDrives && (() => {
                 const minDrives = Number(round.cfg.minDrives) || 0;
@@ -19076,7 +19373,7 @@ function computeMatchPlayResult(round, computed) {
               {boardErr && <div style={{ color: "#A42E2D", fontSize: 12, marginBottom: 8 }}>{boardErr}</div>}
               {board && board.tournament && board.tournament.id === round.tournamentId ? (
                 board.strokesRanked.length === 0 ? (
-                  <div style={{ fontSize: 13, color: "#6b6b63" }}>No foursomes have joined yet.</div>
+                  <div style={{ fontSize: 13, color: "#6b6b63" }}>No teams have joined yet.</div>
                 ) : (
                   board.strokesRanked.map((row, idx) => (
                     <div
@@ -19251,7 +19548,7 @@ function computeMatchPlayResult(round, computed) {
               <div className="gsc-card">
                 <div className="gsc-label" style={{ marginBottom: 4, fontSize: 15, color: "#1B4332", fontWeight: 800 }}>Skins Stakes - Settlement</div>
                 <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 10 }}>
-                  At ${round.cfg.skinStake} per skin, per player - through hole {holeIdx + 1}.
+                  At ${round.cfg.skinStake} per skin, per player - through hole {realHoleNumber(round, holeIdx)}.
                 </div>
                 {allEven ? (
                   <div style={{ fontWeight: 700, color: "#6b6b63" }}>All even so far - nobody owes anybody.</div>
@@ -19288,7 +19585,7 @@ function computeMatchPlayResult(round, computed) {
               </>
             ) : (
               <div style={{ fontSize: 12, color: "#8a8a80", textAlign: "center", marginTop: 14 }}>
-                Only the tournament organizer or this {MATCH_PLAY_GAMES.includes(round.game) ? "match's" : "foursome's"} captains can finish this round.
+                Only the tournament organizer or this {MATCH_PLAY_GAMES.includes(round.game) ? "match's" : "team's"} captains can finish this round.
               </div>
             )
           )}
@@ -19324,7 +19621,7 @@ function computeMatchPlayResult(round, computed) {
               <div className="gsc-modal-title">Leave this round?</div>
               <div className="gsc-modal-body">
                 {round && round.tournamentId
-                  ? "Your scores are saved, and you can pick up right where you left off by opening this foursome from the Leaderboard. Are you sure you want to leave?"
+                  ? "Your scores are saved, and you can pick up right where you left off by opening this team from the Leaderboard. Are you sure you want to leave?"
                   : "Your scores are saved, and you can pick up right where you left off from \"Continue round\" on the home screen. Are you sure you want to leave?"}
               </div>
               <div className="gsc-modal-row">
@@ -19340,7 +19637,7 @@ function computeMatchPlayResult(round, computed) {
               <div className="gsc-modal-title">Some scores weren't entered</div>
               <div className="gsc-modal-body">
                 <div style={{ marginBottom: 8 }}>
-                  For Hole {holeIdx + 1}, these players will be given the default for whatever wasn't entered:
+                  For Hole {realHoleNumber(round, holeIdx)}, these players will be given the default for whatever wasn't entered:
                 </div>
                 {pendingHoleChange.missing.map((m) => (
                   <div key={m.playerIdx} style={{ fontSize: 13, marginBottom: 2 }}>
@@ -19409,11 +19706,11 @@ function computeMatchPlayResult(round, computed) {
           roundId={round.id}
           players={mapPlayersForSideGames(round.players, sideGamesVenmoByUserId)}
           storage={sideGamesStorage}
-          initialHole={holeIdx + 1}
-          yardage={round.yardage}
-          strokeIndex={round.strokeIndex}
+          initialHole={realHoleNumber(round, holeIdx)}
+          yardage={toHoleOrder(round.yardage, round.startHole)}
+          strokeIndex={toHoleOrder(round.strokeIndex, round.startHole)}
           teeName={round.cfg.teeName}
-          roundPars={round.par}
+          roundPars={toHoleOrder(round.par, round.startHole)}
           onSaved={() => goBack("card")}
         />
       </div>
