@@ -11976,7 +11976,7 @@ function computeMatchPlayResult(round, computed) {
         <TopIconRow />
         <div className="gsc-body">
           <TitleStrip
-            title={<><span style={{ fontSize: 23 }}>RipScore Golf</span><div style={{ fontSize: 11, fontWeight: 400, opacity: 0.75, letterSpacing: "0.5px", textTransform: "uppercase", marginTop: 2, fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>Your crew. Your leaderboard.</div></>}
+            title={<><span style={{ fontSize: 23 }}>RipScore Golf</span><svg aria-hidden="true" viewBox="100 395 1305 175" width="150" height="20" style={{ display: "block", margin: "6px 0 0" }}><path d="M 110 560 Q 770 340 1395 478 Q 770 452 110 560 Z" fill="#E8CC9C" /></svg></>}
             sub=""
           />
           {joinableGroupRounds.filter((jr) => !dismissedJoinableRounds.includes(jr.code)).map((jr) => (
