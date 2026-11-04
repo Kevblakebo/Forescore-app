@@ -11832,11 +11832,10 @@ function computeMatchPlayResult(round, computed) {
             style={{ background: "none", border: "none", padding: 0, cursor: "pointer", display: "flex" }}
             aria-label="What RipScore does"
           >
-            <img
-              src={LOGO_DATA_URI}
-              alt="RipScore logo"
-              style={{ width: 70, height: "auto", objectFit: "contain", pointerEvents: "none" }}
-            />
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", pointerEvents: "none" }}>
+              <span className="gsc-display" style={{ fontSize: 22, fontWeight: 700, color: "#F3EFE0", whiteSpace: "nowrap", lineHeight: 1.1, textShadow: "0 1px 3px rgba(0,0,0,0.35)" }}>RipScore Golf</span>
+              <svg aria-hidden="true" viewBox="100 395 1305 175" width="130" height="17" style={{ display: "block", marginTop: 4 }}><path d="M 110 560 Q 770 340 1395 478 Q 770 452 110 560 Z" fill="#E8CC9C" /></svg>
+            </div>
           </button>
           {logoInfoOpen && <LogoInfoDropdown />}
         </div>
