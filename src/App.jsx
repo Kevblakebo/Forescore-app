@@ -12082,7 +12082,7 @@ function computeMatchPlayResult(round, computed) {
                     <div>{step}</div>
                   </div>
                 ))}
-                <div style={{ marginTop: 12 }}>You're all set, next hole... the 19th!</div>
+                <div style={{ marginTop: 12 }}>You're all set, let it Rip!</div>
               </>
             )}
           </div>
