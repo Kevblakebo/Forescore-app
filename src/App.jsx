@@ -7756,7 +7756,10 @@ export default function GolfScorecard() {
   // startGPSWatch above for why (avoids a well-documented WKWebView
   // double-prompt when calling navigator.geolocation directly inside a
   // Capacitor iOS app).
-  async function searchCoursesByGps() {
+  async function searchCoursesByGps(auto) {
+    // auto === true: run quietly on entering a setup page (no error text if
+    // location is off or nothing is nearby - the person can still just type).
+    const quiet = auto === true;
     setGpsCourseSearchBusy(true);
     setCourseSearchErr("");
     setCourseSearchResults([]);
@@ -7766,12 +7769,12 @@ export default function GolfScorecard() {
       const res = await fetch(`${API_BASE}/api/course-gps-search?lat=${latitude}&lng=${longitude}`);
       const data = await res.json().catch(() => null);
       if (!res.ok || !data) {
-        setCourseSearchErr((data && data.error) || "Course search isn't available right now. You can still search by name or enter par manually below.");
+        if (!quiet) setCourseSearchErr((data && data.error) || "Course search isn't available right now. You can still search by name or enter par manually below.");
         setGpsCourseSearchBusy(false);
         return;
       }
       setCourseSearchResults(data.courses || []);
-      if (!data.courses || data.courses.length === 0) {
+      if ((!data.courses || data.courses.length === 0) && !quiet) {
         setCourseSearchErr(
           data.noCoordinatesAvailable
             ? "Found nearby courses, but couldn't confirm their exact location. Try searching by name instead."
@@ -7779,7 +7782,7 @@ export default function GolfScorecard() {
         );
       }
     } catch (err) {
-      setCourseSearchErr(
+      if (!quiet) setCourseSearchErr(
         err && err.code === 1
           ? "Location access denied - you can still search by name below."
           : "Couldn't get your location - you can still search by name below."
@@ -10473,6 +10476,24 @@ export default function GolfScorecard() {
   // box, since there's only one shared team score - individual player
   // rankings wouldn't mean anything. Load it once on arrival so it's not
   // blank before the first manual refresh.
+  // On arriving at any course-search step (Quick Start, round setups,
+  // tournament setup, the guided wizard's course step), show the nearest
+  // courses right away - same as pressing Search with the box empty - so
+  // the person can go straight to picking a course and tees. Runs once per
+  // arrival, and only if no course is picked yet and nothing is typed.
+  const autoNearbyKeyRef = useRef("");
+  useEffect(() => {
+    const onCourseStep =
+      screen === "quickStart" || screen === "setup" || screen === "tournamentCreate" ||
+      (screen === "gameWizard" && wizardStepId === "field_course");
+    if (!onCourseStep) { autoNearbyKeyRef.current = ""; return; }
+    const key = screen + ":" + (screen === "gameWizard" ? wizardStepId : "");
+    if (autoNearbyKeyRef.current === key) return;
+    autoNearbyKeyRef.current = key;
+    if (courseSelectedViaSearch || courseTeeOptions || courseSearchResults.length > 0 || courseSearchQuery.trim()) return;
+    searchCoursesByGps(true);
+  }, [screen, wizardStepId]);
+
   useEffect(() => {
     if (screen !== "card" || !round || !round.tournamentId) return;
     if (!GAMES[round.game] || !GAMES[round.game].oneTeamScore) return;
