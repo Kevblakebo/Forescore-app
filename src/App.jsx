@@ -15127,7 +15127,7 @@ function computeMatchPlayResult(round, computed) {
               {courseMsg && <div style={{ fontSize: 12, color: courseMsg.startsWith("Couldn't") ? "#174F83" : "#B08D57", marginTop: 8 }}>{courseMsg}</div>}
 
               <button className="gsc-link" style={{ marginTop: 12, fontSize: 12 }} onClick={() => setShowManualCourse((s) => !s)}>
-                {showManualCourse ? "Hide manual entry" : "Course not listed, or numbers off? Enter or edit par & hole handicaps"}
+                {showManualCourse ? "Hide manual entry" : "Course not listed? Enter manually here"}
               </button>
               {showManualCourse && (
                 <div style={{ marginTop: 10 }}>
@@ -15702,7 +15702,7 @@ function computeMatchPlayResult(round, computed) {
               </div>
             )}
             <button className="gsc-link" style={{ marginTop: 10, fontSize: 12 }} onClick={() => setShowManualCourse((s) => !s)}>
-              {showManualCourse ? "Hide manual course entry" : "Course not listed, or numbers off? Enter or edit par & hole handicaps"}
+              {showManualCourse ? "Hide manual course entry" : "Course not listed? Enter manually here"}
             </button>
             {showManualCourse && (
               <div style={{ marginTop: 12 }}>
@@ -16046,7 +16046,7 @@ function computeMatchPlayResult(round, computed) {
                   </div>
                 )}
                 <button className="gsc-link" style={{ marginTop: 10, fontSize: 12 }} onClick={() => setShowManualCourse((s) => !s)}>
-                  {showManualCourse ? "Hide manual course entry" : "Course not listed, or numbers off? Enter or edit par & hole handicaps"}
+                  {showManualCourse ? "Hide manual course entry" : "Course not listed? Enter manually here"}
                 </button>
                 {showManualCourse && (
                   <div style={{ marginTop: 12 }}>
@@ -16669,7 +16669,7 @@ function computeMatchPlayResult(round, computed) {
                 </div>
               )}
               <button className="gsc-link" style={{ marginTop: 10, fontSize: 12 }} onClick={() => setShowManualCourse((s) => !s)}>
-                {showManualCourse ? "Hide manual course entry" : "Course not listed, or numbers off? Enter or edit par & hole handicaps"}
+                {showManualCourse ? "Hide manual course entry" : "Course not listed? Enter manually here"}
               </button>
               {showManualCourse && (
                 <div style={{ marginTop: 12 }}>
