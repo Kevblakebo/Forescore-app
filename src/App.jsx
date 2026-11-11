@@ -46,7 +46,7 @@ const STYLE = `
   .gsc-topiconrow-chip { display:flex; align-items:center; justify-content:center; width:54px; height:54px; border-radius:999px; background:#1B4332; border:none; padding:0; cursor:pointer; touch-action:manipulation; }
   .gsc-titlestrip { background:#1B4332; color:#F3EFE0; padding:calc(78px + env(safe-area-inset-top)) 18px 18px; margin:-16px -16px 16px; }
   .gsc-btn { border:none; border-radius:8px; padding:9px 14px; font-size:14px; font-weight:600; cursor:pointer; min-height:44px; touch-action:manipulation; }
-  .gsc-btn-primary { background:#174F83; color:#F3EFE0; }
+  .gsc-btn-primary { background:#B08D57; color:#1B4332; }
   .gsc-btn-ghost { background:rgba(243,239,224,0.12); color:#F3EFE0; }
   .gsc-btn-outline { background:transparent; border:1.5px solid #1B4332; color:#1B4332; }
   .gsc-btn-gold { background:#B08D57; color:#F3EFE0; }
@@ -2616,7 +2616,7 @@ function SideGames({ roundId = "demo-round", players = DEFAULT_PLAYERS, storage,
             </div>
           </div>
 
-          <button className="primary wide" style={{ background: "#174F83", color: "#fff" }} onClick={() => { saveHole(hole, draft); setSavedHole(hole); }}>
+          <button className="primary wide" style={{ background: "#B08D57", color: "#1B4332" }} onClick={() => { saveHole(hole, draft); setSavedHole(hole); }}>
             Save side games
           </button>
           {savedHole === hole && (
@@ -6024,8 +6024,8 @@ export default function GolfScorecard() {
           <div className="gsc-field">
             <div className="gsc-label">Use per-hole handicapping (net scoring)?</div>
             <div style={{ display: "flex", gap: 8 }}>
-              <button className="gsc-btn" style={{ flex: 1, background: c.netScoring ? "#174F83" : "transparent", color: c.netScoring ? "#F3EFE0" : "#174F83", border: "1.5px solid #174F83" }} onClick={() => set({ netScoring: true })}>Yes</button>
-              <button className="gsc-btn" style={{ flex: 1, background: !c.netScoring ? "#174F83" : "transparent", color: !c.netScoring ? "#F3EFE0" : "#174F83", border: "1.5px solid #174F83" }} onClick={() => set({ netScoring: false })}>No</button>
+              <button className="gsc-btn" style={{ flex: 1, background: c.netScoring ? "#B08D57" : "transparent", color: c.netScoring ? "#1B4332" : "#8a6a2f", border: "1.5px solid #B08D57" }} onClick={() => set({ netScoring: true })}>Yes</button>
+              <button className="gsc-btn" style={{ flex: 1, background: !c.netScoring ? "#B08D57" : "transparent", color: !c.netScoring ? "#1B4332" : "#8a6a2f", border: "1.5px solid #B08D57" }} onClick={() => set({ netScoring: false })}>No</button>
             </div>
           </div>
 
@@ -6042,8 +6042,8 @@ export default function GolfScorecard() {
                 Nassau splits the round into three separate bets: front 9, back 9, and overall 18 - each its own winner.
               </div>
               <div style={{ display: "flex", gap: 8 }}>
-                <button className="gsc-btn" style={{ flex: 1, background: !c.nassau ? "#174F83" : "transparent", color: !c.nassau ? "#F3EFE0" : "#174F83", border: "1.5px solid #174F83" }} onClick={() => set({ nassau: false })}>Overall</button>
-                <button className="gsc-btn" style={{ flex: 1, background: c.nassau ? "#174F83" : "transparent", color: c.nassau ? "#F3EFE0" : "#174F83", border: "1.5px solid #174F83" }} onClick={() => set({ nassau: true })}>Nassau</button>
+                <button className="gsc-btn" style={{ flex: 1, background: !c.nassau ? "#B08D57" : "transparent", color: !c.nassau ? "#1B4332" : "#8a6a2f", border: "1.5px solid #B08D57" }} onClick={() => set({ nassau: false })}>Overall</button>
+                <button className="gsc-btn" style={{ flex: 1, background: c.nassau ? "#B08D57" : "transparent", color: c.nassau ? "#1B4332" : "#8a6a2f", border: "1.5px solid #B08D57" }} onClick={() => set({ nassau: true })}>Nassau</button>
               </div>
             </div>
           )}
@@ -6053,8 +6053,8 @@ export default function GolfScorecard() {
               <div className="gsc-field">
                 <div className="gsc-label">Track putts?</div>
                 <div style={{ display: "flex", gap: 8 }}>
-                  <button className="gsc-btn" style={{ flex: 1, background: c.trackPutts !== false ? "#174F83" : "transparent", color: c.trackPutts !== false ? "#F3EFE0" : "#174F83", border: "1.5px solid #174F83" }} onClick={() => set({ trackPutts: true })}>Yes</button>
-                  <button className="gsc-btn" style={{ flex: 1, background: c.trackPutts === false ? "#174F83" : "transparent", color: c.trackPutts === false ? "#F3EFE0" : "#174F83", border: "1.5px solid #174F83" }} onClick={() => set({ trackPutts: false })}>No</button>
+                  <button className="gsc-btn" style={{ flex: 1, background: c.trackPutts !== false ? "#B08D57" : "transparent", color: c.trackPutts !== false ? "#1B4332" : "#8a6a2f", border: "1.5px solid #B08D57" }} onClick={() => set({ trackPutts: true })}>Yes</button>
+                  <button className="gsc-btn" style={{ flex: 1, background: c.trackPutts === false ? "#B08D57" : "transparent", color: c.trackPutts === false ? "#1B4332" : "#8a6a2f", border: "1.5px solid #B08D57" }} onClick={() => set({ trackPutts: false })}>No</button>
                 </div>
               </div>
               {c.trackPutts !== false && (
@@ -6070,8 +6070,8 @@ export default function GolfScorecard() {
             <div className="gsc-field">
               <div className="gsc-label">Ties carry over to next hole?</div>
               <div style={{ display: "flex", gap: 8 }}>
-                <button className="gsc-btn" style={{ flex: 1, background: c.tiesCarryOver ? "#174F83" : "transparent", color: c.tiesCarryOver ? "#F3EFE0" : "#174F83", border: "1.5px solid #174F83" }} onClick={() => set({ tiesCarryOver: true })}>Yes</button>
-                <button className="gsc-btn" style={{ flex: 1, background: !c.tiesCarryOver ? "#174F83" : "transparent", color: !c.tiesCarryOver ? "#F3EFE0" : "#174F83", border: "1.5px solid #174F83" }} onClick={() => set({ tiesCarryOver: false })}>No</button>
+                <button className="gsc-btn" style={{ flex: 1, background: c.tiesCarryOver ? "#B08D57" : "transparent", color: c.tiesCarryOver ? "#1B4332" : "#8a6a2f", border: "1.5px solid #B08D57" }} onClick={() => set({ tiesCarryOver: true })}>Yes</button>
+                <button className="gsc-btn" style={{ flex: 1, background: !c.tiesCarryOver ? "#B08D57" : "transparent", color: !c.tiesCarryOver ? "#1B4332" : "#8a6a2f", border: "1.5px solid #B08D57" }} onClick={() => set({ tiesCarryOver: false })}>No</button>
               </div>
             </div>
           )}
@@ -12230,7 +12230,7 @@ function computeMatchPlayResult(round, computed) {
             <div style={{ fontSize: 13, color: "#4b4b45", marginTop: 3 }}>
               Just want to track scores today? Start here.
             </div>
-            <button className="gsc-btn" style={{ width: "100%", marginTop: 10, background: "#174F83", color: "#F3EFE0" }} onClick={startQuickStart}>
+            <button className="gsc-btn" style={{ width: "100%", marginTop: 10, background: "#B08D57", color: "#1B4332" }} onClick={startQuickStart}>
               Quick Start
             </button>
           </div>
@@ -12773,7 +12773,7 @@ function computeMatchPlayResult(round, computed) {
                               setProfileForm({ ...profileForm, avatar: profileForm.avatar === emoji ? "" : emoji });
                               setProfileAvatarPickerOpen(false);
                             }}
-                            style={{ width: 36, height: 36, borderRadius: "50%", border: profileForm.avatar === emoji ? "2px solid #174F83" : "1.5px solid #d8d2bd", background: "#fff", fontSize: 18, cursor: "pointer" }}
+                            style={{ width: 36, height: 36, borderRadius: "50%", border: profileForm.avatar === emoji ? "2px solid #B08D57" : "1.5px solid #d8d2bd", background: "#fff", fontSize: 18, cursor: "pointer" }}
                           >
                             {emoji}
                           </button>
@@ -12868,7 +12868,7 @@ function computeMatchPlayResult(round, computed) {
                   <div className="gsc-row">
                     <button
                       className="gsc-btn"
-                      style={{ background: "#174F83", color: "#fff" }}
+                      style={{ background: "#B08D57", color: "#1B4332" }}
                       disabled={deleteAccountBusy || deleteAccountConfirmText.trim().toUpperCase() !== "DELETE"}
                       onClick={deleteMyAccount}
                     >
@@ -12972,7 +12972,7 @@ function computeMatchPlayResult(round, computed) {
                         setCreateGroupAvatar(createGroupAvatar === emoji ? "" : emoji);
                         setCreateGroupAvatarPickerOpen(false);
                       }}
-                      style={{ width: 32, height: 32, borderRadius: "50%", border: createGroupAvatar === emoji ? "2px solid #174F83" : "1.5px solid #d8d2bd", background: "#fff", fontSize: 18, cursor: "pointer" }}
+                      style={{ width: 32, height: 32, borderRadius: "50%", border: createGroupAvatar === emoji ? "2px solid #B08D57" : "1.5px solid #d8d2bd", background: "#fff", fontSize: 18, cursor: "pointer" }}
                     >
                       {emoji}
                     </button>
@@ -13087,7 +13087,7 @@ function computeMatchPlayResult(round, computed) {
                               updateGroupAvatar(g.id, g.avatar === emoji ? "" : emoji);
                               setEditGroupAvatarPickerOpen(false);
                             }}
-                            style={{ width: 32, height: 32, borderRadius: "50%", border: g.avatar === emoji ? "2px solid #174F83" : "1.5px solid #d8d2bd", background: "#fff", fontSize: 18, cursor: "pointer" }}
+                            style={{ width: 32, height: 32, borderRadius: "50%", border: g.avatar === emoji ? "2px solid #B08D57" : "1.5px solid #d8d2bd", background: "#fff", fontSize: 18, cursor: "pointer" }}
                           >
                             {emoji}
                           </button>
@@ -13153,7 +13153,7 @@ function computeMatchPlayResult(round, computed) {
                               <div className="gsc-row">
                                 <button
                                   className="gsc-btn"
-                                  style={{ background: "#174F83", color: "#fff" }}
+                                  style={{ background: "#B08D57", color: "#1B4332" }}
                                   disabled={removeMemberBusy}
                                   onClick={() => removeMember(selectedGroupId, x.row.user_id)}
                                 >
@@ -13302,7 +13302,7 @@ function computeMatchPlayResult(round, computed) {
                         <div className="gsc-row">
                           <button
                             className="gsc-btn"
-                            style={{ background: "#174F83", color: "#fff" }}
+                            style={{ background: "#B08D57", color: "#1B4332" }}
                             disabled={leaveGroupBusy}
                             onClick={() => leaveGroup(g.id)}
                           >
@@ -13331,7 +13331,7 @@ function computeMatchPlayResult(round, computed) {
                         <div className="gsc-row">
                           <button
                             className="gsc-btn"
-                            style={{ background: "#174F83", color: "#fff" }}
+                            style={{ background: "#B08D57", color: "#1B4332" }}
                             disabled={deleteGroupBusy}
                             onClick={() => deleteGroup(g.id)}
                           >
@@ -13817,7 +13817,7 @@ function computeMatchPlayResult(round, computed) {
               {deleteRoundErr && <div style={{ color: "#174F83", fontSize: 13, marginBottom: 12 }}>{deleteRoundErr}</div>}
               <div className="gsc-modal-row">
                 <button className="gsc-btn gsc-btn-outline" onClick={cancelDeleteFinishedRound}>Cancel</button>
-                <button className="gsc-btn gsc-btn-primary" style={{ background: "#174F83" }} disabled={deleteRoundBusy} onClick={confirmDeleteFinishedRound}>
+                <button className="gsc-btn gsc-btn-primary" style={{ background: "#B08D57" }} disabled={deleteRoundBusy} onClick={confirmDeleteFinishedRound}>
                   {deleteRoundBusy ? "Deleting..." : "Yes, delete"}
                 </button>
               </div>
@@ -13834,7 +13834,7 @@ function computeMatchPlayResult(round, computed) {
               {deleteTournamentErr && <div style={{ color: "#174F83", fontSize: 13, marginBottom: 12 }}>{deleteTournamentErr}</div>}
               <div className="gsc-modal-row">
                 <button className="gsc-btn gsc-btn-outline" onClick={cancelDeleteFinishedTournament}>Cancel</button>
-                <button className="gsc-btn gsc-btn-primary" style={{ background: "#174F83" }} disabled={deleteTournamentBusy} onClick={confirmDeleteFinishedTournament}>
+                <button className="gsc-btn gsc-btn-primary" style={{ background: "#B08D57" }} disabled={deleteTournamentBusy} onClick={confirmDeleteFinishedTournament}>
                   {deleteTournamentBusy ? "Removing..." : "Yes, remove"}
                 </button>
               </div>
@@ -14612,7 +14612,7 @@ function computeMatchPlayResult(round, computed) {
                         setProfileForm({ ...profileForm, avatar: profileForm.avatar === emoji ? "" : emoji });
                         setProfileAvatarPickerOpen(false);
                       }}
-                      style={{ width: 36, height: 36, borderRadius: "50%", border: profileForm.avatar === emoji ? "2px solid #174F83" : "1.5px solid #d8d2bd", background: "#fff", fontSize: 18, cursor: "pointer" }}
+                      style={{ width: 36, height: 36, borderRadius: "50%", border: profileForm.avatar === emoji ? "2px solid #B08D57" : "1.5px solid #d8d2bd", background: "#fff", fontSize: 18, cursor: "pointer" }}
                     >
                       {emoji}
                     </button>
@@ -15257,14 +15257,14 @@ function computeMatchPlayResult(round, computed) {
                   <div style={{ display: "flex", gap: 8 }}>
                     <button
                       className="gsc-btn"
-                      style={{ flex: 1, background: activeCfg.netScoring ? "#174F83" : "transparent", color: activeCfg.netScoring ? "#F3EFE0" : "#174F83", border: "1.5px solid #174F83" }}
+                      style={{ flex: 1, background: activeCfg.netScoring ? "#B08D57" : "transparent", color: activeCfg.netScoring ? "#1B4332" : "#8a6a2f", border: "1.5px solid #B08D57" }}
                       onClick={() => setActiveCfg({ ...activeCfg, netScoring: true })}
                     >
                       Yes
                     </button>
                     <button
                       className="gsc-btn"
-                      style={{ flex: 1, background: !activeCfg.netScoring ? "#174F83" : "transparent", color: !activeCfg.netScoring ? "#F3EFE0" : "#174F83", border: "1.5px solid #174F83" }}
+                      style={{ flex: 1, background: !activeCfg.netScoring ? "#B08D57" : "transparent", color: !activeCfg.netScoring ? "#1B4332" : "#8a6a2f", border: "1.5px solid #B08D57" }}
                       onClick={() => setActiveCfg({ ...activeCfg, netScoring: false })}
                     >
                       No
@@ -15281,14 +15281,14 @@ function computeMatchPlayResult(round, computed) {
                   <div style={{ display: "flex", gap: 8 }}>
                     <button
                       className="gsc-btn"
-                      style={{ flex: 1, background: !activeCfg.nassau ? "#174F83" : "transparent", color: !activeCfg.nassau ? "#F3EFE0" : "#174F83", border: "1.5px solid #174F83" }}
+                      style={{ flex: 1, background: !activeCfg.nassau ? "#B08D57" : "transparent", color: !activeCfg.nassau ? "#1B4332" : "#8a6a2f", border: "1.5px solid #B08D57" }}
                       onClick={() => setActiveCfg({ ...activeCfg, nassau: false })}
                     >
                       Overall
                     </button>
                     <button
                       className="gsc-btn"
-                      style={{ flex: 1, background: activeCfg.nassau ? "#174F83" : "transparent", color: activeCfg.nassau ? "#F3EFE0" : "#174F83", border: "1.5px solid #174F83" }}
+                      style={{ flex: 1, background: activeCfg.nassau ? "#B08D57" : "transparent", color: activeCfg.nassau ? "#1B4332" : "#8a6a2f", border: "1.5px solid #B08D57" }}
                       onClick={() => setActiveCfg({ ...activeCfg, nassau: true })}
                     >
                       Nassau
@@ -15321,14 +15321,14 @@ function computeMatchPlayResult(round, computed) {
                   <div style={{ display: "flex", gap: 8 }}>
                     <button
                       className="gsc-btn"
-                      style={{ flex: 1, background: !activeCfg.nassau ? "#174F83" : "transparent", color: !activeCfg.nassau ? "#F3EFE0" : "#174F83", border: "1.5px solid #174F83" }}
+                      style={{ flex: 1, background: !activeCfg.nassau ? "#B08D57" : "transparent", color: !activeCfg.nassau ? "#1B4332" : "#8a6a2f", border: "1.5px solid #B08D57" }}
                       onClick={() => setActiveCfg({ ...activeCfg, nassau: false })}
                     >
                       Overall
                     </button>
                     <button
                       className="gsc-btn"
-                      style={{ flex: 1, background: activeCfg.nassau ? "#174F83" : "transparent", color: activeCfg.nassau ? "#F3EFE0" : "#174F83", border: "1.5px solid #174F83" }}
+                      style={{ flex: 1, background: activeCfg.nassau ? "#B08D57" : "transparent", color: activeCfg.nassau ? "#1B4332" : "#8a6a2f", border: "1.5px solid #B08D57" }}
                       onClick={() => setActiveCfg({ ...activeCfg, nassau: true })}
                     >
                       Nassau
@@ -15364,14 +15364,14 @@ function computeMatchPlayResult(round, computed) {
                   <div style={{ display: "flex", gap: 8 }}>
                     <button
                       className="gsc-btn"
-                      style={{ flex: 1, background: activeCfg.trackPutts !== false ? "#174F83" : "transparent", color: activeCfg.trackPutts !== false ? "#F3EFE0" : "#174F83", border: "1.5px solid #174F83" }}
+                      style={{ flex: 1, background: activeCfg.trackPutts !== false ? "#B08D57" : "transparent", color: activeCfg.trackPutts !== false ? "#1B4332" : "#8a6a2f", border: "1.5px solid #B08D57" }}
                       onClick={() => setActiveCfg({ ...activeCfg, trackPutts: true })}
                     >
                       Yes
                     </button>
                     <button
                       className="gsc-btn"
-                      style={{ flex: 1, background: activeCfg.trackPutts === false ? "#174F83" : "transparent", color: activeCfg.trackPutts === false ? "#F3EFE0" : "#174F83", border: "1.5px solid #174F83" }}
+                      style={{ flex: 1, background: activeCfg.trackPutts === false ? "#B08D57" : "transparent", color: activeCfg.trackPutts === false ? "#1B4332" : "#8a6a2f", border: "1.5px solid #B08D57" }}
                       onClick={() => setActiveCfg({ ...activeCfg, trackPutts: false })}
                     >
                       No
@@ -15388,14 +15388,14 @@ function computeMatchPlayResult(round, computed) {
                   <div style={{ display: "flex", gap: 8 }}>
                     <button
                       className="gsc-btn"
-                      style={{ flex: 1, background: activeCfg.tiesCarryOver ? "#174F83" : "transparent", color: activeCfg.tiesCarryOver ? "#F3EFE0" : "#174F83", border: "1.5px solid #174F83" }}
+                      style={{ flex: 1, background: activeCfg.tiesCarryOver ? "#B08D57" : "transparent", color: activeCfg.tiesCarryOver ? "#1B4332" : "#8a6a2f", border: "1.5px solid #B08D57" }}
                       onClick={() => setActiveCfg({ ...activeCfg, tiesCarryOver: true })}
                     >
                       Yes
                     </button>
                     <button
                       className="gsc-btn"
-                      style={{ flex: 1, background: !activeCfg.tiesCarryOver ? "#174F83" : "transparent", color: !activeCfg.tiesCarryOver ? "#F3EFE0" : "#174F83", border: "1.5px solid #174F83" }}
+                      style={{ flex: 1, background: !activeCfg.tiesCarryOver ? "#B08D57" : "transparent", color: !activeCfg.tiesCarryOver ? "#1B4332" : "#8a6a2f", border: "1.5px solid #B08D57" }}
                       onClick={() => setActiveCfg({ ...activeCfg, tiesCarryOver: false })}
                     >
                       No
@@ -15556,7 +15556,7 @@ function computeMatchPlayResult(round, computed) {
                         <button
                           key={emoji}
                           onClick={() => { updatePlayer(i, "avatar", p.avatar === emoji ? "" : emoji); setAvatarPickerFor(null); }}
-                          style={{ width: 36, height: 36, borderRadius: "50%", border: p.avatar === emoji ? "2px solid #174F83" : "1.5px solid #d8d2bd", background: "#fff", fontSize: 18, cursor: "pointer" }}
+                          style={{ width: 36, height: 36, borderRadius: "50%", border: p.avatar === emoji ? "2px solid #B08D57" : "1.5px solid #d8d2bd", background: "#fff", fontSize: 18, cursor: "pointer" }}
                         >
                           {emoji}
                         </button>
@@ -15856,7 +15856,7 @@ function computeMatchPlayResult(round, computed) {
                           updatePlayer(i, "avatar", p.avatar === emoji ? "" : emoji);
                           setAvatarPickerFor(null);
                         }}
-                        style={{ width: 36, height: 36, borderRadius: "50%", border: p.avatar === emoji ? "2px solid #174F83" : "1.5px solid #d8d2bd", background: "#fff", fontSize: 18, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+                        style={{ width: 36, height: 36, borderRadius: "50%", border: p.avatar === emoji ? "2px solid #B08D57" : "1.5px solid #d8d2bd", background: "#fff", fontSize: 18, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
                       >
                         {emoji}
                       </button>
@@ -16177,14 +16177,14 @@ function computeMatchPlayResult(round, computed) {
                 <div style={{ display: "flex", gap: 8 }}>
                   <button
                     className="gsc-btn"
-                    style={{ flex: 1, background: cfg.netScoring ? "#174F83" : "transparent", color: cfg.netScoring ? "#F3EFE0" : "#174F83", border: "1.5px solid #174F83" }}
+                    style={{ flex: 1, background: cfg.netScoring ? "#B08D57" : "transparent", color: cfg.netScoring ? "#1B4332" : "#8a6a2f", border: "1.5px solid #B08D57" }}
                     onClick={() => setCfg({ ...cfg, netScoring: true })}
                   >
                     Yes
                   </button>
                   <button
                     className="gsc-btn"
-                    style={{ flex: 1, background: !cfg.netScoring ? "#174F83" : "transparent", color: !cfg.netScoring ? "#F3EFE0" : "#174F83", border: "1.5px solid #174F83" }}
+                    style={{ flex: 1, background: !cfg.netScoring ? "#B08D57" : "transparent", color: !cfg.netScoring ? "#1B4332" : "#8a6a2f", border: "1.5px solid #B08D57" }}
                     onClick={() => setCfg({ ...cfg, netScoring: false })}
                   >
                     No
@@ -16201,14 +16201,14 @@ function computeMatchPlayResult(round, computed) {
                 <div style={{ display: "flex", gap: 8 }}>
                   <button
                     className="gsc-btn"
-                    style={{ flex: 1, background: !cfg.nassau ? "#174F83" : "transparent", color: !cfg.nassau ? "#F3EFE0" : "#174F83", border: "1.5px solid #174F83" }}
+                    style={{ flex: 1, background: !cfg.nassau ? "#B08D57" : "transparent", color: !cfg.nassau ? "#1B4332" : "#8a6a2f", border: "1.5px solid #B08D57" }}
                     onClick={() => setCfg({ ...cfg, nassau: false })}
                   >
                     Overall
                   </button>
                   <button
                     className="gsc-btn"
-                    style={{ flex: 1, background: cfg.nassau ? "#174F83" : "transparent", color: cfg.nassau ? "#F3EFE0" : "#174F83", border: "1.5px solid #174F83" }}
+                    style={{ flex: 1, background: cfg.nassau ? "#B08D57" : "transparent", color: cfg.nassau ? "#1B4332" : "#8a6a2f", border: "1.5px solid #B08D57" }}
                     onClick={() => setCfg({ ...cfg, nassau: true })}
                   >
                     Nassau
@@ -16241,14 +16241,14 @@ function computeMatchPlayResult(round, computed) {
                 <div style={{ display: "flex", gap: 8 }}>
                   <button
                     className="gsc-btn"
-                    style={{ flex: 1, background: !cfg.nassau ? "#174F83" : "transparent", color: !cfg.nassau ? "#F3EFE0" : "#174F83", border: "1.5px solid #174F83" }}
+                    style={{ flex: 1, background: !cfg.nassau ? "#B08D57" : "transparent", color: !cfg.nassau ? "#1B4332" : "#8a6a2f", border: "1.5px solid #B08D57" }}
                     onClick={() => setCfg({ ...cfg, nassau: false })}
                   >
                     Overall
                   </button>
                   <button
                     className="gsc-btn"
-                    style={{ flex: 1, background: cfg.nassau ? "#174F83" : "transparent", color: cfg.nassau ? "#F3EFE0" : "#174F83", border: "1.5px solid #174F83" }}
+                    style={{ flex: 1, background: cfg.nassau ? "#B08D57" : "transparent", color: cfg.nassau ? "#1B4332" : "#8a6a2f", border: "1.5px solid #B08D57" }}
                     onClick={() => setCfg({ ...cfg, nassau: true })}
                   >
                     Nassau
@@ -16284,14 +16284,14 @@ function computeMatchPlayResult(round, computed) {
                 <div style={{ display: "flex", gap: 8 }}>
                   <button
                     className="gsc-btn"
-                    style={{ flex: 1, background: cfg.trackPutts !== false ? "#174F83" : "transparent", color: cfg.trackPutts !== false ? "#F3EFE0" : "#174F83", border: "1.5px solid #174F83" }}
+                    style={{ flex: 1, background: cfg.trackPutts !== false ? "#B08D57" : "transparent", color: cfg.trackPutts !== false ? "#1B4332" : "#8a6a2f", border: "1.5px solid #B08D57" }}
                     onClick={() => setCfg({ ...cfg, trackPutts: true })}
                   >
                     Yes
                   </button>
                   <button
                     className="gsc-btn"
-                    style={{ flex: 1, background: cfg.trackPutts === false ? "#174F83" : "transparent", color: cfg.trackPutts === false ? "#F3EFE0" : "#174F83", border: "1.5px solid #174F83" }}
+                    style={{ flex: 1, background: cfg.trackPutts === false ? "#B08D57" : "transparent", color: cfg.trackPutts === false ? "#1B4332" : "#8a6a2f", border: "1.5px solid #B08D57" }}
                     onClick={() => setCfg({ ...cfg, trackPutts: false })}
                   >
                     No
@@ -16308,14 +16308,14 @@ function computeMatchPlayResult(round, computed) {
                 <div style={{ display: "flex", gap: 8 }}>
                   <button
                     className="gsc-btn"
-                    style={{ flex: 1, background: cfg.tiesCarryOver ? "#174F83" : "transparent", color: cfg.tiesCarryOver ? "#F3EFE0" : "#174F83", border: "1.5px solid #174F83" }}
+                    style={{ flex: 1, background: cfg.tiesCarryOver ? "#B08D57" : "transparent", color: cfg.tiesCarryOver ? "#1B4332" : "#8a6a2f", border: "1.5px solid #B08D57" }}
                     onClick={() => setCfg({ ...cfg, tiesCarryOver: true })}
                   >
                     Yes
                   </button>
                   <button
                     className="gsc-btn"
-                    style={{ flex: 1, background: !cfg.tiesCarryOver ? "#174F83" : "transparent", color: !cfg.tiesCarryOver ? "#F3EFE0" : "#174F83", border: "1.5px solid #174F83" }}
+                    style={{ flex: 1, background: !cfg.tiesCarryOver ? "#B08D57" : "transparent", color: !cfg.tiesCarryOver ? "#1B4332" : "#8a6a2f", border: "1.5px solid #B08D57" }}
                     onClick={() => setCfg({ ...cfg, tiesCarryOver: false })}
                   >
                     No
@@ -16473,7 +16473,7 @@ function computeMatchPlayResult(round, computed) {
                           width: 36,
                           height: 36,
                           borderRadius: "50%",
-                          border: p.avatar === emoji ? "2px solid #174F83" : "1.5px solid #d8d2bd",
+                          border: p.avatar === emoji ? "2px solid #B08D57" : "1.5px solid #d8d2bd",
                           background: "#fff",
                           fontSize: 18,
                           cursor: "pointer",
@@ -16786,14 +16786,14 @@ function computeMatchPlayResult(round, computed) {
                 <div style={{ display: "flex", gap: 8 }}>
                   <button
                     className="gsc-btn"
-                    style={{ flex: 1, background: tournamentCfg.netScoring ? "#174F83" : "transparent", color: tournamentCfg.netScoring ? "#F3EFE0" : "#174F83", border: "1.5px solid #174F83" }}
+                    style={{ flex: 1, background: tournamentCfg.netScoring ? "#B08D57" : "transparent", color: tournamentCfg.netScoring ? "#1B4332" : "#8a6a2f", border: "1.5px solid #B08D57" }}
                     onClick={() => setTournamentCfg({ ...tournamentCfg, netScoring: true })}
                   >
                     Yes
                   </button>
                   <button
                     className="gsc-btn"
-                    style={{ flex: 1, background: !tournamentCfg.netScoring ? "#174F83" : "transparent", color: !tournamentCfg.netScoring ? "#F3EFE0" : "#174F83", border: "1.5px solid #174F83" }}
+                    style={{ flex: 1, background: !tournamentCfg.netScoring ? "#B08D57" : "transparent", color: !tournamentCfg.netScoring ? "#1B4332" : "#8a6a2f", border: "1.5px solid #B08D57" }}
                     onClick={() => setTournamentCfg({ ...tournamentCfg, netScoring: false })}
                   >
                     No
@@ -16810,14 +16810,14 @@ function computeMatchPlayResult(round, computed) {
                 <div style={{ display: "flex", gap: 8 }}>
                   <button
                     className="gsc-btn"
-                    style={{ flex: 1, background: tournamentCfg.trackPutts !== false ? "#174F83" : "transparent", color: tournamentCfg.trackPutts !== false ? "#F3EFE0" : "#174F83", border: "1.5px solid #174F83" }}
+                    style={{ flex: 1, background: tournamentCfg.trackPutts !== false ? "#B08D57" : "transparent", color: tournamentCfg.trackPutts !== false ? "#1B4332" : "#8a6a2f", border: "1.5px solid #B08D57" }}
                     onClick={() => setTournamentCfg({ ...tournamentCfg, trackPutts: true })}
                   >
                     Yes
                   </button>
                   <button
                     className="gsc-btn"
-                    style={{ flex: 1, background: tournamentCfg.trackPutts === false ? "#174F83" : "transparent", color: tournamentCfg.trackPutts === false ? "#F3EFE0" : "#174F83", border: "1.5px solid #174F83" }}
+                    style={{ flex: 1, background: tournamentCfg.trackPutts === false ? "#B08D57" : "transparent", color: tournamentCfg.trackPutts === false ? "#1B4332" : "#8a6a2f", border: "1.5px solid #B08D57" }}
                     onClick={() => setTournamentCfg({ ...tournamentCfg, trackPutts: false })}
                   >
                     No
@@ -17027,7 +17027,7 @@ function computeMatchPlayResult(round, computed) {
                             width: 36,
                             height: 36,
                             borderRadius: "50%",
-                            border: p.avatar === emoji ? "2px solid #174F83" : "1.5px solid #d8d2bd",
+                            border: p.avatar === emoji ? "2px solid #B08D57" : "1.5px solid #d8d2bd",
                             background: "#fff",
                             fontSize: 18,
                             cursor: "pointer",
@@ -17368,7 +17368,7 @@ function computeMatchPlayResult(round, computed) {
             </>
           )}
           {t && isTournamentOrganizer(t) && (
-            <button className="gsc-btn" style={{ width: "100%", marginTop: 14, background: "#174F83", color: "#fff" }} disabled={finishTournamentBusy} onClick={() => finishTournament(t)}>
+            <button className="gsc-btn" style={{ width: "100%", marginTop: 14, background: "#B08D57", color: "#1B4332" }} disabled={finishTournamentBusy} onClick={() => finishTournament(t)}>
               {finishTournamentBusy ? "Saving..." : "Finish tournament"}
             </button>
           )}
@@ -18762,7 +18762,7 @@ function computeMatchPlayResult(round, computed) {
                         <button
                           key={emoji}
                           onClick={() => updateRoundPlayerAvatar(i, p.avatar === emoji ? "" : emoji)}
-                          style={{ width: 34, height: 34, borderRadius: "50%", border: p.avatar === emoji ? "2px solid #174F83" : "1.5px solid #d8d2bd", background: "#fff", fontSize: 17, cursor: "pointer" }}
+                          style={{ width: 34, height: 34, borderRadius: "50%", border: p.avatar === emoji ? "2px solid #B08D57" : "1.5px solid #d8d2bd", background: "#fff", fontSize: 17, cursor: "pointer" }}
                         >
                           {emoji}
                         </button>
@@ -19429,7 +19429,7 @@ function computeMatchPlayResult(round, computed) {
           {!round.finished && (
             canEditThisRound ? (
               <>
-                <button className="gsc-btn" style={{ width: "100%", marginTop: 14, background: "#174F83", color: "#fff" }} disabled={busy} onClick={() => setConfirmFinishOpen(true)}>
+                <button className="gsc-btn" style={{ width: "100%", marginTop: 14, background: "#B08D57", color: "#1B4332" }} disabled={busy} onClick={() => setConfirmFinishOpen(true)}>
                   {busy ? "Saving..." : "Finish & Save Completed Round"}
                 </button>
                 {archiveErr && <div style={{ color: "#174F83", fontSize: 12, textAlign: "center", marginTop: 8 }}>{archiveErr}</div>}
