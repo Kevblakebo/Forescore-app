@@ -104,6 +104,8 @@ const STYLE = `
   .gsc-modal-title { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif; font-size:19px; font-weight:700; color:#1B4332; margin-bottom:8px; }
   .gsc-modal-body { font-size:14px; color:#4b4b45; line-height:1.5; margin-bottom:18px; }
   .gsc-modal-row { display:flex; gap:10px; }
+  @keyframes gsc-spin { to { transform: rotate(360deg); } }
+  @keyframes gsc-shimmer { 0% { opacity:0.45; } 50% { opacity:1; } 100% { opacity:0.45; } }
   @keyframes gsc-firework-particle { 0% { transform:translate(0,0) scale(1); opacity:1; } 100% { transform:translate(var(--dx), var(--dy)) scale(0.3); opacity:0; } }
   @keyframes gsc-firework-pop { 0% { opacity:0; } 15% { opacity:1; } 100% { opacity:0; } }
   .gsc-firework-field { position:absolute; inset:0; overflow:hidden; pointer-events:none; }
@@ -7721,6 +7723,30 @@ export default function GolfScorecard() {
   // a short list of candidates - the person still picks the right one
   // (and the right tee, since par can differ between tees at the same
   // course) before anything gets filled in.
+  // Obvious "working on it" panel for course search: spinner + message +
+  // pulsing placeholder rows, so a slow lookup never looks frozen.
+  function renderCourseSearchBusy() {
+    if (!(courseSearchBusy || gpsCourseSearchBusy) || courseTeeOptions) return null;
+    const nearby = gpsCourseSearchBusy;
+    return (
+      <div style={{ marginTop: 10 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 14px", background: "#EEF3F8", border: "1px solid #C5D6E6", borderRadius: 12 }}>
+          <div style={{ width: 22, height: 22, flex: "0 0 auto", border: "3px solid #C5D6E6", borderTopColor: "#174F83", borderRadius: "50%", animation: "gsc-spin 0.8s linear infinite" }} />
+          <div>
+            <div style={{ fontWeight: 700, fontSize: 14, color: "#174F83" }}>{nearby ? "Finding golf courses near you..." : "Searching for courses..."}</div>
+            <div style={{ fontSize: 12, color: "#4b6b8a", marginTop: 2 }}>{nearby ? "Checking your location - this can take a few seconds. You can also type a course name above." : "This can take a few seconds."}</div>
+          </div>
+        </div>
+        {[0, 1, 2].map((i) => (
+          <div key={i} className="gsc-card" style={{ marginTop: 8, padding: 10, animation: "gsc-shimmer 1.2s ease-in-out infinite", animationDelay: `${i * 0.15}s` }}>
+            <div style={{ height: 12, width: `${70 - i * 12}%`, background: "#E3E8EC", borderRadius: 6 }} />
+            <div style={{ height: 10, width: "40%", background: "#EDF0F2", borderRadius: 6, marginTop: 8 }} />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   async function searchCourses() {
     const q = courseSearchQuery.trim();
     if (q.length === 0) {
@@ -7756,15 +7782,31 @@ export default function GolfScorecard() {
   // startGPSWatch above for why (avoids a well-documented WKWebView
   // double-prompt when calling navigator.geolocation directly inside a
   // Capacitor iOS app).
+  // Remembers the last "courses near me" answer for a few minutes, so
+  // opening a second setup page right after the first (Quick Start, then a
+  // round setup, back and forth) shows the list instantly instead of
+  // repeating the whole location + server lookup. Only used for the
+  // automatic lookup - an explicit Search tap always does a fresh one.
+  const nearbyCacheRef = useRef(null);
   async function searchCoursesByGps(auto) {
     // auto === true: run quietly on entering a setup page (no error text if
     // location is off or nothing is nearby - the person can still just type).
     const quiet = auto === true;
+    const cached = nearbyCacheRef.current;
+    if (quiet && cached && Date.now() - cached.at < 5 * 60 * 1000) {
+      setCourseSearchErr("");
+      setCourseSearchResults(cached.courses);
+      return;
+    }
     setGpsCourseSearchBusy(true);
     setCourseSearchErr("");
     setCourseSearchResults([]);
     try {
-      const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 10000 });
+      // Finding the nearest course only needs roughly a mile of accuracy,
+      // so skip the slow high-accuracy GPS fix, and accept a position the
+      // phone already has from the last 5 minutes (instant) instead of
+      // waiting for a brand new one.
+      const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: false, timeout: 10000, maximumAge: 5 * 60 * 1000 });
       const { latitude, longitude } = pos.coords;
       const res = await fetch(`${API_BASE}/api/course-gps-search?lat=${latitude}&lng=${longitude}`);
       const data = await res.json().catch(() => null);
@@ -7774,6 +7816,7 @@ export default function GolfScorecard() {
         return;
       }
       setCourseSearchResults(data.courses || []);
+      if (data.courses && data.courses.length > 0) nearbyCacheRef.current = { at: Date.now(), courses: data.courses };
       if ((!data.courses || data.courses.length === 0) && !quiet) {
         setCourseSearchErr(
           data.noCoordinatesAvailable
@@ -15100,6 +15143,7 @@ function computeMatchPlayResult(round, computed) {
                   {courseSearchBusy || gpsCourseSearchBusy ? "Searching..." : "Search"}
                 </button>
               </div>
+              {renderCourseSearchBusy()}
               {courseSearchErr && <div style={{ color: "#174F83", fontSize: 12, marginTop: 8 }}>{courseSearchErr}</div>}
               {courseSearchResults.length > 0 && !courseTeeOptions && (
                 <div style={{ marginTop: 10 }}>
@@ -15648,6 +15692,7 @@ function computeMatchPlayResult(round, computed) {
                 {courseSearchBusy || gpsCourseSearchBusy ? "Searching..." : "Search"}
               </button>
             </div>
+            {renderCourseSearchBusy()}
             {courseSearchErr && <div style={{ color: "#174F83", fontSize: 12, marginTop: 8 }}>{courseSearchErr}</div>}
 
             {courseSearchResults.length > 0 && !courseTeeOptions && (
@@ -15984,6 +16029,7 @@ function computeMatchPlayResult(round, computed) {
                     {courseSearchBusy || gpsCourseSearchBusy ? "Searching..." : "Search"}
                   </button>
                 </div>
+                {renderCourseSearchBusy()}
                 {courseSearchErr && <div style={{ color: "#174F83", fontSize: 12, marginTop: 8 }}>{courseSearchErr}</div>}
 
                 {courseSearchResults.length > 0 && !courseTeeOptions && (
@@ -16599,6 +16645,7 @@ function computeMatchPlayResult(round, computed) {
                   {courseSearchBusy || gpsCourseSearchBusy ? "Searching..." : "Search"}
                 </button>
               </div>
+              {renderCourseSearchBusy()}
               {courseSearchErr && <div style={{ color: "#174F83", fontSize: 12, marginTop: 8 }}>{courseSearchErr}</div>}
 
               {courseSearchResults.length > 0 && !courseTeeOptions && (
