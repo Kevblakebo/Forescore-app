@@ -15761,9 +15761,6 @@ function computeMatchPlayResult(round, computed) {
 
           <div className="gsc-card">
             <div className="gsc-label" style={{ marginBottom: 10 }}>Players</div>
-            <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 10 }}>
-              1-4 players - add or remove below to match who's actually playing.
-            </div>
             {players.map((p, i) => (
               <div key={i} style={{ marginBottom: 8 }}>
                 <div className="gsc-row">
