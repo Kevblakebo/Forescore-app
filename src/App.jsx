@@ -7723,8 +7723,12 @@ export default function GolfScorecard() {
   // course) before anything gets filled in.
   async function searchCourses() {
     const q = courseSearchQuery.trim();
+    if (q.length === 0) {
+      // Empty box: Search finds the courses nearest to you instead.
+      return searchCoursesByGps();
+    }
     if (q.length < 2) {
-      setCourseSearchErr("Type at least 2 characters to search.");
+      setCourseSearchErr("Type at least 2 characters to search, or leave it blank to find courses near you.");
       return;
     }
     setCourseSearchBusy(true);
@@ -15071,18 +15075,10 @@ function computeMatchPlayResult(round, computed) {
                   onChange={(e) => setCourseSearchQuery(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && searchCourses()}
                 />
-                <button className="gsc-btn gsc-btn-primary" style={{ flex: "0 0 auto" }} disabled={courseSearchBusy} onClick={searchCourses}>
-                  {courseSearchBusy ? "Searching..." : "Search"}
+                <button className="gsc-btn gsc-btn-primary" style={{ flex: "0 0 auto" }} disabled={courseSearchBusy || gpsCourseSearchBusy} onClick={searchCourses}>
+                  {courseSearchBusy || gpsCourseSearchBusy ? "Searching..." : "Search"}
                 </button>
               </div>
-              <button
-                className="gsc-btn gsc-btn-outline"
-                style={{ width: "100%", marginTop: 8 }}
-                disabled={gpsCourseSearchBusy}
-                onClick={searchCoursesByGps}
-              >
-                {gpsCourseSearchBusy ? "Finding nearby courses..." : `${"\u{1F4CD}"} Use my location instead`}
-              </button>
               {courseSearchErr && <div style={{ color: "#174F83", fontSize: 12, marginTop: 8 }}>{courseSearchErr}</div>}
               {courseSearchResults.length > 0 && !courseTeeOptions && (
                 <div style={{ marginTop: 10 }}>
@@ -15627,18 +15623,10 @@ function computeMatchPlayResult(round, computed) {
                 onChange={(e) => setCourseSearchQuery(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && searchCourses()}
               />
-              <button className="gsc-btn gsc-btn-primary" style={{ flex: "0 0 auto" }} disabled={courseSearchBusy} onClick={searchCourses}>
-                {courseSearchBusy ? "Searching..." : "Search"}
+              <button className="gsc-btn gsc-btn-primary" style={{ flex: "0 0 auto" }} disabled={courseSearchBusy || gpsCourseSearchBusy} onClick={searchCourses}>
+                {courseSearchBusy || gpsCourseSearchBusy ? "Searching..." : "Search"}
               </button>
             </div>
-            <button
-              className="gsc-btn gsc-btn-outline"
-              style={{ width: "100%", marginTop: 8 }}
-              disabled={gpsCourseSearchBusy}
-              onClick={searchCoursesByGps}
-            >
-              {gpsCourseSearchBusy ? "Finding nearby courses..." : `${"\u{1F4CD}"} Use my location instead`}
-            </button>
             {courseSearchErr && <div style={{ color: "#174F83", fontSize: 12, marginTop: 8 }}>{courseSearchErr}</div>}
 
             {courseSearchResults.length > 0 && !courseTeeOptions && (
@@ -15971,18 +15959,10 @@ function computeMatchPlayResult(round, computed) {
                     onChange={(e) => setCourseSearchQuery(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && searchCourses()}
                   />
-                  <button className="gsc-btn gsc-btn-primary" style={{ flex: "0 0 auto" }} disabled={courseSearchBusy} onClick={searchCourses}>
-                    {courseSearchBusy ? "Searching..." : "Search"}
+                  <button className="gsc-btn gsc-btn-primary" style={{ flex: "0 0 auto" }} disabled={courseSearchBusy || gpsCourseSearchBusy} onClick={searchCourses}>
+                    {courseSearchBusy || gpsCourseSearchBusy ? "Searching..." : "Search"}
                   </button>
                 </div>
-                <button
-                  className="gsc-btn gsc-btn-outline"
-                  style={{ width: "100%", marginTop: 8 }}
-                  disabled={gpsCourseSearchBusy}
-                  onClick={searchCoursesByGps}
-                >
-                  {gpsCourseSearchBusy ? "Finding nearby courses..." : `${"\u{1F4CD}"} Use my location instead`}
-                </button>
                 {courseSearchErr && <div style={{ color: "#174F83", fontSize: 12, marginTop: 8 }}>{courseSearchErr}</div>}
 
                 {courseSearchResults.length > 0 && !courseTeeOptions && (
@@ -16594,18 +16574,10 @@ function computeMatchPlayResult(round, computed) {
                   onChange={(e) => setCourseSearchQuery(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && searchCourses()}
                 />
-                <button className="gsc-btn gsc-btn-primary" style={{ flex: "0 0 auto" }} disabled={courseSearchBusy} onClick={searchCourses}>
-                  {courseSearchBusy ? "Searching..." : "Search"}
+                <button className="gsc-btn gsc-btn-primary" style={{ flex: "0 0 auto" }} disabled={courseSearchBusy || gpsCourseSearchBusy} onClick={searchCourses}>
+                  {courseSearchBusy || gpsCourseSearchBusy ? "Searching..." : "Search"}
                 </button>
               </div>
-              <button
-                className="gsc-btn gsc-btn-outline"
-                style={{ width: "100%", marginTop: 8 }}
-                disabled={gpsCourseSearchBusy}
-                onClick={searchCoursesByGps}
-              >
-                {gpsCourseSearchBusy ? "Finding nearby courses..." : `${"\u{1F4CD}"} Use my location instead`}
-              </button>
               {courseSearchErr && <div style={{ color: "#174F83", fontSize: 12, marginTop: 8 }}>{courseSearchErr}</div>}
 
               {courseSearchResults.length > 0 && !courseTeeOptions && (
