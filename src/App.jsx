@@ -11897,7 +11897,7 @@ function computeMatchPlayResult(round, computed) {
           >
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", pointerEvents: "none" }}>
               <img src={LOGO_DATA_URI} alt="RipScore logo" style={{ width: 62, height: "auto", objectFit: "contain", display: "block" }} />
-              <div style={{ marginTop: -4, fontSize: 11.5, fontWeight: 800, letterSpacing: "1.8px", whiteSpace: "nowrap", lineHeight: 1, color: "#F3EFE0", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", textShadow: "0 1px 3px rgba(0,0,0,0.35)" }}>RIPSCORE <span style={{ color: "#F3EFE0" }}>GOLF</span></div>
+              <div style={{ marginTop: -4, fontSize: 11.5, fontWeight: 800, letterSpacing: "1.8px", whiteSpace: "nowrap", lineHeight: 1, color: "#F3EFE0", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", textShadow: "0 1px 3px rgba(0,0,0,0.35)" }}>RIPSCORE <span style={{ color: "#B08D57" }}>GOLF</span></div>
             </div>
           </button>
           {logoInfoOpen && <LogoInfoDropdown />}
