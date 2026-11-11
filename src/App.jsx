@@ -8798,13 +8798,15 @@ export default function GolfScorecard() {
     goToScreen("tournamentCreate");
   }
 
+  // Tournament name is optional - when left blank it defaults the same way a
+  // regular round's name does: the game's name plus the date.
+  function defaultTournamentName() {
+    const tgDef = GAMES[tournamentGameKey] || {};
+    return (tgDef.tournamentName || tgDef.name || "Tournament") + " " + tournamentDate;
+  }
+
   function proceedToFoursomeRoster() {
     setTournamentErr("");
-    const name = tournamentName.trim();
-    if (!name) {
-      setTournamentErr("Give the tournament a name first.");
-      return;
-    }
     const parIncomplete = tournamentPar.some((p) => p === "" || p == null || isNaN(Number(p)) || Number(p) <= 0);
     if (parIncomplete) {
       setTournamentErr("Search for and select your course above, then pick your tees to load par. Can't find your course? Load a saved course or enter par for each hole manually before continuing.");
@@ -8940,9 +8942,6 @@ export default function GolfScorecard() {
             <option value="C">C (3rd group)</option>
           </select>
         </div>
-        <div style={{ fontSize: 11, color: "#8a8a80", marginTop: 4 }}>
-          For a shotgun start. Leave blank to start on hole 1. Use the letter when two groups start on the same hole (7A, 7B).
-        </div>
       </div>
     );
   }
@@ -9007,11 +9006,7 @@ export default function GolfScorecard() {
 
   async function finishTournamentCreate() {
     setTournamentErr("");
-    const name = tournamentName.trim();
-    if (!name) {
-      setTournamentErr("Give the tournament a name first.");
-      return;
-    }
+    const name = tournamentName.trim() || defaultTournamentName();
     const code = genCode();
     const cleanPar = tournamentPar.map((p) => (p === "" || p == null || isNaN(Number(p)) ? 4 : Number(p)));
     const cleanYardage = tournamentYardage.map((y) => (y === "" || y == null || isNaN(Number(y)) ? null : Number(y)));
@@ -15010,7 +15005,7 @@ function computeMatchPlayResult(round, computed) {
           {wizardStepId === "field_name" && (
             <div className="gsc-card">
               <div className="gsc-label" style={{ marginBottom: 10, fontSize: 16 }}>
-                What do you want to name your {isTournament ? "tournament" : "Group"}? {isTournament ? "(Required)" : "(Optional)"}
+                What do you want to name your {isTournament ? "tournament" : "Group"}? (Optional)
               </div>
               {!isTournament && session && (
                 <button className="gsc-link" style={{ fontSize: 13, fontWeight: 700, marginBottom: 8, display: "inline-block" }} onClick={() => openGroupFillPicker("playersAndMeta")}>
@@ -15035,10 +15030,6 @@ function computeMatchPlayResult(round, computed) {
                 className="gsc-btn gsc-btn-primary"
                 style={{ width: "100%", marginTop: 14 }}
                 onClick={() => {
-                  if (isTournament && !tournamentName.trim()) {
-                    setWizardFieldErr("Give your tournament a name before continuing.");
-                    return;
-                  }
                   wizardGoNext("field_name", {});
                 }}
               >
@@ -16570,63 +16561,8 @@ function computeMatchPlayResult(round, computed) {
             View full rules for {tg.tournamentName || tg.name}
           </button>
           <div className="gsc-card">
-            <div className="gsc-label">Tournament name</div>
+            <div className="gsc-label">Tournament name (Optional)</div>
             <input className="gsc-input" placeholder="e.g. Club Championship" value={tournamentName} onChange={(e) => setTournamentName(e.target.value)} />
-            <div className="gsc-field" style={{ marginTop: 12 }}>
-              <div className="gsc-label">Round Avatar (optional)</div>
-              <button
-                onClick={() => setTournamentAvatarPickerOpen((v) => !v)}
-                style={{ width: 44, height: 44, borderRadius: "50%", border: "1.5px solid #d8d2bd", background: "#fff", fontSize: 20, cursor: "pointer", position: "relative" }}
-              >
-                {tournamentCfg.roundAvatar || "\u{1F3CC}\u{FE0F}"}
-                {!tournamentCfg.roundAvatar && (
-                  <span style={{ position: "absolute", bottom: -2, right: -2, width: 16, height: 16, borderRadius: "50%", background: "#174F83", color: "#fff", fontSize: 11, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", border: "1.5px solid #F3EFE0" }}>
-                    +
-                  </span>
-                )}
-              </button>
-              {tournamentAvatarPickerOpen && (
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 8, padding: "10px 0 0" }}>
-                  {AVATAR_OPTIONS.map((emoji) => (
-                    <button
-                      key={emoji}
-                      onClick={() => {
-                        setTournamentCfg({ ...tournamentCfg, roundAvatar: tournamentCfg.roundAvatar === emoji ? "" : emoji });
-                        setTournamentAvatarPickerOpen(false);
-                      }}
-                      style={{ width: 36, height: 36, borderRadius: "50%", border: tournamentCfg.roundAvatar === emoji ? "2px solid #174F83" : "1.5px solid #d8d2bd", background: "#fff", fontSize: 18, cursor: "pointer" }}
-                    >
-                      {emoji}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-            <div className="gsc-field" style={{ marginTop: 12 }}>
-              <div className="gsc-label">Date</div>
-              <input className="gsc-input" type="date" value={tournamentDate} onChange={(e) => setTournamentDate(e.target.value)} />
-            </div>
-            {tg.hasScore && (
-              <div className="gsc-field" style={{ marginTop: 12 }}>
-                <div className="gsc-label">Distance to Green GPS</div>
-                {!session ? (
-                  <button
-                    onClick={() => goToScreen("login")}
-                    style={{ display: "block", width: "100%", textAlign: "left", fontSize: 12, color: "#6b6b63", padding: "8px 10px", background: "#F8F1E4", border: "none", borderRadius: 8, cursor: "pointer" }}
-                  >
-                    {"\u26F3"} Log in to unlock live distance-to-green GPS. <span style={{ textDecoration: "underline", fontWeight: 700 }}>Tap to log in</span>
-                  </button>
-                ) : tournamentCfg.gpsCourseLabel ? (
-                  <div style={{ fontSize: 12, color: "#1B4332", fontWeight: 600, padding: "8px 10px", background: "#EBF0EC", borderRadius: 8 }}>
-                    {"\u26F3"} Enabled for {tournamentCfg.gpsCourseLabel} (applies to every team)
-                  </div>
-                ) : (
-                  <div style={{ fontSize: 12, color: "#6b6b63" }}>
-                    Automatically enabled when you search and select your course below, if GPS data is available for it.
-                  </div>
-                )}
-              </div>
-            )}
             <div className="gsc-field" style={{ marginTop: 12 }}>
               {tournamentCourseName && courseSelectedViaSearch ? (
                 <div className="gsc-card gsc-winner-card" style={{ padding: 12 }}>
@@ -16796,7 +16732,7 @@ function computeMatchPlayResult(round, computed) {
 
           <div className="gsc-card">
             <button type="button" onClick={() => setTourneyVarsOpen((v) => !v)} aria-expanded={tourneyVarsOpen} style={{ width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center", background: "none", border: "none", padding: 0, marginBottom: tourneyVarsOpen ? 10 : 0, cursor: "pointer", textAlign: "left", fontFamily: "inherit" }}>
-              <span className="gsc-label" style={{ margin: 0 }}>Shared game variables</span>
+              <span className="gsc-label" style={{ margin: 0 }}>Shared Game Variables (Expand to Change Defaults)</span>
               <span aria-hidden="true" style={{ fontSize: 18, color: "#174F83", fontWeight: 700, lineHeight: 1 }}>{tourneyVarsOpen ? "\u2212" : "+"}</span>
             </button>
             {tourneyVarsOpen && (
@@ -16952,13 +16888,6 @@ function computeMatchPlayResult(round, computed) {
                 if (e.target.value === "") setTournamentFoursomeCount(2);
               }}
             />
-            <div style={{ fontSize: 12, color: "#6b6b63", marginTop: 8 }}>
-              {tournamentGameKey === "matchplay"
-                ? "You'll add each match's name and its 2 players next. More matches can always join later with the tournament code."
-                : tournamentGameKey === "matchplayfourball" || tournamentGameKey === "altshot"
-                ? "You'll add each match's name and its 4 players (2 vs 2) next. More matches can always join later with the tournament code."
-                : "You'll add each team's name and players next. More teams can always join later with the tournament code."}
-            </div>
           </div>
 
           {tournamentErr && <div style={{ color: "#174F83", marginBottom: 10 }}>{tournamentErr}</div>}
@@ -16977,15 +16906,8 @@ function computeMatchPlayResult(round, computed) {
     return (
       <div className="gsc">
         <style>{STYLE}</style>
-        <Header title={tournamentName || "New Tournament"} sub={MATCH_PLAY_GAMES.includes(tournamentGameKey) ? "Add each match" : "Add each team"} onBack={() => goBack("tournamentCreate")} />
+        <Header title={tournamentName.trim() || defaultTournamentName()} sub={MATCH_PLAY_GAMES.includes(tournamentGameKey) ? "Add each match" : "Add each team"} onBack={() => goBack("tournamentCreate")} />
         <div className="gsc-body">
-          <div style={{ fontSize: 13, color: "#4b4b45", marginBottom: 12 }}>
-            {tournamentGameKey === "matchplay"
-              ? "Enter each match's name and its 2 players. You can always add more matches later with the tournament code."
-              : tournamentGameKey === "matchplayfourball" || tournamentGameKey === "altshot"
-              ? "Enter each match's name and its 4 players (2 vs 2). You can always add more matches later with the tournament code."
-              : "Enter each team's name and its players. You can always add more teams later with the tournament code."}
-          </div>
           {tournamentFoursomesDraft.map((f, fi) => (
             <div key={fi} className="gsc-card">
               <div className="gsc-label">{MATCH_PLAY_GAMES.includes(tournamentGameKey) ? "Match name" : "Team name"}</div>
@@ -16998,22 +16920,6 @@ function computeMatchPlayResult(round, computed) {
               )}
               <div style={{ height: 8 }} />
               <div className="gsc-label" style={{ marginBottom: 6 }}>Players Names and Handicaps (Optional)</div>
-              {session && (
-                <button className="gsc-link" style={{ fontSize: 13, fontWeight: 700, marginBottom: 10, display: "inline-block" }} onClick={() => openGroupFillPicker(fi)}>
-                  {"\u{1F465}"} Fill players from a group
-                </button>
-              )}
-              {!session && (
-                <button
-                  onClick={() => goToScreen("login")}
-                  style={{ display: "block", width: "100%", textAlign: "left", fontSize: 12, color: "#6b6b63", padding: "8px 10px", background: "#F8F1E4", border: "none", borderRadius: 8, cursor: "pointer", marginBottom: 10 }}
-                >
-                  {"\u{1F465}"} Log in to unlock one-tap group and player adding. <span style={{ textDecoration: "underline", fontWeight: 700 }}>Tap to log in</span>
-                </button>
-              )}
-              <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 10 }}>
-                Tap the circle next to a player's name to pick a fun avatar (optional).
-              </div>
               {f.players.map((p, pi) => {
                 const avatarKey = `${fi}-${pi}`;
                 return (
