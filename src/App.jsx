@@ -2880,6 +2880,8 @@ export default function GolfScorecard() {
 
   // wizard state
   const [gameKey, setGameKey] = useState(null);
+  const [gameVarsOpen, setGameVarsOpen] = useState(false); // Game variables card in round setup - starts collapsed
+  const [tourneyVarsOpen, setTourneyVarsOpen] = useState(false); // Shared game variables card in tournament setup - starts collapsed
   const [cfg, setCfg] = useState({});
   const [roundName, setRoundName] = useState("");
   const [roundDate, setRoundDate] = useState(() => new Date().toISOString().slice(0, 10));
@@ -3376,6 +3378,7 @@ export default function GolfScorecard() {
   const [tournamentDate, setTournamentDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [tournamentCourseName, setTournamentCourseName] = useState("");
   const [tournamentGameKey, setTournamentGameKey] = useState(null);
+  useEffect(() => { setGameVarsOpen(false); setTourneyVarsOpen(false); }, [gameKey, tournamentGameKey, screen]);
   const [tournamentRankBy, setTournamentRankBy] = useState("strokes"); // strokes-only for now (game points ranking removed)
   const [tournamentPar, setTournamentPar] = useState(DEFAULT_PAR);
   const [tournamentYardage, setTournamentYardage] = useState(Array(18).fill(""));
@@ -16219,7 +16222,12 @@ function computeMatchPlayResult(round, computed) {
 
           {!activeTournament && (
           <div className="gsc-card">
-            <div className="gsc-label" style={{ marginBottom: 10 }}>Game variables (Optional)</div>
+            <button type="button" onClick={() => setGameVarsOpen((v) => !v)} aria-expanded={gameVarsOpen} style={{ width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center", background: "none", border: "none", padding: 0, marginBottom: gameVarsOpen ? 10 : 0, cursor: "pointer", textAlign: "left", fontFamily: "inherit" }}>
+              <span className="gsc-label" style={{ margin: 0 }}>Game variables (Optional)</span>
+              <span aria-hidden="true" style={{ fontSize: 18, color: "#174F83", fontWeight: 700, lineHeight: 1 }}>{gameVarsOpen ? "\u2212" : "+"}</span>
+            </button>
+            {gameVarsOpen && (
+            <>
             {g.rotates !== undefined && g.hasScore && (
               <div className="gsc-field">
                 <div className="gsc-label">Use per-hole handicapping (net scoring)?</div>
@@ -16464,6 +16472,8 @@ function computeMatchPlayResult(round, computed) {
               <div className="gsc-label">Venmo handle for settling up (optional)</div>
               <input className="gsc-input" placeholder="@your-venmo" value={cfg.venmo || ""} onChange={(e) => setCfg({ ...cfg, venmo: e.target.value })} />
             </div>
+            </>
+            )}
           </div>
           )}
 
@@ -16891,7 +16901,12 @@ function computeMatchPlayResult(round, computed) {
           </div>
 
           <div className="gsc-card">
-            <div className="gsc-label" style={{ marginBottom: 10 }}>Shared game variables</div>
+            <button type="button" onClick={() => setTourneyVarsOpen((v) => !v)} aria-expanded={tourneyVarsOpen} style={{ width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center", background: "none", border: "none", padding: 0, marginBottom: tourneyVarsOpen ? 10 : 0, cursor: "pointer", textAlign: "left", fontFamily: "inherit" }}>
+              <span className="gsc-label" style={{ margin: 0 }}>Shared game variables</span>
+              <span aria-hidden="true" style={{ fontSize: 18, color: "#174F83", fontWeight: 700, lineHeight: 1 }}>{tourneyVarsOpen ? "\u2212" : "+"}</span>
+            </button>
+            {tourneyVarsOpen && (
+            <>
             {tg.hasScore && tournamentGameKey !== "avoscramble" && (
               <div className="gsc-field">
                 <div className="gsc-label">Use per-hole handicapping (net scoring)?</div>
@@ -17023,6 +17038,8 @@ function computeMatchPlayResult(round, computed) {
               <div className="gsc-label">Prize / stakes</div>
               <input className="gsc-input" value={tournamentCfg.prize || ""} onChange={(e) => setTournamentCfg({ ...tournamentCfg, prize: e.target.value })} />
             </div>
+            </>
+            )}
           </div>
 
           <div className="gsc-card">
