@@ -8011,7 +8011,7 @@ export default function GolfScorecard() {
       case "vibeFollowup":
         return "confirmGame";
       case "confirmGame":
-        if (Number(answers.playerCount) === 1) return "field_course";
+        if (Number(answers.playerCount) === 1 || !answers.isTournament) return "field_course";
         return "field_name";
       case "field_name":
         return "field_course";
@@ -8039,7 +8039,7 @@ export default function GolfScorecard() {
   // that is an approximation, since the total step count isn't knowable
   // until enough questions are answered.
   function wizardProgress() {
-    const roundFields = ["field_name", "field_course", "field_limits", "field_prize", "field_players"];
+    const roundFields = ["field_course", "field_limits", "field_prize", "field_players"];
     const tournamentFields = ["field_name", "field_course", "field_limits", "field_foursomeCount", "field_prize"];
     const fields = wizardAnswers.isTournament ? tournamentFields : roundFields;
     const fieldIdx = fields.indexOf(wizardStepId);
@@ -8903,9 +8903,6 @@ export default function GolfScorecard() {
               Hole {h}
             </button>
           ))}
-        </div>
-        <div style={{ fontSize: 11, color: "#8a8a80", marginTop: 4 }}>
-          Pick Hole 10 if your course starts you on the back nine. The round then plays 10-18, then 1-9.
         </div>
       </div>
     );
@@ -15054,27 +15051,6 @@ function computeMatchPlayResult(round, computed) {
           {wizardStepId === "field_course" && (
             <div className="gsc-card">
               <div className="gsc-label" style={{ marginBottom: 10, fontSize: 16 }}>What course are you playing? (Required)</div>
-              {g.hasScore && (
-                <div className="gsc-field" style={{ marginBottom: 14 }}>
-                  <div className="gsc-label">Distance to Green GPS</div>
-                  {!session ? (
-                    <button
-                      onClick={() => goToScreen("login")}
-                      style={{ display: "block", width: "100%", textAlign: "left", fontSize: 12, color: "#6b6b63", padding: "8px 10px", background: "#F8F1E4", border: "none", borderRadius: 8, cursor: "pointer" }}
-                    >
-                      {"\u26F3"} Log in to unlock live distance-to-green GPS. <span style={{ textDecoration: "underline", fontWeight: 700 }}>Tap to log in</span>
-                    </button>
-                  ) : activeCfg.gpsCourseLabel ? (
-                    <div style={{ fontSize: 12, color: "#1B4332", fontWeight: 600, padding: "8px 10px", background: "#EBF0EC", borderRadius: 8 }}>
-                      {"\u26F3"} Enabled for {activeCfg.gpsCourseLabel}
-                    </div>
-                  ) : (
-                    <div style={{ fontSize: 12, color: "#6b6b63" }}>
-                      Automatically enabled when you search and select your course below, if GPS data is available for it.
-                    </div>
-                  )}
-                </div>
-              )}
               {activeCourseName && courseSelectedViaSearch ? (
                 <div className="gsc-card gsc-winner-card" style={{ padding: 12 }}>
                   <div className="gsc-label" style={{ marginBottom: 4 }}>Selected Course</div>
@@ -15505,9 +15481,6 @@ function computeMatchPlayResult(round, computed) {
           {wizardStepId === "field_players" && (
             <div className="gsc-card">
               <div className="gsc-label" style={{ marginBottom: 10, fontSize: 16 }}>Who's playing? Add names and handicaps (optional)</div>
-              <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 10, fontWeight: 700 }}>
-                Tap the circle next to a player's name to pick a fun avatar (optional).
-              </div>
               {players.map((p, i) => (
                 <div key={i} style={{ marginBottom: 8 }}>
                   <div className="gsc-row">
@@ -15632,38 +15605,6 @@ function computeMatchPlayResult(round, computed) {
         <style>{STYLE}</style>
         <Header title="Quick Start" sub="Individual Stroke Play - just the basics" onBack={() => goBack("home")} />
         <div className="gsc-body">
-          <div className="gsc-card" style={{ background: "#FDF6E9", border: "2px solid #B08D57" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
-              <span style={{ fontSize: 18 }}>{"\u26A1"}</span>
-              <div style={{ fontWeight: 800, fontSize: 16, color: "#8a6a2f" }}>Quick Start</div>
-            </div>
-            <div style={{ fontSize: 13, color: "#4b4b45" }}>
-              Individual Strokes Play format. Search your course and enter your players to get started. Additional game details can be edited in the scoring pages.
-            </div>
-          </div>
-
-          {g.hasScore && (
-            <div className="gsc-card">
-              <div className="gsc-label">Distance to Green GPS</div>
-              {!session ? (
-                <button
-                  onClick={() => goToScreen("login")}
-                  style={{ display: "block", width: "100%", textAlign: "left", fontSize: 12, color: "#6b6b63", padding: "8px 10px", background: "#F8F1E4", border: "none", borderRadius: 8, cursor: "pointer" }}
-                >
-                  {"\u26F3"} Log in to unlock live distance-to-green GPS. <span style={{ textDecoration: "underline", fontWeight: 700 }}>Tap to log in</span>
-                </button>
-              ) : cfg.gpsCourseLabel ? (
-                <div style={{ fontSize: 12, color: "#1B4332", fontWeight: 600, padding: "8px 10px", background: "#EBF0EC", borderRadius: 8 }}>
-                  {"\u26F3"} Enabled for {cfg.gpsCourseLabel}
-                </div>
-              ) : (
-                <div style={{ fontSize: 12, color: "#6b6b63" }}>
-                  Automatically enabled when you search and select your course below, if GPS data is available for it.
-                </div>
-              )}
-            </div>
-          )}
-
           <div className="gsc-card">
             {courseName && courseSelectedViaSearch ? (
               <div className="gsc-card gsc-winner-card" style={{ padding: 12 }}>
@@ -15998,54 +15939,18 @@ function computeMatchPlayResult(round, computed) {
             </div>
           )}
           <div className="gsc-card">
-            <div className="gsc-label">{activeTournament ? (MATCH_PLAY_GAMES.includes(activeTournament.game) ? "Match name (Optional)" : "Team name (Optional)") : "Group name (Optional)"}</div>
-            {!activeTournament && session && (
-              <button className="gsc-link" style={{ fontSize: 13, fontWeight: 700, marginBottom: 8, display: "inline-block" }} onClick={() => openGroupFillPicker("playersAndMeta")}>
-                {"\u{1F465}"} Select a group to fill in name, avatar & players
-              </button>
+            {activeTournament && (
+              <>
+                <div className="gsc-label">{MATCH_PLAY_GAMES.includes(activeTournament.game) ? "Match name (Optional)" : "Team name (Optional)"}</div>
+                <input
+                  className="gsc-input"
+                  placeholder={MATCH_PLAY_GAMES.includes(activeTournament.game) ? "e.g. Match 1" : "e.g. Team 1"}
+                  value={roundName}
+                  onChange={(e) => setRoundName(e.target.value)}
+                />
+              </>
             )}
-            {!activeTournament && !session && (
-              <button
-                onClick={() => goToScreen("login")}
-                style={{ display: "block", width: "100%", textAlign: "left", fontSize: 12, color: "#6b6b63", padding: "8px 10px", background: "#F8F1E4", border: "none", borderRadius: 8, cursor: "pointer", marginBottom: 10 }}
-              >
-                {"\u{1F465}"} Log in to unlock one-tap group name, avatar & player adding. <span style={{ textDecoration: "underline", fontWeight: 700 }}>Tap to log in</span>
-              </button>
-            )}
-            <input
-              className="gsc-input"
-              placeholder={activeTournament ? (MATCH_PLAY_GAMES.includes(activeTournament.game) ? "e.g. Match 1" : "e.g. Team 1") : g.name + " at ..."}
-              value={roundName}
-              onChange={(e) => setRoundName(e.target.value)}
-            />
             {activeTournament && renderStartHoleFields(foursomeStartHole, foursomeStartSlot, setFoursomeStartHole, setFoursomeStartSlot)}
-            {!activeTournament && (
-              <div className="gsc-field" style={{ marginTop: 12 }}>
-                <div className="gsc-label">Date</div>
-                <input className="gsc-input" type="date" value={roundDate} onChange={(e) => setRoundDate(e.target.value)} />
-              </div>
-            )}
-            {!activeTournament && g.hasScore && (
-              <div className="gsc-field" style={{ marginTop: 12 }}>
-                <div className="gsc-label">Distance to Green GPS</div>
-                {!session ? (
-                  <button
-                    onClick={() => goToScreen("login")}
-                    style={{ display: "block", width: "100%", textAlign: "left", fontSize: 12, color: "#6b6b63", padding: "8px 10px", background: "#F8F1E4", border: "none", borderRadius: 8, cursor: "pointer" }}
-                  >
-                    {"\u26F3"} Log in to unlock live distance-to-green GPS. <span style={{ textDecoration: "underline", fontWeight: 700 }}>Tap to log in</span>
-                  </button>
-                ) : cfg.gpsCourseLabel ? (
-                  <div style={{ fontSize: 12, color: "#1B4332", fontWeight: 600, padding: "8px 10px", background: "#EBF0EC", borderRadius: 8 }}>
-                    {"\u26F3"} Enabled for {cfg.gpsCourseLabel}
-                  </div>
-                ) : (
-                  <div style={{ fontSize: 12, color: "#6b6b63" }}>
-                    Automatically enabled when you search and select your course below, if GPS data is available for it.
-                  </div>
-                )}
-              </div>
-            )}
             {!activeTournament && (
               <div className="gsc-field" style={{ marginTop: 12 }}>
                 {courseName && courseSelectedViaSearch ? (
@@ -16223,7 +16128,7 @@ function computeMatchPlayResult(round, computed) {
           {!activeTournament && (
           <div className="gsc-card">
             <button type="button" onClick={() => setGameVarsOpen((v) => !v)} aria-expanded={gameVarsOpen} style={{ width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center", background: "none", border: "none", padding: 0, marginBottom: gameVarsOpen ? 10 : 0, cursor: "pointer", textAlign: "left", fontFamily: "inherit" }}>
-              <span className="gsc-label" style={{ margin: 0 }}>Game variables (Optional)</span>
+              <span className="gsc-label" style={{ margin: 0 }}>Game Variables (Expand to Change Defaults)</span>
               <span aria-hidden="true" style={{ fontSize: 18, color: "#174F83", fontWeight: 700, lineHeight: 1 }}>{gameVarsOpen ? "\u2212" : "+"}</span>
             </button>
             {gameVarsOpen && (
@@ -16479,14 +16384,6 @@ function computeMatchPlayResult(round, computed) {
 
           <div className="gsc-card">
             <div className="gsc-label" style={{ marginBottom: 10 }}>Players Names and Handicaps (Optional)</div>
-            {(gameKey === "swami" || gameKey === "dstreet" || gameKey === "pontobango" || gameKey === "individualputts" || gameKey === "stableford" || gameKey === "quota" || gameKey === "oceans11") && (
-              <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 10 }}>
-                This format supports {gameKey === "pontobango" || gameKey === "individualputts" ? "2-4" : "1-4"} players - add or remove players below to match who's actually playing.
-              </div>
-            )}
-            <div style={{ fontSize: 12, color: "#6b6b63", marginBottom: 10 }}>
-              Tap the circle next to a player's name to pick a fun avatar (optional).
-            </div>
             {players.map((p, i) => (
               <div key={i} style={{ marginBottom: 8 }}>
                 <div className="gsc-row">
