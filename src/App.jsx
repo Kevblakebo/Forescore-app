@@ -7734,7 +7734,7 @@ export default function GolfScorecard() {
           <div style={{ width: 22, height: 22, flex: "0 0 auto", border: "3px solid #C5D6E6", borderTopColor: "#174F83", borderRadius: "50%", animation: "gsc-spin 0.8s linear infinite" }} />
           <div>
             <div style={{ fontWeight: 700, fontSize: 14, color: "#174F83" }}>{nearby ? "Finding golf courses near you..." : "Searching for courses..."}</div>
-            <div style={{ fontSize: 12, color: "#4b6b8a", marginTop: 2 }}>{nearby ? "Checking your location - this can take a few seconds. You can also type a course name above." : "This can take a few seconds."}</div>
+            <div style={{ fontSize: 12, color: "#4b6b8a", marginTop: 2 }}>{nearby ? "Checking your location - this can take a few seconds." : "This can take a few seconds."}</div>
           </div>
         </div>
         {[0, 1, 2].map((i) => (
