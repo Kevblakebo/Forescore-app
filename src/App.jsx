@@ -4,6 +4,25 @@ import { supabase } from "./storage-polyfill.js";
 import { AppleSignIn, SignInScope } from "@capawesome/capacitor-apple-sign-in";
 import { SocialLogin } from "@capgo/capacitor-social-login";
 import { Geolocation } from "@capacitor/geolocation";
+import { registerPlugin } from "@capacitor/core";
+
+// Reads the installed app's own version (iPhone app only). Registered by
+// name rather than imported from the @capacitor/app package so the website
+// build never needs that package - on the web this just fails quietly.
+const NativeAppInfo = registerPlugin("App");
+const APP_STORE_UPDATE_URL = "itms-apps://apps.apple.com/app/id6808406365";
+
+// true when version "a" (e.g. "1.0.2") is newer than version "b".
+function isNewerVersion(a, b) {
+  const pa = String(a).split(".").map((n) => parseInt(n, 10) || 0);
+  const pb = String(b).split(".").map((n) => parseInt(n, 10) || 0);
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const x = pa[i] || 0, y = pb[i] || 0;
+    if (x > y) return true;
+    if (x < y) return false;
+  }
+  return false;
+}
 
 // SocialLogin.initialize() is documented as a call-once operation, so this
 // module-level flag (not React state - it must survive across renders and
@@ -10524,6 +10543,25 @@ export default function GolfScorecard() {
   // courses right away - same as pressing Search with the box empty - so
   // the person can go straight to picking a course and tees. Runs once per
   // arrival, and only if no course is picked yet and nothing is typed.
+  // iPhone app only: ask the App Store for the newest version and show an
+  // "Update" pill on the home page if the installed one is older. Fails
+  // quietly (no pill) on the web, offline, or if anything is unavailable.
+  const [updateAvailable, setUpdateAvailable] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        if (!(window.Capacitor && window.Capacitor.getPlatform && window.Capacitor.getPlatform() === "ios")) return;
+        const info = await NativeAppInfo.getInfo();
+        const res = await fetch(`${API_BASE}/api/app-version`);
+        const data = await res.json().catch(() => null);
+        if (!res.ok || !data || !data.version || !info || !info.version) return;
+        if (!cancelled && isNewerVersion(data.version, info.version)) setUpdateAvailable(true);
+      } catch (e) {}
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
   const autoNearbyKeyRef = useRef("");
   useEffect(() => {
     const onCourseStep =
@@ -12041,6 +12079,15 @@ function computeMatchPlayResult(round, computed) {
             title={null}
             sub=""
           />
+          {updateAvailable && (
+            <button
+              className="gsc-btn"
+              style={{ width: "100%", marginBottom: 16, background: "#B08D57", color: "#F3EFE0", borderRadius: 999, fontWeight: 700 }}
+              onClick={() => { window.location.href = APP_STORE_UPDATE_URL; }}
+            >
+              {"\u2B06\uFE0F"} A new version of RipScore is available - tap to update
+            </button>
+          )}
           {joinableGroupRounds.filter((jr) => !dismissedJoinableRounds.includes(jr.code)).map((jr) => (
             <div key={jr.code} className="gsc-card" style={{ background: "#F8F1E4", border: "1px solid #B08D57", marginBottom: 16 }}>
               <div style={{ fontSize: 11, color: "#8a6a2f", textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 700, marginBottom: 6 }}>
