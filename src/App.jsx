@@ -217,6 +217,14 @@ async function sha256Hex(text) {
 // even once SUBSCRIPTIONS_ENABLED is switched on for the website.
 const SUBSCRIPTIONS_AVAILABLE_HERE = SUBSCRIPTIONS_ENABLED && !isRunningInNativeApp();
 
+// "Include putts in scoring" now starts as No for new round and tournament
+// setups (Quick Start is left as it was). Putts-only games (Individual
+// Putts, Team Putts) are scored on putts, so they have no such switch.
+function puttsOffByDefault(key) {
+  const g = GAMES[key];
+  return g && g.hasPutts && !["individualputts", "teamputts"].includes(key) ? { trackPutts: false } : {};
+}
+
 const GAMES = {
   teamstrokes: {
     name: "Team Stroke Play",
@@ -247,6 +255,7 @@ const GAMES = {
       "No carry-overs on ties.",
       "Per-hole handicapping (net score per hole) is defaulted to On, but can be turned off in game scoring settings.",
       "Great for mixed handicaps.",
+      "Include Putts is defaulted to No, but can be changed in the Game Variables setup.",
     ],
   },
   teamputts: {
@@ -305,6 +314,7 @@ const GAMES = {
       "No carry-overs on ties.",
       "Per-hole handicapping (net score per hole) is defaulted to On, but can be turned off in game scoring settings.",
       "Great for mixed handicap groups.",
+      "Include Putts is defaulted to No, but can be changed in the Game Variables setup.",
     ],
   },
   moonlightwolf: {
@@ -360,6 +370,7 @@ const GAMES = {
       "Must putt all the way into the hole.",
       "Flagstick can stay in.",
       "Putts start once on the putting green.",
+      "Include Putts is defaulted to No, but can be changed in the Game Variables setup.",
     ],
   },
   ponto: {
@@ -391,6 +402,7 @@ const GAMES = {
       "In this game format you can choose to play Ties Carryover (classic Skins format) or Ties do not carryover (similar to Match Play format). This game is currently defaulted to Ties Carryover, that you can change when setting up the round.",
       "Per-hole handicapping (net score per hole) is defaulted to On, but can be turned off in game scoring settings.",
       "Great for similar handicap groups.",
+      "Include Putts is defaulted to No, but can be changed in the Game Variables setup.",
     ],
   },
   vegas: {
@@ -427,6 +439,7 @@ const GAMES = {
       "Must putt all the way into the hole.",
       "Flagstick can stay in.",
       "Putts start once on the putting green.",
+      "Include Putts is defaulted to No, but can be changed in the Game Variables setup.",
     ],
   },
   teamoceans11: {
@@ -454,6 +467,7 @@ const GAMES = {
       "Putts start once on the putting green.",
       "Per-hole handicapping (net score per hole) is defaulted to On, but can be turned off in game scoring settings.",
       "Great for mixed handicaps.",
+      "Include Putts is defaulted to No, but can be changed in the Game Variables setup.",
     ],
   },
   beachside: {
@@ -491,6 +505,7 @@ const GAMES = {
       "No carry-overs on ties.",
       "Per-hole handicapping (net score per hole) is defaulted to On, but can be turned off in game scoring settings.",
       "Great for mixed handicap teams.",
+      "Include Putts is defaulted to No, but can be changed in the Game Variables setup.",
     ],
   },
   tourneybb: {
@@ -523,6 +538,7 @@ const GAMES = {
       "No carry-overs on ties.",
       "Per-hole handicapping (net score per hole) is defaulted to On, but can be turned off in game scoring settings.",
       "Great for team-vs-team tournament play.",
+      "Include Putts is defaulted to No, but can be changed in the Game Variables setup.",
     ],
   },
   tourneygg: {
@@ -555,6 +571,7 @@ const GAMES = {
       "No carry-overs on ties.",
       "Per-hole handicapping (net score per hole) is defaulted to On, but can be turned off in game scoring settings.",
       "Great for team-vs-team tournament play.",
+      "Include Putts is defaulted to No, but can be changed in the Game Variables setup.",
     ],
   },
   avoscramble: {
@@ -619,6 +636,7 @@ const GAMES = {
       "Flagstick can stay in.",
       "Putts start once on the putting green.",
       "Per-hole handicapping (net score per hole) is defaulted to On, but can be turned off in game scoring settings.",
+      "Include Putts is defaulted to No, but can be changed in the Game Variables setup.",
     ],
   },
   dstreet: {
@@ -650,6 +668,7 @@ const GAMES = {
       "In this game format you can choose to play Ties Carryover (classic Skins format) or Ties do not carryover (similar to Match Play format). This game is currently defaulted to Ties Carryover, that you can change when setting up the round.",
       "Per-hole handicapping (net score per hole) is defaulted to On, but can be turned off in game scoring settings.",
       "Great for similar handicap foursomes.",
+      "Include Putts is defaulted to No, but can be changed in the Game Variables setup.",
     ],
   },
   individualputts: {
@@ -708,6 +727,7 @@ const GAMES = {
       "Flagstick can stay in.",
       "Putts start once on the putting green.",
       "Per-hole handicapping (net score per hole) is defaulted to On, but can be turned off in game scoring settings.",
+      "Include Putts is defaulted to No, but can be changed in the Game Variables setup.",
     ],
   },
   stableford: {
@@ -743,6 +763,7 @@ const GAMES = {
       "Must putt all the way into the hole.",
       "Flagstick can stay in.",
       "Putts start once on the putting green.",
+      "Include Putts is defaulted to No, but can be changed in the Game Variables setup.",
     ],
   },
   oceans11: {
@@ -768,6 +789,7 @@ const GAMES = {
       "Flagstick can stay in.",
       "Putts start once on the putting green.",
       "Per-hole handicapping (net score per hole) is defaulted to On, but can be turned off in game scoring settings.",
+      "Include Putts is defaulted to No, but can be changed in the Game Variables setup.",
     ],
   },
   ninepoint: {
@@ -806,6 +828,7 @@ const GAMES = {
       "Must putt all the way into the hole.",
       "Flagstick can stay in.",
       "Putts start once on the putting green.",
+      "Include Putts is defaulted to No, but can be changed in the Game Variables setup.",
     ],
   },
   quota: {
@@ -849,6 +872,7 @@ const GAMES = {
       "Must putt all the way into the hole.",
       "Flagstick can stay in.",
       "Putts start once on the putting green.",
+      "Include Putts is defaulted to No, but can be changed in the Game Variables setup.",
     ],
   },
   matchplay: {
@@ -883,6 +907,7 @@ const GAMES = {
       "Must putt all the way into the hole.",
       "Flagstick can stay in.",
       "Putts start once on the putting green.",
+      "Include Putts is defaulted to No, but can be changed in the Game Variables setup.",
     ],
     tournamentRules: [
       "A tournament made up of any number of individual 1 vs 1 matches, all sharing one event and one leaderboard.",
@@ -937,6 +962,7 @@ const GAMES = {
       "Must putt all the way into the hole.",
       "Flagstick can stay in.",
       "Putts start once on the putting green.",
+      "Include Putts is defaulted to No, but can be changed in the Game Variables setup.",
     ],
     tournamentRules: [
       "A tournament made up of any number of 2 vs 2 matches, all sharing one event and one leaderboard.",
@@ -987,6 +1013,7 @@ const GAMES = {
       "Must putt all the way into the hole.",
       "Flagstick can stay in.",
       "Putts start once on the putting green.",
+      "Include Putts is defaulted to No, but can be changed in the Game Variables setup.",
     ],
   },
 };
@@ -5988,7 +6015,7 @@ export default function GolfScorecard() {
           <div style={{ fontSize: 13, color: "#4b4b45", lineHeight: 1.9 }}>
             <div><b>Max score over par per hole:</b> {cfg.doubleParMax ? "Double par" : cfg.maxOver != null ? `+${cfg.maxOver}` : "No limit set"}</div>
             {GAMES[r.game] && GAMES[r.game].hasPutts && (
-              <div><b>Track putts:</b> {cfg.trackPutts !== false ? "Yes" : "No"}</div>
+              <div><b>Include putts:</b> {cfg.trackPutts !== false ? "Yes" : "No"}</div>
             )}
             <div><b>Max putts per hole:</b> {cfg.trackPutts === false ? "N/A (putts not tracked)" : cfg.maxPutts != null ? cfg.maxPutts : "No limit set"}</div>
             <div><b>Mulligans per player:</b> {cfg.mulliganSegment ? cfg.mulliganSegment : "None set (tracked freely)"}</div>
@@ -6070,7 +6097,7 @@ export default function GolfScorecard() {
           {g && g.hasPutts && (
             <>
               <div className="gsc-field">
-                <div className="gsc-label">Track putts?</div>
+                <div className="gsc-label">Include putts?</div>
                 <div style={{ display: "flex", gap: 8 }}>
                   <button className="gsc-btn" style={{ flex: 1, background: c.trackPutts !== false ? "#B08D57" : "transparent", color: c.trackPutts !== false ? "#F3EFE0" : "#8a6a2f", border: "1.5px solid #B08D57" }} onClick={() => set({ trackPutts: true })}>Yes</button>
                   <button className="gsc-btn" style={{ flex: 1, background: c.trackPutts === false ? "#B08D57" : "transparent", color: c.trackPutts === false ? "#F3EFE0" : "#8a6a2f", border: "1.5px solid #B08D57" }} onClick={() => set({ trackPutts: false })}>No</button>
@@ -8128,7 +8155,7 @@ export default function GolfScorecard() {
       const key = nextAnswers.resolvedGameKey;
       if (nextAnswers.isTournament) {
         setTournamentGameKey(key);
-        setTournamentCfg(withProfileVenmo({ ...GAMES[key].defaults }));
+        setTournamentCfg(withProfileVenmo({ ...GAMES[key].defaults, ...puttsOffByDefault(key) }));
         setTournamentPar(Array(18).fill(""));
         setTournamentYardage(Array(18).fill(""));
         setTournamentStrokeIndex(Array(18).fill(""));
@@ -8138,7 +8165,7 @@ export default function GolfScorecard() {
         setTournamentFoursomeCount(Math.max(2, Math.ceil((Number(nextAnswers.playerCount) || 8) / 4)));
       } else {
         setGameKey(key);
-        setCfg(withProfileVenmo({ ...GAMES[key].defaults, ...(nextAnswers.wantsNassau && !["swami", "dstreet", "individualputts", "oceans11"].includes(key) ? { nassau: true } : {}) }));
+        setCfg(withProfileVenmo({ ...GAMES[key].defaults, ...puttsOffByDefault(key), ...(nextAnswers.wantsNassau && !["swami", "dstreet", "individualputts", "oceans11"].includes(key) ? { nassau: true } : {}) }));
         const count = key === "ninepoint" ? 3 : key === "swami" || key === "dstreet" || key === "pontobango" || key === "individualputts" || key === "stableford" || key === "quota" || key === "matchplay" || key === "oceans11" ? Math.max(1, Math.min(4, Number(nextAnswers.playerCount) || 4)) : 4;
         setPlayers((p) => {
           const base = [...p];
@@ -8187,7 +8214,7 @@ export default function GolfScorecard() {
   function startNewRound(key) {
     setActiveTournament(null);
     setGameKey(key);
-    setCfg(withProfileVenmo({ ...GAMES[key].defaults }));
+    setCfg(withProfileVenmo({ ...GAMES[key].defaults, ...puttsOffByDefault(key) }));
     setRoundName(""); setRoundStartHole(1);
     setRoundDate(new Date().toISOString().slice(0, 10));
     setPlayers(freshPlayerSlots(key, true));
@@ -8856,7 +8883,7 @@ export default function GolfScorecard() {
     setTournamentPar(Array(18).fill(""));
     setTournamentYardage(Array(18).fill(""));
     setTournamentStrokeIndex(Array(18).fill(""));
-    setTournamentCfg(withProfileVenmo({ ...GAMES[key].defaults }));
+    setTournamentCfg(withProfileVenmo({ ...GAMES[key].defaults, ...puttsOffByDefault(key) }));
     setTournamentFoursomeCount(2);
     setCourseSearchQuery("");
     setCourseSearchResults([]);
@@ -9527,6 +9554,28 @@ export default function GolfScorecard() {
   // can't clobber a scoring update someone else made in the meantime),
   // changes only cfg, and syncs local state afterward if this is the
   // round currently on screen.
+  // One-tap "Include Putts in Scoring?" pill on the scoring page: turns
+  // putts on for this round (same save path as Edit Details), so the putts
+  // boxes and putts-based scoring appear immediately.
+  async function includePuttsInRound() {
+    if (!round || puttsPillBusy) return;
+    setPuttsPillBusy(true);
+    const local = { ...round, cfg: { ...round.cfg, trackPutts: true } };
+    try {
+      const res = await storageGet(`golfround:${round.id}`, true);
+      if (res.ok && res.value) {
+        const r = JSON.parse(res.value);
+        r.cfg = { ...r.cfg, trackPutts: true };
+        const w = await storageSet(`golfround:${round.id}`, JSON.stringify(r), true);
+        if (w.ok) {
+          setRound(local);
+          setActiveRound(local);
+        }
+      }
+    } catch (e) {}
+    setPuttsPillBusy(false);
+  }
+
   async function saveEditSettings() {
     setEditSettingsErr("");
     setEditSettingsBusy(true);
@@ -10547,6 +10596,7 @@ export default function GolfScorecard() {
   // "Update" pill on the home page if the installed one is older. Fails
   // quietly (no pill) on the web, offline, or if anything is unavailable.
   const [updateAvailable, setUpdateAvailable] = useState(false);
+  const [puttsPillBusy, setPuttsPillBusy] = useState(false);
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -15404,9 +15454,9 @@ function computeMatchPlayResult(round, computed) {
               )}
               {g.hasPutts && !["individualputts", "teamputts"].includes(wizardAnswers.resolvedGameKey) && (
                 <div className="gsc-field" style={{ marginTop: 10 }}>
-                  <div className="gsc-label">Track putts?</div>
+                  <div className="gsc-label">Include putts?</div>
                   <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 6 }}>
-                    Track putts and include in the game scoring as defined in the game rules.
+                    Include putts in the game scoring as defined in the game rules. Defaults to No - tap Yes to include them.
                   </div>
                   <div style={{ display: "flex", gap: 8 }}>
                     <button
@@ -16324,9 +16374,9 @@ function computeMatchPlayResult(round, computed) {
             )}
             {g.hasPutts && !["individualputts", "teamputts"].includes(gameKey) && (
               <div className="gsc-field">
-                <div className="gsc-label">Track putts?</div>
+                <div className="gsc-label">Include putts?</div>
                 <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 6 }}>
-                  Track putts and include in the game scoring as defined in the game rules.
+                  Include putts in the game scoring as defined in the game rules. Defaults to No - tap Yes to include them.
                 </div>
                 <div style={{ display: "flex", gap: 8 }}>
                   <button
@@ -16850,9 +16900,9 @@ function computeMatchPlayResult(round, computed) {
             )}
             {tg.hasPutts && (
               <div className="gsc-field">
-                <div className="gsc-label">Track putts?</div>
+                <div className="gsc-label">Include putts?</div>
                 <div style={{ fontSize: 11, color: "#8a8a80", marginBottom: 6 }}>
-                  Track putts and include in the game scoring as defined in the game rules.
+                  Include putts in the game scoring as defined in the game rules. Defaults to No - tap Yes to include them.
                 </div>
                 <div style={{ display: "flex", gap: 8 }}>
                   <button
@@ -18296,6 +18346,18 @@ function computeMatchPlayResult(round, computed) {
             </div>
           }
         />
+        {!round.finished && !round.tournamentId && GAMES[round.game] && GAMES[round.game].hasPutts && !["individualputts", "teamputts"].includes(round.game) && round.cfg && round.cfg.trackPutts === false && (
+          <div className="gsc-body" style={{ paddingBottom: 0 }}>
+            <button
+              className="gsc-btn"
+              disabled={puttsPillBusy}
+              style={{ width: "100%", background: "#B08D57", color: "#F3EFE0", borderRadius: 999, fontWeight: 700, boxShadow: "0 2px 6px rgba(0,0,0,0.18)" }}
+              onClick={includePuttsInRound}
+            >
+              {puttsPillBusy ? "Updating..." : "\u26F3 Include Putts in Scoring? Tap here"}
+            </button>
+          </div>
+        )}
         {session && !claimSlotDismissed && !round.players.some((p) => p.user_id === session.user.id) && round.players.some((p) => !p.user_id) && (
           <div className="gsc-body" style={{ paddingBottom: 0 }}>
             <div className="gsc-card" style={{ background: "#EBF0EC", border: "1px solid #1B4332" }}>
