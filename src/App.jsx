@@ -16058,6 +16058,7 @@ function computeMatchPlayResult(round, computed) {
           }}
         />
         <div className="gsc-body">
+          {renderLocationNote()}
           <button className="gsc-link" style={{ marginBottom: 10, fontSize: 13, display: "block" }} onClick={() => openDescription(gameKey, !!activeTournament)}>
             Game format description
           </button>
@@ -16067,7 +16068,6 @@ function computeMatchPlayResult(round, computed) {
           <button className="gsc-link" style={{ marginBottom: 12, fontSize: 13 }} onClick={() => openRules(gameKey, !!activeTournament)}>
             View full rules for {g.name}
           </button>
-          {renderLocationNote()}
           {activeTournament && (
             <div className="gsc-card" style={{ border: "2px solid #B08D57" }}>
               <div className="gsc-label" style={{ marginBottom: 6 }}>Tournament settings (locked)</div>
@@ -16710,6 +16710,7 @@ function computeMatchPlayResult(round, computed) {
         <style>{STYLE}</style>
         <Header title={tg.tournamentName || tg.name} sub={MATCH_PLAY_GAMES.includes(tournamentGameKey) ? "Tournament setup - every match plays this format" : "Tournament setup - every team plays this format"} onBack={() => goBack("libraryTab")} />
         <div className="gsc-body">
+          {renderLocationNote()}
           <button className="gsc-link" style={{ marginBottom: 10, fontSize: 13, display: "block" }} onClick={() => openDescription(tournamentGameKey, true)}>
             Game format description
           </button>
@@ -16719,7 +16720,6 @@ function computeMatchPlayResult(round, computed) {
           <button className="gsc-link" style={{ marginBottom: 12, fontSize: 13 }} onClick={() => openRules(tournamentGameKey, true)}>
             View full rules for {tg.tournamentName || tg.name}
           </button>
-          {renderLocationNote()}
           <div className="gsc-card">
             <div className="gsc-label">Tournament name (Optional)</div>
             <input className="gsc-input" placeholder="e.g. Club Championship" value={tournamentName} onChange={(e) => setTournamentName(e.target.value)} />
