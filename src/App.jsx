@@ -7781,6 +7781,7 @@ export default function GolfScorecard() {
           <div>
             <div style={{ fontWeight: 700, fontSize: 14, color: "#174F83" }}>{nearby ? "Finding golf courses near you..." : "Searching for courses..."}</div>
             <div style={{ fontSize: 12, color: "#4b6b8a", marginTop: 2 }}>{nearby ? "Checking your location - this can take a few seconds." : "This can take a few seconds."}</div>
+            {nearby && <div style={{ fontSize: 12, fontWeight: 700, color: "#174F83", marginTop: 6 }}>Location is only used for course search and distance to the green. It is not used for any other purpose.</div>}
           </div>
         </div>
         {[0, 1, 2].map((i) => (
@@ -18628,7 +18629,7 @@ function computeMatchPlayResult(round, computed) {
                           <button onClick={() => updateSideHoleEntryStep(side, "strokes", 1, 1, round.par[holeIdx])}>+</button>
                         </div>
                         {(sideEntry.strokes === "" || sideEntry.strokes == null) && (
-                          <div style={{ fontSize: 9.5, color: "#8a8a80", textAlign: "center", marginTop: 2 }}>tap to confirm</div>
+                          <div style={{ fontSize: 9.5, fontWeight: 700, color: "#8a8a80", textAlign: "center", marginTop: 2 }}>tap to confirm</div>
                         )}
                       </div>
                       <div>
@@ -18652,7 +18653,7 @@ function computeMatchPlayResult(round, computed) {
                           <button onClick={() => updateSideHoleEntryStep(side, "putts", 1, 0, 2)}>+</button>
                         </div>
                         {(sideEntry.putts === "" || sideEntry.putts == null) && (
-                          <div style={{ fontSize: 9.5, color: "#8a8a80", textAlign: "center", marginTop: 2 }}>tap to confirm</div>
+                          <div style={{ fontSize: 9.5, fontWeight: 700, color: "#8a8a80", textAlign: "center", marginTop: 2 }}>tap to confirm</div>
                         )}
                       </div>
                     </div>
@@ -18902,7 +18903,7 @@ function computeMatchPlayResult(round, computed) {
                           <button onClick={() => updateHoleEntryStep(i, "strokes", 1, 1, round.par[holeIdx])}>+</button>
                         </div>
                         {(e.strokes === "" || e.strokes == null) && (
-                          <div style={{ fontSize: 9.5, color: "#8a8a80", textAlign: "center", marginTop: 2 }}>tap to confirm</div>
+                          <div style={{ fontSize: 9.5, fontWeight: 700, color: "#8a8a80", textAlign: "center", marginTop: 2 }}>tap to confirm</div>
                         )}
                         {round.cfg.netScoring && e.strokes !== "" && e.strokes != null && (() => {
                           const strokesOff = computed.strokesOffForHole(i, holeIdx);
@@ -18955,7 +18956,7 @@ function computeMatchPlayResult(round, computed) {
                           <button onClick={() => updateHoleEntryStep(i, "putts", 1, 0, 2)}>+</button>
                         </div>
                         {(e.putts === "" || e.putts == null) && (
-                          <div style={{ fontSize: 9.5, color: "#8a8a80", textAlign: "center", marginTop: 2 }}>tap to confirm</div>
+                          <div style={{ fontSize: 9.5, fontWeight: 700, color: "#8a8a80", textAlign: "center", marginTop: 2 }}>tap to confirm</div>
                         )}
                       </div>
                     )}
