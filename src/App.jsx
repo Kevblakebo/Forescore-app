@@ -7771,6 +7771,18 @@ export default function GolfScorecard() {
   // course) before anything gets filled in.
   // Obvious "working on it" panel for course search: spinner + message +
   // pulsing placeholder rows, so a slow lookup never looks frozen.
+  // Shown at the very top of the setup page while the location prompt is up
+  // (the browser's own pop-up sits over the course search area, so the note
+  // lives up here where it stays visible).
+  function renderLocationNote() {
+    if (!gpsCourseSearchBusy) return null;
+    return (
+      <div style={{ marginBottom: 12, padding: "10px 14px", background: "#FDF6E9", border: "2px solid #B08D57", borderRadius: 12, fontSize: 13, fontWeight: 700, color: "#8a6a2f", lineHeight: 1.4 }}>
+        {"\u{1F4CD}"} Location is only used for course search and distance to the green. It is not used for any other purpose.
+      </div>
+    );
+  }
+
   function renderCourseSearchBusy() {
     if (!(courseSearchBusy || gpsCourseSearchBusy) || courseTeeOptions) return null;
     const nearby = gpsCourseSearchBusy;
@@ -7781,7 +7793,6 @@ export default function GolfScorecard() {
           <div>
             <div style={{ fontWeight: 700, fontSize: 14, color: "#174F83" }}>{nearby ? "Finding golf courses near you..." : "Searching for courses..."}</div>
             <div style={{ fontSize: 12, color: "#4b6b8a", marginTop: 2 }}>{nearby ? "Checking your location - this can take a few seconds." : "This can take a few seconds."}</div>
-            {nearby && <div style={{ fontSize: 12, fontWeight: 700, color: "#174F83", marginTop: 6 }}>Location is only used for course search and distance to the green. It is not used for any other purpose.</div>}
           </div>
         </div>
         {[0, 1, 2].map((i) => (
@@ -15205,6 +15216,7 @@ function computeMatchPlayResult(round, computed) {
             </div>
           )}
 
+          {wizardStepId === "field_course" && renderLocationNote()}
           {wizardStepId === "field_course" && (
             <div className="gsc-card">
               <div className="gsc-label" style={{ marginBottom: 10, fontSize: 16 }}>What course are you playing? (Required)</div>
@@ -15755,6 +15767,7 @@ function computeMatchPlayResult(round, computed) {
         <style>{STYLE}</style>
         <Header title="Quick Start" sub="Individual Stroke Play - just the basics" onBack={() => goBack("home")} />
         <div className="gsc-body">
+          {renderLocationNote()}
           <div className="gsc-card">
             {courseName && courseSelectedViaSearch ? (
               <div className="gsc-card gsc-winner-card" style={{ padding: 12 }}>
@@ -16054,6 +16067,7 @@ function computeMatchPlayResult(round, computed) {
           <button className="gsc-link" style={{ marginBottom: 12, fontSize: 13 }} onClick={() => openRules(gameKey, !!activeTournament)}>
             View full rules for {g.name}
           </button>
+          {renderLocationNote()}
           {activeTournament && (
             <div className="gsc-card" style={{ border: "2px solid #B08D57" }}>
               <div className="gsc-label" style={{ marginBottom: 6 }}>Tournament settings (locked)</div>
@@ -16705,6 +16719,7 @@ function computeMatchPlayResult(round, computed) {
           <button className="gsc-link" style={{ marginBottom: 12, fontSize: 13 }} onClick={() => openRules(tournamentGameKey, true)}>
             View full rules for {tg.tournamentName || tg.name}
           </button>
+          {renderLocationNote()}
           <div className="gsc-card">
             <div className="gsc-label">Tournament name (Optional)</div>
             <input className="gsc-input" placeholder="e.g. Club Championship" value={tournamentName} onChange={(e) => setTournamentName(e.target.value)} />
