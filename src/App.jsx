@@ -7777,7 +7777,7 @@ export default function GolfScorecard() {
   function renderLocationNote() {
     if (!gpsCourseSearchBusy) return null;
     return (
-      <div style={{ marginBottom: 12, padding: "10px 14px", background: "#FDF6E9", border: "2px solid #B08D57", borderRadius: 12, fontSize: 13, fontWeight: 700, color: "#8a6a2f", lineHeight: 1.4 }}>
+      <div style={{ marginBottom: 12, padding: "10px 14px", background: "#FDF6E9", border: "2px solid #A42E2D", borderRadius: 12, fontSize: 13, fontWeight: 700, color: "#8a6a2f", lineHeight: 1.4 }}>
         {"\u{1F4CD}"} Location is only used for course search and distance to the green. It is not used for any other purpose.
       </div>
     );
